@@ -32,7 +32,10 @@ export function calculateGameTick(state: GameState): Partial<GameState> {
 function calculateRadioactivity(state: GameState): GameState {
   let radioactivityChange = 0
 
-  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.5
+  // Uranium fuel is naturally radioactive and always produces baseline radioactivity
+  radioactivityChange += 1.5 // Constant baseline positive radioactivity
+
+  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.25
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
@@ -61,20 +64,20 @@ function calculateTemperatures(state: GameState): GameState {
 
   // Radioactivity affects Reactor Temp (direct/quick)
   // Higher radioactivity increases reactor temp
-  reactorTempChange += state.radioactivity * 0.7
+  reactorTempChange += state.radioactivity * 0.35
 
   // Water Pumps affect Reactor Temp (inverse/moderate)
   // Each pump reduces temp when ON and POWERED
   const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
-  reactorTempChange -= activePumps.length * 0.5
+  reactorTempChange -= activePumps.length * 0.25
 
   // Reactor Temp affects Fuel Temp (direct/slow)
   // High reactor temp slowly increases fuel temp
   if (state.reactorTemp > 200) {
-    fuelTempChange += (state.reactorTemp - 200) * 0.02
+    fuelTempChange += (state.reactorTemp - 200) * 0.005
   } else {
     // Cool down fuel temp if reactor is cool
-    fuelTempChange -= (200 - state.reactorTemp) * 0.01
+    fuelTempChange -= (200 - state.reactorTemp) * 0.0025
   }
 
   const newReactorTemp = Math.max(0, state.reactorTemp + reactorTempChange)
@@ -87,13 +90,13 @@ function calculateSteam(state: GameState): GameState {
   let steamChange = 0
 
   // Reactor Temp affects Steam Volume (direct/very quick/exponential)
-  // The rate of change is proportional to the square of reactor temp
-  if (state.reactorTemp > 200) {
-    const tempFactor = (state.reactorTemp - 200) / 100
-    steamChange += Math.pow(tempFactor, 2) * 2
+  // The rate of change is proportional to the square of reactor temp above threshold
+  if (state.reactorTemp >= 90) {
+    const tempFactor = (state.reactorTemp - 90) / 100
+    steamChange += Math.pow(tempFactor, 2) * 1
   } else {
-    // Steam decreases if reactor is cool
-    steamChange -= (200 - state.reactorTemp) * 0.05
+    // Steam decreases if reactor is below production threshold
+    steamChange -= (90 - state.reactorTemp) * 0.025
   }
 
   const newSteam = Math.max(0, Math.min(200, state.steamVolume + steamChange))

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
 import { formatTime } from "@/lib/game-utils"
 import { Flame, TrendingDown } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface GameOverScreenProps {
   gameState: GameState
@@ -10,9 +11,15 @@ interface GameOverScreenProps {
 }
 
 export default function GameOverScreen({ gameState, onReset }: GameOverScreenProps) {
+  const router = useRouter()
   const isMeltdown = gameState.gameOverReason?.includes("MELTDOWN")
 
   const handleReturnToMenu = () => {
+    localStorage.removeItem("chernobyl-game-state")
+    router.push("/")
+  }
+
+  const handleTryAgain = () => {
     localStorage.removeItem("chernobyl-game-state")
     onReset()
   }
@@ -87,7 +94,7 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
             <Button
-              onClick={onReset}
+              onClick={handleTryAgain}
               size="lg"
               className="uppercase font-mono tracking-wider px-8 border-2 border-primary"
             >

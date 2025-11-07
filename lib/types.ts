@@ -57,11 +57,11 @@ export interface GameState {
 }
 
 export const INITIAL_GAME_STATE: GameState = {
-  radioactivity: 200,
+  radioactivity: 50,
   reactorTemp: 105,
   fuelTemp: 50,
   xenon: 0,
-  steamVolume: 50,
+  steamVolume: 20,
 
   powerTarget: 4000,
   powerOutput: 3000,
