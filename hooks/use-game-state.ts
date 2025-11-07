@@ -15,6 +15,7 @@ export function useGameState() {
 
   // Load game state from local storage on mount
   useEffect(() => {
+    console.log(gameState) // Tim: debug
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
