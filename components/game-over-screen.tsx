@@ -1,6 +1,4 @@
 "use client"
-
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
 import { formatTime } from "@/lib/game-utils"
@@ -13,6 +11,11 @@ interface GameOverScreenProps {
 
 export default function GameOverScreen({ gameState, onReset }: GameOverScreenProps) {
   const isMeltdown = gameState.gameOverReason?.includes("MELTDOWN")
+
+  const handleReturnToMenu = () => {
+    localStorage.removeItem("chernobyl-game-state")
+    onReset()
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -91,15 +94,14 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
               Try Again
             </Button>
 
-            <Link href="/">
-              <Button
-                size="lg"
-                variant="outline"
-                className="uppercase font-mono tracking-wider px-8 border-2 border-primary w-full sm:w-auto bg-transparent"
-              >
-                Return to Menu
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              className="uppercase font-mono tracking-wider px-8 border-2 border-primary w-full sm:w-auto bg-transparent"
+              onClick={handleReturnToMenu}
+            >
+              Return to Menu
+            </Button>
           </div>
         </div>
 

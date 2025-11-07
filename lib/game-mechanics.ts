@@ -32,26 +32,25 @@ export function calculateGameTick(state: GameState): Partial<GameState> {
 function calculateRadioactivity(state: GameState): GameState {
   let radioactivityChange = 0
 
-  // Control Rods affect radioactivity (inverse/quick)
-  radioactivityChange += getRadioactivityFromRods(state.controlRods)
+  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.5
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
   if (state.fuelTemp > 100) {
-    radioactivityChange -= (state.fuelTemp - 100) * 0.05
+    radioactivityChange -= (state.fuelTemp - 100) * 0.03
   }
 
   // Xenon affects radioactivity (inverse/slow)
   // Higher xenon reduces radioactivity
-  radioactivityChange -= state.xenon * 0.08
+  radioactivityChange -= state.xenon * 0.05
 
   // Steam Volume affects radioactivity (direct/quick)
   // High steam slightly increases radioactivity
   if (state.steamVolume > 50) {
-    radioactivityChange += (state.steamVolume - 50) * 0.3
+    radioactivityChange += (state.steamVolume - 50) * 0.15
   }
 
-  const newRadioactivity = Math.max(0, state.radioactivity + radioactivityChange)
+  const newRadioactivity = Math.max(0, Math.min(400, state.radioactivity + radioactivityChange))
 
   return { ...state, radioactivity: newRadioactivity }
 }

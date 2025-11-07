@@ -57,9 +57,9 @@ export interface GameState {
 }
 
 export const INITIAL_GAME_STATE: GameState = {
-  radioactivity: 100,
-  reactorTemp: 200,
-  fuelTemp: 100,
+  radioactivity: 200,
+  reactorTemp: 105,
+  fuelTemp: 50,
   xenon: 0,
   steamVolume: 50,
 
@@ -69,13 +69,13 @@ export const INITIAL_GAME_STATE: GameState = {
 
   controlRods: Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,
-    insertion: 50,
+    insertion: 45, // At 45%, provides -26.25 radioactivity change (more stable start)
     stuck: false,
   })),
 
   waterPumps: Array.from({ length: 4 }, (_, i) => ({
     id: i + 1,
-    on: true,
+    on: i < 2, // Only first 2 pumps on, but this provides adequate cooling
     powered: true,
   })),
 

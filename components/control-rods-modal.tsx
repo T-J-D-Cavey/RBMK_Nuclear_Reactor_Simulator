@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 import type { ControlRod } from "@/lib/types"
 import { AlertCircle } from "lucide-react"
 
@@ -62,22 +62,24 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Input
+              <div className="flex items-center gap-4">
+                <Slider
                   id={`rod-${rod.id}`}
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={tempValues[idx] ?? rod.insertion}
-                  onChange={(e) => {
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[tempValues[idx] ?? rod.insertion]}
+                  onValueChange={(value) => {
                     const newValues = [...tempValues]
-                    newValues[idx] = Number.parseInt(e.target.value) || 0
+                    newValues[idx] = value[0]
                     setTempValues(newValues)
                   }}
                   disabled={rod.stuck}
-                  className="font-mono border-2 disabled:opacity-50"
+                  className="flex-1"
                 />
-                <span className="font-mono text-sm min-w-[2rem]">%</span>
+                <span className="font-mono text-lg font-bold min-w-[3.5rem] text-right">
+                  {tempValues[idx] ?? rod.insertion}%
+                </span>
               </div>
               {/* Visual indicator */}
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
