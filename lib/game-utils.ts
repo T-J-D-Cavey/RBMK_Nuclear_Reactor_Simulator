@@ -13,15 +13,15 @@ export function getRadioactivityFromRods(rods: ControlRod[]): number {
   rods.forEach((rod) => {
     const insertion = rod.insertion
 
-    if (insertion <= 5) {
+    if (insertion > 0 && insertion <= 5) {
       // Graphite tips only - increases radioactivity
-      totalChange += 2
-    } else if (insertion <= 10) {
-      // Net neutral around 10%
-      totalChange += 0
+      totalChange += 4
+    } else if (insertion > 5) {
+    // Boron dominant - decreases radioactivity
+      totalChange -= (insertion - 10) * 0.2
     } else {
-      // Boron dominant - decreases radioactivity
-      totalChange -= (insertion - 10) * 0.15
+      // No insertion, no affect
+      totalChange += 0
     }
   })
 

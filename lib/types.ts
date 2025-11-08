@@ -58,10 +58,10 @@ export interface GameState {
 
 export const INITIAL_GAME_STATE: GameState = {
   radioactivity: 50,
-  reactorTemp: 105,
-  fuelTemp: 50,
+  reactorTemp: 200,
+  fuelTemp: 200,
   xenon: 0,
-  steamVolume: 20,
+  steamVolume: 50,
 
   powerTarget: 4000,
   powerOutput: 3000,
@@ -102,13 +102,13 @@ export const THRESHOLDS = {
     meltdown: 1200,
   },
   fuelTemp: {
-    warning: 600,
+    warning: 1000,
   },
   steamVolume: {
-    warning: 80,
+    warning: 120,
   },
   performance: {
     gameOver: 0,
   },
-  powerTolerance: 0.05, // 5%
+  powerTolerance: 0.1, // 10%
 } as const
