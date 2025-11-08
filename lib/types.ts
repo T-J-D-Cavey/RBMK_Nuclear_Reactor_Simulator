@@ -60,8 +60,8 @@ export const INITIAL_GAME_STATE: GameState = {
   radioactivity: 50,
   reactorTemp: 200,
   fuelTemp: 200,
-  xenon: 0,
-  steamVolume: 50,
+  xenon: 3,
+  steamVolume: 80,
 
   powerTarget: 4000,
   powerOutput: 3000,

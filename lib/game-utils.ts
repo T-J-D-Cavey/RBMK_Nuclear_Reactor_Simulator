@@ -18,7 +18,8 @@ export function getRadioactivityFromRods(rods: ControlRod[]): number {
       totalChange += 4
     } else if (insertion > 5) {
     // Boron dominant - decreases radioactivity
-      totalChange -= (insertion - 10) * 0.2
+    // (Tim: below it was "totalChange -= (insertion -10) * 0.2"
+      totalChange -= insertion * 0.2
     } else {
       // No insertion, no affect
       totalChange += 0
