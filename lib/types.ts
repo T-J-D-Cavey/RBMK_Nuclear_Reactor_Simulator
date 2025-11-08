@@ -60,7 +60,7 @@ export const INITIAL_GAME_STATE: GameState = {
   radioactivity: 50,
   reactorTemp: 200,
   fuelTemp: 200,
-  xenon: 3,
+  xenon: 0,
   steamVolume: 80,
 
   powerTarget: 4000,
@@ -102,7 +102,7 @@ export const THRESHOLDS = {
     meltdown: 1200,
   },
   fuelTemp: {
-    warning: 1000,
+    warning: 900,
   },
   steamVolume: {
     warning: 120,
