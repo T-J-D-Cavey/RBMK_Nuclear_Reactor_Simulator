@@ -57,19 +57,19 @@ export interface GameState {
 }
 
 export const INITIAL_GAME_STATE: GameState = {
-  radioactivity: 50,
-  reactorTemp: 200,
-  fuelTemp: 200,
+  radioactivity: 100,
+  reactorTemp: 330,
+  fuelTemp: 330,
   xenon: 0,
-  steamVolume: 80,
+  steamVolume: 100,
 
-  powerTarget: 4000,
-  powerOutput: 3000,
+  powerTarget: 5000,
+  powerOutput: 5000,
   performance: 100,
 
   controlRods: Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,
-    insertion: 45, // At 45%, provides -26.25 radioactivity change (more stable start)
+    insertion: 32, 
     stuck: false,
   })),
 
@@ -105,7 +105,7 @@ export const THRESHOLDS = {
     warning: 900,
   },
   steamVolume: {
-    warning: 120,
+    warning: 300,
   },
   performance: {
     gameOver: 0,

@@ -35,7 +35,7 @@ function calculateRadioactivity(state: GameState): GameState {
   // Uranium fuel is naturally radioactive and always produces baseline radioactivity
   radioactivityChange += 0.1 // Constant baseline positive radioactivity
 
-  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.02
+  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.05
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
@@ -106,10 +106,12 @@ function calculateTemperatures(state: GameState): GameState {
   return { ...state, reactorTemp: newReactorTemp, fuelTemp: newFuelTemp }
 }
 
+/*
+Tim: Hiding this whilst I try an alternative: 
 function calculateSteam(state: GameState): GameState {
   let steamChange = 0
 
-  // Reactor Temp affects Steam Volume (direct/very quick/exponential)
+  // Reactor Temp affects Steam Volume (direct/quick)
   // The rate of change is proportional to the square of reactor temp above threshold
   if (state.reactorTemp >= 90) {
     const tempFactor = (state.reactorTemp - 90) / 100
@@ -122,6 +124,59 @@ function calculateSteam(state: GameState): GameState {
   const newSteam = Math.max(0, Math.min(200, state.steamVolume + steamChange))
 
   return { ...state, steamVolume: newSteam }
+}
+*/
+
+function calculateSteam(state: GameState): GameState {
+  let steamChange = 0;
+  const temp = state.reactorTemp;
+
+  // --- Tier 1: Below Cold Threshold (Temp < 90) - RAPID DECREASE ---
+  if (temp < 90) {
+    // Steam rapidly condenses when the reactor is cold.
+    steamChange -= (90 - temp) * 0.5;
+
+  // --- Tier 2: Operational Zone (90 <= Temp <= 800) - QUICK CHASE TARGET ---
+  // Tim: this will break if the thresholds are adjusted. Current reactor temp warning threshold is 800:
+  } else if (temp <= 800) {
+    
+    // 1. Calculate the ideal STEAM volume for the current temperature.
+    // We'll define the linear relationship:
+    // Temp 90  -> Target Steam 0
+    // Temp 800 -> Target Steam 400 (A high, but non-max value for the operational zone)
+    
+    const MIN_TEMP = 90;
+    const MAX_OPERATIONAL_TEMP = 800;
+    const MAX_OPERATIONAL_STEAM = 300; // Define max steam capacity for the operational range
+
+    // Normalized ratio of temperature within the operational range (0 to 1)
+    const tempRatio = (temp - MIN_TEMP) / (MAX_OPERATIONAL_TEMP - MIN_TEMP); 
+    
+    // Target steam volume for this exact temperature
+    const steamTarget = Math.max(0, tempRatio * MAX_OPERATIONAL_STEAM);
+
+    // 2. Calculate the difference (the gap we need to close)
+    const steamGap = steamTarget - state.steamVolume;
+
+    // 3. Apply Aggressive Correction (0.5 means 50% of the gap is closed per second)
+    const CHASE_RATE = 0.5; 
+    steamChange = steamGap * CHASE_RATE;
+
+  // --- Tier 3: Critical Zone (Temp > 800) - EXPONENTIAL INCREASE ---
+  } else {
+    const CRITICAL_THRESHOLD = 800;
+    const LINEAR_RATE_AT_800 = (CRITICAL_THRESHOLD - 90) * 0.3; // Base rate is 213 units/sec
+    const criticalFactor = temp - CRITICAL_THRESHOLD;
+    
+    // The total steam change is the sum of the maximum linear rate, PLUS the exponential spike.
+    steamChange = LINEAR_RATE_AT_800 + Math.pow(criticalFactor, 2) * 0.005;
+  }
+
+  // Max steam volume is 600 units
+  const MAX_STEAM = 600; 
+  const newSteam = Math.max(0, Math.min(MAX_STEAM, state.steamVolume + steamChange));
+
+  return { ...state, steamVolume: newSteam };
 }
 
 function calculatePower(state: GameState): GameState {
