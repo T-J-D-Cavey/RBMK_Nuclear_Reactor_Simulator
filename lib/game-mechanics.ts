@@ -72,6 +72,8 @@ function calculateTemperatures(state: GameState): GameState {
   let reactorTempChange = 0
   let fuelTempChange = 0
 
+  reactorTempChange -= 0.1 // This ensures the temp seeks to drop even if all the pumps are off, as long as there is no radioactivity
+
   // Radioactivity affects Reactor Temp (direct/quick)
   // Higher radioactivity increases reactor temp
   reactorTempChange += state.radioactivity * 0.02

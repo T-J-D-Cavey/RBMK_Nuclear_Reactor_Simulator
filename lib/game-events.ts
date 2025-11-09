@@ -11,6 +11,13 @@ export function shouldTriggerEvent(state: GameState): boolean {
     return false
   }
 
+  const hasActivePowerCut = state.activeEvents.some((e) => e.type === "power-cut")
+  const hasActiveRodStuck = state.activeEvents.some((e) => e.type === "rod-stuck")
+
+  if (hasActivePowerCut || hasActiveRodStuck) {
+    return false
+  }
+
   // Random chance after minimum interval
   if (timeSinceLastEvent >= EVENT_MIN_INTERVAL) {
     const probability = Math.min(
@@ -24,12 +31,20 @@ export function shouldTriggerEvent(state: GameState): boolean {
 }
 
 export function generateRandomEvent(state: GameState): GameEvent | null {
+  const hasActivePowerCut = state.activeEvents.some((e) => e.type === "power-cut")
+  const hasActiveRodStuck = state.activeEvents.some((e) => e.type === "rod-stuck")
+
+  // If there's an active disruptive event, don't generate target changes
+  if (hasActivePowerCut || hasActiveRodStuck) {
+    return null
+  }
+
   // Event type weights: 50% target change, 25% power cut, 25% rod stuck
   const roll = Math.random()
 
-  if (roll <= 0.6) {
+  if (roll <= 0.75) {
     return generateTargetChangeEvent(state)
-  } else if (roll <= 0.8) {
+  } else if (roll <= 0.875) {
     return generatePowerCutEvent(state)
   } else {
     return generateRodStuckEvent(state)
@@ -38,13 +53,13 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
 
 function generateTargetChangeEvent(state: GameState): GameEvent {
   // Target range: 1600 to 12000 MW (a difference of 10400)
-  const range = 10400;
-  const minTarget = 1600;
+  const range = 10400
+  const minTarget = 1600
 
   // 1. Calculate a random number between 1600 and 12000
   // 2. Divide by 100, round to the nearest whole number (e.g., 55.4 -> 55, 55.6 -> 56)
   // 3. Multiply by 100 to get the final rounded target (e.g., 56 -> 5600)
-  const newTarget = Math.round((Math.random() * range + minTarget) / 100) * 100;
+  const newTarget = Math.round((Math.random() * range + minTarget) / 100) * 100
 
   return {
     id: `event-${Date.now()}`,
@@ -56,18 +71,14 @@ function generateTargetChangeEvent(state: GameState): GameEvent {
 }
 
 function generatePowerCutEvent(state: GameState): GameEvent {
-  // Duration between 60 seconds and 10 minutes
-  // Tim: debug: const duration = (Math.random() * 590 + 60) * 1000
-  // Tim: debug: const durationSeconds = Math.round(duration / 1000)
-
-  // Duration between 60 seconds and 10 minutes (600 seconds)
-  const duration = Math.random() * 590 + 60 // Range 10s to 600s
-  const durationSeconds = Math.round(duration)
+  // Duration between 1-3 minutes
+  const duration = Math.random() * 180 + 60
+  const durationSeconds = Math.round(duration)
 
   return {
     id: `event-${Date.now()}`,
     type: "power-cut",
-    message: `⚡ WARNING: Power cut detected! Pumps offline for ${durationSeconds}s`,
+    message: `⚡ WARNING: Power cut detected! Pumps offline`,
     timestamp: state.gameTime,
     duration,
     data: { affectedPumps: [0, 1, 2, 3] },
@@ -75,20 +86,16 @@ function generatePowerCutEvent(state: GameState): GameEvent {
 }
 
 function generateRodStuckEvent(state: GameState): GameEvent {
-  // Duration between 60 seconds and 10 minutes
-  // Tim: debug: const duration = (Math.random() * 590 + 60) * 1000
-  // Tim: debug: const durationSeconds = Math.round(duration / 1000)
-
-   // Duration between 60 seconds and 10 minutes (600 seconds)
-  const duration = Math.random() * 590 + 60 // Range 10s to 600s
-  const durationSeconds = Math.round(duration)
+ // Duration between 1-3 minutes
+  const duration = Math.random() * 180 + 60
+  const durationSeconds = Math.round(duration)
 
   // Select 1-2 random rods
   const numRods = Math.random() < 0.5 ? 1 : 2
   const affectedRods: number[] = []
 
   while (affectedRods.length < numRods) {
-    const rodIdx = Math.floor(Math.random() * 5)
+    const rodIdx = Math.floor(Math.random() * 20)
     if (!affectedRods.includes(rodIdx)) {
       affectedRods.push(rodIdx)
     }
@@ -99,7 +106,7 @@ function generateRodStuckEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "rod-stuck",
-    message: `⚡ WARNING: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} stuck for ${durationSeconds}s`,
+    message: `⚡ WARNING: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} stuck`,
     timestamp: state.gameTime,
     duration,
     data: { affectedRods },
@@ -149,7 +156,7 @@ export function applyEvent(state: GameState, event: GameEvent): Partial<GameStat
 }
 
 export function updateActiveEvents(state: GameState): Partial<GameState> {
-  const nowInSeconds = state.gameTime;
+  const nowInSeconds = state.gameTime
   // Tim Debug: const now = Date.now()
   const updates: Partial<GameState> = {}
 
@@ -158,7 +165,7 @@ export function updateActiveEvents(state: GameState): Partial<GameState> {
     if (!event.duration) return false
     // Tim Debug: const eventTimestamp = event.timestamp * 1000 // Convert to milliseconds
     // Tim Debug: return now - eventTimestamp >= event.duration
-      return nowInSeconds >= (event.timestamp + event.duration)
+    return nowInSeconds >= event.timestamp + event.duration
   })
 
   if (expiredEvents.length > 0) {
