@@ -1,7 +1,7 @@
 import type { GameEvent, GameState } from "./types"
 
-const EVENT_MIN_INTERVAL = 300 // 5 minutes in seconds
-const EVENT_MAX_INTERVAL = 900 // 15 minutes in seconds
+const EVENT_MIN_INTERVAL = 180 // 3 minutes in seconds
+const EVENT_MAX_INTERVAL = 360 // 6 minutes in seconds
 
 export function shouldTriggerEvent(state: GameState): boolean {
   const timeSinceLastEvent = state.gameTime - state.lastEventTime
@@ -24,12 +24,12 @@ export function shouldTriggerEvent(state: GameState): boolean {
 }
 
 export function generateRandomEvent(state: GameState): GameEvent | null {
-  // Event type weights: 70% target change, 15% power cut, 15% rod stuck
+  // Event type weights: 50% target change, 25% power cut, 25% rod stuck
   const roll = Math.random()
 
-  if (roll < 0.7) {
+  if (roll <= 0.6) {
     return generateTargetChangeEvent(state)
-  } else if (roll < 0.85) {
+  } else if (roll <= 0.8) {
     return generatePowerCutEvent(state)
   } else {
     return generateRodStuckEvent(state)
@@ -37,8 +37,14 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
 }
 
 function generateTargetChangeEvent(state: GameState): GameEvent {
-  // Random target between 1600 and 5500 MW
-  const newTarget = Math.round((Math.random() * 3900 + 1600) / 100) * 100
+  // Target range: 1600 to 12000 MW (a difference of 10400)
+  const range = 10400;
+  const minTarget = 1600;
+
+  // 1. Calculate a random number between 1600 and 12000
+  // 2. Divide by 100, round to the nearest whole number (e.g., 55.4 -> 55, 55.6 -> 56)
+  // 3. Multiply by 100 to get the final rounded target (e.g., 56 -> 5600)
+  const newTarget = Math.round((Math.random() * range + minTarget) / 100) * 100;
 
   return {
     id: `event-${Date.now()}`,
@@ -50,8 +56,8 @@ function generateTargetChangeEvent(state: GameState): GameEvent {
 }
 
 function generatePowerCutEvent(state: GameState): GameEvent {
-  // Duration between 10 seconds and 10 minutes
-  const duration = (Math.random() * 590 + 10) * 1000
+  // Duration between 60 seconds and 10 minutes
+  const duration = (Math.random() * 590 + 60) * 1000
   const durationSeconds = Math.round(duration / 1000)
 
   return {
@@ -65,8 +71,8 @@ function generatePowerCutEvent(state: GameState): GameEvent {
 }
 
 function generateRodStuckEvent(state: GameState): GameEvent {
-  // Duration between 10 seconds and 10 minutes
-  const duration = (Math.random() * 590 + 10) * 1000
+  // Duration between 60 seconds and 10 minutes
+  const duration = (Math.random() * 590 + 60) * 1000
   const durationSeconds = Math.round(duration / 1000)
 
   // Select 1-2 random rods

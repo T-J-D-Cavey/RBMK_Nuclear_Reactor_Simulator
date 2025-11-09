@@ -35,7 +35,7 @@ function calculateRadioactivity(state: GameState): GameState {
   // Uranium fuel is naturally radioactive and always produces baseline radioactivity
   radioactivityChange += 0.1 // Constant baseline positive radioactivity
 
-  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.05
+  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.2
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
@@ -138,7 +138,7 @@ function calculateSteam(state: GameState): GameState {
 
   // --- Tier 2: Operational Zone (90 <= Temp <= 800) - QUICK CHASE TARGET ---
   // Tim: this will break if the thresholds are adjusted. Current reactor temp warning threshold is 800:
-  } else if (temp <= 800) {
+  } else {
     
     // 1. Calculate the ideal STEAM volume for the current temperature.
     // We'll define the linear relationship:
@@ -162,15 +162,7 @@ function calculateSteam(state: GameState): GameState {
     const CHASE_RATE = 0.5; 
     steamChange = steamGap * CHASE_RATE;
 
-  // --- Tier 3: Critical Zone (Temp > 800) - EXPONENTIAL INCREASE ---
-  } else {
-    const CRITICAL_THRESHOLD = 800;
-    const LINEAR_RATE_AT_800 = (CRITICAL_THRESHOLD - 90) * 0.3; // Base rate is 213 units/sec
-    const criticalFactor = temp - CRITICAL_THRESHOLD;
-    
-    // The total steam change is the sum of the maximum linear rate, PLUS the exponential spike.
-    steamChange = LINEAR_RATE_AT_800 + Math.pow(criticalFactor, 2) * 0.005;
-  }
+  } 
 
   // Max steam volume is 600 units
   const MAX_STEAM = 600; 
@@ -211,19 +203,19 @@ function calculateXenon(state: GameState): GameState {
   let xenonChange = 0
 
   // Xenon Generation: Produced only when radioactivity < 50
-  if (state.radioactivity < 10) {
-    xenonChange += 0.01
+  if (state.radioactivity <= 10) {
+    xenonChange += 1
   }
 
-  if (state.radioactivity < 50) {
-    xenonChange += 0.001
+  if (state.radioactivity > 10 && state.radioactivity <= 50) {
+    xenonChange += 0.01
   }
 
   // Xenon Reduction: Decreases when radioactivity > 150
   if (state.radioactivity > 150) {
     if (state.radioactivity > 250) {
       // Faster reduction if radioactivity > 250
-      xenonChange -= 1.5
+      xenonChange -= 1
     } else {
       xenonChange -= 0.01
     }

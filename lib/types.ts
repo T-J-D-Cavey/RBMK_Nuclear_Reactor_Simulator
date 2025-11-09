@@ -69,7 +69,7 @@ export const INITIAL_GAME_STATE: GameState = {
 
   controlRods: Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,
-    insertion: 32, 
+    insertion: 15, 
     stuck: false,
   })),
 
