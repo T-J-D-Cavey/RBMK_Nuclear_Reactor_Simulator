@@ -33,9 +33,9 @@ function calculateRadioactivity(state: GameState): GameState {
   let radioactivityChange = 0
 
   // Uranium fuel is naturally radioactive and always produces baseline radioactivity
-  radioactivityChange += 0.1 // Constant baseline positive radioactivity
+  radioactivityChange += 0.15 // Constant baseline positive radioactivity
 
-  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.2
+  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.05
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
@@ -55,7 +55,7 @@ function calculateRadioactivity(state: GameState): GameState {
 
   // Xenon affects radioactivity (inverse/fast)
   // Higher xenon reduces radioactivity
-  radioactivityChange -= state.xenon * 0.1
+  radioactivityChange -= state.xenon * 0.01
 
   // Steam Volume affects radioactivity (direct/quick)
   // High steam slightly increases radioactivity

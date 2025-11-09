@@ -67,9 +67,9 @@ export const INITIAL_GAME_STATE: GameState = {
   powerOutput: 5000,
   performance: 100,
 
-  controlRods: Array.from({ length: 5 }, (_, i) => ({
+  controlRods: Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
-    insertion: 15, 
+    insertion: i < 5 ? 40 : 0, // First 5 rods inserted at 40%, remaining 15 fully removed
     stuck: false,
   })),
 

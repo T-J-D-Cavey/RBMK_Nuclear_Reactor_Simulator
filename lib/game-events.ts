@@ -57,8 +57,12 @@ function generateTargetChangeEvent(state: GameState): GameEvent {
 
 function generatePowerCutEvent(state: GameState): GameEvent {
   // Duration between 60 seconds and 10 minutes
-  const duration = (Math.random() * 590 + 60) * 1000
-  const durationSeconds = Math.round(duration / 1000)
+  // Tim: debug: const duration = (Math.random() * 590 + 60) * 1000
+  // Tim: debug: const durationSeconds = Math.round(duration / 1000)
+
+  // Duration between 60 seconds and 10 minutes (600 seconds)
+  const duration = Math.random() * 590 + 60 // Range 10s to 600s
+  const durationSeconds = Math.round(duration)
 
   return {
     id: `event-${Date.now()}`,
@@ -72,8 +76,12 @@ function generatePowerCutEvent(state: GameState): GameEvent {
 
 function generateRodStuckEvent(state: GameState): GameEvent {
   // Duration between 60 seconds and 10 minutes
-  const duration = (Math.random() * 590 + 60) * 1000
-  const durationSeconds = Math.round(duration / 1000)
+  // Tim: debug: const duration = (Math.random() * 590 + 60) * 1000
+  // Tim: debug: const durationSeconds = Math.round(duration / 1000)
+
+   // Duration between 60 seconds and 10 minutes (600 seconds)
+  const duration = Math.random() * 590 + 60 // Range 10s to 600s
+  const durationSeconds = Math.round(duration)
 
   // Select 1-2 random rods
   const numRods = Math.random() < 0.5 ? 1 : 2
@@ -141,14 +149,16 @@ export function applyEvent(state: GameState, event: GameEvent): Partial<GameStat
 }
 
 export function updateActiveEvents(state: GameState): Partial<GameState> {
-  const now = Date.now()
+  const nowInSeconds = state.gameTime;
+  // Tim Debug: const now = Date.now()
   const updates: Partial<GameState> = {}
 
   // Check for expired events
   const expiredEvents = state.activeEvents.filter((event) => {
     if (!event.duration) return false
-    const eventTimestamp = event.timestamp * 1000 // Convert to milliseconds
-    return now - eventTimestamp >= event.duration
+    // Tim Debug: const eventTimestamp = event.timestamp * 1000 // Convert to milliseconds
+    // Tim Debug: return now - eventTimestamp >= event.duration
+      return nowInSeconds >= (event.timestamp + event.duration)
   })
 
   if (expiredEvents.length > 0) {

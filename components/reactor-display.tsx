@@ -22,7 +22,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
   return (
     <div className="relative w-full max-w-4xl mx-auto">
       {/* Control Rods - Top of Reactor */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 flex gap-2 md:gap-4 z-20">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 grid grid-cols-10 gap-1 md:gap-2 z-20">
         {gameState.controlRods.map((rod) => (
           <button
             key={rod.id}
@@ -33,14 +33,14 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           >
             {/* Rod shaft */}
             <div
-              className="w-6 md:w-8 bg-primary border-2 border-primary transition-all duration-500 group-hover:bg-primary/80"
+              className="w-4 md:w-6 bg-primary border-2 border-primary transition-all duration-500 group-hover:bg-primary/80"
               style={{
-                height: `${Math.max(20, rod.insertion * 1.5)}px`,
+                height: `${Math.max(10, rod.insertion * 1.2)}px`,
               }}
             />
             {/* Rod indicator */}
             <div
-              className={`absolute -bottom-6 left-1/2 -translate-x-1/2 w-8 h-1 ${
+              className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 md:w-6 h-1 ${
                 rod.stuck ? "bg-destructive" : "bg-accent"
               }`}
             />
@@ -49,7 +49,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
       </div>
 
       {/* Reactor Core */}
-      <div className="relative flex items-center justify-center pt-24 md:pt-32 pb-24 md:pb-32">
+      <div className="relative flex items-center justify-center pt-32 md:pt-40 pb-24 md:pb-32">
         <div
           className="w-48 h-48 md:w-72 md:h-72 rounded-full bg-accent transition-all duration-1000 relative"
           style={{
