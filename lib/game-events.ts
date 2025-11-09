@@ -86,7 +86,7 @@ function generatePowerCutEvent(state: GameState): GameEvent {
 }
 
 function generateRodStuckEvent(state: GameState): GameEvent {
- // Duration between 1-3 minutes
+  // Duration between 1-3 minutes
   const duration = Math.random() * 180 + 60
   const durationSeconds = Math.round(duration)
 
@@ -95,7 +95,7 @@ function generateRodStuckEvent(state: GameState): GameEvent {
   const affectedRods: number[] = []
 
   while (affectedRods.length < numRods) {
-    const rodIdx = Math.floor(Math.random() * 20)
+    const rodIdx = Math.floor(Math.random() * 10)
     if (!affectedRods.includes(rodIdx)) {
       affectedRods.push(rodIdx)
     }
@@ -114,8 +114,15 @@ function generateRodStuckEvent(state: GameState): GameEvent {
 }
 
 export function applyEvent(state: GameState, event: GameEvent): Partial<GameState> {
+  let activeEvents = [...state.activeEvents]
+
+  if (event.type === "target-change") {
+    // Remove any existing target-change events
+    activeEvents = activeEvents.filter((e) => e.type !== "target-change")
+  }
+
   const updates: Partial<GameState> = {
-    activeEvents: [...state.activeEvents, event],
+    activeEvents: [...activeEvents, event],
     lastEventTime: state.gameTime,
     eventHistory: [...state.eventHistory, event],
   }

@@ -28,14 +28,16 @@ export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModal
           </DialogTitle>
           <DialogDescription className="text-base font-mono pt-4">
             Leaving the game will reset the reactor to its initial state. All progress will be lost, including:
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Current performance score</li>
-              <li>Game time and statistics</li>
-              <li>Control rod and pump configurations</li>
-              <li>Active events and event history</li>
-            </ul>
           </DialogDescription>
         </DialogHeader>
+        <div className="px-6">
+          <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground font-mono">
+            <li>Current performance score</li>
+            <li>Game time and statistics</li>
+            <li>Control rod and pump configurations</li>
+            <li>Active events and event history</li>
+          </ul>
+        </div>
         <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono">
             CANCEL - Stay in Control

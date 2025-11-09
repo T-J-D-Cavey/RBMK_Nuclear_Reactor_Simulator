@@ -11,6 +11,11 @@ interface ControlPanelProps {
 }
 
 export default function ControlPanel({ gameState, onTogglePause }: ControlPanelProps) {
+  const powerTolerance = 0.1 // 10%
+  const lowerBound = gameState.powerTarget * (1 - powerTolerance)
+  const upperBound = gameState.powerTarget * (1 + powerTolerance)
+  const isOnTarget = gameState.powerOutput >= lowerBound && gameState.powerOutput <= upperBound
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="bg-card border-4 border-primary p-4 md:p-6 space-y-4">
@@ -24,7 +29,9 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
           {/* Current Power Output */}
           <div className="bg-background border-2 border-border p-3 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Power Output</div>
-            <div className="led-display led-green text-lg md:text-xl">{Math.round(gameState.powerOutput)} MW</div>
+            <div className={`led-display text-lg md:text-xl ${isOnTarget ? "led-green" : "text-red-500"}`}>
+              {Math.round(gameState.powerOutput)} MW
+            </div>
           </div>
 
           {/* Power Target */}
@@ -48,7 +55,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
           {/* Time */}
           <div className="bg-background border-2 border-border p-3 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Time</div>
-            <div className="led-display text-lg md:text-xl">{formatTime(gameState.gameTime)}</div>
+            <div className="led-display led-amber text-lg md:text-xl">{formatTime(gameState.gameTime)}</div>
           </div>
         </div>
 

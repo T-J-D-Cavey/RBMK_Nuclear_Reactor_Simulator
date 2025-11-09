@@ -28,3 +28,16 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+
+FIXES TO MAKE:
+
+- Increase the base radiation slightly (so it it naturally more radioative, only a little bit)
+- Reduce the affect of Xenon on radioactivity a bit 
+- SLightly slow down the generation of Xenon at very low radioactivity 
+- When radioactivity is 0, reactor temp should cool down much faster
+- Increase the affect of low fuel temp on radioactivity
+- Increase the speed at which fuel temp changed in relation to reactor temp
+- Change max radioactivity level, it's currently maxxes out at 400
+- Get v0 to update how to guide
+- Get v0 to introduce flashing buttons on UI, and have the readouts flash when threasholds are met
