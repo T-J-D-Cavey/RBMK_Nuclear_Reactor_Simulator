@@ -71,49 +71,50 @@ function calculateRadioactivity(state: GameState): GameState {
 function calculateTemperatures(state: GameState): GameState {
   let reactorTempChange = 0
   let fuelTempChange = 0
+  let R_heat_factor = 0;
+  const R = state.radioactivity;
 
   reactorTempChange -= 0.1 // Reactor temp naturally falls unless something acts to keep it the same
 
-  if (state.radioactivity <= 20 && state.reactorTemp > 22) {
+  if (state.radioactivity <= 50 && state.reactorTemp > 22) {
     if(state.radioactivity <= 1) {
       reactorTempChange -= 4
     } else {
-      reactorTempChange -= 1
+      reactorTempChange -= 2
     }
   }
 
   // 2. RADIOACTIVITY AFFECTS REACTOR TEMP (Direct/Quick - CONTINUOUS SCALING)
-  let R_heat_factor = 0;
-  const R = state.radioactivity;
-  
-  const THRESHOLD_1 = 150;
-  const THRESHOLD_2 = 250;
 
-  // --- BASELINE TIER (R up to 150: Rate 0.01) ---
-  if (R <= THRESHOLD_1) {
-    R_heat_factor = R * 0.021;
-  } else {
+  if (R > 50) {
+    const THRESHOLD_1 = 150;
+    const THRESHOLD_2 = 250;
+
+    // --- BASELINE TIER (R up to 150: Rate 0.01) ---
+    if (R <= THRESHOLD_1) {
+      R_heat_factor = R * 0.021;
+    } else {
     // Apply full base rate up to 150 (1.5 units/sec)
-    R_heat_factor = THRESHOLD_1 * 0.021;
-  }
+      R_heat_factor = THRESHOLD_1 * 0.021;
+    }
 
-  // --- ACCELERATION TIER 2 (R > 150: Rate 0.03 total) ---
-  if (R > THRESHOLD_1) {
+    // --- ACCELERATION TIER 2 (R > 150: Rate 0.03 total) ---
+    if (R > THRESHOLD_1) {
     // Add an EXTRA 0.02 to the rate for the excess portion (0.01 + 0.02 = 0.03 total)
-    const R_excess_1 = Math.min(R, THRESHOLD_2) - THRESHOLD_1; 
-    R_heat_factor += R_excess_1 * 0.009; 
-  }
+      const R_excess_1 = Math.min(R, THRESHOLD_2) - THRESHOLD_1; 
+      R_heat_factor += R_excess_1 * 0.009; 
+    }
 
-  // --- ACCELERATION TIER 3 (R > 250: Rate 0.09 total) ---
-  if (R > THRESHOLD_2) {
+    // --- ACCELERATION TIER 3 (R > 250: Rate 0.09 total) ---
+    if (R > THRESHOLD_2) {
     // Add an EXTRA 0.06 to the rate for the excess portion (0.03 + 0.06 = 0.09 total)
-    const R_excess_2 = R - THRESHOLD_2; 
-    R_heat_factor += R_excess_2 * 0.06;
+      const R_excess_2 = R - THRESHOLD_2; 
+      R_heat_factor += R_excess_2 * 0.06;
+    }
+  
+    // Add the continuously scaled heating factor to the total temperature change
+    reactorTempChange += R_heat_factor;
   }
-  
-  // Add the continuously scaled heating factor to the total temperature change
-  reactorTempChange += R_heat_factor;
-  
 
   // Water Pumps affect Reactor Temp (inverse/quick)
   // Each pump reduces temp when ON and POWERED

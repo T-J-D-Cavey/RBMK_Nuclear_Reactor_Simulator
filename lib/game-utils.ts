@@ -31,24 +31,36 @@ export function getRadioactivityFromRods(rods: ControlRod[]): number {
 export function checkWarnings(state: GameState): string[] {
   const warnings: string[] = []
 
-  if (state.radioactivity >= THRESHOLDS.radioactivity.warning) {
-    warnings.push("HIGH RADIOACTIVITY")
+  if (state.radioactivity >= THRESHOLDS.radioactivity.highWarning) {
+    warnings.push("WARNING: High radioactivity. Reactor temperature expected to spike. Recommend to increase insertion of control rods to reduce radioactivity.")
+  }
+
+  if (state.radioactivity <= THRESHOLDS.radioactivity.lowWarning) {
+    warnings.push("WARNING: Low radioactivity. Xenon levels are expected to spike, further reducing radioactivity. Recommend reducing control rod insertion to increase radioactivity")
   }
 
   if (state.reactorTemp >= THRESHOLDS.reactorTemp.warning) {
-    warnings.push("HIGH REACTOR TEMPERATURE")
+    warnings.push("WARNING: High reactor temperature. Steam levels and radioactivity expected to spike. Recommend turning on more water pumpts to cool reactor")
   }
 
-  if (state.fuelTemp >= THRESHOLDS.fuelTemp.warning) {
-    warnings.push("HIGH FUEL TEMPERATURE")
+  if (state.fuelTemp >= THRESHOLDS.fuelTemp.highWarning) {
+    warnings.push("WARNING: High fuel temperature. Radioactivity may drop as a result. Recommend turning on more water pumpts to cool fuel")
   }
 
-  if (state.steamVolume >= THRESHOLDS.steamVolume.warning) {
-    warnings.push("HIGH STEAM PRESSURE")
+  if (state.fuelTemp <= THRESHOLDS.fuelTemp.lowWarning) {
+    warnings.push("WARNING: Low fuel temperature. Radiation is expected to spike. Recommended turning off some water pumps to increase reactor and fuel temperature")
+  }
+
+  if (state.steamVolume >= THRESHOLDS.steamVolume.highWarning) {
+    warnings.push("WARNING: High steam pressure. Please disconnect turbine to avoid damage to the transmission infrastructure")
+  }
+
+  if (state.steamVolume <= THRESHOLDS.steamVolume.lowWarning) {
+    warnings.push("WARNING: Low steam pressure causing reduced power generation. Recommend turning off some water pumps to increase reactor temperature and reducing control rod insertion to increase radioactivity")
   }
 
   if (state.performance < 50) {
-    warnings.push("LOW PERFORMANCE")
+    warnings.push("WARNING: Our power station is reporting low grid target performance. Review power targets")
   }
 
   return warnings

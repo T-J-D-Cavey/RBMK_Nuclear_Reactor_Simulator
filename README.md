@@ -32,10 +32,6 @@ Continue building your app on:
 
 FIXES TO MAKE:
 
-- Change max radioactivity level, it currently max's out at 400
-- Introduce warning thresholds with warning messages for low levels
-- Add more detail to the warning messages, to give an indication of what will happen at the current levels
-- low radiation warning: Xenon will be produced at a fast pace, further reducing radioactivity
-- Low fuel temp warning: radiation will increase  
+- Remove max radioactivity level, it currently max's out at 400 but I can't see where this limit is being applied
 - Get v0 to update how to guide
 - Get v0 to introduce flashing buttons on UI, and have the relevant figures on the readouts flash when threasholds are met

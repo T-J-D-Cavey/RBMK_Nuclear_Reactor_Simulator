@@ -95,17 +95,20 @@ export const INITIAL_GAME_STATE: GameState = {
 
 export const THRESHOLDS = {
   radioactivity: {
-    warning: 250,
+    highWarning: 250,
+    lowWarning: 50,
   },
   reactorTemp: {
     warning: 800,
     meltdown: 1200,
   },
   fuelTemp: {
-    warning: 900,
+    highWarning: 900,
+    lowWarning: 90
   },
   steamVolume: {
-    warning: 300,
+    highWarning: 300,
+    lowWarning: 0,
   },
   performance: {
     gameOver: 0,
