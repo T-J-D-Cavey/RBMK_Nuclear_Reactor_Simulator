@@ -157,3 +157,36 @@
 .reactor-glow {
   filter: drop-shadow(0 0 20px var(--color-glow-green));
 }
+
+/* Add faster flashing animations for warning lights and borders */
+@keyframes warning-flash {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.8);
+  }
+  50% {
+    opacity: 0.3;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.3);
+  }
+}
+
+@keyframes border-flash {
+  0%,
+  100% {
+    border-color: rgb(220, 38, 38);
+    box-shadow: inset 0 0 20px rgba(220, 38, 38, 0.6);
+  }
+  50% {
+    border-color: rgb(153, 27, 27);
+    box-shadow: inset 0 0 5px rgba(220, 38, 38, 0.2);
+  }
+}
+
+.animate-warning-flash {
+  animation: warning-flash 1s ease-in-out infinite;
+}
+
+.animate-border-flash {
+  animation: border-flash 1s ease-in-out infinite;
+}

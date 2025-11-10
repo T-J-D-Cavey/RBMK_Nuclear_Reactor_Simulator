@@ -63,7 +63,7 @@ function calculateRadioactivity(state: GameState): GameState {
     radioactivityChange += (state.steamVolume) * 0.02
   }
 
-  const newRadioactivity = Math.max(0, Math.min(400, state.radioactivity + radioactivityChange))
+  const newRadioactivity = Math.max(0, Math.min(800, state.radioactivity + radioactivityChange))
 
   return { ...state, radioactivity: newRadioactivity }
 }

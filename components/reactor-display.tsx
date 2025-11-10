@@ -21,35 +21,39 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
 
   return (
     <div className="relative w-full max-w-4xl mx-auto">
-      {/* Control Rods - Top of Reactor */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 grid grid-cols-5 gap-2 md:gap-3 z-20">
-        {gameState.controlRods.map((rod) => (
-          <button
-            key={rod.id}
-            onClick={() => !gameState.isPaused && setRodsModalOpen(true)}
-            disabled={gameState.isPaused}
-            className="group relative cursor-pointer disabled:cursor-not-allowed"
-            title={`Control Rod ${rod.id}: ${rod.insertion}%${rod.stuck ? " (STUCK)" : ""}`}
-          >
-            {/* Rod shaft */}
-            <div
-              className="w-5 md:w-7 bg-primary border-2 border-primary transition-all duration-500 group-hover:bg-primary/80"
+      {/* Control Rods - Positioned above Reactor, move DOWN as insertion increases */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
+        {gameState.controlRods.map((rod) => {
+          // Calculate vertical offset: 0% insertion = 0px offset (high), 100% insertion = 60px offset (low)
+          const verticalOffset = (rod.insertion / 100) * 60
+
+          return (
+            <button
+              key={rod.id}
+              onClick={() => !gameState.isPaused && setRodsModalOpen(true)}
+              disabled={gameState.isPaused}
+              className="group relative cursor-pointer disabled:cursor-not-allowed"
+              title={`Control Rod ${rod.id}: ${rod.insertion}%${rod.stuck ? " (STUCK)" : ""}`}
               style={{
-                height: `${Math.max(10, rod.insertion * 1.2)}px`,
+                transform: `translateY(${verticalOffset}px)`,
+                transition: "transform 0.5s ease-out",
               }}
-            />
-            {/* Rod indicator */}
-            <div
-              className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-5 md:w-7 h-1 ${
-                rod.stuck ? "bg-destructive" : "bg-accent"
-              }`}
-            />
-          </button>
-        ))}
+            >
+              {/* Rod shaft - fixed height, moves down as insertion increases */}
+              <div className="w-4 md:w-5 h-16 md:h-20 bg-primary border-2 border-primary transition-all duration-500 group-hover:bg-primary/80" />
+              {/* Rod indicator at bottom */}
+              <div
+                className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-4 md:w-5 h-1 ${
+                  rod.stuck ? "bg-destructive" : "bg-accent"
+                }`}
+              />
+            </button>
+          )
+        })}
       </div>
 
       {/* Reactor Core */}
-      <div className="relative flex items-center justify-center pt-32 md:pt-40 pb-24 md:pb-32">
+      <div className="relative flex items-center justify-center pt-24 md:pt-28 pb-24 md:pb-32">
         <div
           className="w-48 h-48 md:w-72 md:h-72 rounded-full bg-accent transition-all duration-1000 relative"
           style={{

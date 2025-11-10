@@ -33,10 +33,10 @@ export default function InstructionsPage() {
             <h2 className="text-2xl font-bold font-mono uppercase text-accent">Controls</h2>
             <div className="space-y-3">
               <div className="bg-background p-4 border-2 border-border">
-                <h3 className="font-bold font-mono mb-2">Control Rods (×5)</h3>
+                <h3 className="font-bold font-mono mb-2">Control Rods (×10)</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Click the rods inserted into the reactor to adjust insertion percentage (0-100%). Rods contain 95% Boron (decreases radioactivity) and 5% Graphite tips (increases radioactivity). At 0-5% insertion, only graphite is active. At 10%, the effect is neutral. Above 10%, boron dominates and reduces radioactivity."
+                    "Click the rods on top of the reactor to adjust insertion percentage (0-100%). Rods contain 95% Boron (decreases radioactivity) and 5% Graphite tips (increases radioactivity). At 0-10% insertion, only graphite is active, increasing radioactivity. Above 10%, boron dominates and reduces radioactivity proportional to insertion depth."
                   }
                 </p>
               </div>
@@ -67,19 +67,37 @@ export default function InstructionsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Radioactivity</h3>
-                <p className="text-xs leading-relaxed">{"Visible as green glow. Warning at 250 units."}</p>
+                <p className="text-xs leading-relaxed">
+                  {
+                    "Visible as green glow. Has natural baseline increase from uranium fuel. Controlled by control rods and influenced by steam and fuel temperature. Warning at 250 units."
+                  }
+                </p>
               </div>
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Reactor Temperature</h3>
-                <p className="text-xs leading-relaxed">{"Warning at 800. Meltdown at 1200 units."}</p>
+                <p className="text-xs leading-relaxed">
+                  {
+                    "Increases with radioactivity, reduced by water pumps. Generates steam above 90°. Warning at 800°, meltdown at 1200°."
+                  }
+                </p>
               </div>
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Steam Volume</h3>
-                <p className="text-xs leading-relaxed">{"Increases rapidly with high temp. Warning at 80 units."}</p>
+                <p className="text-xs leading-relaxed">
+                  {
+                    "Generated exponentially based on reactor temperature (above 90°). Increases radioactivity over time. Turbine converts steam to power. Warning at 80 units."
+                  }
+                </p>
+              </div>
+              <div className="bg-background p-3 border-2 border-border">
+                <h3 className="font-bold font-mono text-sm mb-1">Fuel Temperature</h3>
+                <p className="text-xs leading-relaxed">
+                  {"Slowly increases with radioactivity, contributes to overall radioactivity growth."}
+                </p>
               </div>
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Performance</h3>
-                <p className="text-xs leading-relaxed">{"Stay within ±5% of Power Target. Game over at 0%."}</p>
+                <p className="text-xs leading-relaxed">{"Stay within ±10% of Power Target. Game over at 0%."}</p>
               </div>
             </div>
           </section>
