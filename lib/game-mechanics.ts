@@ -33,24 +33,24 @@ function calculateRadioactivity(state: GameState): GameState {
   let radioactivityChange = 0
 
   // Uranium fuel is naturally radioactive and always produces baseline radioactivity
-  radioactivityChange += 0.15 // Constant baseline positive radioactivity
+  radioactivityChange += 2 // Constant baseline positive radioactivity
 
   radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.05
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
   if (state.fuelTemp > 700 && state.fuelTemp < 900) {
-    radioactivityChange -= (state.fuelTemp - 700) * 0.01
+    radioactivityChange -= (state.fuelTemp - 700) * 0.02
   }
   if (state.fuelTemp >= 900) {
     radioactivityChange -= (state.fuelTemp - 900) * 0.05
   }
   // Lower fuel temp increases radioactivity
-  if (state.fuelTemp < 200 && state.fuelTemp > 90) {
-    radioactivityChange += (200 - state.fuelTemp) * 0.01
+  if (state.fuelTemp < 150 && state.fuelTemp > 90) {
+    radioactivityChange += (150 - state.fuelTemp) * 0.01
   }
   if (state.fuelTemp <= 90) {
-    radioactivityChange += (90 - state.fuelTemp) * 0.05
+    radioactivityChange += (90 - state.fuelTemp) * 0.2
   }
 
   // Xenon affects radioactivity (inverse/fast)
@@ -72,34 +72,60 @@ function calculateTemperatures(state: GameState): GameState {
   let reactorTempChange = 0
   let fuelTempChange = 0
 
-  reactorTempChange -= 0.1 // This ensures the temp seeks to drop even if all the pumps are off, as long as there is no radioactivity
+  reactorTempChange -= 0.1 // Reactor temp naturally falls unless something acts to keep it the same
 
-  // Radioactivity affects Reactor Temp (direct/quick)
-  // Higher radioactivity increases reactor temp
-  reactorTempChange += state.radioactivity * 0.02
+  if (state.radioactivity <= 20 && state.reactorTemp > 22) {
+    if(state.radioactivity <= 1) {
+      reactorTempChange -= 4
+    } else {
+      reactorTempChange -= 1
+    }
+  }
+
+  // 2. RADIOACTIVITY AFFECTS REACTOR TEMP (Direct/Quick - CONTINUOUS SCALING)
+  let R_heat_factor = 0;
+  const R = state.radioactivity;
+  
+  const THRESHOLD_1 = 150;
+  const THRESHOLD_2 = 250;
+
+  // --- BASELINE TIER (R up to 150: Rate 0.01) ---
+  if (R <= THRESHOLD_1) {
+    R_heat_factor = R * 0.021;
+  } else {
+    // Apply full base rate up to 150 (1.5 units/sec)
+    R_heat_factor = THRESHOLD_1 * 0.021;
+  }
+
+  // --- ACCELERATION TIER 2 (R > 150: Rate 0.03 total) ---
+  if (R > THRESHOLD_1) {
+    // Add an EXTRA 0.02 to the rate for the excess portion (0.01 + 0.02 = 0.03 total)
+    const R_excess_1 = Math.min(R, THRESHOLD_2) - THRESHOLD_1; 
+    R_heat_factor += R_excess_1 * 0.009; 
+  }
+
+  // --- ACCELERATION TIER 3 (R > 250: Rate 0.09 total) ---
+  if (R > THRESHOLD_2) {
+    // Add an EXTRA 0.06 to the rate for the excess portion (0.03 + 0.06 = 0.09 total)
+    const R_excess_2 = R - THRESHOLD_2; 
+    R_heat_factor += R_excess_2 * 0.06;
+  }
+  
+  // Add the continuously scaled heating factor to the total temperature change
+  reactorTempChange += R_heat_factor;
+  
 
   // Water Pumps affect Reactor Temp (inverse/quick)
   // Each pump reduces temp when ON and POWERED
   const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
   reactorTempChange -= activePumps.length
 
-  // Reactor Temp affects Fuel Temp (direct/slow)
-  // Tim: replacing this code with logic below:
-  /*
-  if (state.reactorTemp > 90) {
-    fuelTempChange += (state.reactorTemp - 90) * 0.005
-  } else {
-    // Cool down fuel temp if reactor is cool
-    fuelTempChange -= (90 - state.reactorTemp) * 0.5
-  }
-  */
-  // New logic:
+
   // Calculate the difference between the two temperatures
   const tempGap = state.reactorTemp - state.fuelTemp 
 
-  // Use a small coefficient (0.005) to simulate slow thermal transfer (lag)
-  // The fuel temperature moves only 0.5% closer to the reactor temperature each second.
-  const THERMAL_TRANSFER_RATE = 0.005 
+  // Use a small coefficient to simulate slow thermal transfer (lag)
+  const THERMAL_TRANSFER_RATE = 0.1 
   fuelTempChange = tempGap * THERMAL_TRANSFER_RATE
 
   const newReactorTemp = Math.max(0, state.reactorTemp + reactorTempChange)
@@ -107,27 +133,6 @@ function calculateTemperatures(state: GameState): GameState {
 
   return { ...state, reactorTemp: newReactorTemp, fuelTemp: newFuelTemp }
 }
-
-/*
-Tim: Hiding this whilst I try an alternative: 
-function calculateSteam(state: GameState): GameState {
-  let steamChange = 0
-
-  // Reactor Temp affects Steam Volume (direct/quick)
-  // The rate of change is proportional to the square of reactor temp above threshold
-  if (state.reactorTemp >= 90) {
-    const tempFactor = (state.reactorTemp - 90) / 100
-    steamChange += Math.pow(tempFactor, 2) * 0.01
-  } else {
-    // Steam decreases if reactor is below production threshold
-    steamChange -= (90 - state.reactorTemp) * 0.01
-  }
-
-  const newSteam = Math.max(0, Math.min(200, state.steamVolume + steamChange))
-
-  return { ...state, steamVolume: newSteam }
-}
-*/
 
 function calculateSteam(state: GameState): GameState {
   let steamChange = 0;
@@ -203,14 +208,17 @@ function calculatePerformance(state: GameState): GameState {
 
 function calculateXenon(state: GameState): GameState {
   let xenonChange = 0
-
+  if (state.xenon > 250) {
+    const newXenon = state.xenon;
+    return { ...state, xenon: newXenon }
+  }
   // Xenon Generation: Produced only when radioactivity < 50
   if (state.radioactivity <= 10) {
-    xenonChange += 1
+    xenonChange += 0.5
   }
 
-  if (state.radioactivity > 10 && state.radioactivity <= 50) {
-    xenonChange += 0.01
+  if (state.radioactivity > 10 && state.radioactivity <= 80) {
+    xenonChange += 0.02
   }
 
   // Xenon Reduction: Decreases when radioactivity > 150
@@ -219,7 +227,7 @@ function calculateXenon(state: GameState): GameState {
       // Faster reduction if radioactivity > 250
       xenonChange -= 1
     } else {
-      xenonChange -= 0.01
+      xenonChange -= 0.02
     }
   }
 

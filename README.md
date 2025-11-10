@@ -32,12 +32,10 @@ Continue building your app on:
 
 FIXES TO MAKE:
 
-- Increase the base radiation slightly (so it it naturally more radioative, only a little bit)
-- Reduce the affect of Xenon on radioactivity a bit 
-- SLightly slow down the generation of Xenon at very low radioactivity 
-- When radioactivity is 0, reactor temp should cool down much faster
-- Increase the affect of low fuel temp on radioactivity
-- Increase the speed at which fuel temp changed in relation to reactor temp
-- Change max radioactivity level, it's currently maxxes out at 400
+- Change max radioactivity level, it currently max's out at 400
+- Introduce warning thresholds with warning messages for low levels
+- Add more detail to the warning messages, to give an indication of what will happen at the current levels
+- low radiation warning: Xenon will be produced at a fast pace, further reducing radioactivity
+- Low fuel temp warning: radiation will increase  
 - Get v0 to update how to guide
-- Get v0 to introduce flashing buttons on UI, and have the readouts flash when threasholds are met
+- Get v0 to introduce flashing buttons on UI, and have the relevant figures on the readouts flash when threasholds are met

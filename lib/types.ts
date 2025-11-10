@@ -60,7 +60,7 @@ export const INITIAL_GAME_STATE: GameState = {
   radioactivity: 100,
   reactorTemp: 330,
   fuelTemp: 330,
-  xenon: 1,
+  xenon: 0,
   steamVolume: 100,
 
   powerTarget: 5000,
@@ -69,7 +69,7 @@ export const INITIAL_GAME_STATE: GameState = {
 
   controlRods: Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
-    insertion: i < 5 ? 40 : 0, // First 5 rods inserted at 40%, remaining 5 fully removed
+    insertion: i < 6 ? 37 : 44,
     stuck: false,
   })),
 
