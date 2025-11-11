@@ -31,7 +31,14 @@ Continue building your app on:
 
 
 FIXES TO MAKE:
-
-- Remove max radioactivity level, it currently max's out at 400 but I can't see where this limit is being applied
-- Get v0 to update how to guide
-- Get v0 to introduce flashing buttons on UI, and have the relevant figures on the readouts flash when threasholds are met
+ 
+- Update event logic to events are more frequent, power changes are more common, followed by control rods getting stuck, and make it so that all control rods are stuck at once, not just 1 at a time, and the least common is power cut
+- Update control rod function so any insertion between 1-10% equals radioactivity inrease, and then 11-100% is radioactivity decrease
+- Get v0 to fix control rod modal: it won't work on mobible screens, I think it's because it was changes to only allow click and drag. The modal control rods are still too thick especially the % boxes. They can be at the bottom
+- Get v0 to adjust appearance of water pump modal so the on off switches are taps and not the modern slider buttons they currently are. I might want to pass it an image of a tab to help
+- Draw a reactor shape, get Gemini to then create a modal of it and then pass it to v0 to create
+- Draw a turbine, get Gemini to then create a modal of it and then pass it to v0 to create
+- Get v0 to update turbine modal 
+- Get v0 to fix warning lights, on small screens they aren't perfect circles
+- Get v0 to make the warning panals hideable, as they take up a lot of space on mobile screens. 
+-

@@ -40,17 +40,17 @@ function calculateRadioactivity(state: GameState): GameState {
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
   if (state.fuelTemp > 700 && state.fuelTemp < 900) {
-    radioactivityChange -= (state.fuelTemp - 700) * 0.02
+    radioactivityChange -= (state.fuelTemp - 700) * 0.01
   }
   if (state.fuelTemp >= 900) {
     radioactivityChange -= (state.fuelTemp - 900) * 0.05
   }
   // Lower fuel temp increases radioactivity
-  if (state.fuelTemp < 150 && state.fuelTemp > 90) {
-    radioactivityChange += (150 - state.fuelTemp) * 0.01
+  if (state.fuelTemp < 120 && state.fuelTemp > 50) {
+    radioactivityChange += (120 - state.fuelTemp) * 0.01
   }
-  if (state.fuelTemp <= 90) {
-    radioactivityChange += (90 - state.fuelTemp) * 0.2
+  if (state.fuelTemp <= 50) {
+    radioactivityChange += (50 - state.fuelTemp) * 0.05
   }
 
   // Xenon affects radioactivity (inverse/fast)
@@ -63,7 +63,7 @@ function calculateRadioactivity(state: GameState): GameState {
     radioactivityChange += (state.steamVolume) * 0.02
   }
 
-  const newRadioactivity = Math.max(0, Math.min(800, state.radioactivity + radioactivityChange))
+  const newRadioactivity = Math.max(0, Math.min(1000, state.radioactivity + radioactivityChange))
 
   return { ...state, radioactivity: newRadioactivity }
 }
@@ -73,151 +73,79 @@ function calculateTemperatures(state: GameState): GameState {
     let fuelTempChange = 0
     const R = state.radioactivity;
 
-    // 1. PASSIVE COOLING
-    reactorTempChange -= 0.1 // Reactor temp naturally falls unless something acts to keep it the same
+    // Generate a random ambient sea temperature between 1 and 5 degrees Celsius
+    // This value represents the lowest temperature the reactor can naturally cool to.
+    const AMBIENT_SEA_TEMP = Math.floor(Math.random() * 4) + 1; // Random integer between 1 and 5
 
-    // 2. CUSTOM LOW RADIOACTIVITY COOLING (User's Logic)
-    // This provides aggressive cooling when the reactor is in the low-power/low-radioactivity state.
-    if (R <= 50 && state.reactorTemp > 22) {
-        if(R <= 1) {
-            reactorTempChange -= 4 // Very aggressive cooling near zero R
-        } else {
-            reactorTempChange -= 1 // Aggressive cooling for R < 50
-        }
+    // 1. DYNAMIC PASSIVE COOLING (Faster at higher temps, slows as it approaches ambient)
+    // Cooling rate is proportional to the temperature difference from ambient.
+    // Max cooling rate capped for realism and to ensure meltdown is possible.
+    const MAX_PASSIVE_COOLING_RATE = 3; // Maximum temp decrease per second (e.g., 2 units/sec)
+    const COOLING_COEFFICIENT = 0.0003; // Adjust this to fine-tune how quickly it cools down
+
+    if (state.reactorTemp > AMBIENT_SEA_TEMP) {
+        const tempDifference = state.reactorTemp - AMBIENT_SEA_TEMP;
+        // The cooling rate increases with tempDifference, capped at MAX_PASSIVE_COOLING_RATE
+        reactorTempChange -= Math.min(tempDifference * COOLING_COEFFICIENT, MAX_PASSIVE_COOLING_RATE);
     }
+    // If reactorTemp is at or below ambient, it won't naturally cool further.
+    // It might even slightly warm up towards ambient if below it, but we handle the floor later.
 
-    // 3. RADIOACTIVE HEATING (4-Tier Continuous Scaling Logic)
+
+    // 2. RADIOACTIVE HEATING (4-Tier Continuous Scaling Logic) - UNCHANGED from your logic
     let R_heat_factor = 0;
-    
+
     const THRESHOLD_1 = 50;  // Tier 1/2 transition (Rate increases from 0.01 to 0.021)
     const THRESHOLD_2 = 150; // Tier 2/3 transition (Rate increases from 0.021 to 0.03)
     const THRESHOLD_3 = 250; // Tier 3/4 transition (Rate increases from 0.03 to 0.09)
 
     // --- TIER 1 BASELINE (R up to 50: Rate 0.01) ---
-    // This is the absolute minimum heat contribution.
     if (R <= THRESHOLD_1) {
         R_heat_factor = R * 0.01;
     } else {
-        // Apply full base rate up to 50 (0.5 units/sec)
-        R_heat_factor = THRESHOLD_1 * 0.01; 
+        R_heat_factor = THRESHOLD_1 * 0.01;
     }
 
     // --- TIER 2 ACCELERATION (R > 50: Total Rate 0.021) ---
-    // This adds the 0.011 bonus to reach the new stable rate of 0.021.
     if (R > THRESHOLD_1) {
-        const R_excess_1 = Math.min(R, THRESHOLD_2) - THRESHOLD_1; 
-        R_heat_factor += R_excess_1 * 0.032; 
+        const R_excess_1 = Math.min(R, THRESHOLD_2) - THRESHOLD_1;
+        R_heat_factor += R_excess_1 * 0.032;
     }
 
     // --- TIER 3 ACCELERATION (R > 150: Total Rate 0.03) ---
-    // This adds the 0.009 bonus to reach the first instability zone rate of 0.03.
     if (R > THRESHOLD_2) {
-        const R_excess_2 = Math.min(R, THRESHOLD_3) - THRESHOLD_2; 
-        R_heat_factor += R_excess_2 * 0.013; 
+        const R_excess_2 = Math.min(R, THRESHOLD_3) - THRESHOLD_2;
+        R_heat_factor += R_excess_2 * 0.013;
     }
 
     // --- TIER 4 ACCELERATION (R > 250: Total Rate 0.09) ---
-    // This adds the 0.06 bonus to reach the critical runaway rate of 0.09.
     if (R > THRESHOLD_3) {
-        const R_excess_3 = R - THRESHOLD_3; 
-        R_heat_factor += R_excess_3 * 0.045; 
+        const R_excess_3 = R - THRESHOLD_3;
+        R_heat_factor += R_excess_3 * 0.045;
     }
-    
+
     // Add the total calculated heat factor to the temperature change
     reactorTempChange += R_heat_factor;
 
 
-    // 4. WATER PUMPS AFFECT REACTOR TEMP (Inverse/Quick)
-    // Each active pump provides 1 unit/sec of cooling.
+    // 3. WATER PUMPS AFFECT REACTOR TEMP (Inverse/Quick) - UNCHANGED
     const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
     reactorTempChange -= activePumps.length // Cooling rate matches number of active pumps (1:1)
 
 
-    // 5. THERMAL LAG (Reactor Temp affects Fuel Temp)
-    // Fuel Temp chases Reactor Temp slowly (Lag Coefficient 0.1)
-    const tempGap = state.reactorTemp - state.fuelTemp 
-    const THERMAL_TRANSFER_RATE = 0.1 
+    // 4. THERMAL LAG (Reactor Temp affects Fuel Temp) - UNCHANGED
+    const tempGap = state.reactorTemp - state.fuelTemp
+    const THERMAL_TRANSFER_RATE = 0.1
     fuelTempChange = tempGap * THERMAL_TRANSFER_RATE
 
-    // 6. APPLY CHANGES AND LIMITS
-    const newReactorTemp = Math.max(0, state.reactorTemp + reactorTempChange)
-    const newFuelTemp = Math.max(0, Math.min(1000, state.fuelTemp + fuelTempChange))
+    // 5. APPLY CHANGES AND LIMITS
+    // Reactor Temp is now floored by the AMBIENT_SEA_TEMP
+    const newReactorTemp = Math.max(5, state.reactorTemp + reactorTempChange)
+    const newFuelTemp = Math.max(5, state.fuelTemp + fuelTempChange)
 
     return { ...state, reactorTemp: newReactorTemp, fuelTemp: newFuelTemp }
 }
-/* Tim: new logic above being tested
-function calculateTemperatures(state: GameState): GameState {
-  let reactorTempChange = 0
-  let fuelTempChange = 0
-  let R_heat_factor = 0;
-  const R = state.radioactivity;
 
-  reactorTempChange -= 0.1 // Reactor temp naturally falls unless something acts to keep it the same
-
-  if (state.radioactivity <= 50 && state.reactorTemp > 22) {
-    if(state.radioactivity <= 1) {
-      reactorTempChange -= 4
-    } else {
-      reactorTempChange -= 1
-    }
-  }
-
-  // 2. RADIOACTIVITY AFFECTS REACTOR TEMP (Direct/Quick - CONTINUOUS SCALING)
-  const THRESHOLD_x = 50
-  const THRESHOLD_y = 150;
-  const THRESHOLD_z = 250;
-  // --- BASELINE TIER (R up to 50: Rate 0.01) ---
-  if(R <= THRESHOLD_x) {
-    R_heat_factor = R * 0.01;
-  } else {
-    R_heat_factor = R * 0.021;
-  }
-
-  // --- SECOND BASELINE TIER (R up to 150: Rate 0.021) ---
-  if (R > THRESHOLD_x && R <= THRESHOLD_y) {
-    R_heat_factor = R * 0.021;
-  } else {
-    // Apply full base rate up to 150 (1.5 units/sec)
-     R_heat_factor = THRESHOLD_y * 0.021;
-  }
-
-  // --- ACCELERATION TIER 2 (R > 150: Rate 0.03 total) ---
-  if (R > THRESHOLD_y) {
-  // Add an EXTRA 0.02 to the rate for the excess portion (0.01 + 0.02 = 0.03 total)
-    const R_excess_1 = Math.min(R, THRESHOLD_z) - THRESHOLD_y; 
-    R_heat_factor += R_excess_1 * 0.009; 
-  }
-
-    // --- ACCELERATION TIER 3 (R > 250: Rate 0.09 total) ---
-  if (R > THRESHOLD_z) {
-    // Add an EXTRA 0.06 to the rate for the excess portion (0.03 + 0.06 = 0.09 total)
-    const R_excess_2 = R - THRESHOLD_z; 
-    R_heat_factor += R_excess_2 * 0.06;
-  }
-  
-    // Add the continuously scaled heating factor to the total temperature change
-  reactorTempChange += R_heat_factor;
-
-
-  // Water Pumps affect Reactor Temp (inverse/quick)
-  // Each pump reduces temp when ON and POWERED
-  const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
-  reactorTempChange -= activePumps.length
-
-
-  // Calculate the difference between the two temperatures
-  const tempGap = state.reactorTemp - state.fuelTemp 
-
-  // Use a small coefficient to simulate slow thermal transfer (lag)
-  const THERMAL_TRANSFER_RATE = 0.1 
-  fuelTempChange = tempGap * THERMAL_TRANSFER_RATE
-
-  const newReactorTemp = Math.max(0, state.reactorTemp + reactorTempChange)
-  const newFuelTemp = Math.max(0, Math.min(1000, state.fuelTemp + fuelTempChange))
-
-  return { ...state, reactorTemp: newReactorTemp, fuelTemp: newFuelTemp }
-}
-*/
 
 function calculateSteam(state: GameState): GameState {
   let steamChange = 0;
@@ -299,24 +227,24 @@ function calculateXenon(state: GameState): GameState {
   }
   // Xenon Generation: Produced only when radioactivity < 50
   if (state.radioactivity <= 10) {
-    xenonChange += 0.5
+    xenonChange += 2
   }
 
   if (state.radioactivity > 10 && state.radioactivity <= 80) {
-    xenonChange += 0.02
+    xenonChange += 0.5
   }
 
   // Xenon Reduction: Decreases when radioactivity > 150
   if (state.radioactivity > 150) {
     if (state.radioactivity > 250) {
       // Faster reduction if radioactivity > 250
-      xenonChange -= 1
+      xenonChange -= 8
     } else {
-      xenonChange -= 0.02
+      xenonChange -= 2
     }
   }
 
-  const newXenon = Math.max(0, Math.min(200, state.xenon + xenonChange))
+  const newXenon = Math.max(0, Math.min(350, state.xenon + xenonChange))
 
   return { ...state, xenon: newXenon }
 }

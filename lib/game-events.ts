@@ -1,13 +1,13 @@
 import type { GameEvent, GameState } from "./types"
 
-const EVENT_MIN_INTERVAL = 180 // 3 minutes in seconds
-const EVENT_MAX_INTERVAL = 360 // 6 minutes in seconds
+const EVENT_MIN_INTERVAL = 120 // 3 minutes in seconds
+const EVENT_MAX_INTERVAL = 240 // 6 minutes in seconds
 
 export function shouldTriggerEvent(state: GameState): boolean {
   const timeSinceLastEvent = state.gameTime - state.lastEventTime
 
   // Don't trigger events in the first minute
-  if (state.gameTime < 60) {
+  if (state.gameTime < 120) {
     return false
   }
 
@@ -42,9 +42,9 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
   // Event type weights: 50% target change, 25% power cut, 25% rod stuck
   const roll = Math.random()
 
-  if (roll <= 0.75) {
+  if (roll <= 0.6) {
     return generateTargetChangeEvent(state)
-  } else if (roll <= 0.875) {
+  } else if (roll <= 0.8) {
     return generatePowerCutEvent(state)
   } else {
     return generateRodStuckEvent(state)
@@ -64,7 +64,7 @@ function generateTargetChangeEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "target-change",
-    message: `⚡ INCOMING: Power target changed to ${newTarget} MW`,
+    message: `⚡ INCOMING FROM GRID CONTROLLER: Power target changed to ${newTarget} MW`,
     timestamp: state.gameTime,
     data: { newTarget },
   }
@@ -78,7 +78,7 @@ function generatePowerCutEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "power-cut",
-    message: `⚡ WARNING: Power cut detected! Pumps offline`,
+    message: `⚡ UPDATE FROM HEAD ENGINEER: Power cut detected! Pumps offline`,
     timestamp: state.gameTime,
     duration,
     data: { affectedPumps: [0, 1, 2, 3] },
@@ -86,12 +86,12 @@ function generatePowerCutEvent(state: GameState): GameEvent {
 }
 
 function generateRodStuckEvent(state: GameState): GameEvent {
-  // Duration between 1-3 minutes
-  const duration = Math.random() * 180 + 60
+  // Duration between 2-5 minutes
+  const duration = Math.random() * 300 + 120
   const durationSeconds = Math.round(duration)
 
-  // Select 1-2 random rods
-  const numRods = Math.random() < 0.5 ? 1 : 2
+  // Select 7-10 random rods
+  const numRods = Math.floor(Math.random() * (10 - 7 + 1)) + 7
   const affectedRods: number[] = []
 
   while (affectedRods.length < numRods) {
@@ -106,7 +106,7 @@ function generateRodStuckEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "rod-stuck",
-    message: `⚡ WARNING: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} stuck`,
+    message: `⚡ UPDATE FROM HEAD ENGINEER:: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} stuck`,
     timestamp: state.gameTime,
     duration,
     data: { affectedRods },
