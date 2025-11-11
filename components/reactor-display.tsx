@@ -17,6 +17,15 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
 
+  const waterPumpBlueLeftTop = "/water_pipe_no_bg_left_blue.png";
+  const waterPumpBlueRightTop = "/water_pipe_no_bg_right_blue.png";
+  const waterPumpGreyLeftTop = "/water_pipe_no_bg_left_grey.png";
+  const waterPumpGreyRightTop = "/water_pipe_no_bg_right_grey.png";
+  const waterPumpBlueLeftBottom = "/water_pipe_no_bg_left_blue.png";
+  const waterPumpBlueRightBottom = "/water_pipe_no_bg_right_blue.png";
+  const waterPumpGreyLeftBottom = "/water_pipe_no_bg_left_grey.png";
+  const waterPumpGreyRightBottom = "/water_pipe_no_bg_right_grey.png";
+
   const glowIntensity = getGlowIntensity(gameState.radioactivity)
 
   return (
@@ -105,104 +114,90 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
 
            {/* Angled Water Pumps - positioned diagonally */}
           {/* Top-left pump */}
-          <button
-            onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
-            disabled={gameState.isPaused}
-            className="absolute cursor-pointer disabled:cursor-not-allowed group"
-            style={{ top: "50%", left: "0%", transform: "rotate(-35deg)" }}
-            title="Water Pump 1"
-          >
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-t mx-auto" />
-            <div
-              className={`w-12 md:w-14 h-32 md:h-40 border-4 rounded-lg shadow-xl transition-all ${
-                gameState.waterPumps[0].on && gameState.waterPumps[0].powered
-                  ? "bg-gradient-to-b from-blue-400 to-blue-500 border-blue-600"
-                  : "bg-gradient-to-b from-gray-400 to-gray-500 border-gray-600"
-              }`}
-            >
-              <div className="flex items-center justify-center h-full">
-                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center">
-                  <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-gray-900" />
-                </div>
-              </div>
-            </div>
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-b mx-auto" />
-          </button>
 
-          {/* Bottom-left pump */}
-          <button
-            onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
-            disabled={gameState.isPaused}
-            className="absolute cursor-pointer disabled:cursor-not-allowed group"
-            style={{ bottom: "15%", left: "0%", transform: "rotate(35deg)" }}
-            title="Water Pump 2"
-          >
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-t mx-auto" />
-            <div
-              className={`w-12 md:w-14 h-32 md:h-40 border-4 rounded-lg shadow-xl transition-all ${
-                gameState.waterPumps[1].on && gameState.waterPumps[1].powered
-                  ? "bg-gradient-to-b from-blue-400 to-blue-500 border-blue-600"
-                  : "bg-gradient-to-b from-gray-400 to-gray-500 border-gray-600"
-              }`}
-            >
-              <div className="flex items-center justify-center h-full">
-                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center">
-                  <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-gray-900" />
-                </div>
-              </div>
-            </div>
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-b mx-auto" />
-          </button>
+    <button
+      onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+      disabled={gameState.isPaused}
+      className="absolute cursor-pointer disabled:cursor-not-allowed group"
+      style={{
+        top: "50%",
+        left: "0%",
+        transform: "rotate(-35deg)",
+        // Set dimensions appropriate for your image asset
+        width: "60px", // Example width, adjust as needed for your image
+        height: "160px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[0].on && gameState.waterPumps[0].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+      title="Water Pump 1"
+    >
+      {/* No child divs needed for the pump visual, as it's a background image */}
+    </button>
 
-          {/* Top-right pump */}
-          <button
-            onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
-            disabled={gameState.isPaused}
-            className="absolute cursor-pointer disabled:cursor-not-allowed group"
-            style={{ top: "20%", right: "-25%", transform: "rotate(35deg)" }}
-            title="Water Pump 3"
-          >
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-t mx-auto" />
-            <div
-              className={`w-12 md:w-14 h-32 md:h-40 border-4 rounded-lg shadow-xl transition-all ${
-                gameState.waterPumps[2].on && gameState.waterPumps[2].powered
-                  ? "bg-gradient-to-b from-blue-400 to-blue-500 border-blue-600"
-                  : "bg-gradient-to-b from-gray-400 to-gray-500 border-gray-600"
-              }`}
-            >
-              <div className="flex items-center justify-center h-full">
-                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center">
-                  <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-gray-900" />
-                </div>
-              </div>
-            </div>
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-b mx-auto" />
-          </button>
+    {/* Bottom-left pump */}
+    <button
+      onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+      disabled={gameState.isPaused}
+      className="absolute cursor-pointer disabled:cursor-not-allowed group"
+      style={{
+        bottom: "15%",
+        left: "0%",
+        transform: "rotate(35deg)",
+        width: "60px", // Example width, adjust as needed for your image
+        height: "160px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[1].on && gameState.waterPumps[1].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+      title="Water Pump 2"
+    >
+      {/* No child divs needed for the pump visual */}
+    </button>
 
-          {/* Bottom-right pump */}
-          <button
-            onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
-            disabled={gameState.isPaused}
-            className="absolute cursor-pointer disabled:cursor-not-allowed group"
-            style={{ bottom: "15%", right: "-25%", transform: "rotate(-35deg)" }}
-            title="Water Pump 4"
-          >
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-t mx-auto" />
-            <div
-              className={`w-12 md:w-14 h-32 md:h-40 border-4 rounded-lg shadow-xl transition-all ${
-                gameState.waterPumps[3].on && gameState.waterPumps[3].powered
-                  ? "bg-gradient-to-b from-blue-400 to-blue-500 border-blue-600"
-                  : "bg-gradient-to-b from-gray-400 to-gray-500 border-gray-600"
-              }`}
-            >
-              <div className="flex items-center justify-center h-full">
-                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center">
-                  <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-gray-900" />
-                </div>
-              </div>
-            </div>
-            <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-b mx-auto" />
-          </button>
+    {/* Top-right pump */}
+    <button
+      onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+      disabled={gameState.isPaused}
+      className="absolute cursor-pointer disabled:cursor-not-allowed group"
+      style={{
+        top: "20%",
+        right: "-25%", // Adjust right/left based on where your component container is
+        transform: "rotate(35deg)",
+        width: "60px", // Example width, adjust as needed for your image
+        height: "160px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[2].on && gameState.waterPumps[2].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+      title="Water Pump 3"
+    >
+      {/* No child divs needed for the pump visual */}
+    </button>
+
+    {/* Bottom-right pump */}
+    <button
+      onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+      disabled={gameState.isPaused}
+      className="absolute cursor-pointer disabled:cursor-not-allowed group"
+      style={{
+        bottom: "15%",
+        right: "-25%", // Adjust right/left based on where your component container is
+        transform: "rotate(-35deg)",
+        width: "60px", // Example width, adjust as needed for your image
+        height: "160px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[3].on && gameState.waterPumps[3].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+      title="Water Pump 4"
+    >
+      {/* No child divs needed for the pump visual */}
+    </button>
 
           {/* Bottom Turbine */}
           <button
