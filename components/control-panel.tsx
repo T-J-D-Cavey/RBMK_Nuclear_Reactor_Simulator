@@ -33,7 +33,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
         <div className="text-center">
           <div className="flex items-center justify-center gap-4">
             <div
-              className={`w-12 h-12 rounded-full transition-all ${
+              className={`w-8 h-8 md:w-10 md:h-10 rounded-full transition-all flex-shrink-0 ${
                 hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-transparent border-2 border-muted"
               }`}
             />
@@ -43,7 +43,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
             </h1>
 
             <div
-              className={`w-12 h-12 rounded-full transition-all ${
+              className={`w-8 h-8 md:w-10 md:h-10 rounded-full transition-all flex-shrink-0 ${
                 hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-transparent border-2 border-muted"
               }`}
             />

@@ -40,19 +40,20 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
     setTempValues(newValues)
   }
 
-  const handleMouseDown = (idx: number, e: React.MouseEvent) => {
+  const handleStart = (idx: number, e: React.MouseEvent | React.TouchEvent) => {
     if (!controlRods[idx].stuck) {
       e.preventDefault()
       setIsDragging(idx)
     }
   }
 
-  const handleMouseMove = (e: React.MouseEvent | MouseEvent, idx: number, containerHeight: number) => {
+  const handleMove = (e: MouseEvent | TouchEvent, idx: number, containerHeight: number) => {
     if (isDragging === idx) {
       const container = document.getElementById(`rod-container-${idx}`)
       if (container) {
         const rect = container.getBoundingClientRect()
-        const y = Math.max(0, Math.min(containerHeight, e.clientY - rect.top))
+        const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
+        const y = Math.max(0, Math.min(containerHeight, clientY - rect.top))
         const percentage = Math.round((y / containerHeight) * 100)
         const newValues = [...tempValues]
         newValues[idx] = percentage
@@ -61,25 +62,25 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
     }
   }
 
-  const handleMouseUp = () => {
-    setIsDragging(null)
-  }
-
   useEffect(() => {
     if (isDragging !== null) {
       const container = document.getElementById(`rod-container-${isDragging}`)
       if (container) {
         const containerHeight = container.clientHeight
 
-        const handleMove = (e: MouseEvent) => handleMouseMove(e, isDragging, containerHeight)
-        const handleUp = () => setIsDragging(null)
+        const handleMoveEvent = (e: MouseEvent | TouchEvent) => handleMove(e, isDragging, containerHeight)
+        const handleEnd = () => setIsDragging(null)
 
-        document.addEventListener("mousemove", handleMove)
-        document.addEventListener("mouseup", handleUp)
+        document.addEventListener("mousemove", handleMoveEvent)
+        document.addEventListener("mouseup", handleEnd)
+        document.addEventListener("touchmove", handleMoveEvent)
+        document.addEventListener("touchend", handleEnd)
 
         return () => {
-          document.removeEventListener("mousemove", handleMove)
-          document.removeEventListener("mouseup", handleUp)
+          document.removeEventListener("mousemove", handleMoveEvent)
+          document.removeEventListener("mouseup", handleEnd)
+          document.removeEventListener("touchmove", handleMoveEvent)
+          document.removeEventListener("touchend", handleEnd)
         }
       }
     }
@@ -96,7 +97,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           <div className="bg-background border-2 border-border p-2 text-[10px] sm:text-xs leading-relaxed">
             <p>
               {
-                "Drag the LEVER HANDLES to adjust rod insertion (0-100%). Rods are 95% Boron (decreases radioactivity) and 5% Graphite tips (increases radioactivity). Use AZ5 button for emergency full insertion."
+                "Drag the LEVERS to adjust rod insertion (0-100%). Rods are 95% Boron (decreases radioactivity) and 5% Graphite tips (increases radioactivity). Use AZ5 button for emergency full insertion."
               }
             </p>
           </div>
@@ -112,7 +113,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
             </Button>
           </div>
 
-          <div className="flex justify-center gap-1 sm:gap-2 p-2">
+          <div className="flex justify-center gap-2 sm:gap-3 p-2">
             {controlRods.map((rod, idx) => {
               const currentInsertion = tempValues[idx] ?? rod.insertion
               return (
@@ -122,11 +123,11 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                     {rod.stuck && <AlertCircle className="h-3 w-3 text-destructive" />}
                   </div>
 
-                  <div className="w-6 sm:w-8 h-2 sm:h-3 bg-accent border border-primary rounded-t" />
+                  <div className="w-4 sm:w-5 h-2 sm:h-3 bg-accent border border-primary rounded-t" />
 
                   <div
                     id={`rod-container-${idx}`}
-                    className="relative w-6 sm:w-8 h-48 sm:h-56 bg-muted border-2 border-border rounded-b"
+                    className="relative w-4 sm:w-5 h-48 sm:h-56 bg-muted border-2 border-border rounded-b"
                   >
                     <div
                       className={`absolute top-0 left-0 w-full ${rod.stuck ? "bg-destructive" : "bg-primary"}`}
@@ -135,20 +136,20 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                       }}
                     />
 
+                    {/* Thin draggable lever line */}
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 w-10 sm:w-12 h-5 sm:h-6 border-2 flex items-center justify-center text-[9px] sm:text-[11px] font-mono font-bold ${
+                      className={`absolute left-1/2 -translate-x-1/2 w-6 sm:w-8 h-1 ${
                         rod.stuck
-                          ? "bg-destructive border-destructive text-destructive-foreground cursor-not-allowed"
-                          : "bg-primary border-primary text-primary-foreground cursor-grab active:cursor-grabbing hover:bg-opacity-80"
+                          ? "bg-destructive cursor-not-allowed"
+                          : "bg-foreground cursor-grab active:cursor-grabbing hover:bg-primary"
                       }`}
                       style={{
                         top: `${currentInsertion}%`,
                         transform: "translate(-50%, -50%)",
                       }}
-                      onMouseDown={(e) => handleMouseDown(idx, e)}
-                    >
-                      {currentInsertion}%
-                    </div>
+                      onMouseDown={(e) => handleStart(idx, e)}
+                      onTouchStart={(e) => handleStart(idx, e)}
+                    />
                   </div>
 
                   <span className="font-mono text-[10px] sm:text-xs font-bold">{currentInsertion}%</span>

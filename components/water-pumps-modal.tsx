@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import type { WaterPump } from "@/lib/types"
 import { Power } from "lucide-react"
@@ -62,16 +61,30 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
                   </span>
                 </div>
               </div>
-              <Switch
-                id={`pump-${pump.id}`}
-                checked={tempStates[idx] ?? pump.on}
-                onCheckedChange={(checked) => {
+              <button
+                onClick={() => {
                   const newStates = [...tempStates]
-                  newStates[idx] = checked
+                  newStates[idx] = !newStates[idx]
                   setTempStates(newStates)
                 }}
-                className="data-[state=checked]:bg-accent"
-              />
+                className={`w-16 h-16 rounded-full border-4 flex items-center justify-center transition-all ${
+                  (tempStates[idx] ?? pump.on)
+                    ? "bg-accent border-accent hover:bg-accent/80"
+                    : "bg-muted border-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="w-10 h-10 text-foreground" fill="currentColor">
+                  <circle cx="12" cy="12" r="2" />
+                  <line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" strokeWidth="2" />
+                  <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" strokeWidth="2" />
+                  <line x1="4.22" y1="4.22" x2="7.05" y2="7.05" stroke="currentColor" strokeWidth="2" />
+                  <line x1="16.95" y1="16.95" x2="19.78" y2="19.78" stroke="currentColor" strokeWidth="2" />
+                  <line x1="2" y1="12" x2="6" y2="12" stroke="currentColor" strokeWidth="2" />
+                  <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="2" />
+                  <line x1="4.22" y1="19.78" x2="7.05" y2="16.95" stroke="currentColor" strokeWidth="2" />
+                  <line x1="16.95" y1="7.05" x2="19.78" y2="4.22" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </button>
             </div>
           ))}
 

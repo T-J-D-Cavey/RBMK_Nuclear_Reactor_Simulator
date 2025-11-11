@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Power } from "lucide-react"
 
 interface TurbineModalProps {
   open: boolean
@@ -43,16 +43,20 @@ export default function TurbineModal({ open, onOpenChange, turbineConnected, onU
             </p>
           </div>
 
-          <div className="flex items-center justify-between bg-background border-2 border-border p-6">
+          <div className="flex flex-col items-center gap-4 bg-background border-2 border-border p-6">
             <Label htmlFor="turbine" className="font-mono uppercase text-base">
               Turbine Connection
             </Label>
-            <Switch
-              id="turbine"
-              checked={tempState}
-              onCheckedChange={setTempState}
-              className="data-[state=checked]:bg-accent"
-            />
+            <button
+              onClick={() => setTempState(!tempState)}
+              className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all ${
+                tempState
+                  ? "bg-accent border-accent hover:bg-accent/80"
+                  : "bg-muted border-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              <Power className="w-12 h-12 text-foreground" />
+            </button>
           </div>
 
           <div className="bg-background border-2 border-border p-4">
