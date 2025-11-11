@@ -120,13 +120,13 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
       disabled={gameState.isPaused}
       className="absolute cursor-pointer disabled:cursor-not-allowed group"
       style={{
-        top: "50%",
-        left: "0%",
-        transform: "rotate(-35deg)",
+        top: "-10%",
+        left: "-20%",
+        transform: "rotate(-0deg)",
         // Set dimensions appropriate for your image asset
-        width: "60px", // Example width, adjust as needed for your image
-        height: "160px", // Example height, adjust as needed for your image
-        backgroundImage: `url(${gameState.waterPumps[0].on && gameState.waterPumps[0].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        width: "80px", // Example width, adjust as needed for your image
+        height: "200px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[0].on && gameState.waterPumps[0].powered ? waterPumpBlueLeftTop : waterPumpGreyLeftTop})`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
@@ -142,12 +142,12 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
       disabled={gameState.isPaused}
       className="absolute cursor-pointer disabled:cursor-not-allowed group"
       style={{
-        bottom: "15%",
-        left: "0%",
-        transform: "rotate(35deg)",
-        width: "60px", // Example width, adjust as needed for your image
-        height: "160px", // Example height, adjust as needed for your image
-        backgroundImage: `url(${gameState.waterPumps[1].on && gameState.waterPumps[1].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        bottom: "-10%",
+        left: "-20%",
+        transform: "rotate(0deg)",
+        width: "80px", // Example width, adjust as needed for your image
+        height: "200px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[1].on && gameState.waterPumps[1].powered ? waterPumpBlueLeftBottom : waterPumpGreyLeftBottom})`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
@@ -163,12 +163,12 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
       disabled={gameState.isPaused}
       className="absolute cursor-pointer disabled:cursor-not-allowed group"
       style={{
-        top: "20%",
-        right: "-25%", // Adjust right/left based on where your component container is
-        transform: "rotate(35deg)",
-        width: "60px", // Example width, adjust as needed for your image
-        height: "160px", // Example height, adjust as needed for your image
-        backgroundImage: `url(${gameState.waterPumps[2].on && gameState.waterPumps[2].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        top: "-10%",
+        right: "-20%", // Adjust right/left based on where your component container is
+        transform: "rotate(0deg)",
+        width: "80px", // Example width, adjust as needed for your image
+        height: "200px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[2].on && gameState.waterPumps[2].powered ? waterPumpBlueRightTop : waterPumpGreyRightTop})`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
@@ -184,12 +184,12 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
       disabled={gameState.isPaused}
       className="absolute cursor-pointer disabled:cursor-not-allowed group"
       style={{
-        bottom: "15%",
-        right: "-25%", // Adjust right/left based on where your component container is
-        transform: "rotate(-35deg)",
-        width: "60px", // Example width, adjust as needed for your image
-        height: "160px", // Example height, adjust as needed for your image
-        backgroundImage: `url(${gameState.waterPumps[3].on && gameState.waterPumps[3].powered ? waterPumpBlueLeftTop : waterPumpBlueRightTop})`,
+        bottom: "-10%",
+        right: "-20%", // Adjust right/left based on where your component container is
+        transform: "rotate(0deg)",
+        width: "80px", // Example width, adjust as needed for your image
+        height: "200px", // Example height, adjust as needed for your image
+        backgroundImage: `url(${gameState.waterPumps[3].on && gameState.waterPumps[3].powered ? waterPumpBlueRightBottom : waterPumpGreyRightBottom})`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
