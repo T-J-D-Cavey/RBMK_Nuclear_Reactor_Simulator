@@ -103,7 +103,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
             */}
           </div>
 
-          {/* Angled Water Pumps - positioned diagonally */}
+           {/* Angled Water Pumps - positioned diagonally */}
           {/* Top-left pump */}
           <button
             onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
