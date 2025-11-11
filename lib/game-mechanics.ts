@@ -227,11 +227,11 @@ function calculateXenon(state: GameState): GameState {
   }
   // Xenon Generation: Produced only when radioactivity < 50
   if (state.radioactivity <= 10) {
-    xenonChange += 2
+    xenonChange += 1
   }
 
   if (state.radioactivity > 10 && state.radioactivity <= 80) {
-    xenonChange += 0.5
+    xenonChange += 0.25
   }
 
   // Xenon Reduction: Decreases when radioactivity > 150

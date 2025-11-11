@@ -94,12 +94,13 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
               </div>
             </div>
 
-            {/* REACTOR CORE Label plate */}
+            {/* REACTOR CORE Label plate
             <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 bg-gray-700 border-2 border-gray-800 px-4 py-1 shadow-lg">
               <span className="text-[10px] md:text-xs font-mono font-bold text-gray-100 tracking-widest">
                 REACTOR CORE
               </span>
             </div>
+            */}
           </div>
 
           {/* Angled Water Pumps - positioned diagonally */}
@@ -108,7 +109,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
             onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
             disabled={gameState.isPaused}
             className="absolute cursor-pointer disabled:cursor-not-allowed group"
-            style={{ top: "20%", left: "-25%", transform: "rotate(-35deg)" }}
+            style={{ top: "50%", left: "0%", transform: "rotate(-35deg)" }}
             title="Water Pump 1"
           >
             <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-t mx-auto" />
@@ -133,7 +134,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
             onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
             disabled={gameState.isPaused}
             className="absolute cursor-pointer disabled:cursor-not-allowed group"
-            style={{ bottom: "15%", left: "-25%", transform: "rotate(35deg)" }}
+            style={{ bottom: "15%", left: "0%", transform: "rotate(35deg)" }}
             title="Water Pump 2"
           >
             <div className="w-10 md:w-12 h-2 bg-gray-600 border border-gray-700 rounded-t mx-auto" />
