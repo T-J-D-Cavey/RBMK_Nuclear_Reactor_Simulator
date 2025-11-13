@@ -43,7 +43,7 @@ function calculateRadioactivity(state: GameState): GameState {
     radioactivityChange -= (state.fuelTemp - 700) * 0.01
   }
   if (state.fuelTemp >= 900) {
-    radioactivityChange -= (state.fuelTemp - 900) * 0.05
+    radioactivityChange -= (state.fuelTemp - 900) * 0.02
   }
   // Lower fuel temp increases radioactivity
   if (state.fuelTemp < 120 && state.fuelTemp > 50) {
@@ -130,7 +130,7 @@ function calculateTemperatures(state: GameState): GameState {
 
     // 3. WATER PUMPS AFFECT REACTOR TEMP (Inverse/Quick) - UNCHANGED
     const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
-    reactorTempChange -= activePumps.length // Cooling rate matches number of active pumps (1:1)
+    reactorTempChange -= (activePumps.length + 0.002) // Cooling rate matches number of active pumps (1:1)
 
 
     // 4. THERMAL LAG (Reactor Temp affects Fuel Temp) - UNCHANGED
@@ -230,7 +230,7 @@ function calculateXenon(state: GameState): GameState {
     xenonChange += 1
   }
 
-  if (state.radioactivity > 10 && state.radioactivity <= 80) {
+  if (state.radioactivity > 10 && state.radioactivity < 50) {
     xenonChange += 0.25
   }
 

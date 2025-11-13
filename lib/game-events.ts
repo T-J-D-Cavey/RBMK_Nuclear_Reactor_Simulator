@@ -42,9 +42,9 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
   // Event type weights: 50% target change, 25% power cut, 25% rod stuck
   const roll = Math.random()
 
-  if (roll <= 0.6) {
+  if (roll <= 0.7) {
     return generateTargetChangeEvent(state)
-  } else if (roll <= 0.8) {
+  } else if (roll <= 0.85) {
     return generatePowerCutEvent(state)
   } else {
     return generateRodStuckEvent(state)
@@ -71,8 +71,8 @@ function generateTargetChangeEvent(state: GameState): GameEvent {
 }
 
 function generatePowerCutEvent(state: GameState): GameEvent {
-  // Duration between 1-3 minutes
-  const duration = Math.random() * 180 + 60
+  // Duration between 30 seconds and 1.5 minutes
+  const duration = Math.random() * 60 + 30
   const durationSeconds = Math.round(duration)
 
   return {
@@ -86,8 +86,8 @@ function generatePowerCutEvent(state: GameState): GameEvent {
 }
 
 function generateRodStuckEvent(state: GameState): GameEvent {
-  // Duration between 2-5 minutes
-  const duration = Math.random() * 300 + 120
+  // Duration between 1-2 minutes
+  const duration = Math.random() * 120 + 60
   const durationSeconds = Math.round(duration)
 
   // Select 7-10 random rods
