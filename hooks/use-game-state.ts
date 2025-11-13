@@ -13,9 +13,7 @@ export function useGameState() {
   const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE)
   const tickIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load game state from local storage on mount
   useEffect(() => {
-    console.log({gameState}) // Tim: debug
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
@@ -25,6 +23,7 @@ export function useGameState() {
         console.error("[v0] Failed to load game state:", e)
       }
     }
+    // If no saved state, use INITIAL_GAME_STATE (already set in useState)
   }, [])
 
   // Save game state to local storage whenever it changes
@@ -49,17 +48,24 @@ export function useGameState() {
   }, [])
 
   useEffect(() => {
-    if (!gameState.isPaused && !gameState.isGameOver) {
+    if (!gameState.isPaused && !gameState.isGameOver && !gameState.hasWon) {
       tickIntervalRef.current = setInterval(() => {
         setGameState((prev) => {
           // Calculate all game mechanics
           const updates = calculateGameTick(prev)
 
-          // Increment game time
+          const newGameTime = Math.max(0, prev.gameTime - 1)
+
           let newState = {
             ...prev,
             ...updates,
-            gameTime: prev.gameTime + 1,
+            gameTime: newGameTime,
+          }
+
+          if (newGameTime === 0 && !prev.hasWon) {
+            newState.hasWon = true
+            newState.isPaused = true
+            return newState
           }
 
           // Update active events (check for expired events)
@@ -96,7 +102,7 @@ export function useGameState() {
         clearInterval(tickIntervalRef.current)
       }
     }
-  }, [gameState.isPaused, gameState.isGameOver])
+  }, [gameState.isPaused, gameState.isGameOver, gameState.hasWon])
 
   return {
     gameState,

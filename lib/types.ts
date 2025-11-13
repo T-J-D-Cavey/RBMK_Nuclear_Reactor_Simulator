@@ -45,7 +45,10 @@ export interface GameState {
   isPaused: boolean
   isGameOver: boolean
   gameOverReason: string | null
-  gameTime: number // in seconds
+  gameTime: number // 15 minutes in seconds (easy mode default)
+  difficultyIsHard: boolean
+  hasWon: boolean
+  timeLimit: number // 15 minutes default (easy mode)
 
   // Events
   activeEvents: GameEvent[]
@@ -84,7 +87,10 @@ export const INITIAL_GAME_STATE: GameState = {
   isPaused: false,
   isGameOver: false,
   gameOverReason: null,
-  gameTime: 0,
+  gameTime: 900, // 15 minutes in seconds (easy mode default)
+  difficultyIsHard: false,
+  hasWon: false,
+  timeLimit: 900, // 15 minutes default (easy mode)
 
   activeEvents: [],
   eventHistory: [],
@@ -104,7 +110,7 @@ export const THRESHOLDS = {
   },
   fuelTemp: {
     highWarning: 900,
-    lowWarning: 90
+    lowWarning: 90,
   },
   steamVolume: {
     highWarning: 300,

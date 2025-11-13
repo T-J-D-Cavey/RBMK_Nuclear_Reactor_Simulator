@@ -6,6 +6,7 @@ import ControlPanel from "@/components/control-panel"
 import ReactorDisplay from "@/components/reactor-display"
 import MessageArea from "@/components/message-area"
 import GameOverScreen from "@/components/game-over-screen"
+import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,10 @@ export default function GamePage() {
     resetGame()
     setShowLeaveModal(false)
     router.push("/")
+  }
+
+  if (gameState.hasWon) {
+    return <SuccessScreen gameState={gameState} onReset={resetGame} />
   }
 
   if (gameState.isGameOver) {

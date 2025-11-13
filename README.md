@@ -32,11 +32,6 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- get v0 to fix: on the control rod modal, 
-- Get v0 to fix: There is a bug relating to the opening of the water-pumps-modal, turbine-modal and control-rods modal on small screens like a mobile phone. If I open one of these modals, the UI behind the modal becomes slightly squashed and to the right. When the modal is closed, the UI then jumps back into its original position. This creates a jittery, glitchy effect. I want everything behind the modal to be unmoved, no changes to width or anything. The result should be a seamless opening and closing of the modals without any changes. 
-- Get v0 to implement: add a modal when the user selects 'start game' from the landing page, which asks them to choose a dificulty: Easy or Hard. This is then saved in the game state for the start of the game. 
-- Get v0 to implement: Add a 'dificultyIsHard' property to the game state, and set that to true if the user chooses hard, and set it to false if the user chooses easy. 
-- Get v0 to implement: change the clock so it times down to 0. If it gets to 0, the user wins. This will need a new component similar to the game over page, but instead of 'game over' it's a 'success' page
 - I need to then access the dificulty state in lots of places: 
 - Game-events: I should save different values for easy vs hard and then use those variables to change power target range, number of control rods that get stuck, length of period they can be stuck, length of power cut
 - Types: I should save different values for easy vs hard and then use those variables to change timer (15 minutes for easy, 30 minutes for hard), and power threshold (15% for easy, 10% for hard)

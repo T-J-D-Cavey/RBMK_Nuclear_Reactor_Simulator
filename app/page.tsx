@@ -1,7 +1,36 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { DifficultyModal } from "@/components/difficulty-modal"
+import { INITIAL_GAME_STATE } from "@/lib/types"
 
 export default function HomePage() {
+  const [showDifficultyModal, setShowDifficultyModal] = useState(false)
+  const router = useRouter()
+
+  const handleStartGame = () => {
+    setShowDifficultyModal(true)
+  }
+
+  const handleSelectDifficulty = (isHard: boolean) => {
+    // Easy = 15 minutes (900s), Hard = 30 minutes (1800s)
+    const timeLimit = isHard ? 1800 : 900
+
+    const newGameState = {
+      ...INITIAL_GAME_STATE,
+      difficultyIsHard: isHard,
+      timeLimit,
+      gameTime: timeLimit, // Start countdown at the time limit
+    }
+
+    localStorage.setItem("chernobyl-game-state", JSON.stringify(newGameState))
+    setShowDifficultyModal(false)
+    router.push("/game")
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="max-w-2xl w-full space-y-8 text-center">
@@ -30,14 +59,13 @@ export default function HomePage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link href="/game">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto uppercase font-mono tracking-wider text-lg px-8 py-6 bg-primary hover:bg-primary/90 border-2 border-primary"
-              >
-                Start Game
-              </Button>
-            </Link>
+            <Button
+              onClick={handleStartGame}
+              size="lg"
+              className="w-full sm:w-auto uppercase font-mono tracking-wider text-lg px-8 py-6 bg-primary hover:bg-primary/90 border-2 border-primary"
+            >
+              Start Game
+            </Button>
 
             <Link href="/instructions">
               <Button
@@ -57,6 +85,8 @@ export default function HomePage() {
           <p className="text-xs">{"© 1986 REACTOR CONTROL SYSTEMS"}</p>
         </div>
       </div>
+
+      <DifficultyModal open={showDifficultyModal} onSelectDifficulty={handleSelectDifficulty} />
     </div>
   )
 }

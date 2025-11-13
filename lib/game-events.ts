@@ -4,6 +4,7 @@ const EVENT_MIN_INTERVAL = 120 // 3 minutes in seconds
 const EVENT_MAX_INTERVAL = 240 // 6 minutes in seconds
 
 export function shouldTriggerEvent(state: GameState): boolean {
+            
   const timeSinceLastEvent = state.gameTime - state.lastEventTime
 
   // Don't trigger events in the first minute

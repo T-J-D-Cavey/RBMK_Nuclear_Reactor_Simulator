@@ -129,6 +129,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-y: scroll; /* Prevent scrollbar from causing layout shift when modals open */
   }
 }
 
