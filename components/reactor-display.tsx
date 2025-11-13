@@ -75,7 +75,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           className="relative w-full h-auto object-cover z-10 rounded-lg"
         />
         {/* WATER PUMPS */}
-        {/* Top-left pump */}
+        {/* Top-left pump in blue*/}
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
@@ -83,21 +83,36 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           style={{
             width: "60px", 
             height: "150px", /* Reduced height */
-            backgroundImage: `url(${
-              gameState.waterPumps[0].on && gameState.waterPumps[0].powered
-                ? waterPumpBlueLeftTop
-                : waterPumpGreyLeftTop
-            })`,
+            backgroundImage: `url(${waterPumpBlueLeftTop})`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
           title="Water Pump 1"
+          hidden={!gameState.waterPumps[0].on && !gameState.waterPumps[0].powered}
+        >
+          {/* No child divs needed for the pump visual, as it's a background image */}
+        </button>
+        {/* Top-left pump in grey*/}
+        <button
+          onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+          disabled={gameState.isPaused}
+          className="absolute top-40 -left-5 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
+          style={{
+            width: "60px", 
+            height: "150px", /* Reduced height */
+            backgroundImage: `url(${waterPumpGreyLeftTop})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+          }}
+          title="Water Pump 1"
+          hidden={gameState.waterPumps[0].on && gameState.waterPumps[0].powered}
         >
           {/* No child divs needed for the pump visual, as it's a background image */}
         </button>
 
-        {/* Bottom-left pump */}
+        {/* Bottom-left pump in blue*/}
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
@@ -105,21 +120,36 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           style={{
             width: "60px", 
             height: "150px", 
-            backgroundImage: `url(${
-              gameState.waterPumps[1].on && gameState.waterPumps[1].powered
-                ? waterPumpBlueLeftBottom
-                : waterPumpGreyLeftBottom
-            })`,
+            backgroundImage: `url(${waterPumpBlueLeftBottom})`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
           title="Water Pump 2"
+          hidden={!gameState.waterPumps[1].on && !gameState.waterPumps[1].powered}
+        >
+          {/* No child divs needed for the pump visual */}
+        </button>
+        {/* Bottom-left pump in grey*/}
+        <button
+          onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+          disabled={gameState.isPaused}
+          className="absolute bottom-20 -left-5 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
+          style={{
+            width: "60px", 
+            height: "150px", 
+            backgroundImage: `url(${waterPumpGreyLeftBottom})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+          }}
+          title="Water Pump 2"
+          hidden={gameState.waterPumps[1].on && gameState.waterPumps[1].powered}
         >
           {/* No child divs needed for the pump visual */}
         </button>
 
-        {/* Top-right pump */}
+        {/* Top-right pump in blue*/}
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
@@ -127,21 +157,37 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           style={{
             width: "60px", 
             height: "150px", 
-            backgroundImage: `url(${
-              gameState.waterPumps[2].on && gameState.waterPumps[2].powered
-                ? waterPumpBlueRightTop
-                : waterPumpGreyRightTop
-            })`,
+            backgroundImage: `url(${waterPumpBlueRightTop})`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
           title="Water Pump 3"
+          hidden={!gameState.waterPumps[2].on && !gameState.waterPumps[2].powered}
         >
           {/* No child divs needed for the pump visual */}
         </button>
 
-        {/* Bottom-right pump */}
+        {/* Top-right pump in grey*/}
+        <button
+          onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+          disabled={gameState.isPaused}
+          className="absolute top-40 -right-5 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
+          style={{
+            width: "60px", 
+            height: "150px", 
+            backgroundImage: `url(${waterPumpGreyRightTop})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+          }}
+          title="Water Pump 3"
+          hidden={gameState.waterPumps[2].on && gameState.waterPumps[2].powered}
+        >
+          {/* No child divs needed for the pump visual */}
+        </button>
+
+        {/* Bottom-right pump in blue*/}
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
@@ -149,19 +195,36 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           style={{
             width: "60px", 
             height: "150px", 
-            backgroundImage: `url(${
-              gameState.waterPumps[3].on && gameState.waterPumps[3].powered
-                ? waterPumpBlueRightBottom
-                : waterPumpGreyRightBottom
-            })`,
+            backgroundImage: `url(${waterPumpBlueRightBottom})`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
           title="Water Pump 4"
+          hidden={!gameState.waterPumps[3].on && !gameState.waterPumps[3].powered}
         >
           {/* No child divs needed for the pump visual */}
         </button>
+
+        {/* Bottom-right pump in grey*/}
+        <button
+          onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+          disabled={gameState.isPaused}
+          className="absolute bottom-20 -right-5 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
+          style={{
+            width: "60px", 
+            height: "150px", 
+            backgroundImage: `url(${waterPumpGreyRightBottom})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+          }}
+          title="Water Pump 4"
+          hidden={gameState.waterPumps[3].on && gameState.waterPumps[3].powered}
+        >
+          {/* No child divs needed for the pump visual */}
+        </button>
+        
       </div> {/* End of Reactor + Pumps Anchor */}
 
       {/* BOTTOM TURBINE */}
