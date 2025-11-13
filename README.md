@@ -32,7 +32,7 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- Replace Reactor designs with image
+- Get Gemini to redo the reactor image, as the current one is pixilated. Ask for it to match the metal style of the grey water pipes. When done, crop it, remove bg, add to github, pull into v0, replace import
 - Improve turbine design and modal?
 - Update designs to make sure the reactor image, 4 water pumps and turbine are all inside a container, and then use Absolute positioning to ensure consistent placement for all screensizes. The 2 lower water pumps could be rotated and on the bottom?
 - Update water pump buttons so one pump (grey) and the other pump (blue) have JSX elements, but it has a "hidden" property that will change depending on the state of water pump on/off and power on/off, that way we avoid the image having to load when the user turns the pump on or off.

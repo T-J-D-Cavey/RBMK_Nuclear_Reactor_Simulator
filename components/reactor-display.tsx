@@ -63,11 +63,11 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
     </div>
 
     {/* MAIN CONTENT STACK */}
-    <div className="flex flex-col items-center w-full bg-black">
+    <div className="flex flex-col items-center w-full">
       
       {/* REACTOR + PUMPS ANCHOR */}
       {/* ADJUSTMENT: w-4/5 for mobile (75-80%), md:w-80 for desktop. */}
-      <div className="relative bg-white">
+      <div className="relative">
         
         {/* REACTOR CORE IMAGE */}
         {/* ADJUSTMENT: Removed border-4 and border-gray-700. */}
