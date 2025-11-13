@@ -32,11 +32,7 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- Get Gemini to redo the reactor image, as the current one is pixilated. Ask for it to match the metal style of the grey water pipes. When done, crop it, remove bg, add to github, pull into v0, replace import
-- Improve turbine design and modal?
-- Update designs to make sure the reactor image, 4 water pumps and turbine are all inside a container, and then use Absolute positioning to ensure consistent placement for all screensizes. The 2 lower water pumps could be rotated and on the bottom?
 - Update water pump buttons so one pump (grey) and the other pump (blue) have JSX elements, but it has a "hidden" property that will change depending on the state of water pump on/off and power on/off, that way we avoid the image having to load when the user turns the pump on or off.
-- Create a background image to go behind control rods, that matches the silver metal style of new reactor image 
 - Get v0 to add a modal when the user selects 'start game' from landing page, which asks them to choose a dificulty: Easy, Hard. This is then saved in the game state for the start of the game
 - Get v0 to change the clock so it times down to 0. If it gets to 0, the user wins.
 - I need to then access the dificulty state in lots of places: 

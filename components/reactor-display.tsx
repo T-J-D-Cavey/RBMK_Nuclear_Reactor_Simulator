@@ -65,7 +65,6 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
     <div className="flex flex-col items-center w-full">
       
       {/* REACTOR + PUMPS ANCHOR */}
-      {/* ADJUSTMENT: w-4/5 for mobile (75-80%), md:w-80 for desktop. */}
       <div className="relative">
         
         {/* REACTOR CORE IMAGE */}
@@ -166,11 +165,10 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
       </div> {/* End of Reactor + Pumps Anchor */}
 
       {/* BOTTOM TURBINE */}
-      {/* ADJUSTMENT: Reduced margin-top (mt-4) to pull it much closer. */}
       <button
         onClick={() => !gameState.isPaused && setTurbineModalOpen(true)}
         disabled={gameState.isPaused}
-        className="relative mt-4 cursor-pointer disabled:cursor-not-allowed group"
+        className="-mt-4 relative cursor-pointer disabled:cursor-not-allowed group"
         title={`Turbine: ${
           gameState.turbineConnected ? "Connected" : "Disconnected"
         }`}
