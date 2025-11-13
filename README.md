@@ -32,13 +32,26 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- Update event logic to events are more frequent, power changes are more common, followed by control rods getting stuck, and make it so that all control rods are stuck at once, not just 1 at a time, and the least common is power cut
+- Replace Reactor designs with image
+- Improve turbine design and modal?
+- Update designs to make sure the reactor image, 4 water pumps and turbine are all inside a container, and then use Absolute positioning to ensure consistent placement for all screensizes. The 2 lower water pumps could be rotated and on the bottom?
+- Update water pump buttons so one pump (grey) and the other pump (blue) have JSX elements, but it has a "hidden" property that will change depending on the state of water pump on/off and power on/off, that way we avoid the image having to load when the user turns the pump on or off.
+- Create a background image to go behind control rods, that matches the silver metal style of new reactor image 
+- Get v0 to add a modal when the user selects 'start game' from landing page, which asks them to choose a dificulty: Easy, Hard. This is then saved in the game state for the start of the game
+- Get v0 to change the clock so it times down to 0. If it gets to 0, the user wins.
+- I need to then access the dificulty state in lots of places: 
+- Game-events: I should save different values for easy vs hard and then use those variables to change power target range, number of control rods that get stuck, length of period they can be stuck, length of power cut
+- Types: I should save different values for easy vs hard and then use those variables to change timer (15 minutes for easy, 30 minutes for hard), and power threshold (15% for easy, 10% for hard)
 - Update control rod function so any insertion between 1-10% equals radioactivity inrease, and then 11-100% is radioactivity decrease
-- Get v0 to fix control rod modal: it won't work on mobible screens, I think it's because it was changes to only allow click and drag. The modal control rods are still too thick especially the % boxes. They can be at the bottom
-- Get v0 to adjust appearance of water pump modal so the on off switches are taps and not the modern slider buttons they currently are. I might want to pass it an image of a tab to help
-- Draw a reactor shape, get Gemini to then create a modal of it and then pass it to v0 to create
-- Draw a turbine, get Gemini to then create a modal of it and then pass it to v0 to create
-- Get v0 to update turbine modal 
-- Get v0 to fix warning lights, on small screens they aren't perfect circles
-- Get v0 to make the warning panals hideable, as they take up a lot of space on mobile screens. 
--
+- Review events mechanics to make sure it's workign as expected. I'm not sure the random time between events is working as expected and it might be worth removing the random time interval, and just keeping which event happens random 
+- Full review of all UI, checking wording, designs
+- Consider changing name of game to "Hinkley"
+
+MECHANIC ADJUSTMENT TWEAKS:
+
+- Threshold for Xenon build up should be reduced to <= 50 radioactivity
+- Control rods when fully inserted should be more powerful OR control rods in general should be a tiny bit more powerful
+- Water pumps should be a tiny bit more powerful 
+- The duration of control rod freezing should be shorter
+- The proportion of power target changes should be higher
+- High temp impact to radioactivity should be reduced
