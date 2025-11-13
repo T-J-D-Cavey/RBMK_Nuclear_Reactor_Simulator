@@ -17,7 +17,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
 
-  const reactorImage = "/reactor.png"
+  const reactorImage = "/reactor_cropped.png"
   const waterPumpBlueLeftTop = "/water_pipe_no_bg_left_blue.png";
   const waterPumpBlueRightTop = "/water_pipe_no_bg_right_blue.png";
   const waterPumpGreyLeftTop = "/water_pipe_no_bg_left_grey.png";
@@ -33,7 +33,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
   <div className="relative w-full max-w-2xl mx-auto">
     {/* Control Rods - Positioned above Reactor */}
     {/* ADJUSTMENT: top-0 for initial positioning, will use negative margin for overlap */}
-    <div className="absolute top-25 left-1/2 gap-2 -translate-x-1/2 flex z-30 md:gap-1">
+    <div className="absolute top-0 left-1/2 gap-2 -translate-x-1/2 flex z-30 md:gap-1">
       {gameState.controlRods.map((rod) => {
         const verticalOffset = (rod.insertion / 100) * 60
 
@@ -86,7 +86,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-35 left-12 z-20 cursor-pointer disabled:cursor-not-allowed group"
+          className="absolute top-0 left-0 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", /* Reduced height */
@@ -108,7 +108,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-7 left-12 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
+          className="absolute bottom-0 left-0 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 
@@ -130,7 +130,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-35 right-15 z-20 cursor-pointer disabled:cursor-not-allowed group"
+          className="absolute top-0 right-0 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 
@@ -152,7 +152,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-7 right-15 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
+          className="absolute bottom-0 right-0 z-20 cursor-pointer disabled:cursor-not-allowed group "
           style={{
             width: "60px", 
             height: "150px", 
