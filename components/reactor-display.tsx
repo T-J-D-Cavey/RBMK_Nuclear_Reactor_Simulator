@@ -30,10 +30,10 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
   const glowIntensity = getGlowIntensity(gameState.radioactivity)
 
   return (
-  <div className="relative w-full max-w-4xl mx-auto">
+  <div className="relative w-full max-w-2xl mx-auto">
     {/* Control Rods - Positioned above Reactor */}
     {/* ADJUSTMENT: top-0 for initial positioning, will use negative margin for overlap */}
-    <div className="absolute top-0 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-30">
+    <div className="absolute top-25 left-1/2 gap-2 -translate-x-1/2 flex z-30 md:gap-1">
       {gameState.controlRods.map((rod) => {
         const verticalOffset = (rod.insertion / 100) * 60
 
@@ -53,7 +53,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           >
             <div className="w-3 md:w-4 h-20 md:h-24 bg-gradient-to-b from-gray-600 to-gray-700 border-2 border-gray-800 transition-all duration-500 group-hover:brightness-110" />
             <div
-              className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 md:w-4 h-1 ${
+              className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 md:w-4 h-1 ${
                 rod.stuck ? "bg-destructive" : "bg-accent"
               }`}
             />
@@ -63,14 +63,11 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
     </div>
 
     {/* MAIN CONTENT STACK */}
-    {/* ADJUSTMENT: Drastically reduced pt (padding-top) for overall layout tightening.
-        This allows control rods to overlap the reactor's top.
-        Also reduced pb (padding-bottom) to bring turbine closer. */}
-    <div className="flex flex-col items-center w-full pt-16 md:pt-16 pb-6">
+    <div className="flex flex-col items-center w-full bg-black">
       
       {/* REACTOR + PUMPS ANCHOR */}
       {/* ADJUSTMENT: w-4/5 for mobile (75-80%), md:w-80 for desktop. */}
-      <div className="relative w-4/5 md:w-80">
+      <div className="relative bg-white">
         
         {/* REACTOR CORE IMAGE */}
         {/* ADJUSTMENT: Removed border-4 and border-gray-700. */}
@@ -78,12 +75,6 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
           src={reactorImage}
           alt="Reactor Core"
           className="relative w-full h-auto object-cover rounded-lg shadow-2xl z-10"
-          style={{
-            /* This is the preserved dynamic glow effect for the outer shadow */
-            boxShadow: `0 0 ${glowIntensity * 12}px ${
-              glowIntensity * 6
-            }px rgba(0,255,255,${glowIntensity})`,
-          }}
         />
 
         {/* WATER PUMPS */}
@@ -95,16 +86,16 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 z-20 cursor-pointer disabled:cursor-not-allowed group"
+          className="absolute top-35 left-12 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
-            width: "60px", /* Reduced width */
+            width: "60px", 
             height: "150px", /* Reduced height */
             backgroundImage: `url(${
               gameState.waterPumps[0].on && gameState.waterPumps[0].powered
                 ? waterPumpBlueLeftTop
                 : waterPumpGreyLeftTop
             })`,
-            backgroundSize: "contain",
+            backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
@@ -117,16 +108,16 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-0 left-0 -translate-x-1/4 translate-y-1/4 z-20 cursor-pointer disabled:cursor-not-allowed group"
+          className="absolute bottom-7 left-12 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
           style={{
-            width: "60px", /* Reduced width */
-            height: "150px", /* Reduced height */
+            width: "60px", 
+            height: "150px", 
             backgroundImage: `url(${
               gameState.waterPumps[1].on && gameState.waterPumps[1].powered
                 ? waterPumpBlueLeftBottom
                 : waterPumpGreyLeftBottom
             })`,
-            backgroundSize: "contain",
+            backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
@@ -139,16 +130,16 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 z-20 cursor-pointer disabled:cursor-not-allowed group"
+          className="absolute top-35 right-15 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
-            width: "60px", /* Reduced width */
-            height: "150px", /* Reduced height */
+            width: "60px", 
+            height: "150px", 
             backgroundImage: `url(${
               gameState.waterPumps[2].on && gameState.waterPumps[2].powered
                 ? waterPumpBlueRightTop
                 : waterPumpGreyRightTop
             })`,
-            backgroundSize: "contain",
+            backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
@@ -161,16 +152,16 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 z-20 cursor-pointer disabled:cursor-not-allowed group"
+          className="absolute bottom-7 right-15 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
           style={{
-            width: "60px", /* Reduced width */
-            height: "150px", /* Reduced height */
+            width: "60px", 
+            height: "150px", 
             backgroundImage: `url(${
               gameState.waterPumps[3].on && gameState.waterPumps[3].powered
                 ? waterPumpBlueRightBottom
                 : waterPumpGreyRightBottom
             })`,
-            backgroundSize: "contain",
+            backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
           }}
