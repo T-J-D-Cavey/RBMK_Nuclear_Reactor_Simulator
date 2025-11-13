@@ -94,7 +94,7 @@ export const INITIAL_GAME_STATE: GameState = {
 
   activeEvents: [],
   eventHistory: [],
-  lastEventTime: 0,
+  lastEventTime: 900, // Match initial gameTime
 
   warnings: [],
 }

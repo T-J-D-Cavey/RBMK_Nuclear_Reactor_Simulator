@@ -1,14 +1,14 @@
 import type { GameEvent, GameState } from "./types"
 
-const EVENT_MIN_INTERVAL = 120 // 3 minutes in seconds
-const EVENT_MAX_INTERVAL = 240 // 6 minutes in seconds
+const EVENT_MIN_INTERVAL = 60 // 1 minute in seconds
+const EVENT_MAX_INTERVAL = 240 // 4 minutes in seconds
 
 export function shouldTriggerEvent(state: GameState): boolean {
-            
-  const timeSinceLastEvent = state.gameTime - state.lastEventTime
+  const timeSinceLastEvent = state.lastEventTime - state.gameTime
 
-  // Don't trigger events in the first minute
-  if (state.gameTime < 120) {
+  // Hard mode: 30min = 1800s, so first minute is when gameTime > 1740
+  // Easy mode: 15min = 900s, so first minute is when gameTime > 840
+  if ((state.difficultyIsHard && state.gameTime > 1740) || (!state.difficultyIsHard && state.gameTime > 840)) {
     return false
   }
 
@@ -25,7 +25,7 @@ export function shouldTriggerEvent(state: GameState): boolean {
       (timeSinceLastEvent - EVENT_MIN_INTERVAL) / (EVENT_MAX_INTERVAL - EVENT_MIN_INTERVAL),
       1,
     )
-    return Math.random() < probability * 0.1 // 10% max chance per tick
+    return Math.random() < probability * 0.1 // 10% chance per tick
   }
 
   return false
@@ -54,10 +54,10 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
 
 function generateTargetChangeEvent(state: GameState): GameEvent {
   // Target range: 1600 to 12000 MW (a difference of 10400)
-  const range = 10400
-  const minTarget = 1600
+  const range = state.difficultyIsHard ? 10400 : 5200
+  const minTarget = state.difficultyIsHard ? 1600 : 3200
 
-  // 1. Calculate a random number between 1600 and 12000
+  // 1. Calculate a random number between the ranges
   // 2. Divide by 100, round to the nearest whole number (e.g., 55.4 -> 55, 55.6 -> 56)
   // 3. Multiply by 100 to get the final rounded target (e.g., 56 -> 5600)
   const newTarget = Math.round((Math.random() * range + minTarget) / 100) * 100
@@ -72,8 +72,7 @@ function generateTargetChangeEvent(state: GameState): GameEvent {
 }
 
 function generatePowerCutEvent(state: GameState): GameEvent {
-  // Duration between 30 seconds and 1.5 minutes
-  const duration = Math.random() * 60 + 30
+  const duration = state.difficultyIsHard ? Math.random() * 60 + 30 : Math.random() * 40 + 20
   const durationSeconds = Math.round(duration)
 
   return {
@@ -87,12 +86,13 @@ function generatePowerCutEvent(state: GameState): GameEvent {
 }
 
 function generateRodStuckEvent(state: GameState): GameEvent {
-  // Duration between 1-2 minutes
-  const duration = Math.random() * 120 + 60
+  const duration = state.difficultyIsHard ? Math.random() * 120 + 60 : Math.random() * 60 + 30
   const durationSeconds = Math.round(duration)
 
-  // Select 7-10 random rods
-  const numRods = Math.floor(Math.random() * (10 - 7 + 1)) + 7
+  // Select random rods
+  const numRods = state.difficultyIsHard
+    ? Math.floor(Math.random() * (8 - 5 + 1)) + 5
+    : Math.floor(Math.random() * (7 - 4 + 1)) + 4
   const affectedRods: number[] = []
 
   while (affectedRods.length < numRods) {
@@ -102,7 +102,7 @@ function generateRodStuckEvent(state: GameState): GameEvent {
     }
   }
 
-  const rodNumbers = affectedRods.map((idx) => idx + 1)
+  const rodNumbers = affectedRods.map((idx) => idx + 1).sort((a, b) => a - b)
 
   return {
     id: `event-${Date.now()}`,
@@ -165,15 +165,12 @@ export function applyEvent(state: GameState, event: GameEvent): Partial<GameStat
 
 export function updateActiveEvents(state: GameState): Partial<GameState> {
   const nowInSeconds = state.gameTime
-  // Tim Debug: const now = Date.now()
   const updates: Partial<GameState> = {}
 
   // Check for expired events
   const expiredEvents = state.activeEvents.filter((event) => {
     if (!event.duration) return false
-    // Tim Debug: const eventTimestamp = event.timestamp * 1000 // Convert to milliseconds
-    // Tim Debug: return now - eventTimestamp >= event.duration
-    return nowInSeconds >= event.timestamp + event.duration
+    return event.timestamp - nowInSeconds >= event.duration
   })
 
   if (expiredEvents.length > 0) {

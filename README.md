@@ -32,10 +32,6 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- I need to then access the dificulty state in lots of places: 
-- Game-events: I should save different values for easy vs hard and then use those variables to change power target range, number of control rods that get stuck, length of period they can be stuck, length of power cut
-- Types: I should save different values for easy vs hard and then use those variables to change timer (15 minutes for easy, 30 minutes for hard), and power threshold (15% for easy, 10% for hard)
-- Update control rod function so any insertion between 1-10% equals radioactivity inrease, and then 11-100% is radioactivity decrease
 - Review events mechanics to make sure it's workign as expected. I'm not sure the random time between events is working as expected and it might be worth removing the random time interval, and just keeping which event happens random 
 - Full review of all UI, checking wording, designs
 - Consider changing name of game to "Hinkley"

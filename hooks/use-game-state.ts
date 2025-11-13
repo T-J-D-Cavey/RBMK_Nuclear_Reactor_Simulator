@@ -22,8 +22,12 @@ export function useGameState() {
       } catch (e) {
         console.error("[v0] Failed to load game state:", e)
       }
+    } else {
+      setGameState((prev) => ({
+        ...prev,
+        lastEventTime: prev.gameTime,
+      }))
     }
-    // If no saved state, use INITIAL_GAME_STATE (already set in useState)
   }, [])
 
   // Save game state to local storage whenever it changes

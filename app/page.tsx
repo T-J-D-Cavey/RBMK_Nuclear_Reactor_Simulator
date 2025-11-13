@@ -24,6 +24,7 @@ export default function HomePage() {
       difficultyIsHard: isHard,
       timeLimit,
       gameTime: timeLimit, // Start countdown at the time limit
+      lastEventTime: timeLimit, // Initialize to same value as gameTime
     }
 
     localStorage.setItem("chernobyl-game-state", JSON.stringify(newGameState))
