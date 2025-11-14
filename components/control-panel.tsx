@@ -51,11 +51,11 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
         </div>
 
         {/* Main Readouts */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {/* Current Power Output */}
           <div className="bg-background border-2 border-border p-3 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Power Output</div>
-            <div className={`led-display text-lg md:text-xl ${isOnTarget ? "led-green" : "text-red-500"}`}>
+            <div className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${isOnTarget ? "led-green" : "text-red-500"}`}>
               {Math.round(gameState.powerOutput)} MW
             </div>
           </div>
@@ -63,7 +63,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
           {/* Power Target */}
           <div className="bg-background border-2 border-border p-3 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Target</div>
-            <div className="led-display led-amber text-lg md:text-xl">{gameState.powerTarget} MW</div>
+            <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">{gameState.powerTarget} MW</div>
           </div>
 
           <div
@@ -73,7 +73,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
           >
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Performance</div>
             <div
-              className={`led-display text-lg md:text-xl ${
+              className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${
                 gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
               }`}
             >
@@ -84,7 +84,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
           {/* Time */}
           <div className="bg-background border-2 border-border p-3 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Time</div>
-            <div className="led-display led-amber text-lg md:text-xl">{formatTime(gameState.gameTime)}</div>
+            <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">{formatTime(gameState.gameTime)}</div>
           </div>
         </div>
 

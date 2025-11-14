@@ -7,19 +7,30 @@ export function formatTime(seconds: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
 }
 
+export function calculateWasFullyRemovedNowInserted(rods: ControlRod[]): number {
+  let rodsNowInsertedCount = 0;
+  
+  // Count only the rods that have the transition flag set
+  rods.forEach((rod) => {
+    console
+    if (rod.justReinserted) { 
+      rodsNowInsertedCount += 1;
+    }
+  });
+  
+  return rodsNowInsertedCount;
+}
+
+
 export function getRadioactivityFromRods(rods: ControlRod[]): number {
   let totalChange = 0
 
   rods.forEach((rod) => {
     const insertion = rod.insertion
 
-    if (insertion > 0 && insertion <= 10) {
-      // Graphite tips only - increases radioactivity
-      totalChange += 4
-    } else if (insertion > 5) {
-    // Boron dominant - decreases radioactivity
+    if (insertion > 0 && insertion < 100) {
       totalChange -= insertion * 0.2
-    } else if (insertion === 100) {
+    } else if (insertion == 100) {
       totalChange -= insertion * 0.5
     } else {
       // No insertion, no affect

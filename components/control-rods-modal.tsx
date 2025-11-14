@@ -26,13 +26,47 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
     }
   }, [open, controlRods])
 
+/*
   const handleApply = () => {
     const updatedRods = controlRods.map((rod, idx) => ({
       ...rod,
       insertion: rod.stuck ? rod.insertion : Math.max(0, Math.min(100, tempValues[idx] || 0)),
+      wasFullyRemoved: rod.insertion == 0 ? true : false;
     }))
     onUpdate(updatedRods)
     onOpenChange(false)
+  }
+  */
+  const handleApply = () => {
+      const updatedRods = controlRods.map((rod, idx) => {
+          
+          // 1. Calculate the NEW insertion value first
+          const newInsertion = rod.stuck 
+              ? rod.insertion 
+              : Math.max(0, Math.min(100, tempValues[idx] || 0));
+  
+          // --- Calculate NEW Flag Values ---
+          
+          // A. currentlyFullyRemoved: TRUE if the new insertion value is 0.
+          const newCurrentlyFullyRemoved = newInsertion === 0;
+  
+          // B. justReinserted: TRUE if the rod *was* fully removed (old state) 
+          //    AND the new insertion value is > 0.
+          const newJustReinserted = rod.currentlyFullyRemoved && newInsertion > 0;
+          //console.log(newCurrentlyFullyRemoved, newJustReinserted)
+          
+          // 3. Return the new rod object with updated properties
+          return {
+              ...rod,
+              insertion: newInsertion, 
+              currentlyFullyRemoved: newCurrentlyFullyRemoved,
+              justReinserted: newJustReinserted
+          };
+      });
+      
+      // Pass the state update to your state management system
+      onUpdate(updatedRods);
+      onOpenChange(false);
   }
 
   const handleAZ5 = () => {

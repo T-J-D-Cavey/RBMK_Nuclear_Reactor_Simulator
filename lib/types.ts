@@ -1,6 +1,8 @@
 export interface ControlRod {
   id: number
   insertion: number // 0-100%
+  currentlyFullyRemoved: boolean
+  justReinserted: boolean
   stuck: boolean
 }
 
@@ -74,6 +76,8 @@ export const INITIAL_GAME_STATE: GameState = {
     id: i + 1,
     insertion: i < 6 ? 37 : 44,
     stuck: false,
+    currentlyFullyRemoved: false,
+    justReinserted: false
   })),
 
   waterPumps: Array.from({ length: 4 }, (_, i) => ({
