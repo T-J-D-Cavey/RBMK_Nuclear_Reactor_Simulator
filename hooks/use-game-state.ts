@@ -37,7 +37,47 @@ export function useGameState() {
 
   // Update a specific field in game state
   const updateGameState = useCallback((updates: Partial<GameState>) => {
-    setGameState((prev) => ({ ...prev, ...updates }))
+      setGameState((prev) => {
+
+          // 1. Intercept controlRods updates:
+          if (updates.controlRods) {
+
+              let radioactivityChange = 0;
+              let reactorTempChange = 0;
+              let steamChange = 0;
+              let XenonChange = 0;
+              const updatedRods = updates.controlRods.map(rod => {
+
+                  // Check if the rod is transitioning (flag is true)
+                  if (rod.justReinserted) {
+                      // Control rods entering core from a fully removed position causes a spike in radioactivity, fuel temp and steam due to the graphic tips of the rods
+                      radioactivityChange += 20;
+                      reactorTempChange += 20;
+                      steamChange += 10;
+                      XenonChange -= 10;
+
+                      // 2. Reset the flag immediately in the same state update
+                      return { ...rod, justReinserted: false };
+                  }
+                  return rod;
+              });
+
+              // 3. Merge the updates: apply the reset rods and the radioactivity change
+              return { 
+                  ...prev, 
+                  ...updates, // Includes all other updates (like closing the modal)
+                  controlRods: updatedRods, // Commits the rods with the flag reset
+                  // Assumes 'radioactivity' is part of GameState
+                  radioactivity: (prev.radioactivity || 0) + radioactivityChange
+                  reactorTemp: (prev.reactorTemp || 0) + reactorTempChange 
+                  steamVolume: (prev.steamVolume || 0) + steamChange
+                  xenon: (prev.xenon || 0) + XenonChange  
+              };
+          }
+
+          // Standard update if controlRods are not being updated
+          return { ...prev, ...updates };
+      });
   }, [])
 
   // Reset game to initial state

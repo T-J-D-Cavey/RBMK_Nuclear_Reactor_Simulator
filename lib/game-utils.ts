@@ -9,7 +9,7 @@ export function formatTime(seconds: number): string {
 
 export function calculateWasFullyRemovedNowInserted(rods: ControlRod[]): number {
   let rodsNowInsertedCount = 0;
-  
+  console.log('is this function ever getting called?')
   // Count only the rods that have the transition flag set
   rods.forEach((rod) => {
     console
