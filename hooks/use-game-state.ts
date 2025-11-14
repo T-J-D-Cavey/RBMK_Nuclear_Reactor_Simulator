@@ -68,10 +68,10 @@ export function useGameState() {
                   ...updates, // Includes all other updates (like closing the modal)
                   controlRods: updatedRods, // Commits the rods with the flag reset
                   // Assumes 'radioactivity' is part of GameState
-                  radioactivity: (prev.radioactivity || 0) + radioactivityChange
-                  reactorTemp: (prev.reactorTemp || 0) + reactorTempChange 
-                  steamVolume: (prev.steamVolume || 0) + steamChange
-                  xenon: (prev.xenon || 0) + XenonChange  
+                  radioactivity: (prev.radioactivity || 0) + radioactivityChange,
+                  reactorTemp: (prev.reactorTemp || 0) + reactorTempChange,
+                  steamVolume: (prev.steamVolume || 0) + steamChange,
+                  xenon: (prev.xenon || 0) + XenonChange,  
               };
           }
 
