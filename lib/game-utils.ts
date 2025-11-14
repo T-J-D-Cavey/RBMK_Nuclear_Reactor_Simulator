@@ -7,20 +7,6 @@ export function formatTime(seconds: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
 }
 
-export function calculateWasFullyRemovedNowInserted(rods: ControlRod[]): number {
-  let rodsNowInsertedCount = 0;
-  console.log('is this function ever getting called?')
-  // Count only the rods that have the transition flag set
-  rods.forEach((rod) => {
-    console
-    if (rod.justReinserted) { 
-      rodsNowInsertedCount += 1;
-    }
-  });
-  
-  return rodsNowInsertedCount;
-}
-
 
 export function getRadioactivityFromRods(rods: ControlRod[]): number {
   let totalChange = 0
@@ -65,7 +51,7 @@ export function checkWarnings(state: GameState): string[] {
   }
 
   if (state.steamVolume >= THRESHOLDS.steamVolume.highWarning) {
-    warnings.push("WARNING: High steam pressure. Please disconnect turbine to avoid damage to the transmission infrastructure")
+    warnings.push("WARNING: High steam pressure. Disconnect turbine to avoid damage to the transmission infrastructure")
   }
 
   if (state.steamVolume <= THRESHOLDS.steamVolume.lowWarning) {

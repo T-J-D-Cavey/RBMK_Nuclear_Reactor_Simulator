@@ -71,7 +71,7 @@ export function useGameState() {
                   radioactivity: (prev.radioactivity || 0) + radioactivityChange,
                   reactorTemp: (prev.reactorTemp || 0) + reactorTempChange,
                   steamVolume: (prev.steamVolume || 0) + steamChange,
-                  xenon: (prev.xenon || 0) + XenonChange,  
+                  xenon: Math.max(0, (prev.xenon || 0) + XenonChange),  
               };
           }
 

@@ -79,7 +79,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-40 -left-5 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
+          className="absolute top-40 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", /* Reduced height */
@@ -97,7 +97,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-40 -left-5 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
+          className="absolute top-40 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", /* Reduced height */
@@ -116,7 +116,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-20 -left-5 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
+          className="absolute bottom-20 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 
@@ -134,7 +134,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-20 -left-5 z-20 cursor-pointer disabled:cursor-not-allowed group -rotate-90"
+          className="absolute bottom-20 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 
@@ -153,7 +153,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-40 -right-5 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
+          className="absolute top-40 -right-1 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 
@@ -172,7 +172,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute top-40 -right-5 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
+          className="absolute top-40 -right-1 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 
@@ -191,7 +191,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-20 -right-5 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
+          className="absolute bottom-20 -right-1 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 
@@ -210,7 +210,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         <button
           onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
           disabled={gameState.isPaused}
-          className="absolute bottom-20 -right-5 z-20 cursor-pointer disabled:cursor-not-allowed group rotate-90"
+          className="absolute bottom-20 -right-1 z-20 cursor-pointer disabled:cursor-not-allowed group"
           style={{
             width: "60px", 
             height: "150px", 

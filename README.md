@@ -36,7 +36,6 @@ FIXES TO MAKE:
 - the red border radius glow on alets only has glow internally, it should glow inside and outside
 - power cuts are happening too often, something is wrong with event logic
 - game over screen: stats read 'time survived' but it shoudl be 'time remaining'
-- edit rod calculation function so that it checks if rod value was at 0 before and now is higher than 0. If it is, add 20 radiation, 20 reactor temp, 10 steam, -10 Xenon. This might need adding a proprty to the rods object "wasInsertedFromZero" Boolean 
 - Reduce earliest time till first event from 1 minute to 30 seconds 
 - Full review of all UI, checking wording, designs
 - Consider changing name of game to "Hinkley"

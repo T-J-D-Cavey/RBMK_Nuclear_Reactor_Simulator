@@ -53,7 +53,6 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           // B. justReinserted: TRUE if the rod *was* fully removed (old state) 
           //    AND the new insertion value is > 0.
           const newJustReinserted = rod.currentlyFullyRemoved && newInsertion > 0;
-          //console.log(newCurrentlyFullyRemoved, newJustReinserted)
           
           // 3. Return the new rod object with updated properties
           return {

@@ -1,5 +1,5 @@
 import { type GameState, THRESHOLDS } from "./types"
-import { getRadioactivityFromRods, calculateWasFullyRemovedNowInserted } from "./game-utils"
+import { getRadioactivityFromRods } from "./game-utils"
 
 export function calculateGameTick(state: GameState): Partial<GameState> {
   if (state.isPaused || state.isGameOver) {
@@ -26,8 +26,6 @@ export function calculateGameTick(state: GameState): Partial<GameState> {
   // 6. Calculate xenon changes
   newState = calculateXenon(newState)
 
-  console.log(state.controlRods[0].currentlyFullyRemoved, state.controlRods[0].justReinserted)
-
   return newState
 }
 
@@ -38,14 +36,6 @@ function calculateRadioactivity(state: GameState): GameState {
   radioactivityChange += 2 // Constant baseline positive radioactivity
 
   radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.05
-
-   // Rods moving into reactor from a fully removed insertion causes a spike in radioactivity
-  const rodsNowInserted = calculateWasFullyRemovedNowInserted(state.controlRods)
-  if(rodsNowInserted > 0) {
-   // console.log("Rods now inserted equals" + rodsNowInserted)
-      radioactivityChange += 20 * rodsNowInserted;
-  }
-
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
