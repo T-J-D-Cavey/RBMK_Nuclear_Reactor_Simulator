@@ -54,7 +54,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Turbine</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Our power station delivers electricity to the people of Pripyat as a result of the steam our reactor generates turning our electricity turbine. Select the turbine to toggle connection. If our power generation is too high, we may be asked to disconnect our turbine to avoid damage to the power grid"
+                    "Our power station delivers electricity to the people of our district as a result of the steam our reactor generates turning our electricity turbine. Select the turbine to toggle connection. If our power generation is too high, we may be asked to disconnect our turbine to avoid damage to the power grid"
                   }
                 </p>
               </div>

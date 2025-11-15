@@ -25,7 +25,7 @@ export function DifficultyModal({ open, onSelectDifficulty }: DifficultyModalPro
             <h3 className="font-mono font-bold text-lg uppercase text-accent">Easy Mode</h3>
             <ul className="text-sm font-mono space-y-1 text-muted-foreground">
               <li>• 15 minute countdown</li>
-              <li>• Standard reactor behavior</li>
+              <li>• More stable reactor mechanics</li>
               <li>• Recommended for beginners</li>
             </ul>
             <Button
@@ -42,7 +42,7 @@ export function DifficultyModal({ open, onSelectDifficulty }: DifficultyModalPro
             <h3 className="font-mono font-bold text-lg uppercase text-destructive">Hard Mode</h3>
             <ul className="text-sm font-mono space-y-1 text-muted-foreground">
               <li>• 30 minute countdown</li>
-              <li>• More aggressive mechanics</li>
+              <li>• Challenging reactor mechanics</li>
               <li>• For experienced operators</li>
             </ul>
             <Button

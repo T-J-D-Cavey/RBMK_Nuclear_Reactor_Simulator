@@ -53,7 +53,7 @@ export default function HomePage() {
 
             <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
               {
-                "Manage a nuclear reactor in real-time. Balance radioactivity, temperature, steam, and power output to avoid catastrophic failure."
+                "Manage a flawed RBMK nuclear reactor in real-time. Maintain balance and deliver the required power output whilst avoiding catastrophic failure."
               }
             </p>
           </div>
@@ -82,8 +82,7 @@ export default function HomePage() {
 
         {/* Footer Info */}
         <div className="text-sm text-muted-foreground font-mono space-y-1">
-          <p>{"WARNING: This simulation requires careful attention and quick decision-making"}</p>
-          <p className="text-xs">{"© 1986 REACTOR CONTROL SYSTEMS"}</p>
+          <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
         </div>
       </div>
 

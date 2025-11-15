@@ -121,16 +121,21 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-4 border-primary max-w-[95vw] w-full max-h-screen h-screen overflow-y-auto p-2 sm:p-4">
+      <DialogContent className="bg-card border-4 border-primary max-w-[95vw] w-full max-h-screen h-auto overflow-y-auto p-2 sm:p-4">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl font-mono uppercase text-center">Control Rods</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-2">
-          <div className="bg-background border-2 border-border p-2 text-[10px] sm:text-xs leading-relaxed">
+          <div className="bg-background border-2 border-border p-2 text-[10px] sm:text-xs leading-relaxed text-center">
             <p>
               {
-                "Drag the LEVERS to adjust rod insertion (0-100%). Rods are 95% Boron (decreases radioactivity) and 5% Graphite tips (increases radioactivity). Use AZ5 button for emergency full insertion."
+                "Drag the LEVERS to adjust rod insertion (0-100%)."
+              }
+            </p>
+                      <p>
+              {
+                "Use AZ5 button for emergency full insertion."
               }
             </p>
           </div>
@@ -142,15 +147,15 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
               variant="destructive"
               className="uppercase font-mono tracking-wider px-4 py-2 text-sm sm:text-base border-2"
             >
-              AZ-5 EMERGENCY SCRAM
+              AZ-5
             </Button>
           </div>
 
-          <div className="flex justify-center gap-2 sm:gap-3 p-2">
+          <div className="flex justify-center gap-2 p-2">
             {controlRods.map((rod, idx) => {
               const currentInsertion = tempValues[idx] ?? rod.insertion
               return (
-                <div key={rod.id} className="flex flex-col items-center gap-1">
+                <div key={rod.id} className="flex flex-col items-center gap-1 min-w-7">
                   <div className="flex items-center gap-1">
                     <Label className="font-mono text-[10px] sm:text-xs font-bold">R{rod.id}</Label>
                     {rod.stuck && <AlertCircle className="h-3 w-3 text-destructive" />}

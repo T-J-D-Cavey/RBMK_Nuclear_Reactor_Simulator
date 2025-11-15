@@ -33,3 +33,14 @@ Continue building your app on:
 FIXES TO MAKE:
  
 - Full review of all UI, checking wording, designs
+- Remove warning border affects from performance readout
+- On hard, power target range needs reducing slightly
+- Add a 'numberofPowerCuts' state and a 'numberOfRodFailures' state and set them to 0. Whenever there is a power cut or rod seizure event, add 1 to the value. Then adjust event logic so it checks if roll <33 && numberofPowerCuts is < whatever value for easy / hard, then initiate power cut, else if roll <33 && numberofRodFailues is < whatever value for easy / hard, initiate rod falue, else initiate power target change. I think for easy, 1 power cut and 2 control rod failures is good. For hard, 2 power cuts and 3 control rod failues. We can then increase the duration of powercut and rod failues
+- fix control rod modal so 100% insertion doesn't cause neighbour elements to move sideways, it's related to margin I think
+- Test adding background picture for game page
+- AZ5 button changes when I hover but doesn't change back after moving mouse away
+
+OPTIONAL MECHANIC CHANGES:
+
+- Review all mechnics that use flat change values and consider making them proportional to the thing they are affected by, similar to how steam is worked out. That way everything is more exponential
+- Consider increasing affect all all factors, maintani balance but ensuring things move out of balance faster
