@@ -32,10 +32,4 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- modals are still causing page to shift. There seems to be something causing width to be more than 100% on small screens. Might need to consider reducing width of reactor image
-- the red border radius glow on alets only has glow internally, it should glow inside and outside
-- power cuts are happening too often, something is wrong with event logic
-- game over screen: stats read 'time survived' but it shoudl be 'time remaining'
-- Reduce earliest time till first event from 1 minute to 30 seconds 
 - Full review of all UI, checking wording, designs
-- Consider changing name of game to "Hinkley"

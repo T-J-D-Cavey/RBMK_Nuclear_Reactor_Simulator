@@ -38,7 +38,7 @@ export default function HomePage() {
         {/* Title */}
         <div className="space-y-4">
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-foreground uppercase font-mono">
-            Chernobyl
+            RBMK
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground font-mono">Nuclear Reactor Control Simulation</p>
         </div>
@@ -48,7 +48,7 @@ export default function HomePage() {
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2">
               <div className="w-3 h-3 bg-led-green rounded-full animate-pulse" />
-              <span className="text-sm font-mono text-muted-foreground uppercase tracking-wider">System Ready</span>
+              <span className="text-sm font-mono text-muted-foreground uppercase tracking-wider">SYSTEM STATUS: STABLE</span>
             </div>
 
             <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">

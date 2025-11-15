@@ -68,7 +68,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
 
           <div
             className={`bg-background p-3 space-y-1 transition-all ${
-              lowPerformanceWarning ? "border-8 border-red-600 animate-border-flash" : "border-2 border-border"
+              lowPerformanceWarning ? "border-6 border-red-600 animate-border-flash" : "border-2 border-border"
             }`}
           >
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Performance</div>
@@ -93,7 +93,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
           <div
             className={`bg-background p-2 space-y-1 transition-all ${
               lowRadioactivityWarning || highRadioactivityWarning
-                ? "border-8 border-red-600 animate-border-flash"
+                ? "border-6 border-red-600 animate-border-flash"
                 : "border-2 border-border"
             }`}
           >
@@ -103,7 +103,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
 
           <div
             className={`bg-background p-2 space-y-1 transition-all ${
-              highReactorTempWarning ? "border-8 border-red-600 animate-border-flash" : "border-2 border-border"
+              highReactorTempWarning ? "border-6 border-red-600 animate-border-flash" : "border-2 border-border"
             }`}
           >
             <div className="text-xs text-muted-foreground font-mono uppercase">Reactor Temp</div>
@@ -117,7 +117,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
 
           <div
             className={`bg-background p-2 space-y-1 transition-all ${
-              highSteamWarning ? "border-8 border-red-600 animate-border-flash" : "border-2 border-border"
+              highSteamWarning ? "border-6 border-red-600 animate-border-flash" : "border-2 border-border"
             }`}
           >
             <div className="text-xs text-muted-foreground font-mono uppercase">Steam</div>

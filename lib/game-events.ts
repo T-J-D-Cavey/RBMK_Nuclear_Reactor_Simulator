@@ -8,7 +8,7 @@ export function shouldTriggerEvent(state: GameState): boolean {
 
   // Hard mode: 30min = 1800s, so first minute is when gameTime > 1740
   // Easy mode: 15min = 900s, so first minute is when gameTime > 840
-  if ((state.difficultyIsHard && state.gameTime > 1740) || (!state.difficultyIsHard && state.gameTime > 840)) {
+  if ((state.difficultyIsHard && state.gameTime > 1770) || (!state.difficultyIsHard && state.gameTime > 870)) {
     return false
   }
 

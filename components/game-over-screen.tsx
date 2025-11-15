@@ -58,7 +58,7 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mx-auto pt-4">
             <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Time Survived</div>
+              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Time Remaining</div>
               <div className="text-xl md:text-2xl font-mono font-bold">{formatTime(gameState.gameTime)}</div>
             </div>
 

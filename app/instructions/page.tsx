@@ -23,7 +23,7 @@ export default function InstructionsPage() {
             <h2 className="text-2xl font-bold font-mono uppercase text-accent">Objective</h2>
             <p className="text-base leading-relaxed">
               {
-                "Maintain the reactor at optimal performance by meeting the Power Generation Target while preventing a Meltdown. Balance multiple interdependent variables including Radioactivity, Temperature, Steam, Fuel Temperature, and Xenon levels."
+                "Maintain a stable reactor at optimal performance by meeting the power generation targets while preventing the reactor tempeature from exceeding safe limits and eventually a Meltdown. You will need to balance multiple variables including radioactivity, reactor temperature, steam volume, uranium fuel temperature, and xenon levels."
               }
             </p>
           </section>
@@ -36,7 +36,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Control Rods (×10)</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Click the rods on top of the reactor to adjust insertion percentage (0-100%). Rods contain 95% Boron (decreases radioactivity) and 5% Graphite tips (increases radioactivity). At 0-10% insertion, only graphite is active, increasing radioactivity. Above 10%, boron dominates and reduces radioactivity proportional to insertion depth."
+                    "Select the control rods on top of the reactor to adjust insertion percentage (0-100%). Boron rods decrease radioactivity, acting as a critical brake to increasing radioativity. The emergency AZ-5 button can be used to fully insert all rods at once in times of need. Be careful about fully removing the control rods. Once they are removed and reinserted, they can cause a spike in radioacitivty and steam due to their graphite tips. We are hoping to fix this design flaw with the RBMK reactor control rods very soon."
                   }
                 </p>
               </div>
@@ -45,7 +45,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Water Pumps (×4)</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Click the pipes around the reactor to toggle pumps On/Off. Pumps reduce reactor temperature when both ON and powered (shown as blue pipes). Each pump reduces temperature by ~0.5 units/second."
+                    "Select the pipes on each side the reactor to toggle water pumps on and off. Pumps reduce reactor temperature by ensuring a steady state of cooling water, but they need to be in the on position and powered (shown as blue pipes). Turning off all pumps will quickly result in a build up of steam and risk a spike in radioactivity."
                   }
                 </p>
               </div>
@@ -54,7 +54,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Turbine</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Click the turbine to toggle connection. When connected, converts steam into power output. Power Output = Steam Volume × 50 MW."
+                    "Our power station delivers electricity to the people of Pripyat as a result of the steam our reactor generates turning our electricity turbine. Select the turbine to toggle connection. If our power generation is too high, we may be asked to disconnect our turbine to avoid damage to the power grid"
                   }
                 </p>
               </div>
@@ -69,7 +69,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Radioactivity</h3>
                 <p className="text-xs leading-relaxed">
                   {
-                    "Visible as green glow. Has natural baseline increase from uranium fuel. Controlled by control rods and influenced by steam and fuel temperature. Warning at 250 units."
+                    "Uranium-235 fuel is naturally unstable and radioactive. Radioactivity must be stopped from increasing by insertion of boron control rods. High amounts of steam and a low uranium fuel temperature will increase radioactivity, and Xenon will reduce it. Balance these forces carefully."
                   }
                 </p>
               </div>
@@ -77,7 +77,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Reactor Temperature</h3>
                 <p className="text-xs leading-relaxed">
                   {
-                    "Increases with radioactivity, reduced by water pumps. Generates steam above 90°. Warning at 800°, meltdown at 1200°."
+                    "Our reactor temperature increases with higher radioactivity. This is needed in order to generate the steam that turns our turbine. Water pumps take cold water from the sea and removes excess heat. Our reactor core will meltdown at very high temperatures. This must be avoided at all costs"
                   }
                 </p>
               </div>
@@ -85,19 +85,19 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Steam Volume</h3>
                 <p className="text-xs leading-relaxed">
                   {
-                    "Generated exponentially based on reactor temperature (above 90°). Increases radioactivity over time. Turbine converts steam to power. Warning at 80 units."
+                    "A reactor temperature of ~90 degrees will generate steam. The hotter our reactor gets the more steam is created, and thus the more electricity we can generate. Steam increases radioactivity over time as our RBMK reactors have a positive void coefficient"
                   }
                 </p>
               </div>
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Fuel Temperature</h3>
                 <p className="text-xs leading-relaxed">
-                  {"Slowly increases with radioactivity, contributes to overall radioactivity growth."}
+                  {"Uranium fuel increases and decreases as our reactor temperatures changes. It takes longer to change, and there is a negative temperature coefficient. This means cool Uranium fuel is more radioactive, and hot Uranium fuel is less radioactive."}
                 </p>
               </div>
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Performance</h3>
-                <p className="text-xs leading-relaxed">{"Stay within ±10% of Power Target. Game over at 0%."}</p>
+                <p className="text-xs leading-relaxed">{"Our district's power grid requires us to stay within 10% of the power targets they set. If our power plant is consistently unable to meet these targets, you will be removed from your post as Chief Reactor Controller."}</p>
               </div>
             </div>
           </section>
@@ -113,7 +113,7 @@ export default function InstructionsPage() {
                 <strong className="font-mono">Power Cut:</strong> Water pumps lose power temporarily
               </li>
               <li>
-                <strong className="font-mono">Control Rod Stuck:</strong> Rods become immovable temporarily
+                <strong className="font-mono">Control Rod Stuck:</strong> Some control rods become immovable temporarily
               </li>
             </ul>
           </section>
@@ -122,7 +122,7 @@ export default function InstructionsPage() {
           <section className="space-y-3">
             <h2 className="text-2xl font-bold font-mono uppercase text-destructive">Game Over Conditions</h2>
             <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
-              <li>{"Reactor Temperature reaches 1200 units (MELTDOWN)"}</li>
+              <li>{"Reactor Temperature reaches 1200 degress (MELTDOWN)"}</li>
               <li>{"Performance drops to 0% (PERFORMANCE FAILURE)"}</li>
             </ul>
           </section>
