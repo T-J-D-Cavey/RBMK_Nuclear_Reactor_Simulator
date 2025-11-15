@@ -38,7 +38,7 @@ export default function TurbineModal({ open, onOpenChange, turbineConnected, onU
           <div className="bg-background border-2 border-border p-3 text-xs leading-relaxed">
             <p>
               {
-                "Toggle turbine connection. When connected, converts steam into power output. Power Output = Steam Volume × 50 MW."
+                "Toggle turbine connection. When connected, converts steam into power output."
               }
             </p>
           </div>

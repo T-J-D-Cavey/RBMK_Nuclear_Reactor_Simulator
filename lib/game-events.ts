@@ -78,7 +78,7 @@ function generatePowerCutEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "power-cut",
-    message: `⚡ UPDATE FROM HEAD ENGINEER: Power cut detected! Pumps offline`,
+    message: `⚡ UPDATE FROM HEAD ENGINEER: Power cut detected. Pumps offline.`,
     timestamp: state.gameTime,
     duration,
     data: { affectedPumps: [0, 1, 2, 3] },
@@ -107,7 +107,7 @@ function generateRodStuckEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "rod-stuck",
-    message: `⚡ UPDATE FROM HEAD ENGINEER:: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} stuck`,
+    message: `⚡ UPDATE FROM HEAD ENGINEER: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} stuck`,
     timestamp: state.gameTime,
     duration,
     data: { affectedRods },
