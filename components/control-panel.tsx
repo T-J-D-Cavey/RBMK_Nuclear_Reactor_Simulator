@@ -94,7 +94,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
             }`}
           >
             <div className="text-xs text-muted-foreground font-mono uppercase">Radioactivity</div>
-            <div className="font-mono font-bold">{Math.round(gameState.radioactivity)}</div>
+            <div className="font-mono vfd-display">{Math.round(gameState.radioactivity)}</div>
           </div>
 
           <div
@@ -103,12 +103,12 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
             }`}
           >
             <div className="text-xs text-muted-foreground font-mono uppercase">Reactor Temp</div>
-            <div className="font-mono font-bold">{Math.round(gameState.reactorTemp)}°</div>
+            <div className="font-mono font-bold vfd-display">{Math.round(gameState.reactorTemp)}°</div>
           </div>
 
           <div className="bg-background border-2 border-border p-2 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase">Fuel Temp</div>
-            <div className="font-mono font-bold">{Math.round(gameState.fuelTemp)}°</div>
+            <div className="font-mono font-bold vfd-display">{Math.round(gameState.fuelTemp)}°</div>
           </div>
 
           <div
@@ -117,12 +117,12 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
             }`}
           >
             <div className="text-xs text-muted-foreground font-mono uppercase">Steam</div>
-            <div className="font-mono font-bold">{Math.round(gameState.steamVolume)}</div>
+            <div className="font-mono font-bold vfd-display">{Math.round(gameState.steamVolume)}</div>
           </div>
 
           <div className="bg-background border-2 border-border p-2 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase">Xenon</div>
-            <div className="font-mono font-bold">{Math.round(gameState.xenon)}</div>
+            <div className="font-mono font-bold vfd-display">{Math.round(gameState.xenon)}</div>
           </div>
         </div>
 

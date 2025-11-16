@@ -146,6 +146,32 @@
   letter-spacing: 0.1em;
 }
 
+.vfd-display {
+  /* FONT: Keep the same monospaced font */
+  font-family: "Geist Mono", monospace;
+
+  /* BACKGROUND: Light/Medium Green Hue (Hue 130) */
+  /* This value is much lighter (L=0.55) to be a visible green background */
+  background: oklch(0.55 0.1 130); 
+  
+  /* COLOR: Black Text (Very low lightness L=0.0) */
+  color: oklch(0.0 0.0 0); 
+  
+  /* GLOW: Remove the glow effect */
+  text-shadow: none; 
+  
+  /* SIZE: Maintain compact padding */
+  padding: 0.3rem 0.8rem; 
+  
+  /* BORDER: Dark border to frame the light screen */
+  border: 2px solid oklch(0.2 0.0 0); /* Dark gray/black border */
+  border-radius: var(--radius-sm);
+  
+  /* TEXT STYLE: Maintain boldness */
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
 .led-green {
   color: var(--color-led-green);
 }
