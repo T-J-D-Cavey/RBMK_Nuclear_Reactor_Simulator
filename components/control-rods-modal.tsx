@@ -176,7 +176,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
 
                     {/* Thin draggable lever line */}
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 w-5 sm:w-4 h-1 ${
+                      className={`absolute left-1/2 -translate-x-1/2 -translate-y-2 w-5 sm:w-4 h-3 ${
                         rod.stuck
                           ? "bg-destructive cursor-not-allowed"
                           : "bg-foreground cursor-grab active:cursor-grabbing hover:bg-primary"

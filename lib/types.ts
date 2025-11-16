@@ -56,6 +56,7 @@ export interface GameState {
   activeEvents: GameEvent[]
   eventHistory: GameEvent[]
   lastEventTime: number
+  justHadPowerCut: boolean
 
   // Warnings
   warnings: string[]
@@ -98,7 +99,8 @@ export const INITIAL_GAME_STATE: GameState = {
 
   activeEvents: [],
   eventHistory: [],
-  lastEventTime: 900, // Match initial gameTime
+  lastEventTime: 900, // Match initial gameTime (easy mode)
+  justHadPowerCut: false,
 
   warnings: [],
 }

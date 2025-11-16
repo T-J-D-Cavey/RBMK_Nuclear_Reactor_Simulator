@@ -23,7 +23,7 @@ export default function InstructionsPage() {
             <h2 className="text-2xl font-bold font-mono uppercase text-accent">Objective</h2>
             <p className="text-base leading-relaxed">
               {
-                "Maintain a stable reactor at optimal performance by meeting the power generation targets while preventing the reactor tempeature from exceeding safe limits and eventually a Meltdown. You will need to balance multiple variables including radioactivity, reactor temperature, steam volume, uranium fuel temperature, and xenon levels."
+                "Maintain a stable reactor at optimal performance by meeting the power generation targets while preventing the reactor tempeature from exceeding safe limits and eventually a meltdown. You will need to balance multiple variables including radioactivity, reactor temperature, steam volume, uranium fuel temperature, and xenon levels."
               }
             </p>
           </section>

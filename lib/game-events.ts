@@ -1,6 +1,6 @@
 import type { GameEvent, GameState } from "./types"
 
-const EVENT_MIN_INTERVAL = 60 // 1 minute in seconds
+const EVENT_MIN_INTERVAL = 120 // 2 minutes in seconds
 const EVENT_MAX_INTERVAL = 240 // 4 minutes in seconds
 
 export function shouldTriggerEvent(state: GameState): boolean {
@@ -25,7 +25,7 @@ export function shouldTriggerEvent(state: GameState): boolean {
       (timeSinceLastEvent - EVENT_MIN_INTERVAL) / (EVENT_MAX_INTERVAL - EVENT_MIN_INTERVAL),
       1,
     )
-    return Math.random() < probability * 0.1 // 10% chance per tick
+    return Math.random() < 0.01 + probability * 0.99 
   }
 
   return false
@@ -43,19 +43,21 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
   // Event type weights: 50% target change, 25% power cut, 25% rod stuck
   const roll = Math.random()
 
-  if (roll <= 0.7) {
-    return generateTargetChangeEvent(state)
-  } else if (roll <= 0.85) {
-    return generatePowerCutEvent(state)
+  if (roll <= 0.33) {
+    if(!state.justHadPowerCut) {
+      return generatePowerCutEvent(state)
+    } else {
+      return generateRodStuckEvent(state)
+    }
   } else {
-    return generateRodStuckEvent(state)
-  }
+    return generateTargetChangeEvent(state)
+  } 
 }
 
 function generateTargetChangeEvent(state: GameState): GameEvent {
   // Target range: 1600 to 12000 MW (a difference of 10400)
-  const range = state.difficultyIsHard ? 10400 : 5200
-  const minTarget = state.difficultyIsHard ? 1600 : 3200
+  const range = state.difficultyIsHard ? 10000 : 6000
+  const minTarget = state.difficultyIsHard ? 1000 : 2000
 
   // 1. Calculate a random number between the ranges
   // 2. Divide by 100, round to the nearest whole number (e.g., 55.4 -> 55, 55.6 -> 56)
@@ -126,6 +128,7 @@ export function applyEvent(state: GameState, event: GameEvent): Partial<GameStat
     activeEvents: [...activeEvents, event],
     lastEventTime: state.gameTime,
     eventHistory: [...state.eventHistory, event],
+    justHadPowerCut: event.type === "power-cut" ? true : false,
   }
 
   switch (event.type) {

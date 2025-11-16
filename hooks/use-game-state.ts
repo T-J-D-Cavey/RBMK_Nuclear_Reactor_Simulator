@@ -135,7 +135,7 @@ export function useGameState() {
             newState.isGameOver = true
             newState.gameOverReason = gameOverCheck.reason
           }
-
+          console.log(newState.lastEventTime)
           return newState
         })
       }, TICK_INTERVAL)

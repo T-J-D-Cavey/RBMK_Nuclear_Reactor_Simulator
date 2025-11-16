@@ -40,7 +40,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-background border-2 border-border p-3 text-xs leading-relaxed">
+          <div className="bg-background border-2 border-border p-3 text-xs leading-relaxed text-center">
             <p>
               {
                 "Toggle water pumps On/Off. Pumps reduce reactor temperature when both ON and powered."

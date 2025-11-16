@@ -66,11 +66,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
             <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">{gameState.powerTarget} MW</div>
           </div>
 
-          <div
-            className={`bg-background p-3 space-y-1 transition-all ${
-              lowPerformanceWarning ? "border-6 border-red-600 animate-border-flash" : "border-2 border-border"
-            }`}
-          >
+          <div className={"bg-background p-3 space-y-1 transition-all border-2 border-border"}>
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Performance</div>
             <div
               className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${
