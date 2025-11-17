@@ -35,7 +35,6 @@ FIXES TO MAKE:
 - Update cancel game wording
 - Full review of all UI, checking wording, designs
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
-- add a div behind the reactor, which has an ever increasing border radius glow when high radioactivity
 
 MECHANIC CHANGES:
 

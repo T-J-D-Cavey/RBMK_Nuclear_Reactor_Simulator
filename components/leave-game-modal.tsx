@@ -24,10 +24,10 @@ export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModal
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive text-xl font-bold">
             <AlertTriangle className="h-6 w-6" />
-            WARNING: ABANDON REACTOR?
+            QUIT GAME?
           </DialogTitle>
           <DialogDescription className="text-base font-mono pt-4">
-            Leaving the game will reset the reactor to its initial state. All progress will be lost, including:
+            You'll lose your progress if you quite the simulation. Press the pause button to save:
           </DialogDescription>
         </DialogHeader>
         <div className="px-6">
