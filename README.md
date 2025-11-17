@@ -32,10 +32,10 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-
+- Update cancel game wording
 - Full review of all UI, checking wording, designs
-- Test adding background picture for game page
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
+- add a div behind the reactor, which has an ever increasing border radius glow when high radioactivity
 
 MECHANIC CHANGES:
 
@@ -47,4 +47,4 @@ OPTION NEW FUNCTIONALITY:
 - change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
 
 
-metal wall: Image by <a href="https://pixabay.com/users/squarefrog-9690118/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=4484576">Square Frog</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=4484576">Pixabay</a>
+Reactor hall background: Photo by <a href="https://unsplash.com/@aadii2050?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Adeel Ahmed</a> on <a href="https://unsplash.com/photos/interior-view-of-a-large-glass-dome-ceiling-with-lights-Jxj4W56g248?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>

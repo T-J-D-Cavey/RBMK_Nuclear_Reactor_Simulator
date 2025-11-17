@@ -17,6 +17,9 @@ export default function GamePage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const router = useRouter()
 
+  const controlRoomBackground = "control_room_background.jpg"
+  const reactorRoomBackground = "reactor_hall_background.jpg"
+
   const handleHomeClick = () => {
     setShowLeaveModal(true)
   }
@@ -53,7 +56,7 @@ export default function GamePage() {
       <LeaveGameModal open={showLeaveModal} onOpenChange={setShowLeaveModal} onConfirm={handleConfirmLeave} />
 
       {/* Top Half - Control Panel */}
-      <div className="flex-1 p-4 md:p-6 border-b-4 border-primary">
+      <div className="flex-1 p-4 md:p-6 border-b-4 border-primary bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
         <ControlPanel gameState={gameState} onTogglePause={togglePause} />
       </div>
 
@@ -61,7 +64,7 @@ export default function GamePage() {
       <MessageArea gameState={gameState} />
 
       {/* Bottom Half - Reactor Display */}
-      <div className="flex-1 p-4 md:p-6 flex items-center justify-center">
+      <div className="flex-1 p-4 md:p-6 flex items-center justify-center bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${reactorRoomBackground})`}}>
         <ReactorDisplay gameState={gameState} updateGameState={updateGameState} />
       </div>
     </div>

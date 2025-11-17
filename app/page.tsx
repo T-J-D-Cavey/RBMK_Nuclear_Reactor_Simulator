@@ -32,7 +32,7 @@ export default function HomePage() {
     router.push("/game")
   }
 
-  const controlRoomBackground = "/control_room_background.jpg"
+  const controlRoomBackground = "control_room_background.jpg"
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>

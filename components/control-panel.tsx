@@ -29,6 +29,8 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
   const highXenonWarning = gameState.xenon > 50
   const lowFuelTempWarning = gameState.fuelTemp < 49
 
+
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="bg-card border-4 border-primary p-4 md:p-6 space-y-4">
