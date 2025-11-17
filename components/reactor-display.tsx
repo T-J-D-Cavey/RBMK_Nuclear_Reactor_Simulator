@@ -63,6 +63,27 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
     </div>
     {/* MAIN CONTENT STACK */}
     <div className="flex flex-col items-center w-full">
+    {/* 1. THE RADIOACTIVE GLOW DIV (Behind the Image) */}
+    <div 
+        className={`
+            absolute 
+            top-1/2 
+            left-1/2 
+            -translate-x-1/2 
+            -translate-y-1/2 
+            w-1/3 
+            h-1/2  
+            rounded-full 
+            -z-0 
+            transition-all 
+            duration-300
+            bg-transparent
+        `}
+        style={{
+            // CSS to create the pulsing shadow based on the level
+            boxShadow: `0 0 3rem ${glowIntensity * 7}rem oklch(0.9018 0.0978 187.55)` 
+        }}
+    />
       
       {/* REACTOR + PUMPS ANCHOR */}
       <div className="relative">
