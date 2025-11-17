@@ -36,7 +36,6 @@ FIXES TO MAKE:
 - Full review of all UI, checking wording, designs
 - Test adding background picture for game page
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
-- "lastEventTime: 900" in initiral game state are other bits of starting state is correctly changed somewhere when hard mode is selected, try and find out where
 
 MECHANIC CHANGES:
 
@@ -46,3 +45,6 @@ MECHANIC CHANGES:
 OPTION NEW FUNCTIONALITY:
 
 - change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
+
+
+metal wall: Image by <a href="https://pixabay.com/users/squarefrog-9690118/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=4484576">Square Frog</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=4484576">Pixabay</a>

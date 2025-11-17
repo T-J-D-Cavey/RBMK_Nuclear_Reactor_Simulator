@@ -132,7 +132,7 @@ function calculateTemperatures(state: GameState): GameState {
 
     // 4. THERMAL LAG (Reactor Temp affects Fuel Temp) - UNCHANGED
     const tempGap = state.reactorTemp - state.fuelTemp
-    const THERMAL_TRANSFER_RATE = 0.04
+    const THERMAL_TRANSFER_RATE = 0.03
     fuelTempChange = tempGap * THERMAL_TRANSFER_RATE
 
     // 5. APPLY CHANGES AND LIMITS
