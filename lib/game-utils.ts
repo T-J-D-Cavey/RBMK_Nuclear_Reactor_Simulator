@@ -58,6 +58,10 @@ export function checkWarnings(state: GameState): string[] {
     warnings.push("WARNING: Low steam pressure causing reduced power generation. Recommend turning off some water pumps to increase reactor temperature and reducing control rod insertion to increase radioactivity")
   }
 
+  if (state.xenon >= THRESHOLDS.xenon.highWarning) {
+    warnings.push("WARNING: High xenon levels detected, lowering radioactivity. Recommend reducing control rod insertion to increase radioactivity.")
+  }
+
   if (state.performance < 50) {
     warnings.push("WARNING: Our power station is reporting low grid target performance. Review power targets")
   }
@@ -72,14 +76,14 @@ export function checkGameOver(state: GameState): {
   if (state.reactorTemp >= THRESHOLDS.reactorTemp.meltdown) {
     return {
       isGameOver: true,
-      reason: "MELTDOWN - Reactor temperature exceeded safe limits",
+      reason: "MELTDOWN - Reactor temperature has exceeded maximum limits. Uranium fuel is melting down. Initiate emergency stations",
     }
   }
 
   if (state.performance <= THRESHOLDS.performance.gameOver) {
     return {
       isGameOver: true,
-      reason: "PERFORMANCE FAILURE - Unable to meet power requirements",
+      reason: "UNACCEPTABLE POWER GRID PERFORMANCE - You have been removed from your post due to poor performance meeting grid targets",
     }
   }
 

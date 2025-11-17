@@ -112,8 +112,10 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
           </div>
         </div>
 
-        {/* Footnote */}
-        <p className="text-xs text-muted-foreground font-mono">{"Game state automatically saved to local storage"}</p>
+        {/* Footer Info */}
+        <div className="text-sm text-muted-foreground font-mono space-y-1">
+          <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
+        </div>
       </div>
     </div>
   )

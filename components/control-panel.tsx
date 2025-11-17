@@ -24,6 +24,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
   const highRadioactivityWarning = gameState.radioactivity > 250
   const highReactorTempWarning = gameState.reactorTemp > 800
   const highSteamWarning = gameState.steamVolume > 300
+  const lowSteamWarning = gameState.steamVolume <= 0
   const lowPerformanceWarning = gameState.performance < 30
   const highXenonWarning = gameState.xenon > 50
   const lowFuelTempWarning = gameState.fuelTemp < 49
@@ -119,7 +120,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
 
           <div
             className={`bg-background p-2 space-y-1 transition-all ${
-              highSteamWarning ? "border-3 border-red-600 animate-border-flash" : "border-3 border-border"
+              highSteamWarning || lowSteamWarning ? "border-3 border-red-600 animate-border-flash" : "border-3 border-border"
             }`}
           >
             <div className="text-xs text-muted-foreground font-mono uppercase">Steam</div>

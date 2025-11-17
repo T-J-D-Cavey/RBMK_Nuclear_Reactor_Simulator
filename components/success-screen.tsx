@@ -52,7 +52,7 @@ export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
               <Star className="w-8 h-8 text-accent" />
             </div>
             <p className="text-lg md:text-xl font-mono text-foreground leading-relaxed">
-              Reactor shutdown complete. No casualties reported.
+              Reactor stable. Your shift is over, good job!
             </p>
           </div>
 
@@ -123,10 +123,10 @@ export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
           </div>
         </div>
 
-        {/* Footnote */}
-        <p className="text-sm text-accent font-mono font-bold animate-pulse">
-          {"★ OUTSTANDING PERFORMANCE - REACTOR SECURED ★"}
-        </p>
+        {/* Footer Info */}
+        <div className="text-sm text-muted-foreground font-mono space-y-1">
+          <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
+        </div>
       </div>
     </div>
   )

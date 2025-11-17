@@ -32,7 +32,7 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- update warning messages to align with warning control panels
+
 - Full review of all UI, checking wording, designs
 - Test adding background picture for game page
 - AZ5 button changes when I hover but doesn't change back after moving mouse away

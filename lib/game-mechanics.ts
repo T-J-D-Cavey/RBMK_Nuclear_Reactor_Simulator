@@ -47,7 +47,7 @@ function calculateRadioactivity(state: GameState): GameState {
     radioactivityChange += (120 - state.fuelTemp) * 0.01
   }
   if (state.fuelTemp <= 50) {
-    radioactivityChange += (50 - state.fuelTemp) * 0.16
+    radioactivityChange += (50 - state.fuelTemp) * 0.19
   }
 
   // Xenon affects radioactivity (inverse/fast)
@@ -239,8 +239,8 @@ function calculateXenon(state: GameState): GameState {
   }
 
   // Xenon Reduction: Decreases when radioactivity > 150
-  if (state.radioactivity > 150) {
-    if (state.radioactivity > 250) {
+  if (state.radioactivity > 90) {
+    if (state.radioactivity > 150) {
       // Faster reduction if radioactivity > 250
       xenonChange -= 24
     } else {

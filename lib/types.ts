@@ -125,5 +125,8 @@ export const THRESHOLDS = {
   performance: {
     gameOver: 0,
   },
+  xenon: {
+    highWarning: 50,
+  },
   powerTolerance: 0.1, // 10%
 } as const
