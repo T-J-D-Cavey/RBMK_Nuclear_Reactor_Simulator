@@ -32,6 +32,7 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
+- update warning messages to align with warning control panels
 - Full review of all UI, checking wording, designs
 - Test adding background picture for game page
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
@@ -39,8 +40,6 @@ FIXES TO MAKE:
 
 MECHANIC CHANGES:
 
-- make fuel temperature move slower in relation to reactor temperature
-- Increase the affect of no water pumps on steam but ensure it is relative to radioactivity, steam should spike as the remaining water turns to steam 
 - Review all mechnics that use flat change values and consider making them proportional to the thing they are affected by, similar to how steam is worked out. That way everything is more exponential
 - Consider increasing affect all all factors, maintani balance but ensuring things move out of balance faster
 

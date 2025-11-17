@@ -39,23 +39,20 @@ function calculateRadioactivity(state: GameState): GameState {
 
   // Fuel Temperature affects radioactivity (inverse/slow)
   // Higher fuel temp reduces radioactivity
-  if (state.fuelTemp > 700 && state.fuelTemp < 900) {
+  if (state.fuelTemp > 700) {
     radioactivityChange -= (state.fuelTemp - 700) * 0.01
-  }
-  if (state.fuelTemp >= 900) {
-    radioactivityChange -= (state.fuelTemp - 900) * 0.02
   }
   // Lower fuel temp increases radioactivity
   if (state.fuelTemp < 120 && state.fuelTemp > 50) {
     radioactivityChange += (120 - state.fuelTemp) * 0.01
   }
   if (state.fuelTemp <= 50) {
-    radioactivityChange += (50 - state.fuelTemp) * 0.05
+    radioactivityChange += (50 - state.fuelTemp) * 0.16
   }
 
   // Xenon affects radioactivity (inverse/fast)
   // Higher xenon reduces radioactivity
-  radioactivityChange -= state.xenon * 0.01
+  radioactivityChange -= state.xenon * 0.065
 
   // Steam Volume affects radioactivity (direct/quick)
   // High steam slightly increases radioactivity
@@ -135,7 +132,7 @@ function calculateTemperatures(state: GameState): GameState {
 
     // 4. THERMAL LAG (Reactor Temp affects Fuel Temp) - UNCHANGED
     const tempGap = state.reactorTemp - state.fuelTemp
-    const THERMAL_TRANSFER_RATE = 0.1
+    const THERMAL_TRANSFER_RATE = 0.04
     fuelTempChange = tempGap * THERMAL_TRANSFER_RATE
 
     // 5. APPLY CHANGES AND LIMITS
@@ -182,6 +179,13 @@ function calculateSteam(state: GameState): GameState {
     const CHASE_RATE = 0.5; 
     steamChange = steamGap * CHASE_RATE;
 
+    // If all water pumps are turned off, steam rapidly rises in relation to radioactivity
+    const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
+    
+    if(activePumps.length === 0) {
+      steamChange += state.radioactivity * 0.1
+    }
+
   } 
 
   // Max steam volume is 600 units
@@ -227,7 +231,7 @@ function calculateXenon(state: GameState): GameState {
   }
   // Xenon Generation: Produced only when radioactivity < 50
   if (state.radioactivity <= 10) {
-    xenonChange += 1
+    xenonChange += 0.5
   }
 
   if (state.radioactivity > 10 && state.radioactivity < 50) {
@@ -238,13 +242,13 @@ function calculateXenon(state: GameState): GameState {
   if (state.radioactivity > 150) {
     if (state.radioactivity > 250) {
       // Faster reduction if radioactivity > 250
-      xenonChange -= 8
+      xenonChange -= 24
     } else {
-      xenonChange -= 2
+      xenonChange -= 16
     }
   }
 
-  const newXenon = Math.max(0, Math.min(350, state.xenon + xenonChange))
+  const newXenon = Math.max(0, Math.min(100, state.xenon + xenonChange))
 
   return { ...state, xenon: newXenon }
 }

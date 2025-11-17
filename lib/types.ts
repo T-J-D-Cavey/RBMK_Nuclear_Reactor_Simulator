@@ -116,7 +116,7 @@ export const THRESHOLDS = {
   },
   fuelTemp: {
     highWarning: 900,
-    lowWarning: 90,
+    lowWarning: 49,
   },
   steamVolume: {
     highWarning: 300,
