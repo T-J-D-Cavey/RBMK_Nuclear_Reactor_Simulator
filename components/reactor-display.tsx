@@ -81,7 +81,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
         `}
         style={{
             // CSS to create the pulsing shadow based on the level
-            boxShadow: `0 0 15rem ${glowIntensity * 8}rem oklch(0.9018 0.0978 187.55)` 
+            boxShadow: `0 0 20rem ${glowIntensity * 10}rem oklch(0.9018 0.0978 187.55)` 
         }}
     />
       

@@ -130,7 +130,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           <div className="bg-background border-2 border-border p-2 text-[10px] sm:text-xs leading-relaxed text-center">
             <p>
               {
-                "Drag the LEVERS to adjust rod insertion (0-100%)."
+                "Drag the LEVERS to adjust rod insertion (0-100%). A higher insertion percentage for any rod will reduce radioactivity"
               }
             </p>
                       <p>

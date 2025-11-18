@@ -38,7 +38,7 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
       <div className="max-w-2xl w-full space-y-8 text-center">
         {/* Title */}
-        <div className="space-y-4">
+        <div className="space-y-4 bg-black/20">
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-reactor-blue uppercase font-mono">
             R B M K
           </h1>
@@ -83,7 +83,7 @@ export default function HomePage() {
         </div>
 
         {/* Footer Info */}
-        <div className="text-sm text-reactor-blue font-mono space-y-1">
+        <div className="text-sm text-reactor-blue font-mono space-y-1 bg-black/20">
           <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
         </div>
       </div>
