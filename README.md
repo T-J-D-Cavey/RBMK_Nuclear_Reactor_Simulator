@@ -32,14 +32,13 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- Update cancel game wording
 - Full review of all UI, checking wording, designs
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
+- on game page when exit warning modal appears, the buttons are too big on James's computure 
 
 MECHANIC CHANGES:
 
-- Review all mechnics that use flat change values and consider making them proportional to the thing they are affected by, similar to how steam is worked out. That way everything is more exponential
-- Consider increasing affect all all factors, maintani balance but ensuring things move out of balance faster
+- Controls rods are too powerful when fully inserted, it might be worth adjusting this so it stays proportional to insertion % whilst ensuring if they are fully inserted, radioactivity doesn't spike when fuel is lowest
 
 OPTION NEW FUNCTIONALITY:
 

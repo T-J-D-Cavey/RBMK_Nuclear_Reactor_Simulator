@@ -135,7 +135,7 @@ export function useGameState() {
             newState.isGameOver = true
             newState.gameOverReason = gameOverCheck.reason
           }
-          console.log(newState.lastEventTime)
+          console.log(" justHadPowerCut in newState is set to " + newState.justHadPowerCut + " and justHadPowerCut in prev is set to " + prev.justHadPowerCut)
           return newState
         })
       }, TICK_INTERVAL)

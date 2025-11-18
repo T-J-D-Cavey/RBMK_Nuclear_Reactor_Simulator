@@ -29,6 +29,8 @@ export function calculateGameTick(state: GameState): Partial<GameState> {
   return newState
 }
 
+// Please note below is where most of the logic lives to change state. But there is logic in use-game-state.ts which increases radioactivity, steam and reactor temp when control rods went from full removed into a non fully removed state:
+
 function calculateRadioactivity(state: GameState): GameState {
   let radioactivityChange = 0
 
@@ -37,17 +39,14 @@ function calculateRadioactivity(state: GameState): GameState {
 
   radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.05
 
-  // Fuel Temperature affects radioactivity (inverse/slow)
+  // Fuel Temperature affects radioactivity
   // Higher fuel temp reduces radioactivity
   if (state.fuelTemp > 700) {
     radioactivityChange -= (state.fuelTemp - 700) * 0.01
   }
   // Lower fuel temp increases radioactivity
-  if (state.fuelTemp < 120 && state.fuelTemp > 50) {
-    radioactivityChange += (120 - state.fuelTemp) * 0.01
-  }
-  if (state.fuelTemp <= 50) {
-    radioactivityChange += (50 - state.fuelTemp) * 0.19
+  if (state.fuelTemp < 100) {
+    radioactivityChange += (100 - state.fuelTemp) * 0.09
   }
 
   // Xenon affects radioactivity (inverse/fast)
@@ -60,7 +59,7 @@ function calculateRadioactivity(state: GameState): GameState {
     radioactivityChange += (state.steamVolume) * 0.02
   }
 
-  const newRadioactivity = Math.max(0, Math.min(1000, state.radioactivity + radioactivityChange))
+  const newRadioactivity = Math.max(0, state.radioactivity + radioactivityChange))
 
   return { ...state, radioactivity: newRadioactivity }
 }
@@ -188,9 +187,7 @@ function calculateSteam(state: GameState): GameState {
 
   } 
 
-  // Max steam volume is 600 units
-  const MAX_STEAM = 600; 
-  const newSteam = Math.max(0, Math.min(MAX_STEAM, state.steamVolume + steamChange));
+  const newSteam = Math.max(0, state.steamVolume + steamChange);
 
   return { ...state, steamVolume: newSteam };
 }

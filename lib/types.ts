@@ -100,7 +100,7 @@ export const INITIAL_GAME_STATE: GameState = {
   activeEvents: [],
   eventHistory: [],
   lastEventTime: 900, // Match initial gameTime (easy mode)
-  justHadPowerCut: false,
+  justHadPowerCut: true,
 
   warnings: [],
 }

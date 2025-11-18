@@ -38,8 +38,8 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
         <div className="text-center">
           <div className="flex items-center justify-center gap-4">
             <div
-              className={`w-4 h-4 md:w-6 md:h-6 rounded-full transition-all flex-shrink-0 ${
-                hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-red-900 border-2 border-muted"
+              className={`w-4 h-4 md:w-6 md:h-6 rounded-full transition-all flex-shrink-0 border-red-900 border-2 ${
+                hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-red-900"
               }`}
             />
 
@@ -48,8 +48,8 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
             </h1>
 
             <div
-              className={`w-4 h-4 md:w-6 md:h-6 rounded-full transition-all flex-shrink-0 ${
-                hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-red-900 border-2 border-muted"
+              className={`w-4 h-4 md:w-6 md:h-6 rounded-full transition-all flex-shrink-0 border-red-900 border-2 ${
+                hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-red-900"
               }`}
             />
           </div>
@@ -67,7 +67,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
 
           {/* Power Target */}
           <div className="bg-background border-3 border-border p-3 space-y-1">
-            <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Target</div>
+            <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Power Target</div>
             <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">{gameState.powerTarget} MW</div>
           </div>
 

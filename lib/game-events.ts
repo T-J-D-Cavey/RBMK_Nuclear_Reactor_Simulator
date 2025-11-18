@@ -1,16 +1,19 @@
 import type { GameEvent, GameState } from "./types"
 
-const EVENT_MIN_INTERVAL = 120 // 2 minutes in seconds
-const EVENT_MAX_INTERVAL = 240 // 4 minutes in seconds
+const EVENT_MIN_INTERVAL = 120 // 2 minutes in seconds  
+const EVENT_MAX_INTERVAL = 240 // 4 minutes in seconds 
+
 
 export function shouldTriggerEvent(state: GameState): boolean {
   const timeSinceLastEvent = state.lastEventTime - state.gameTime
 
   // Hard mode: 30min = 1800s, so first minute is when gameTime > 1740
   // Easy mode: 15min = 900s, so first minute is when gameTime > 840
-  if ((state.difficultyIsHard && state.gameTime > 1770) || (!state.difficultyIsHard && state.gameTime > 870)) {
+  
+  if ((state.difficultyIsHard && state.gameTime > 1770) || (!state.difficultyIsHard && state.gameTime > 870)) { 
     return false
   }
+  
 
   const hasActivePowerCut = state.activeEvents.some((e) => e.type === "power-cut")
   const hasActiveRodStuck = state.activeEvents.some((e) => e.type === "rod-stuck")
@@ -124,11 +127,18 @@ export function applyEvent(state: GameState, event: GameEvent): Partial<GameStat
     activeEvents = activeEvents.filter((e) => e.type !== "target-change")
   }
 
+  let justHadPowerCutChange = false
+  let newValueForPowerCutCheck = ""
+  
+  if(event.type === "rod-stuck" || event.type === "power-cut") {
+    justHadPowerCutChange = true
+  }
+
   const updates: Partial<GameState> = {
     activeEvents: [...activeEvents, event],
     lastEventTime: state.gameTime,
     eventHistory: [...state.eventHistory, event],
-    justHadPowerCut: event.type === "power-cut" ? true : false,
+    justHadPowerCut: justHadPowerCutChange ? (event.type === "rod-stuck" ? false : true) : state.justHadPowerCut,
   }
 
   switch (event.type) {
