@@ -14,10 +14,8 @@ export function getRadioactivityFromRods(rods: ControlRod[]): number {
   rods.forEach((rod) => {
     const insertion = rod.insertion
 
-    if (insertion > 0 && insertion < 100) {
-      totalChange -= insertion * 0.2
-    } else if (insertion == 100) {
-      totalChange -= insertion * 0.5
+    if (insertion > 0) {
+      totalChange += insertion
     } else {
       // No insertion, no affect
       totalChange += 0

@@ -36,8 +36,9 @@ function calculateRadioactivity(state: GameState): GameState {
 
   // Uranium fuel is naturally radioactive and always produces baseline radioactivity
   radioactivityChange += 2 // Constant baseline positive radioactivity
- // Tim: I will refactor this, removing the multiplication within the function and any difference when the rods are 100% inserted, and applying a final * 0.012
-  radioactivityChange += getRadioactivityFromRods(state.controlRods) * 0.05
+
+  // Control rods reduce radioactivity
+  radioactivityChange -= getRadioactivityFromRods(state.controlRods) * 0.012
 
   // Fuel Temperature affects radioactivity
   // Higher fuel temp reduces radioactivity
