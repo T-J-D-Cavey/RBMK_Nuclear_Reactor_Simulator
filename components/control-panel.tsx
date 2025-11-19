@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import type { GameState } from "@/lib/types"
 import { formatTime } from "@/lib/game-utils"
 import { checkWarnings } from "@/lib/game-utils"
@@ -12,6 +14,12 @@ interface ControlPanelProps {
 }
 
 export default function ControlPanel({ gameState, onTogglePause }: ControlPanelProps) {
+  const [rodsModalOpen, setRodsModalOpen] = useState(false)
+  const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
+  const [turbineModalOpen, setTurbineModalOpen] = useState(false)
+
+
+
   const powerTolerance = 0.1 // 10%
   const lowerBound = gameState.powerTarget * (1 - powerTolerance)
   const upperBound = gameState.powerTarget * (1 + powerTolerance)
@@ -139,27 +147,125 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
           </div>
         </div>  
 
-        {/* Pause Button */}
-        <div className="flex justify-center pt-2">
-          <Button
-            onClick={onTogglePause}
-            size="lg"
-            variant={gameState.isPaused ? "default" : "outline"}
-            className="uppercase font-mono tracking-wider px-8 border-2 border-primary"
-          >
-            {gameState.isPaused ? (
-              <>
-                <Play className="mr-2 h-5 w-5" />
-                Resume
-              </>
-            ) : (
-              <>
-                <Pause className="mr-2 h-5 w-5" />
-                Pause
-              </>
-            )}
-          </Button>
-        </div>
+
+        
+
+        {/* Control panel buttons */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm p-4 bg-neutral-900 rounded-lg border-4 border-neutral-800">
+
+              {/* --- 1. PAUSE BUTTON (State Dependent Color & Glow) --- */}
+              <button
+                onClick={onTogglePause}
+                className={`
+                  btn-retro w-full h-32 flex flex-col items-center justify-center rounded-md border border-white/5
+                  ${gameState.isPaused 
+                    ? "shadow-[0_0_20px_rgba(220,38,38,0.6)] border-red-500/50" // External red glow when paused
+                    : ""
+                  }
+                `}
+              >
+                <div className="text-xs text-neutral-400 font-mono mb-2 tracking-widest uppercase">Sys. Pause</div>
+
+                {/* The Physical Light/Button Face */}
+                <div 
+                  className={`
+                    w-16 h-16 rounded flex items-center justify-center transition-colors duration-200 border-2
+                    ${gameState.isPaused 
+                      ? "bg-red-600 border-red-400 shadow-[inset_0_0_10px_rgba(0,0,0,0.2)]" // Lit state
+                      : "bg-red-900/40 border-red-900/60" // Dim state
+                    }
+                  `}
+                >
+                  <span className={`font-bold font-mono text-lg ${gameState.isPaused ? "text-white drop-shadow-md" : "text-red-900/50"}`}>
+                    {gameState.isPaused ? "HALT" : "RUN"}
+                  </span>
+                </div>
+              </button>
+
+
+              {/* --- 2. WATER PUMPS (Indicator Array) --- */}
+              <button
+                onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+                disabled={gameState.isPaused}
+                className="btn-retro w-full h-32 flex flex-col items-center justify-between py-3 px-2 rounded-md border border-white/5 bg-neutral-800"
+              >
+                <div className="text-xs text-neutral-400 font-mono tracking-widest uppercase">Pumps</div>
+
+                {/* The Lamp Grid */}
+                <div className="grid grid-cols-4 gap-x-3 gap-y-2 p-2 bg-black/40 rounded inset-shadow">
+
+                  {gameState.waterPumps.map((pump, idx) => (
+                    <div key={idx} className="flex flex-col gap-2 items-center">
+                      {/* Top Row: Pump ON (Green/Emerald) */}
+                      <div 
+                        className={`
+                          retro-lamp w-4 h-4 rounded-full
+                          ${pump.on 
+                            ? "bg-emerald-400 text-emerald-400 on" // Bright/Glow
+                            : "bg-emerald-900/30" // Dim
+                          }
+                        `} 
+                      />
+
+                      {/* Bottom Row: Pump POWERED (Amber/Yellow) */}
+                      <div 
+                        className={`
+                          retro-lamp w-4 h-4 rounded-full
+                          ${pump.powered 
+                            ? "bg-amber-400 text-amber-400 on" 
+                            : "bg-amber-900/30"
+                          }
+                        `} 
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[10px] text-neutral-500 font-mono">STATUS / PWR</div>
+              </button>
+
+
+              {/* --- 3. CONTROL RODS (Standard Industrial Button) --- */}
+              <button
+                onClick={() => !gameState.isPaused && setRodsModalOpen(true)}
+                disabled={gameState.isPaused}
+                className="btn-retro w-full h-32 flex flex-col items-center justify-center rounded-md border border-white/5 group"
+              >
+                <div className="text-xs text-neutral-400 font-mono mb-3 tracking-widest uppercase">Core Rods</div>
+
+              </button>
+
+
+              {/* --- 4. TURBINE (Toggle Switch Style) --- */}
+              <button
+                onClick={() => !gameState.isPaused && setTurbineModalOpen(true)}
+                disabled={gameState.isPaused}
+                className="btn-retro w-full h-32 flex flex-col items-center justify-center rounded-md border border-white/5 relative overflow-hidden"
+              >
+              </button>
+
+            </div>
+
+         {/* Pause Button */}
+         <div className="flex justify-center pt-2">
+           <Button
+             onClick={onTogglePause}
+             size="lg"
+             variant={gameState.isPaused ? "default" : "outline"}
+             className="uppercase font-mono tracking-wider px-8 border-2 border-primary"
+           >
+             {gameState.isPaused ? (
+               <>
+                 <Play className="mr-2 h-5 w-5" />
+                 Resume
+               </>
+             ) : (
+               <>
+                 <Pause className="mr-2 h-5 w-5" />
+                 Pause
+               </>
+             )}
+           </Button>
+         </div>
       </div>
     </div>
   )

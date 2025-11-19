@@ -220,3 +220,46 @@
 .animate-border-flash {
   animation: border-flash 1s ease-in-out infinite;
 }
+
+
+
+
+  /* Buttons on the control panel */
+
+  /* 1980s Industrial Button - The "Unpressed" State */
+.btn-retro {
+  /* Slight gradient to look like plastic */
+  background: linear-gradient(to bottom, #3a3a3a, #2b2b2b);
+  /* The 3D Bevel effect */
+  box-shadow: 
+    inset 1px 1px 0px rgba(255, 255, 255, 0.15), /* Top highlight */
+    inset -1px -1px 0px rgba(0, 0, 0, 0.5),      /* Bottom shadow */
+    0px 4px 0px #1a1a1a,                         /* Physical height (the side of the button) */
+    0px 5px 5px rgba(0, 0, 0, 0.4);              /* Drop shadow */
+  transition: all 0.1s ease;
+  position: relative;
+  top: 0;
+}
+
+/* The "Pressed" State */
+.btn-retro:active, .btn-retro.pressed {
+  box-shadow: 
+    inset 2px 2px 5px rgba(0, 0, 0, 0.8), /* Deep inner shadow */
+    0px 0px 0px #1a1a1a;                  /* Remove height */
+  top: 4px; /* Physically move the button down */
+  background: #222;
+}
+
+/* LED / Incandescent Bulb Indicator */
+.retro-lamp {
+  border-radius: 50%;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); /* socket shadow */
+  transition: all 0.3s ease;
+}
+
+/* When the lamp is ON */
+.retro-lamp.on {
+  box-shadow: 
+    inset 1px 1px 2px rgba(255,255,255,0.8), /* Bulb highlight */
+    0 0 6px currentColor; /* Glow */
+}
