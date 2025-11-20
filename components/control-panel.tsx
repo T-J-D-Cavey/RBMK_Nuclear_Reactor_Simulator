@@ -210,7 +210,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                     </div>
           
                     {/* 2. The Existing Lights Grid */}
-                    <div className="grid grid-cols-4 gap-6">
+                    <div className="grid grid-cols-4 gap-2">
                       {gameState.waterPumps.map((pump, idx) => (
                         <div key={idx} className="flex flex-col gap-3 items-center">
                           

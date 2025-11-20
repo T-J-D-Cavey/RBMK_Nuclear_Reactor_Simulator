@@ -3,21 +3,23 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
 export default function InstructionsPage() {
-  return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <Button variant="outline" size="icon" className="border-2 border-primary bg-transparent">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <h1 className="text-4xl md:text-5xl font-bold font-mono uppercase">Operating Manual</h1>
-        </div>
 
+  const controlRoomBackground = "control_room_background.jpg"
+
+  return (
+    <div className="min-h-screen p-4 md:p-8 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Instructions Content */}
         <div className="bg-card border-4 border-primary p-6 md:p-8 space-y-6">
+            {/* Header */}
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="outline" size="icon" className="border-2 border-primary bg-transparent">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <h1 className="text-4xl md:text-5xl font-bold font-mono uppercase text-accent">Operating Manual</h1>
+          </div>
           {/* Objective */}
           <section className="space-y-3">
             <h2 className="text-2xl font-bold font-mono uppercase text-accent">Objective</h2>
