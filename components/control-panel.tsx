@@ -7,13 +7,17 @@ import { formatTime } from "@/lib/game-utils"
 import { checkWarnings } from "@/lib/game-utils"
 import { Button } from "@/components/ui/button"
 import { Pause, Play } from "lucide-react"
+import ControlRodsModal from "./control-rods-modal"
+import WaterPumpsModal from "./water-pumps-modal"
+import TurbineModal from "./turbine-modal"
 
 interface ControlPanelProps {
   gameState: GameState
   onTogglePause: () => void
+  updateGameState: (updates: Partial<GameState>) => void
 }
 
-export default function ControlPanel({ gameState, onTogglePause }: ControlPanelProps) {
+export default function ControlPanel({ gameState, onTogglePause, updateGameState }: ControlPanelProps) {
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
@@ -306,7 +310,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
                   border-t border-white/20 flex flex-col items-center justify-center leading-none
                   active:translate-y-[4px] active:shadow-none
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  bg-stone-700 text-stone-200 shadow-[0_4px_0_#292524]
+                  bg-slate-700 text-slate-200 shadow-[0_4px_0_#292524]
                 `}
               >
                 <span className="font-mono font-bold text-sm">MANAGE</span>
@@ -391,10 +395,7 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
                           border-t border-white/20 flex flex-col items-center justify-center leading-none
                           active:translate-y-[4px] active:shadow-none
                           disabled:opacity-50 disabled:cursor-not-allowed
-
-                          /* Color: Zinc/Gunmetal Grey */
-                          bg-zinc-700 text-zinc-200 shadow-[0_4px_0_#27272a]
-                          hover:bg-zinc-600
+                          bg-slate-700 text-slate-200 shadow-[0_4px_0_#27272a]
                         `}
                       >
                         <span>MANAGE</span>
@@ -403,6 +404,27 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
                   </div>
                 </div>
       </div>
-    </div>
+        {/* Modals */}
+       <ControlRodsModal
+         open={rodsModalOpen}
+         onOpenChange={setRodsModalOpen}
+         controlRods={gameState.controlRods}
+         onUpdate={(rods) => updateGameState({ controlRods: rods })}
+       />
+
+       <WaterPumpsModal
+         open={pumpsModalOpen}
+         onOpenChange={setPumpsModalOpen}
+         waterPumps={gameState.waterPumps}
+         onUpdate={(pumps) => updateGameState({ waterPumps: pumps })}
+       />
+
+       <TurbineModal
+         open={turbineModalOpen}
+         onOpenChange={setTurbineModalOpen}
+         turbineConnected={gameState.turbineConnected}
+         onUpdate={(connected) => updateGameState({ turbineConnected: connected })}
+       />
+       </div>
   )
 }

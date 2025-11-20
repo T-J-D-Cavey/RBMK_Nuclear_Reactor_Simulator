@@ -282,7 +282,7 @@ export default function ReactorDisplay({ gameState, updateGameState }: ReactorDi
     </div> {/* End of Main Content Stack */}
 
 
-    {/* Modals (UNTOUCHED) */}
+    {/* Modals */}
     <ControlRodsModal
       open={rodsModalOpen}
       onOpenChange={setRodsModalOpen}

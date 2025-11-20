@@ -57,7 +57,7 @@ export default function GamePage() {
 
       {/* Top Half - Control Panel */}
       <div className="flex-1 p-4 md:p-6 border-b-4 border-primary bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
-        <ControlPanel gameState={gameState} onTogglePause={togglePause} />
+        <ControlPanel gameState={gameState} onTogglePause={togglePause} updateGameState={updateGameState} />
       </div>
 
       {/* Message Area */}
