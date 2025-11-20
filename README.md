@@ -32,6 +32,7 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
+- Add a minimum width to the root element so it doesn't cause overflow on very small screens, x-scroll is better
 - Add buttons on the control panel to open reactor modals, and lights within the button container for info, such as pump on and pump powered lights
 - Consider changes to reactor display. We could switch to using a more complex, realistic image and remove the ability for the user to interact with it directly. We can use an image, then create different versions for when the pumps are on. The control rods UI could be fully removed in this scenario
 - Full review of all UI, checking wording, designs

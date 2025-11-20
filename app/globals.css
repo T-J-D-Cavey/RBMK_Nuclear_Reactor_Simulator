@@ -254,12 +254,12 @@
 .retro-lamp {
   border-radius: 50%;
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); /* socket shadow */
-  transition: all 0.3s ease;
+  transition: all 0.1s ease;
 }
 
 /* When the lamp is ON */
 .retro-lamp.on {
   box-shadow: 
     inset 1px 1px 2px rgba(255,255,255,0.8), /* Bulb highlight */
-    0 0 6px currentColor; /* Glow */
+    0 0 20px currentColor; /* Glow */
 }

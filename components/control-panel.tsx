@@ -45,21 +45,11 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
         {/* Title with Warning Lights */}
         <div className="text-center">
           <div className="flex items-center justify-center gap-4">
-            <div
-              className={`w-4 h-4 md:w-6 md:h-6 rounded-full transition-all flex-shrink-0 border-red-900 border-2 ${
-                hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-red-900"
-              }`}
-            />
-
+            <div className={`retro-lamp w-5 h-5 rounded-full transition-all ${hasWarnings ? "bg-red-500 text-red-500 on animate-[pulse_0.6s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>
             <h1 className="text-2xl md:text-3xl font-bold font-mono uppercase tracking-wider">
               Reactor Control System
             </h1>
-
-            <div
-              className={`w-4 h-4 md:w-6 md:h-6 rounded-full transition-all flex-shrink-0 border-red-900 border-2 ${
-                hasWarnings ? "bg-red-600 animate-warning-flash" : "bg-red-900"
-              }`}
-            />
+            <div className={`retro-lamp w-5 h-5 rounded-full transition-all ${hasWarnings ? "bg-red-500 text-red-500 on animate-[pulse_0.6s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>
           </div>
         </div>
 
@@ -151,121 +141,267 @@ export default function ControlPanel({ gameState, onTogglePause }: ControlPanelP
         
 
         {/* Control panel buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm p-4 bg-neutral-900 rounded-lg border-4 border-neutral-800">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 text-sm">
 
-              {/* --- 1. PAUSE BUTTON (State Dependent Color & Glow) --- */}
-              <button
-                onClick={onTogglePause}
-                className={`
-                  btn-retro w-full h-32 flex flex-col items-center justify-center rounded-md border border-white/5
-                  ${gameState.isPaused 
-                    ? "shadow-[0_0_20px_rgba(220,38,38,0.6)] border-red-500/50" // External red glow when paused
-                    : ""
-                  }
-                `}
-              >
-                <div className="text-xs text-neutral-400 font-mono mb-2 tracking-widest uppercase">Sys. Pause</div>
+            {/* PAUSE BUTTON  -  LED SCREEN */}
 
-                {/* The Physical Light/Button Face */}
-                <div 
+            <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
+
+              {/* Top Section: Label & Status Text */}
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                  PAUSE SIMULATION
+                </div>
+                {/* A small "screen" showing current status */}
+                <div className="led-display text-center h-16 flex items-center justify-center">
+                  <span className={`!pl-0 !pr-0 text-center text-sm md:text-lg ${gameState.isPaused ? "text-red-500" : "led-green"}`}>
+                    {gameState.isPaused ? "• PAUSED •" : "RUNNING..."}
+                  </span>
+                </div>
+              </div>
+
+              {/* PAUSE BUTTON  -  The Physical Button */}
+              <div className="w-full flex-1 flex items-center justify-center">
+                <button
+                  onClick={onTogglePause}
                   className={`
-                    w-16 h-16 rounded flex items-center justify-center transition-colors duration-200 border-2
+                    w-32 h-12 mx-auto font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
+                    border-t border-white/20 flex items-center justify-center
+                    active:translate-y-[4px] active:shadow-none
                     ${gameState.isPaused 
-                      ? "bg-red-600 border-red-400 shadow-[inset_0_0_10px_rgba(0,0,0,0.2)]" // Lit state
-                      : "bg-red-900/40 border-red-900/60" // Dim state
+                      ? "bg-red-600 text-white shadow-[0_4px_0_#7f1d1d] shadow-red-500/40" 
+                      : "bg-[#5a1a1a] text-red-200/30 shadow-[0_4px_0_#360f0f]"
                     }
                   `}
                 >
-                  <span className={`font-bold font-mono text-lg ${gameState.isPaused ? "text-white drop-shadow-md" : "text-red-900/50"}`}>
-                    {gameState.isPaused ? "HALT" : "RUN"}
-                  </span>
+                  {gameState.isPaused ? "RESUME" : "PAUSE"}
+                </button>
+              </div>
+            </div>
+
+
+       {/* WATER PUMPS (Lights Above, Button Below)*/}
+
+       <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
+
+           {/* Top Section: Label & Lights Grid */}
+           <div className="space-y-2">
+               <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                 WATER PUMPS
+               </div>
+
+                    {/* The Lamp Grid Container */}
+                <div className="bg-black/80 border-2 border-neutral-800 rounded-md p-2 shadow-inner h-16 flex items-center justify-center">
+                  
+                  {/* NEW FLEX WRAPPER: Holds Labels (Left) and Grid (Right) */}
+                  <div className="flex items-center gap-4">
+                    
+                    {/* 1. The Labels Column */}
+                    <div className="flex flex-col gap-3 text-right">
+                       {/* Top Label (Aligns with Pump ON) */}
+                       <span className="text-[9px] font-mono text-neutral-500 leading-3">ON</span>
+                       
+                       {/* Bottom Label (Aligns with Pump POWERED) */}
+                       <span className="text-[9px] font-mono text-neutral-500 leading-3">PWR</span>
+                    </div>
+          
+                    {/* 2. The Existing Lights Grid */}
+                    <div className="grid grid-cols-4 gap-6">
+                      {gameState.waterPumps.map((pump, idx) => (
+                        <div key={idx} className="flex flex-col gap-3 items-center">
+                          
+                          {/* Top Row: Pump ON */}
+                          <div 
+                            className={`
+                              retro-lamp w-3 h-3 rounded-full
+                              ${pump.on ? "bg-emerald-400 text-emerald-400 on" : "bg-emerald-900/20"}
+                            `} 
+                          />
+                          
+                          {/* Bottom Row: Pump POWERED */}
+                          <div 
+                            className={`
+                              retro-lamp w-3 h-3 rounded-full
+                              ${pump.powered ? "bg-amber-400 text-amber-400 on" : "bg-amber-900/20"}
+                            `} 
+                          />
+                        </div>
+                      ))}
+                    </div>
+          
+                  </div>
                 </div>
-              </button>
+              </div>
+
+              {/* Bottom Section: The Physical Button */}
+            <div className="w-full flex-1 flex items-center justify-center">
+                <button
+                 onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+                 disabled={gameState.isPaused}
+                 className={`
+                   w-32 h-12 mx-auto font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
+                   border-t border-white/20 flex flex-col items-center justify-center leading-none
+                   active:translate-y-[4px] active:shadow-none
+                   disabled:opacity-50 disabled:cursor-not-allowed
+                   bg-slate-700 text-slate-200 shadow-[0_4px_0_#1e293b]
+                 `}
+                >
+                  MANAGE
+                </button>
+            </div>
+          </div>
 
 
-              {/* --- 2. WATER PUMPS (Indicator Array) --- */}
-              <button
-                onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
-                disabled={gameState.isPaused}
-                className="btn-retro w-full h-32 flex flex-col items-center justify-between py-3 px-2 rounded-md border border-white/5 bg-neutral-800"
-              >
-                <div className="text-xs text-neutral-400 font-mono tracking-widest uppercase">Pumps</div>
+              {/* CONTROL RODS (Display Top, Button/Light Bottom) */}
 
-                {/* The Lamp Grid */}
-                <div className="grid grid-cols-4 gap-x-3 gap-y-2 p-2 bg-black/40 rounded inset-shadow">
+          <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
 
-                  {gameState.waterPumps.map((pump, idx) => (
-                    <div key={idx} className="flex flex-col gap-2 items-center">
-                      {/* Top Row: Pump ON (Green/Emerald) */}
-                      <div 
+            {/* Top Section: Label & VFD Display Screen */}
+            <div className="space-y-2 w-full">
+              <div>
+                 <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                  CONTROL RODS
+                </div>
+              </div>
+
+              {/* VFD Green Screen */}
+              <div className="vfd-display h-16 w-full relative flex flex-col justify-between py-1">
+
+                <div className="w-full border-t-2 border-black/60 h-0"></div>
+                {/* Rod Indicators Container */}
+                <div className="absolute inset-y-0 left-3 right-3 top-1 bottom-1 flex justify-between">
+                  {gameState.controlRods.map((rod) => (
+                    <div key={rod.id} className="relative w-full h-full border-r border-black/5 last:border-r-0">
+                      <div
                         className={`
-                          retro-lamp w-4 h-4 rounded-full
-                          ${pump.on 
-                            ? "bg-emerald-400 text-emerald-400 on" // Bright/Glow
-                            : "bg-emerald-900/30" // Dim
-                          }
-                        `} 
-                      />
-
-                      {/* Bottom Row: Pump POWERED (Amber/Yellow) */}
-                      <div 
-                        className={`
-                          retro-lamp w-4 h-4 rounded-full
-                          ${pump.powered 
-                            ? "bg-amber-400 text-amber-400 on" 
-                            : "bg-amber-900/30"
-                          }
-                        `} 
-                      />
+                          absolute w-full text-center font-bold leading-none text-xs transition-all duration-500 ease-out
+                          ${rod.stuck ? "animate-[pulse_0.15s_ease-in-out_infinite]" : ""}
+                        `}
+                        style={{ 
+                          // Position based on insertion %. 
+                          // 0% is top, 100% is bottom. We clamp slightly to keep it inside the lines.
+                          top: `${rod.insertion}%`, 
+                          transform: 'translateY(-50%)' // Centers the dash on the exact % point
+                        }}
+                      >
+                        -
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div className="text-[10px] text-neutral-500 font-mono">STATUS / PWR</div>
-              </button>
 
+                <div className="w-full border-b-2 border-black/60 h-0"></div>
+              </div>
+            </div>
 
-              {/* --- 3. CONTROL RODS (Standard Industrial Button) --- */}
+            {/* Bottom Section: Button (Left) & Warning Light (Right) */}
+            <div className="w-full flex-1 flex items-center justify-between gap-3">
+
+              {/* The Button */}
               <button
                 onClick={() => !gameState.isPaused && setRodsModalOpen(true)}
                 disabled={gameState.isPaused}
-                className="btn-retro w-full h-32 flex flex-col items-center justify-center rounded-md border border-white/5 group"
+                className={`
+                  w-32 h-12 font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
+                  border-t border-white/20 flex flex-col items-center justify-center leading-none
+                  active:translate-y-[4px] active:shadow-none
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  bg-stone-700 text-stone-200 shadow-[0_4px_0_#292524]
+                `}
               >
-                <div className="text-xs text-neutral-400 font-mono mb-3 tracking-widest uppercase">Core Rods</div>
-
+                <span className="font-mono font-bold text-sm">MANAGE</span>
               </button>
 
-
-              {/* --- 4. TURBINE (Toggle Switch Style) --- */}
-              <button
-                onClick={() => !gameState.isPaused && setTurbineModalOpen(true)}
-                disabled={gameState.isPaused}
-                className="btn-retro w-full h-32 flex flex-col items-center justify-center rounded-md border border-white/5 relative overflow-hidden"
-              >
-              </button>
+              {/* The Status Light */}
+              <div className="flex flex-col items-center justify-center gap-1 pr-2">
+                <div className="p-1.5 rounded-full border border-white/10 shadow-inner">
+                  <div 
+                    className={`
+                      retro-lamp w-5 h-5 rounded-full transition-all duration-300
+                      ${gameState.controlRods.some(r => r.stuck)
+                        ? "bg-red-500 text-red-500 on animate-pulse shadow-[0_0_15px_currentColor]" 
+                        : "bg-red-950/30"
+                      }
+                    `} 
+                  />
+                </div>
+                <span className="text-[8px] font-mono text-neutral-500 tracking-widest">JAM</span>
+              </div>
 
             </div>
+          </div>
 
-         {/* Pause Button */}
-         <div className="flex justify-center pt-2">
-           <Button
-             onClick={onTogglePause}
-             size="lg"
-             variant={gameState.isPaused ? "default" : "outline"}
-             className="uppercase font-mono tracking-wider px-8 border-2 border-primary"
-           >
-             {gameState.isPaused ? (
-               <>
-                 <Play className="mr-2 h-5 w-5" />
-                 Resume
-               </>
-             ) : (
-               <>
-                 <Pause className="mr-2 h-5 w-5" />
-                 Pause
-               </>
-             )}
-           </Button>
-         </div>
+
+                    {/* 4. TURBINE (2 Lights Top, Toggle Bottom)   */}
+
+                  <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
+                    {/* Top Section: Label & Status Lights */}
+                    <div className="space-y-2 w-full">
+
+                        <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                          Turbine
+                        </div>
+
+
+                      {/* The Lamp Display Container */}
+                      <div className="bg-black/80 border-2 border-neutral-800 rounded-md p-2 shadow-inner h-16 flex items-center justify-center">
+                        <div className="flex gap-8">
+
+                          {/* Light 1: Connection Status (Green) */}
+                          <div className="flex flex-col gap-1.5 items-center">
+                            <div 
+                              className={`
+                                retro-lamp w-4 h-4 rounded-full
+                                ${gameState.turbineConnected 
+                                  ? "bg-emerald-400 text-emerald-400 on shadow-[0_0_10px_currentColor]" 
+                                  : "bg-emerald-900/20"
+                                }
+                              `} 
+                            />
+                            <span className="text-[9px] font-mono text-neutral-500">CONN</span>
+                          </div>
+
+                          {/* Light 2: High Steam Warning (Red Flashing) */}
+                          {/* Logic: Flashes if steam is 'High' (e.g. > 250) */}
+                          <div className="flex flex-col gap-1.5 items-center">
+                            <div 
+                              className={`
+                                retro-lamp w-4 h-4 rounded-full transition-all
+                                ${highSteamWarning 
+                                  ? "bg-red-500 text-red-500 on animate-pulse shadow-[0_0_15px_currentColor]" 
+                                  : "bg-red-950/20"
+                                }
+                              `} 
+                            />
+                            <span className="text-[9px] font-mono text-neutral-500">OVR-P</span>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Section: The Physical Button */}
+                    <div className="w-full flex-1 flex items-center justify-center">
+                      <button
+                        // Assuming you have a function like toggleTurbine in your updates
+                        onClick={() => !gameState.isPaused && setTurbineModalOpen(true)}
+                        disabled={gameState.isPaused}
+                        className={`
+                          w-32 h-12 mx-auto font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
+                          border-t border-white/20 flex flex-col items-center justify-center leading-none
+                          active:translate-y-[4px] active:shadow-none
+                          disabled:opacity-50 disabled:cursor-not-allowed
+
+                          /* Color: Zinc/Gunmetal Grey */
+                          bg-zinc-700 text-zinc-200 shadow-[0_4px_0_#27272a]
+                          hover:bg-zinc-600
+                        `}
+                      >
+                        <span>MANAGE</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
       </div>
     </div>
   )
