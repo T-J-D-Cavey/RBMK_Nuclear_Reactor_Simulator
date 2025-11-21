@@ -121,7 +121,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
               lowFuelTempWarning ? "border-3 border-red-600 animate-border-flash" : "border-3 border-border"
             }`}
           >
-            <div className="text-xs text-muted-foreground font-mono uppercase">Fuel Temperature</div>
+            <div className="text-xs text-muted-foreground font-mono uppercase">Fuel Temp</div>
             <div className="font-mono font-bold vfd-display">{Math.round(gameState.fuelTemp)}°</div>
           </div>
 

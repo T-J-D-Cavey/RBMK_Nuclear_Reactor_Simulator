@@ -231,7 +231,7 @@ function calculateXenon(state: GameState): GameState {
 
   // Xenon Generation: Produced only when radioactivity < 50
   if(state.radioactivity < 55) {
-    xenonChange += (55 - state.radioactivity) * 0.009
+    xenonChange += (55 - state.radioactivity) * 0.007
     xenonChange += randowmFactor
   }
 

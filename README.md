@@ -32,8 +32,7 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- Add a minimum width to the root element so it doesn't cause overflow on very small screens, x-scroll is better
-- Consider changes to reactor display. We could switch to using a more complex, realistic image and remove the ability for the user to interact with it directly. We can use an image, then create different versions for when the pumps are on. The control rods UI could be fully removed in this scenario
+- Add a min width to the root element so it doesn't cause overflow on very small screens, x-scroll is better
 - Full review of all UI, checking wording, designs
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
 - Add in a way to go back (or close the modal) on the dificulty settings modal
@@ -43,6 +42,3 @@ FIXES TO MAKE:
 OPTION NEW FUNCTIONALITY:
 
 - change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
-
-
-Reactor hall background: Photo by <a href="https://unsplash.com/@aadii2050?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Adeel Ahmed</a> on <a href="https://unsplash.com/photos/interior-view-of-a-large-glass-dome-ceiling-with-lights-Jxj4W56g248?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>

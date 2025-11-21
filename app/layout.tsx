@@ -8,9 +8,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Chernobyl - Nuclear Reactor Simulation",
-  description: "Manage a nuclear reactor in real-time. Balance radioactivity, temperature, and power output.",
-  generator: "v0.app",
+  title: "R B M K - Nuclear Reactor Simulation",
+  description: "Manage a nuclear reactor in real-time. Control the forces involved to meet power targets and avoid a nuclear disaster",
   icons: {
     icon: [
       {
@@ -28,6 +27,7 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
+    generator: 'v0.app'
 }
 
 export default function RootLayout({

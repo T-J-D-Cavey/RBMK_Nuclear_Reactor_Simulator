@@ -38,7 +38,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Control Rods (×10)</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Select the control rods on top of the reactor to adjust insertion percentage (0-100%). Boron rods decrease radioactivity, acting as a critical brake to increasing radioativity. The emergency AZ-5 button can be used to fully insert all rods at once in times of need. Be careful about fully removing the control rods. Once they are removed and reinserted, they can cause a spike in radioacitivty and steam due to their graphite tips. We are hoping to fix this design flaw with the RBMK reactor control rods very soon."
+                    "Select the control rods button on the control panel to adjust insertion percentage (0-100%). Boron rods decrease radioactivity, acting as a critical brake to increasing radioativity. The emergency AZ-5 button can be used to fully insert all rods at once when radioactivity levels need to be immediately reduced. Be careful about fully removing the control rods when you need to increase radioactivity. Once they are removed and reinserted, they can cause a spike in radioacitivty and steam due to their graphite tips. We are hoping to fix this design flaw with the RBMK reactor control rods very soon. The control panel shows insertion rates on the display screen."
                   }
                 </p>
               </div>
@@ -47,7 +47,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Water Pumps (×4)</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Select the pipes on each side the reactor to toggle water pumps on and off. Pumps reduce reactor temperature by ensuring a steady state of cooling water, but they need to be in the on position and powered (shown as blue pipes). Turning off all pumps will quickly result in a build up of steam and risk a spike in radioactivity."
+                    "Select the water pumps button on the control panel to toggle water pumps on and off. Pumps reduce reactor temperature by ensuring a steady flow of cooling water through the core, but they need to be in the ON position and powered. In recent days we have seen incoming power cuts that have resulted in the pumps being without power and turning off. If all pumpts are turned off or are without power, the remaining water in the pipes will quickly result in a build up of steam and risk a spike in radioactivity. The control panel lights indicate on/off and powered/unpowered state."
                   }
                 </p>
               </div>
@@ -56,7 +56,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Turbine</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Our power station delivers electricity to the people of our district as a result of the steam our reactor generates turning our electricity turbine. Select the turbine to toggle connection. If our power generation is too high, we may be asked to disconnect our turbine to avoid damage to the power grid"
+                    "Our power station delivers electricity to the people of our district as a result of the steam our reactor generates turning the plant's electricity turbine. Select the turbine button on the control panel to toggle connection. If our power generation is too high, we may be asked to disconnect our turbine to avoid damage to the power grid. A light on the control panel indicate when the turbine is connected, and a warning light with flash when power is too high for the power grid transmission."
                   }
                 </p>
               </div>
@@ -71,7 +71,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Radioactivity</h3>
                 <p className="text-xs leading-relaxed">
                   {
-                    "Uranium-235 fuel is naturally unstable and radioactive. Radioactivity must be stopped from increasing by insertion of boron control rods. High amounts of steam and a low uranium fuel temperature will increase radioactivity, and Xenon will reduce it. Balance these forces carefully."
+                    "Uranium-235 fuel is naturally unstable and radioactive. Radioactivity must be stopped from increasing by insertion of boron control rods. High amounts of steam and a low uranium fuel temperature will increase radioactivity, and the presence of xenon will reduce it. Balance these forces carefully."
                   }
                 </p>
               </div>
@@ -79,7 +79,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Reactor Temperature</h3>
                 <p className="text-xs leading-relaxed">
                   {
-                    "Our reactor temperature increases with higher radioactivity. This is needed in order to generate the steam that turns our turbine. Water pumps take cold water from the sea and removes excess heat. Our reactor core will meltdown at very high temperatures. This must be avoided at all costs"
+                    "Our reactor temperature increases with higher radioactivity. This is needed in order to generate the steam that turns our turbine. Water pumps take cold water from the sea and removes excess heat. Our reactor core will meltdown at very high temperatures. This must be avoided at all costs."
                   }
                 </p>
               </div>
@@ -87,19 +87,25 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Steam Volume</h3>
                 <p className="text-xs leading-relaxed">
                   {
-                    "A reactor temperature of ~90 degrees will generate steam. The hotter our reactor gets the more steam is created, and thus the more electricity we can generate. Steam increases radioactivity over time as our RBMK reactors have a positive void coefficient"
+                    "A reactor temperature of ~90 degrees will generate steam. The hotter our reactor gets the more steam is created, and thus the more electricity we can generate. Steam increases radioactivity over time as our RBMK reactors have a positive void coefficient - monitor carefully."
                   }
                 </p>
               </div>
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Fuel Temperature</h3>
                 <p className="text-xs leading-relaxed">
-                  {"Uranium fuel increases and decreases as our reactor temperatures changes. It takes longer to change, and there is a negative temperature coefficient. This means cool Uranium fuel is more radioactive, and hot Uranium fuel is less radioactive."}
+                  {
+                  "Uranium fuel temperature increases and decreases as our reactor temperatures changes. It takes longer to change, and there is a negative temperature coefficient. This means cool uranium fuel is more radioactive, and hot uranium fuel is less radioactive. If you find your reactor is in a xenon pit, reduce the fuel temperature and remove control rods carefully to raise radioacitivty levels back up to stable levels"
+                  }
                 </p>
               </div>
               <div className="bg-background p-3 border-2 border-border">
                 <h3 className="font-bold font-mono text-sm mb-1">Performance</h3>
-                <p className="text-xs leading-relaxed">{"Our district's power grid requires us to stay within 10% of the power targets they set. If our power plant is consistently unable to meet these targets, you will be removed from your post as Chief Reactor Controller."}</p>
+                <p className="text-xs leading-relaxed">
+                {
+                "Our district's power grid requires us to stay within 10% of the power targets they set. If our power plant is consistently unable to meet these targets, you will be removed from your post as Chief Reactor Controller."
+                }
+                </p>
               </div>
             </div>
           </section>
