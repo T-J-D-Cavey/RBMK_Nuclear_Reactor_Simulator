@@ -32,8 +32,6 @@ Continue building your app on:
 
 FIXES TO MAKE:
  
-- Add a min width to the root element so it doesn't cause overflow on very small screens, x-scroll is better
-- Full review of all UI, checking wording, designs
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
 - Add in a way to go back (or close the modal) on the dificulty settings modal
 - Udate icons used in the game over or success modals

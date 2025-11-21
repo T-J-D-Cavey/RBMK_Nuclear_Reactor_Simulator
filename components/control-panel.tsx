@@ -52,11 +52,11 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         {/* Title with Warning Lights */}
         <div className="text-center">
           <div className="flex items-center justify-center gap-4">
-            <div className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.6s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>
+            <div className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>
             <h1 className="text-2xl md:text-3xl font-bold font-mono uppercase tracking-wider">
               Reactor Control System
             </h1>
-            <div className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.6s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>
+            <div className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>
           </div>
         </div>
 
@@ -282,7 +282,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                       <div
                         className={`
                           absolute w-full text-center font-bold leading-none text-xs transition-all duration-500 ease-out
-                          ${rod.stuck ? "animate-[pulse_0.15s_ease-in-out_infinite]" : ""}
+                          ${rod.stuck ? "animate-[pulse_0.5s_ease-in-out_infinite]" : ""}
                         `}
                         style={{ 
                           // Position based on insertion %. 
@@ -326,7 +326,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                     className={`
                       retro-lamp w-5 h-5 rounded-full transition-all duration-300
                       ${gameState.controlRods.some(r => r.stuck)
-                        ? "bg-red-500 text-red-500 on animate-pulse shadow-[0_0_15px_currentColor]" 
+                        ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" 
                         : "bg-red-950/30"
                       }
                     `} 
@@ -375,7 +375,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                               className={`
                                 retro-lamp w-4 h-4 rounded-full transition-all
                                 ${highSteamWarning 
-                                  ? "bg-red-500 text-red-500 on animate-pulse shadow-[0_0_15px_currentColor]" 
+                                  ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" 
                                   : "bg-red-950/20"
                                 }
                               `} 

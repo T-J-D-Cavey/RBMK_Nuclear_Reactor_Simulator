@@ -1,7 +1,7 @@
 {
-  "name": "my-v0-project",
+  "name": "R B M K - Nuclear Reactor Simulator",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
