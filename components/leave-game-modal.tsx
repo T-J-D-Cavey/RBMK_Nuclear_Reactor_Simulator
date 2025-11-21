@@ -27,7 +27,7 @@ export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModal
             END SIMULATION?
           </DialogTitle>
           <DialogDescription className="text-base font-mono pt-4">
-            You'll lose your progress if you quite the simulation. Leave things paused and come back later. The following will be stored:
+            You'll lose your progress if you quit the simulation. You can pause the game and close the tab and the following will be stored:
           </DialogDescription>
         </DialogHeader>
         <div className="px-6">

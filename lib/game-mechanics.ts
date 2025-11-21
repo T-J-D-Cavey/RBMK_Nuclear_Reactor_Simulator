@@ -37,6 +37,10 @@ function calculateRadioactivity(state: GameState): GameState {
   // Uranium fuel is naturally radioactive and always produces baseline radioactivity
   radioactivityChange += 2 // Constant baseline positive radioactivity
 
+  // Change plays a part in radioactivity. This adds a random change of a change by 2 either positively or negatively:
+  let randowmFactor = Math.random() * (2 * 2) - 2;
+  radioactivityChange += randowmFactor
+
   // Control rods reduce radioactivity
   radioactivityChange -= getRadioactivityFromRods(state.controlRods) * 0.012
 
@@ -223,26 +227,23 @@ function calculatePerformance(state: GameState): GameState {
 
 function calculateXenon(state: GameState): GameState {
   let xenonChange = 0
-  if (state.xenon > 250) {
-    const newXenon = state.xenon;
-    return { ...state, xenon: newXenon }
-  }
+  let randowmFactor = Math.random() * (1 * 2) - 1;
+
   // Xenon Generation: Produced only when radioactivity < 50
-  if (state.radioactivity <= 10) {
-    xenonChange += 0.5
+  if(state.radioactivity < 55) {
+    xenonChange += (55 - state.radioactivity) * 0.009
+    xenonChange += randowmFactor
   }
 
-  if (state.radioactivity > 10 && state.radioactivity < 50) {
-    xenonChange += 0.25
-  }
-
-  // Xenon Reduction: Decreases when radioactivity > 150
+  // Xenon Reduction: Decreases when radioactivity > 90
   if (state.radioactivity > 90) {
     if (state.radioactivity > 150) {
-      // Faster reduction if radioactivity > 250
+      // Faster reduction if radioactivity > 150
       xenonChange -= 24
+      xenonChange += randowmFactor
     } else {
       xenonChange -= 16
+      xenonChange += randowmFactor
     }
   }
 

@@ -112,7 +112,7 @@ function generateRodStuckEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "rod-stuck",
-    message: `⚡ UPDATE FROM HEAD ENGINEER: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} are stuck in position and can't be moved due to a ruptured fuel rod`,
+    message: `⚡ UPDATE FROM HEAD ENGINEER: Control rod${numRods > 1 ? "s" : ""} ${rodNumbers.join(", ")} are stuck in position and can't be moved due to a ruptured fuel channel`,
     timestamp: state.gameTime,
     duration,
     data: { affectedRods },
