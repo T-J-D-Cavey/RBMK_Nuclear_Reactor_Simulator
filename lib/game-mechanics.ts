@@ -60,9 +60,9 @@ function calculateRadioactivity(state: GameState): GameState {
 
   // Steam Volume affects radioactivity (direct/quick)
   // High steam slightly increases radioactivity
-    radioactivityChange += Math.max(10, (state.steamVolume) * 0.02)
+  radioactivityChange += Math.min(10, (state.steamVolume) * 0.02)
   
-
+  console.log(radioactivityChange)
   const newRadioactivity = Math.max(0, state.radioactivity + radioactivityChange)
 
   return { ...state, radioactivity: newRadioactivity }

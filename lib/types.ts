@@ -75,7 +75,7 @@ export const INITIAL_GAME_STATE: GameState = {
 
   controlRods: Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
-    insertion: i < 6 ? 30 : 37,
+    insertion: i < 6 ? 40 : 60,
     stuck: false,
     currentlyFullyRemoved: false,
     justReinserted: false
