@@ -51,10 +51,8 @@ export function useGameState() {
                   // Check if the rod is transitioning (flag is true)
                   if (rod.justReinserted) {
                       // Control rods entering core from a fully removed position causes a spike in radioactivity, fuel temp and steam due to the graphic tips of the rods
-                      radioactivityChange += 20;
+                      radioactivityChange += 50;
                       reactorTempChange += 20;
-                      steamChange += 10;
-                      XenonChange -= 10;
 
                       // 2. Reset the flag immediately in the same state update
                       return { ...rod, justReinserted: false };
@@ -69,9 +67,7 @@ export function useGameState() {
                   controlRods: updatedRods, // Commits the rods with the flag reset
                   // Assumes 'radioactivity' is part of GameState
                   radioactivity: (prev.radioactivity || 0) + radioactivityChange,
-                  reactorTemp: (prev.reactorTemp || 0) + reactorTempChange,
-                  steamVolume: (prev.steamVolume || 0) + steamChange,
-                  xenon: Math.max(0, (prev.xenon || 0) + XenonChange),  
+                  reactorTemp: (prev.reactorTemp || 0) + reactorTempChange, 
               };
           }
 
