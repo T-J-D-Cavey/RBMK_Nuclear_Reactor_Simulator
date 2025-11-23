@@ -43,6 +43,7 @@ function calculateRadioactivity(state: GameState): GameState {
 
   // Control rods reduce radioactivity
   radioactivityChange -= getRadioactivityFromRods(state.controlRods) * 0.025
+  console.log(getRadioactivityFromRods(state.controlRods) * 0.025)
 
   // Fuel Temperature affects radioactivity
   // Higher fuel temp reduces radioactivity
@@ -62,8 +63,8 @@ function calculateRadioactivity(state: GameState): GameState {
   // High steam slightly increases radioactivity
   radioactivityChange += Math.min(10, (state.steamVolume) * 0.02)
   
-  console.log(radioactivityChange)
   const newRadioactivity = Math.max(0, state.radioactivity + radioactivityChange)
+  console.log(radioactivityChange)
 
   return { ...state, radioactivity: newRadioactivity }
 }
