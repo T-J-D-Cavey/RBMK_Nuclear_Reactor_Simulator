@@ -35,34 +35,33 @@ function calculateRadioactivity(state: GameState): GameState {
   let radioactivityChange = 0
 
   // Uranium fuel is naturally radioactive and always produces baseline radioactivity
-  radioactivityChange += 2 // Constant baseline positive radioactivity
+  radioactivityChange += 10 // Constant baseline positive radioactivity
 
   // Change plays a part in radioactivity. This adds a random change of a change by 2 either positively or negatively:
   let randowmFactor = Math.random() * (2 * 2) - 2;
   radioactivityChange += randowmFactor
 
   // Control rods reduce radioactivity
-  radioactivityChange -= getRadioactivityFromRods(state.controlRods) * 0.012
+  radioactivityChange -= getRadioactivityFromRods(state.controlRods) * 0.025
 
   // Fuel Temperature affects radioactivity
   // Higher fuel temp reduces radioactivity
-  if (state.fuelTemp > 700) {
-    radioactivityChange -= (state.fuelTemp - 700) * 0.01
+  if (state.fuelTemp > 600) {
+    radioactivityChange -= (state.fuelTemp - 600) * 0.01
   }
   // Lower fuel temp increases radioactivity
   if (state.fuelTemp < 100) {
-    radioactivityChange += (100 - state.fuelTemp) * 0.09
+    radioactivityChange += (100 - state.fuelTemp) * 0.12
   }
 
   // Xenon affects radioactivity (inverse/fast)
   // Higher xenon reduces radioactivity
-  radioactivityChange -= state.xenon * 0.065
+  radioactivityChange -= state.xenon * 0.2
 
   // Steam Volume affects radioactivity (direct/quick)
   // High steam slightly increases radioactivity
-  if (state.steamVolume > 20) {
-    radioactivityChange += (state.steamVolume) * 0.02
-  }
+    radioactivityChange += Math.max(10, (state.steamVolume) * 0.02)
+  
 
   const newRadioactivity = Math.max(0, state.radioactivity + radioactivityChange)
 
@@ -227,23 +226,23 @@ function calculatePerformance(state: GameState): GameState {
 
 function calculateXenon(state: GameState): GameState {
   let xenonChange = 0
-  let randowmFactor = Math.random() * (1 * 2) - 1;
+  let randomFactor = Math.random() * (1 * 2) - 1;
 
   // Xenon Generation: Produced only when radioactivity < 50
-  if(state.radioactivity < 55) {
-    xenonChange += (55 - state.radioactivity) * 0.007
-    xenonChange += randowmFactor
+  if(state.radioactivity < 65) {
+    xenonChange += (55 - state.radioactivity) * 0.0033
+    xenonChange += randomFactor
   }
 
   // Xenon Reduction: Decreases when radioactivity > 90
-  if (state.radioactivity > 90) {
+  if (state.radioactivity > 110) {
     if (state.radioactivity > 150) {
       // Faster reduction if radioactivity > 150
       xenonChange -= 24
-      xenonChange += randowmFactor
+      xenonChange += randomFactor
     } else {
       xenonChange -= 16
-      xenonChange += randowmFactor
+      xenonChange += randomFactor
     }
   }
 
