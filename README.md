@@ -72,6 +72,9 @@ Game Over Conditions
 
 FIXES TO MAKE:
  
+- Add sounds affects, and an ability to turn sounds on / off from the homepage and gamepage https://pixabay.com/sound-effects/search/alarm%20siren/
+- Update CSS colours so reactor blue is primary, and set an affective background etc, there should be consistency in colour of buttons matching reactor blue
+- When selecting 'try again' it should remember the dificulty setting
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
 - Add in a way to go back (or close the modal) on the dificulty settings modal
 - Udate icons used in the game over or success modals

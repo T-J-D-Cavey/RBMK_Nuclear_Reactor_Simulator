@@ -17,7 +17,7 @@
   --secondary-foreground: oklch(0.25 0.01 85);
   --muted: oklch(0.75 0.01 85);
   --muted-foreground: oklch(0.45 0.01 85);
-  --accent: oklch(0.42 0.15 145); /* Soviet control panel green */
+  --accent: oklch(0.4664 0.0978 187.55); /* NEW GREEN HERE */
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.55 0.22 25); /* Warning red */
   --destructive-foreground: oklch(0.98 0 0);

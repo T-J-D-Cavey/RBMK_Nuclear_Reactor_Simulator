@@ -56,16 +56,17 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
     return generateTargetChangeEvent(state)
   } 
 }
-
+/*
 function generateTargetChangeEvent(state: GameState): GameEvent {
   // Target range: 1600 to 12000 MW (a difference of 10400)
   const range = state.difficultyIsHard ? 10000 : 6000
+  const maxTargetDifference = state.difficultyIsHard ? state.powerTarget * 0.66 : 0.33
   const minTarget = state.difficultyIsHard ? 1000 : 2000
 
   // 1. Calculate a random number between the ranges
   // 2. Divide by 100, round to the nearest whole number (e.g., 55.4 -> 55, 55.6 -> 56)
   // 3. Multiply by 100 to get the final rounded target (e.g., 56 -> 5600)
-  const newTarget = Math.round((Math.random() * range + minTarget) / 100) * 100
+  const newTarget = Math.min(Math.round((Math.random() * range + minTarget) / 100) * 100, Math.round((Math.random() * maxTargetDifference + minTarget) / 100) * 100)
 
   return {
     id: `event-${Date.now()}`,
@@ -74,6 +75,54 @@ function generateTargetChangeEvent(state: GameState): GameEvent {
     timestamp: state.gameTime,
     data: { newTarget },
   }
+}
+*/
+export function generateTargetChangeEvent(state: GameState): GameEvent {
+    // --- 1. CONFIGURATION BASED ON DIFFICULTY ---  
+    // Absolute bounds for the power target
+    const ABSOLUTE_MIN_TARGET = state.difficultyIsHard ? 500 : 2000
+    const ABSOLUTE_MAX_TARGET = state.difficultyIsHard ? 10000 : 8000
+    // Calculate the total possible range (11000 MW)
+    const TOTAL_RANGE_MW = ABSOLUTE_MAX_TARGET - ABSOLUTE_MIN_TARGET;
+
+    // The maximum percentage the target is allowed to shift (up or down)
+    const MAX_DELTA_PERCENT = state.difficultyIsHard ? 0.66 : 0.50;
+
+    // --- 2. CALCULATE BOUNDS AND DELTA LIMITS ---
+    const MAX_DELTA_MW = TOTAL_RANGE_MW * MAX_DELTA_PERCENT;
+
+    // Calculate the minimum possible target (respecting both the max delta and the absolute minimum)
+    const lowerBound = Math.max(
+        ABSOLUTE_MIN_TARGET, 
+        state.powerTarget - MAX_DELTA_MW // Anchored by the constant delta
+    );
+
+    // Calculate the maximum possible target (respecting both the max delta and the absolute maximum)
+    const upperBound = Math.min(
+        ABSOLUTE_MAX_TARGET, 
+        state.powerTarget + MAX_DELTA_MW // Anchored by the constant delta
+    );
+    
+    // --- 3. GENERATE THE NEW TARGET ---
+    // Generate a random number between the calculated lower and upper bounds.
+    const randomValue = Math.random() * (upperBound - lowerBound) + lowerBound;
+
+    // Round the new target to the nearest 100 MW.
+    const newTarget = Math.round(randomValue / 100) * 100;
+    
+    // Safety check to ensure the new target is within the absolute bounds after rounding
+    const finalTarget = Math.min(
+        ABSOLUTE_MAX_TARGET, 
+        Math.max(ABSOLUTE_MIN_TARGET, newTarget)
+    );
+
+    return {
+        id: `event-${Date.now()}`,
+        type: "target-change",
+        message: `⚡ INCOMING FROM GRID CONTROLLER: Power target changed to ${finalTarget} MW`,
+        timestamp: state.gameTime,
+        data: { newTarget: finalTarget },
+    }
 }
 
 function generatePowerCutEvent(state: GameState): GameEvent {
