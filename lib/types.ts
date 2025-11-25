@@ -60,6 +60,10 @@ export interface GameState {
 
   // Warnings
   warnings: string[]
+
+  // Audio
+  soundEnabled: boolean
+  soundVolume: number
 }
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -103,6 +107,9 @@ export const INITIAL_GAME_STATE: GameState = {
   justHadPowerCut: true,
 
   warnings: [],
+  
+  soundEnabled: false,
+  soundVolume: 1,
 }
 
 export const THRESHOLDS = {

@@ -8,35 +8,41 @@ import MessageArea from "@/components/message-area"
 import GameOverScreen from "@/components/game-over-screen"
 import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
+import { useAudioManager } from "@/hooks/use-audio-manager"
+import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Home, Volume, VolumeX } from "lucide-react"
+import { Home, Volume2, VolumeX } from "lucide-react"
 
 export default function GamePage() {
   const { gameState, updateGameState, resetGame, togglePause } = useGameState()
   const [showLeaveModal, setShowLeaveModal] = useState(false)
+  const [showSoundModal, setShowSoundModal] = useState(false)
   const router = useRouter()
 
+  // BACKGROUND IMAGE LOGIC:
   const controlRoomBackground = "control_room_background.jpg"
-  // const reactorRoomBackground = "reactor_hall_background.jpg" // old to be removed when new display is workign as expected
-
+  // const reactorRoomBackground = "reactor_hall_background.jpg" 
   const reactorFromAboveNormal = "new_reactor_image_cropped.jpg"
   const reactorFromAboveRadioactive = "new_reactor_image_high_radioactivity_cropped.jpg"
   const reactorFromAboveTemp = "new_reactor_image_high_temp_cropped.jpg"
-
+  
   // Helper to map 200-600 range to 0.0-1.0 opacity
-  const getRadioactivityOpacity = (value) => {
+  const getRadioactivityOpacity = (value: number) => {
     if (value <= 150) return 0;
     if (value >= 350) return 1;
     return (value - 150) / 200;
-  };
-
+  }
     // Helper to map 700-900 range to 0.0-1.0 opacity
-  const getTemperatureOpacity = (value) => {
+  const getTemperatureOpacity = (value: number) => {
     if (value <= 600) return 0;
     if (value >= 800) return 1;
     return (value - 600) / 200;
-  };
+  }
+
+  const handleSoundModalToggle = () => {
+    setShowSoundModal(!showSoundModal)
+  }
 
   const handleHomeClick = () => {
     setShowLeaveModal(true)
@@ -48,6 +54,17 @@ export default function GamePage() {
     router.push("/")
   }
 
+  // --- AUDIO LOGIC ---
+  const generalAlarmIsNeeded = gameState.reactorTemp > 800 || gameState.radioactivity > 800; // I need to refine and expand these triggers
+  const { initializeAudio } = useAudioManager({
+    soundEnabled: gameState.soundEnabled,
+    soundVolume: gameState.soundVolume,
+    generalAlarmIsNeeded: generalAlarmIsNeeded
+  });
+  const handleInteraction = () => {
+    initializeAudio();
+  };
+
   if (gameState.hasWon) {
     return <SuccessScreen gameState={gameState} onReset={resetGame} />
   }
@@ -57,8 +74,12 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-          {/* Home Button with warning modal */}
+    <div 
+      className="min-h-screen bg-background flex flex-col relative"
+      onClick={handleInteraction}
+      onTouchStart={handleInteraction}
+    >
+        {/* Home Button and Volume Toggle Top Left */}
         <div className="flex flex-col absolute top-4 left-4 z-50 space-y-2">
             <Button
               variant="outline"
@@ -75,16 +96,26 @@ export default function GamePage() {
               variant="outline"
               size="icon"
               className="border-2 border-primary bg-card hover:bg-card/80"
-              title="Turn sound on / off"
-              // Add your volume toggle handler here: onClick={handleVolumeToggle}
+              title="Sound Settings"
+              onClick={handleSoundModalToggle}
             >
-              <VolumeX className="h-5 w-5" />
-              {/* I will togle between the VolumeX and Volume component depeneidng on volume on state */}
+              {gameState.soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
             </Button>
         </div>
 
+      {/* MODALS */}
       <LeaveGameModal open={showLeaveModal} onOpenChange={setShowLeaveModal} onConfirm={handleConfirmLeave} />
 
+      {/* FIX: Corrected typo 'SoundeModal' -> 'SoundModal' */}
+      <SoundModal
+       open={showSoundModal}
+       onOpenChange={setShowSoundModal}
+       soundEnabled={gameState.soundEnabled}
+       soundVolume={gameState.soundVolume}
+       onEnabledUpdate={(soundEnabled) => updateGameState({ soundEnabled })}
+       onVolumeUpdate={(soundVolume) => updateGameState({ soundVolume })}
+      />
+      
       {/* Top Half - Control Panel */}
       <div className="flex-1 p-4 md:p-6 border-b-4 border-primary bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
         <ControlPanel gameState={gameState} onTogglePause={togglePause} updateGameState={updateGameState} />
@@ -92,11 +123,6 @@ export default function GamePage() {
 
       {/* Message Area */}
       <MessageArea gameState={gameState} />
-
-      {/* Bottom Half - Reactor Display 
-      <div className="flex-1 p-4 md:p-6 flex items-center justify-center bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${reactorRoomBackground})`}}>
-        <ReactorDisplay gameState={gameState} updateGameState={updateGameState} />
-      </div>*/}
 
       {/* New reactor display being tested: */}
       <div className="w-full bg-background rounded-lg flex justify-center items-center">

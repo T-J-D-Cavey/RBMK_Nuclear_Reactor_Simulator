@@ -20,7 +20,7 @@ export function useGameState() {
         const parsed = JSON.parse(saved)
         setGameState(parsed)
       } catch (e) {
-        console.error("[v0] Failed to load game state:", e)
+        console.error("Failed to load game state:", e)
       }
     } else {
       setGameState((prev) => ({
