@@ -5,21 +5,32 @@ interface AudioManagerProps {
   soundVolume: number;
   generalAlarmIsNeeded: boolean;
   powerCutOrRodStuckAlarm: boolean;
+  highRadAlarm: boolean;
+  highReactorTempAlarm: boolean;
+  highSteamOrXenon: boolean;
 }
 
 export function useAudioManager({
   soundEnabled,
   soundVolume,
   generalAlarmIsNeeded,
-  powerCutOrRodStuckAlarm
+  powerCutOrRodStuckAlarm,
+  highRadAlarm,
+  highReactorTempAlarm,
+  highSteamOrXenon
 }: AudioManagerProps) {
   // --- REFS ---
   const humAudioRef1 = useRef<HTMLAudioElement | null>(null);
   const humAudioRef2 = useRef<HTMLAudioElement | null>(null);
-  const humTimeoutRef = useRef<NodeJS.Timeout | null>(null); // To store the timer ID
+  const humTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const generalAlarmAudioRef = useRef<HTMLAudioElement | null>(null);
   const powerCutOrRodStuckAlarmRef = useRef<HTMLAudioElement | null>(null);
+  
+  // FIX: Renamed these to include 'Ref' to avoid clashing with the boolean props
+  const highRadAlarmRef = useRef<HTMLAudioElement | null>(null);
+  const highReactorTempAlarmRef = useRef<HTMLAudioElement | null>(null);
+  const highSteamOrXenonRef = useRef<HTMLAudioElement | null>(null);
   
   const isInitialized = useRef(false);
 
@@ -28,62 +39,67 @@ export function useAudioManager({
     if (isInitialized.current) return;
 
     // Setup Hum Track 1
-    humAudioRef1.current = new Audio("/hum.mp3");
+    humAudioRef1.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/KvQGGKnHa58-WpqF4xeUSK/public/hum.mp3");
     humAudioRef1.current.loop = true;
     humAudioRef1.current.preload = "auto";
 
     // Setup Hum Track 2 (The Gap Filler)
-    humAudioRef2.current = new Audio("/hum.mp3");
+    humAudioRef2.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/KvQGGKnHa58-WpqF4xeUSK/public/hum.mp3");
     humAudioRef2.current.loop = true;
     humAudioRef2.current.preload = "auto";
 
-    generalAlarmAudioRef.current = new Audio("/general_alarm.mp3");
+    generalAlarmAudioRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/lsUOlNS1hPeFcsYksZxftt/public/general_alarm.mp3");
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
-    generalAlarmAudioRef.current.volume = Math.max(0, soundVolume - 0.2);
 
-    powerCutOrRodStuckAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/9hJcTS9EGtu3Ny5W8-JnbV/public/good_loop_rod_stuck.mp3");
+    // Added leading slash for consistency
+    powerCutOrRodStuckAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/9hJcTS9EGtu3Ny5W8-JnbV/public/rod_stuck_power_cut.mp3");
     powerCutOrRodStuckAlarmRef.current.loop = true;
     powerCutOrRodStuckAlarmRef.current.preload = "auto";
-    powerCutOrRodStuckAlarmRef.current.volume = Math.max(0, soundVolume - 0.4);
+
+    highRadAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/7qUMgIOPMAWUArr7KtFnJB/public/high_radioactivity.mp3");
+    highRadAlarmRef.current.loop = true;
+    highRadAlarmRef.current.preload = "auto";
+
+    highReactorTempAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/QjO0U2MDR7OOhXTZuityK7/public/high_reactor%20temp.mp3");
+    highReactorTempAlarmRef.current.loop = true;
+    highReactorTempAlarmRef.current.preload = "auto";
+
+    highSteamOrXenonRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/4wqBSk2bDjclgK4_AJe-Mm/public/high_steam.mp3");
+    highSteamOrXenonRef.current.loop = true;
+    highSteamOrXenonRef.current.preload = "auto";
 
     isInitialized.current = true;
   }, []); 
 
-  // --- 2. Volume Management ---
+  // Volume Management ---
   useEffect(() => {
-    // Update volume for BOTH hum tracks
+    // Update volume for hum tracks
     if (humAudioRef1.current) humAudioRef1.current.volume = soundVolume;
     if (humAudioRef2.current) humAudioRef2.current.volume = soundVolume;
-    if (generalAlarmAudioRef.current) generalAlarmAudioRef.current.volume = Math.max(0, soundVolume - 0.2);
-    if (powerCutOrRodStuckAlarmRef.current) powerCutOrRodStuckAlarmRef.current.volume = Math.max(0, soundVolume - 0.4);
+    
+    if (generalAlarmAudioRef.current) generalAlarmAudioRef.current.volume = soundVolume;
+    if (powerCutOrRodStuckAlarmRef.current) powerCutOrRodStuckAlarmRef.current.volume = soundVolume;
+    if (highRadAlarmRef.current) highRadAlarmRef.current.volume = soundVolume;
+    if (highReactorTempAlarmRef.current) highReactorTempAlarmRef.current.volume = soundVolume;
+    if (highSteamOrXenonRef.current) highSteamOrXenonRef.current.volume = soundVolume;
   }, [soundVolume]);
 
-  // --- 3. Hum Logic (The Overlay Strategy) ---
+  // Hum Logic 
   useEffect(() => {
-    // Return early if audio hasn't been initialized yet
     if (!humAudioRef1.current || !humAudioRef2.current) return;
 
     if (soundEnabled) {
-      // 1. Play the first track immediately
       humAudioRef1.current.play().catch((e) => console.warn("Hum 1 blocked", e));
 
-      // 2. Set a timer to play the second track 4 seconds later
-      // This offsets the loops so they don't hit the silence at the same time
       humTimeoutRef.current = setTimeout(() => {
-        // Double check sound is still enabled before playing
         if (humAudioRef2.current && soundEnabled) {
             humAudioRef2.current.play().catch((e) => console.warn("Hum 2 blocked", e));
         }
-      }, 4000); // 4 Second Delay
-
+      }, 4000); 
     } else {
-      // 1. Clear the timeout if we turn sound off before the 4 seconds are up
-      if (humTimeoutRef.current) {
-        clearTimeout(humTimeoutRef.current);
-      }
+      if (humTimeoutRef.current) clearTimeout(humTimeoutRef.current);
 
-      // 2. Pause and Reset BOTH tracks
       humAudioRef1.current.pause();
       humAudioRef1.current.currentTime = 0;
       
@@ -92,7 +108,7 @@ export function useAudioManager({
     }
   }, [soundEnabled]);
 
-  // --- 4. General Alarm Logic ---
+  // General Alarm Logic
   useEffect(() => {
     if (!generalAlarmAudioRef.current) return;
 
@@ -104,7 +120,7 @@ export function useAudioManager({
     }
   }, [soundEnabled, generalAlarmIsNeeded]);
 
-  // --- 5. Rod stuck Logic ---
+  // Rod stuck power cut logic
   useEffect(() => {
     if (!powerCutOrRodStuckAlarmRef.current) return;
 
@@ -116,31 +132,56 @@ export function useAudioManager({
     }
   }, [soundEnabled, powerCutOrRodStuckAlarm]);
 
-  // --- 6. Cleanup ---
+    // Radioactivity logic
+  useEffect(() => {
+    if (!highRadAlarmRef.current) return;
+
+    if (soundEnabled && highRadAlarm) {
+      highRadAlarmRef.current.play().catch((e) => console.warn("Alarm play blocked:", e));
+    } else {
+      highRadAlarmRef.current.pause();
+      highRadAlarmRef.current.currentTime = 0;
+    }
+  }, [soundEnabled, highRadAlarm]);
+
+    // High reactor temp logic
+    useEffect(() => {
+    if (!highReactorTempAlarmRef.current) return;
+
+    if (soundEnabled && highReactorTempAlarm) {
+      highReactorTempAlarmRef.current.play().catch((e) => console.warn("Alarm play blocked:", e));
+    } else {
+      highReactorTempAlarmRef.current.pause();
+      highReactorTempAlarmRef.current.currentTime = 0;
+    }
+  }, [soundEnabled, highReactorTempAlarm]);
+
+      // High steam or low xenon temp logic
+    useEffect(() => {
+    if (!highSteamOrXenonRef.current) return;
+
+    if (soundEnabled && highSteamOrXenon) {
+      highSteamOrXenonRef.current.play().catch((e) => console.warn("Alarm play blocked:", e));
+    } else {
+      highSteamOrXenonRef.current.pause();
+      highSteamOrXenonRef.current.currentTime = 0;
+    }
+  }, [soundEnabled, highSteamOrXenon]);
+
+  // Cleanup
   useEffect(() => {
     return () => {
-      // Clear timeout
       if (humTimeoutRef.current) clearTimeout(humTimeoutRef.current);
 
-      // Cleanup Hum 1
-      if (humAudioRef1.current) {
-        humAudioRef1.current.pause();
-        humAudioRef1.current = null;
-      }
-      // Cleanup Hum 2
-      if (humAudioRef2.current) {
-        humAudioRef2.current.pause();
-        humAudioRef2.current = null;
-      }
-      // Cleanup Alarms
-      if (generalAlarmAudioRef.current) {
-        generalAlarmAudioRef.current.pause();
-        generalAlarmAudioRef.current = null;
-      }
-      if (powerCutOrRodStuckAlarmRef.current) {
-        powerCutOrRodStuckAlarmRef.current.pause();
-        powerCutOrRodStuckAlarmRef.current = null;
-      }
+      if (humAudioRef1.current) { humAudioRef1.current.pause(); humAudioRef1.current = null; }
+      if (humAudioRef2.current) { humAudioRef2.current.pause(); humAudioRef2.current = null; }
+      
+      if (generalAlarmAudioRef.current) { generalAlarmAudioRef.current.pause(); generalAlarmAudioRef.current = null; }
+      if (powerCutOrRodStuckAlarmRef.current) { powerCutOrRodStuckAlarmRef.current.pause(); powerCutOrRodStuckAlarmRef.current = null; }
+      
+      if (highRadAlarmRef.current) { highRadAlarmRef.current.pause(); highRadAlarmRef.current = null; }
+      if (highReactorTempAlarmRef.current) { highReactorTempAlarmRef.current.pause(); highReactorTempAlarmRef.current = null; }
+      if (highSteamOrXenonRef.current) { highSteamOrXenonRef.current.pause(); highSteamOrXenonRef.current = null; }
     };
   }, []);
 

@@ -9,6 +9,7 @@ import GameOverScreen from "@/components/game-over-screen"
 import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
 import { useAudioManager } from "@/hooks/use-audio-manager"
+import { THRESHOLDS } from "@/lib/types" 
 import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -57,11 +58,17 @@ export default function GamePage() {
   // --- AUDIO LOGIC ---
   const generalAlarmIsNeeded = gameState.warnings.length > 0 || gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck"); // I need to refine and expand these triggers
   const powerCutOrRodStuckAlarm = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck");
+  const highRadAlarm = gameState.radioactivity > THRESHOLDS.radioactivity.highWarning
+  const highReactorTempAlarm = gameState.reactorTemp > THRESHOLDS.reactorTemp.warning
+  const highSteamOrXenon = gameState.steamVolume > THRESHOLDS.steamVolume.highWarning || gameState.xenon > THRESHOLDS.xenon.highWarning
   const { initializeAudio } = useAudioManager({
     soundEnabled: gameState.soundEnabled,
     soundVolume: gameState.soundVolume,
     generalAlarmIsNeeded: generalAlarmIsNeeded,
-    powerCutOrRodStuckAlarm: powerCutOrRodStuckAlarm
+    powerCutOrRodStuckAlarm: powerCutOrRodStuckAlarm,
+    highRadAlarm: highRadAlarm,
+    highReactorTempAlarm: highReactorTempAlarm,
+    highSteamOrXenon: highSteamOrXenon
   });
   const handleInteraction = () => {
     initializeAudio();
