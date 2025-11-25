@@ -10,7 +10,7 @@ import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Home } from "lucide-react"
+import { Home, Volume, VolumeX } from "lucide-react"
 
 export default function GamePage() {
   const { gameState, updateGameState, resetGame, togglePause } = useGameState()
@@ -18,7 +18,7 @@ export default function GamePage() {
   const router = useRouter()
 
   const controlRoomBackground = "control_room_background.jpg"
-  const reactorRoomBackground = "reactor_hall_background.jpg" // old to be removed when new display is workign as expected
+  // const reactorRoomBackground = "reactor_hall_background.jpg" // old to be removed when new display is workign as expected
 
   const reactorFromAboveNormal = "new_reactor_image_cropped.jpg"
   const reactorFromAboveRadioactive = "new_reactor_image_high_radioactivity_cropped.jpg"
@@ -26,16 +26,16 @@ export default function GamePage() {
 
   // Helper to map 200-600 range to 0.0-1.0 opacity
   const getRadioactivityOpacity = (value) => {
-    if (value <= 200) return 0;
-    if (value >= 600) return 1;
-    return (value - 200) / 400;
+    if (value <= 150) return 0;
+    if (value >= 350) return 1;
+    return (value - 150) / 200;
   };
 
     // Helper to map 700-900 range to 0.0-1.0 opacity
   const getTemperatureOpacity = (value) => {
-    if (value <= 700) return 0;
-    if (value >= 900) return 1;
-    return (value - 700) / 200;
+    if (value <= 600) return 0;
+    if (value >= 800) return 1;
+    return (value - 600) / 200;
   };
 
   const handleHomeClick = () => {
@@ -58,18 +58,30 @@ export default function GamePage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Home Button with warning modal */}
-      <div className="absolute top-4 left-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          className="border-2 border-primary bg-card hover:bg-card/80"
-          title="Return to Menu"
-          onClick={handleHomeClick}
-        >
-          <Home className="h-5 w-5" />
-        </Button>
-      </div>
+          {/* Home Button with warning modal */}
+        <div className="flex flex-col absolute top-4 left-4 z-50 space-y-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="border-2 border-primary bg-card hover:bg-card/80"
+              title="Return to Menu"
+              onClick={handleHomeClick}
+            >
+              <Home className="h-5 w-5" />
+            </Button>
+
+            {/* Volume toggle */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="border-2 border-primary bg-card hover:bg-card/80"
+              title="Turn sound on / off"
+              // Add your volume toggle handler here: onClick={handleVolumeToggle}
+            >
+              <VolumeX className="h-5 w-5" />
+              {/* I will togle between the VolumeX and Volume component depeneidng on volume on state */}
+            </Button>
+        </div>
 
       <LeaveGameModal open={showLeaveModal} onOpenChange={setShowLeaveModal} onConfirm={handleConfirmLeave} />
 
