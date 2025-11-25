@@ -55,11 +55,13 @@ export default function GamePage() {
   }
 
   // --- AUDIO LOGIC ---
-  const generalAlarmIsNeeded = gameState.reactorTemp > 800 || gameState.radioactivity > 800; // I need to refine and expand these triggers
+  const generalAlarmIsNeeded = gameState.warnings.length > 0 || gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck"); // I need to refine and expand these triggers
+  const powerCutOrRodStuckAlarm = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck");
   const { initializeAudio } = useAudioManager({
     soundEnabled: gameState.soundEnabled,
     soundVolume: gameState.soundVolume,
-    generalAlarmIsNeeded: generalAlarmIsNeeded
+    generalAlarmIsNeeded: generalAlarmIsNeeded,
+    powerCutOrRodStuckAlarm: powerCutOrRodStuckAlarm
   });
   const handleInteraction = () => {
     initializeAudio();
