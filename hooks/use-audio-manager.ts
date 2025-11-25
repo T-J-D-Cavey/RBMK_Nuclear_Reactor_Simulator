@@ -28,21 +28,21 @@ export function useAudioManager({
     if (isInitialized.current) return;
 
     // Setup Hum Track 1
-    humAudioRef1.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/KvQGGKnHa58-WpqF4xeUSK/public/hum.mp3");
+    humAudioRef1.current = new Audio("/hum.mp3");
     humAudioRef1.current.loop = true;
     humAudioRef1.current.preload = "auto";
 
     // Setup Hum Track 2 (The Gap Filler)
-    humAudioRef2.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/KvQGGKnHa58-WpqF4xeUSK/public/hum.mp3");
+    humAudioRef2.current = new Audio("/hum.mp3");
     humAudioRef2.current.loop = true;
     humAudioRef2.current.preload = "auto";
 
-    generalAlarmAudioRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/lsUOlNS1hPeFcsYksZxftt/public/general_alarm.mp3");
+    generalAlarmAudioRef.current = new Audio("/general_alarm.mp3");
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
     generalAlarmAudioRef.current.volume = Math.max(0, soundVolume - 0.2);
 
-    powerCutOrRodStuckAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/lWYOyTq62TBQrkgG7RU6-w/public/rod_stuck_power_cut.mp3");
+    powerCutOrRodStuckAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/9hJcTS9EGtu3Ny5W8-JnbV/public/good_loop_rod_stuck.mp3");
     powerCutOrRodStuckAlarmRef.current.loop = true;
     powerCutOrRodStuckAlarmRef.current.preload = "auto";
     powerCutOrRodStuckAlarmRef.current.volume = Math.max(0, soundVolume - 0.4);
