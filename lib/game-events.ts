@@ -86,7 +86,7 @@ export function generateTargetChangeEvent(state: GameState): GameEvent {
     const TOTAL_RANGE_MW = ABSOLUTE_MAX_TARGET - ABSOLUTE_MIN_TARGET;
 
     // The maximum percentage the target is allowed to shift (up or down)
-    const MAX_DELTA_PERCENT = state.difficultyIsHard ? 0.66 : 0.50;
+    const MAX_DELTA_PERCENT = state.difficultyIsHard ? 0.50 : 0.50;
 
     // --- 2. CALCULATE BOUNDS AND DELTA LIMITS ---
     const MAX_DELTA_MW = TOTAL_RANGE_MW * MAX_DELTA_PERCENT;

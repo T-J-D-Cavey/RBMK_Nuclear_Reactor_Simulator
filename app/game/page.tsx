@@ -56,7 +56,7 @@ export default function GamePage() {
   }
 
   // --- AUDIO LOGIC ---
-  const generalAlarmIsNeeded = gameState.warnings.length > 0 || gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck"); // I need to refine and expand these triggers
+  const generalAlarmIsNeeded = (gameState.warnings.length > 0 && gameState.warnings[0] !== "WARNING: Our power station is reporting low grid target performance. Review power targets") || gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck")
   const powerCutOrRodStuckAlarm = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck");
   const highRadAlarm = gameState.radioactivity > THRESHOLDS.radioactivity.highWarning
   const highReactorTempAlarm = gameState.reactorTemp > THRESHOLDS.reactorTemp.warning
