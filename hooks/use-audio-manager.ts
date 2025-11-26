@@ -48,12 +48,12 @@ export function useAudioManager({
     humAudioRef2.current.loop = true;
     humAudioRef2.current.preload = "auto";
 
-    generalAlarmAudioRef.current = new Audio("/beep_loop_3.mp3");
+    generalAlarmAudioRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/lsUOlNS1hPeFcsYksZxftt/public/general_alarm.mp3");
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
 
     // Added leading slash for consistency
-    powerCutOrRodStuckAlarmRef.current = new Audio("/beeb_loop_2.mp3");
+    powerCutOrRodStuckAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/9hJcTS9EGtu3Ny5W8-JnbV/public/rod_stuck_power_cut.mp3");
     powerCutOrRodStuckAlarmRef.current.loop = true;
     powerCutOrRodStuckAlarmRef.current.preload = "auto";
 
@@ -61,7 +61,7 @@ export function useAudioManager({
     highRadAlarmRef.current.loop = true;
     highRadAlarmRef.current.preload = "auto";
 
-    highReactorTempAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/lsUOlNS1hPeFcsYksZxftt/public/general_alarm.mp3");
+    highReactorTempAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/QjO0U2MDR7OOhXTZuityK7/public/high_reactor_temp.mp3");
     highReactorTempAlarmRef.current.loop = true;
     highReactorTempAlarmRef.current.preload = "auto";
 
