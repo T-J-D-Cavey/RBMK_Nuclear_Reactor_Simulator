@@ -48,24 +48,24 @@ export function useAudioManager({
     humAudioRef2.current.loop = true;
     humAudioRef2.current.preload = "auto";
 
-    generalAlarmAudioRef.current = new Audio("/general_alarm.mp3");
+    generalAlarmAudioRef.current = new Audio("/beep_loop_3.mp3");
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
 
     // Added leading slash for consistency
-    powerCutOrRodStuckAlarmRef.current = new Audio("/rod_stuck_power_cut.mp3");
+    powerCutOrRodStuckAlarmRef.current = new Audio("/beeb_loop_2.mp3");
     powerCutOrRodStuckAlarmRef.current.loop = true;
     powerCutOrRodStuckAlarmRef.current.preload = "auto";
 
-    highRadAlarmRef.current = new Audio("/high_radioactivity.mp3");
+    highRadAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/7qUMgIOPMAWUArr7KtFnJB/public/high_radioactivity.mp3");
     highRadAlarmRef.current.loop = true;
     highRadAlarmRef.current.preload = "auto";
 
-    highReactorTempAlarmRef.current = new Audio("high_reactor_temp.mp3");
+    highReactorTempAlarmRef.current = new Audio("general_alarm.mp3");
     highReactorTempAlarmRef.current.loop = true;
     highReactorTempAlarmRef.current.preload = "auto";
 
-    highSteamOrXenonRef.current = new Audio("high_steam.mp3");
+    highSteamOrXenonRef.current = new Audio("beeb_loop_1.mp3");
     highSteamOrXenonRef.current.loop = true;
     highSteamOrXenonRef.current.preload = "auto";
 
