@@ -60,7 +60,7 @@ export function checkWarnings(state: GameState): string[] {
     warnings.push("WARNING: High xenon levels detected, lowering radioactivity. Recommend reducing control rod insertion to increase radioactivity.")
   }
 
-  if (state.performance < 50) {
+  if (state.performance < 10) {
     warnings.push("WARNING: Our power station is reporting low grid target performance. Review power targets")
   }
 
