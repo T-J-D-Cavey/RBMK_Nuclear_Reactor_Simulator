@@ -39,12 +39,12 @@ export function useAudioManager({
     if (isInitialized.current) return;
 
     // Setup Hum Track 1
-    humAudioRef1.current = new Audio("hum.mp3");
+    humAudioRef1.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/KvQGGKnHa58-WpqF4xeUSK/public/hum.mp3");
     humAudioRef1.current.loop = true;
     humAudioRef1.current.preload = "auto";
 
     // Setup Hum Track 2 (The Gap Filler)
-    humAudioRef2.current = new Audio("hum.mp3");
+    humAudioRef2.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/KvQGGKnHa58-WpqF4xeUSK/public/hum.mp3");
     humAudioRef2.current.loop = true;
     humAudioRef2.current.preload = "auto";
 
@@ -61,11 +61,11 @@ export function useAudioManager({
     highRadAlarmRef.current.loop = true;
     highRadAlarmRef.current.preload = "auto";
 
-    highReactorTempAlarmRef.current = new Audio("general_alarm.mp3");
+    highReactorTempAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/lsUOlNS1hPeFcsYksZxftt/public/general_alarm.mp3");
     highReactorTempAlarmRef.current.loop = true;
     highReactorTempAlarmRef.current.preload = "auto";
 
-    highSteamOrXenonRef.current = new Audio("beeb_loop_1.mp3");
+    highSteamOrXenonRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/foPf2rrWlckCsgQclQDbtS/public/beeb_loop_1.mp3");
     highSteamOrXenonRef.current.loop = true;
     highSteamOrXenonRef.current.preload = "auto";
 
@@ -96,7 +96,7 @@ export function useAudioManager({
         if (humAudioRef2.current && soundEnabled) {
             humAudioRef2.current.play().catch((e) => console.warn("Hum 2 blocked", e));
         }
-      }, 4000); 
+      }, 2000); 
     } else {
       if (humTimeoutRef.current) clearTimeout(humTimeoutRef.current);
 
