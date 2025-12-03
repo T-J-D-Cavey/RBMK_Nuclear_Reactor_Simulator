@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
 import { formatTime } from "@/lib/game-utils"
-import { Trophy, Star } from "lucide-react"
+import { Atom, Star } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface SuccessScreenProps {
@@ -36,7 +36,7 @@ export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
             }}
           >
             <div className="w-full h-full rounded-full border-8 border-primary flex items-center justify-center bg-accent/80 backdrop-blur">
-              <Trophy className="w-24 h-24 md:w-32 md:h-32 text-background" />
+              <Atom className="w-24 h-24 md:w-32 md:h-32 text-background" />
             </div>
           </div>
         </div>

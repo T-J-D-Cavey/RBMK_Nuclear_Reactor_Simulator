@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
 import { formatTime } from "@/lib/game-utils"
-import { Flame, TrendingDown } from "lucide-react"
+import { Radiation, TrendingDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface GameOverScreenProps {
@@ -37,7 +37,7 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
               }}
             >
               <div className="w-full h-full rounded-full border-8 border-primary flex items-center justify-center bg-destructive/80 backdrop-blur">
-                <Flame className="w-24 h-24 md:w-32 md:h-32 text-background animate-pulse" />
+                <Radiation className="w-24 h-24 md:w-32 md:h-32 text-background animate-pulse" />
               </div>
             </div>
           ) : (
