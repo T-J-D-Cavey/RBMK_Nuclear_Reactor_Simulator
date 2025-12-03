@@ -1,14 +1,14 @@
-R B M K - Nuclear Reactor Simulation
+# R B M K - Nuclear Reactor Simulation
 
 Manage a nuclear reactor in real-time. Control the forces involved to meet power targets and avoid a nuclear disaster. [Open the Simulation here](https://rbmk-simulator.vercel.app/)
 
-Objective
+## Objective
 
 Your goal is to maintain a stable RBMK reactor at optimal performance. You must generate enough electricity to meet the dynamic power targets set by the district grid while preventing the reactor temperature from exceeding safe limits.
 
 You are tasked with balancing multiple volatile variables including radioactivity, reactor temperature, steam volume, uranium fuel temperature, and xenon poisoning levels.
 
-Controls
+## Controls
 
 Control Rods (×10)
 - Function: Boron rods act as the primary brake for radioactivity.
@@ -27,7 +27,7 @@ Turbine
 - Usage: Connect/Disconnect via the control panel.
 - Grid Management: If power generation exceeds grid capacity, you must disconnect the turbine to prevent grid damage. Watch for the warning light on the panel.
 
-Key Metrics & Physics
+## Key Metrics & Physics
 
 Understanding the feedback loops inside the core is essential for survival.
 
@@ -51,7 +51,7 @@ Fuel Temperature & Xenon
 - Negative Temperature Coefficient: Cool uranium is more reactive; hot uranium is less reactive. This change happens slowly.
 - Xenon Pit: If the reactor runs at low power for too long, xenon gas builds up, poisoning the reaction. To escape a xenon pit, reduce fuel temperature and carefully withdraw control rods.
 
-Performance & Scoring
+## Performance & Scoring
 
 You must keep power generation within 10% of the current target.
 - Success: Consistent power generation yields a high performance score.
@@ -63,76 +63,21 @@ Be prepared for unexpected variables:
 2. Power Cut: External power fails, disabling water pumps.
 3. Stuck Rods: Mechanical failure prevents rod movement.
 
-Game Over Conditions
+## Game Over Conditions
 
 1. MELTDOWN: Reactor Temperature reaches 1200°.
 2. PERFORMANCE FAILURE: Performance score drops to 0%.
 
 
-
-FIXES TO MAKE:
+## Fixes and improvements to make
  
-- Add sounds affects, and an ability to turn sounds on / off from the homepage and gamepage https://pixabay.com/sound-effects/search/alarm%20siren/
-- Update CSS colours so reactor blue is primary, and set an affective background etc, there should be consistency in colour of buttons matching reactor blue
 - When selecting 'try again' it should remember the dificulty setting
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
 - Add in a way to go back (or close the modal) on the dificulty settings modal
 - Udate icons used in the game over or success modals, replace these with the images being used in the game page, using the same opacity settings
-- tidy up commented out code and unused components (reactor display etc)
+- Tidy up commented out code and unused components (reactor display etc)
+- Change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
 
+## Acceditations
 
-OPTION NEW FUNCTIONALITY:
-
-- change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
-
-
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=80493">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=80493">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=26718">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=26718">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=63578">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=63578">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/audley_fergine-32337609/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=279206">Hanifi Şahin</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=279206">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/ribhavagrawal-39286533/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=294194">Ribhav Agrawal</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=294194">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/dragon-studio-38165424/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=386177">DRAGON-STUDIO</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=386177">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=29431">freesound_community</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=29431">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=71107">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=71107">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=89816">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=89816">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=79993">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=79993">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=107202">freesound_community</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=107202">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/koiroylers-44305058/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=351963">Koi Roylers</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=351963">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/poorartistt-45918667/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=410299">Ribhav Agrawal</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=410299">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=34737">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=34737">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/8footdino_on_scratch-48867414/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=301729">8footdino_on_scratch</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=301729">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/audley_fergine-32337609/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=314878">Hanifi Şahin</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=314878">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=86950">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=86950">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/magiaz-10236927/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=373632">Mauricio Póvoa</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=373632">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/jeremayjimenez-28887262/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=428015">Jeremay Jimenez</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=428015">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/jeremayjimenez-28887262/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=320905">Jeremay Jimenez</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=320905">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=100538">freesound_community</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=100538">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/universfield-28281460/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=151920">Universfield</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=151920">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/universfield-28281460/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=151919">Universfield</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=151919">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=80262">freesound_community</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=80262">Pixabay</a>
-
-Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=60753">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=60753">Pixabay</a>
+Sound effects and 'control room' image obtained from [Pixabay](https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=80493)
