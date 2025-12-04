@@ -81,11 +81,6 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-
-        {/* Footer Info */}
-        <div className="text-sm text-reactor-blue font-mono space-y-1 bg-black/20">
-          <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
-        </div>
       </div>
 
       <DifficultyModal open={showDifficultyModal} onOpenChange={setShowDifficultyModal} onSelectDifficulty={handleSelectDifficulty} />

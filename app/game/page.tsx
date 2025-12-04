@@ -161,9 +161,6 @@ export default function GamePage() {
 
           </div>
         </div>
-        <div className="text-sm text-reactor-blue font-mono space-y-3 bg-black text-center">
-          <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
-        </div>
     </div>
   )
 }

@@ -112,11 +112,6 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
             </Button>
           </div>
         </div>
-
-        {/* Footer Info */}
-        <div className="text-sm text-muted-foreground font-mono space-y-1">
-          <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
-        </div>
       </div>
     </div>
   )

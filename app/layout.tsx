@@ -39,6 +39,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans antialiased min-w-[340px]`}>
         {children}
+        <div className="text-sm text-reactor-blue font-mono py-3 bg-black text-center">
+          <a 
+            href="https://github.com/T-J-D-Cavey" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-xs hover:underline cursor-pointer"
+          >
+            {"© 1986 SKALA CONTROL SYSTEMS"}
+          </a>
+        </div>
         <Analytics />
       </body>
     </html>

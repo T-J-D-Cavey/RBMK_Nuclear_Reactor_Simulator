@@ -71,8 +71,6 @@ Be prepared for unexpected variables:
 
 ## Fixes and improvements to make
  
-- AZ5 button changes when I hover but doesn't change back after moving mouse away
-- Tidy up commented out code and unused components (reactor display etc)
 - Change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
 
 ## Acceditations
