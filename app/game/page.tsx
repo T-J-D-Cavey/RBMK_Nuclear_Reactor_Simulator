@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useGameState } from "@/hooks/use-game-state"
 import ControlPanel from "@/components/control-panel"
-import ReactorDisplay from "@/components/reactor-display"
 import MessageArea from "@/components/message-area"
 import GameOverScreen from "@/components/game-over-screen"
 import { SuccessScreen } from "@/components/success-screen"
