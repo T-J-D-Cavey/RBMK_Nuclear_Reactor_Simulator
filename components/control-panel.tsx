@@ -53,7 +53,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         <div className="text-center">
           <div className="flex items-center justify-center gap-4">
             <div className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>
-            <h1 className="text-2xl md:text-3xl font-bold font-mono uppercase tracking-wider">
+            <h1 className="text-lg md:text-3xl font-bold font-mono uppercase tracking-wider">
               Reactor Control System
             </h1>
             <div className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}/>

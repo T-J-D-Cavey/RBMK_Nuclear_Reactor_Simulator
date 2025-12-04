@@ -104,13 +104,13 @@ export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button
+            {/* <Button
               onClick={handlePlayAgain}
               size="lg"
               className="uppercase font-mono tracking-wider px-8 border-2 border-accent bg-accent hover:bg-accent/90"
             >
               Play Again
-            </Button>
+            </Button> */}
 
             <Button
               size="lg"
@@ -118,7 +118,7 @@ export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
               className="uppercase font-mono tracking-wider px-8 border-2 border-primary w-full sm:w-auto bg-transparent"
               onClick={handleReturnToMenu}
             >
-              Return to Menu
+              Return to Homepage
             </Button>
           </div>
         </div>

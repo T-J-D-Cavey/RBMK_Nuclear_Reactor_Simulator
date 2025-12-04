@@ -71,11 +71,9 @@ Be prepared for unexpected variables:
 
 ## Fixes and improvements to make
  
-- When selecting 'try again' it should remember the dificulty setting
 - AZ5 button changes when I hover but doesn't change back after moving mouse away
-- Add in a way to go back (or close the modal) on the dificulty settings modal
-- Udate icons used in the game over or success modals, replace these with the images being used in the game page, using the same opacity settings
 - Tidy up commented out code and unused components (reactor display etc)
+- it's dificult to select control rods in modal on mobile screens. Either make them 2 rows of 5 so they can be bigger, or add an increment / decrement button
 - Change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
 
 ## Acceditations

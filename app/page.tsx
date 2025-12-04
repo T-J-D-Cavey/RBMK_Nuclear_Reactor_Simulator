@@ -88,7 +88,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <DifficultyModal open={showDifficultyModal} onSelectDifficulty={handleSelectDifficulty} />
+      <DifficultyModal open={showDifficultyModal} onOpenChange={setShowDifficultyModal} onSelectDifficulty={handleSelectDifficulty} />
     </div>
   )
 }

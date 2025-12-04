@@ -93,13 +93,14 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button
+             
+            {/* <Button
               onClick={handleTryAgain}
               size="lg"
               className="uppercase font-mono tracking-wider px-8 border-2 border-primary"
             >
               Try Again
-            </Button>
+            </Button>  */}
 
             <Button
               size="lg"
@@ -107,7 +108,7 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
               className="uppercase font-mono tracking-wider px-8 border-2 border-primary w-full sm:w-auto bg-transparent"
               onClick={handleReturnToMenu}
             >
-              Return to Menu
+              Return to Homepage
             </Button>
           </div>
         </div>

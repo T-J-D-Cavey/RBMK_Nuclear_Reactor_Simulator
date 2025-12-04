@@ -25,7 +25,7 @@ export default function InstructionsPage() {
             <h2 className="text-2xl font-bold font-mono uppercase text-accent">Objective</h2>
             <p className="text-base leading-relaxed">
               {
-                "Maintain a stable reactor at optimal performance by meeting the power generation targets while preventing the reactor tempeature from exceeding safe limits and eventually a meltdown. You will need to balance multiple variables including radioactivity, reactor temperature, steam volume, uranium fuel temperature, and xenon levels."
+                "Maintain a stable reactor at optimal performance by meeting the power generation targets while preventing the reactor temperature from exceeding safe limits and eventually a meltdown. You will need to balance multiple variables including radioactivity, reactor temperature, steam volume, uranium fuel temperature, and xenon levels."
               }
             </p>
           </section>
@@ -38,7 +38,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Control Rods (×10)</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Select the control rods button on the control panel to adjust insertion percentage (0-100%). Boron rods decrease radioactivity, acting as a critical brake to increasing radioativity. The emergency AZ-5 button can be used to fully insert all rods at once when radioactivity levels need to be immediately reduced. Be careful about fully removing the control rods when you need to increase radioactivity. Once they are removed and reinserted, they can cause a spike in radioacitivty and steam due to their graphite tips. We are hoping to fix this design flaw with the RBMK reactor control rods very soon. The control panel shows insertion rates on the display screen."
+                    "Select the control rods button on the control panel to adjust insertion percentage (0-100%). Boron rods decrease radioactivity, acting as a critical brake to increasing radioactivity. The emergency AZ-5 button can be used to fully insert all rods at once when radioactivity levels need to be immediately reduced. Be careful about fully removing the control rods when you need to increase radioactivity. Once they are removed and reinserted, they can cause a spike in radioactivity and steam due to their graphite tips. We are hoping to fix this design flaw with the RBMK reactor control rods very soon. The control panel shows insertion rates on the display screen."
                   }
                 </p>
               </div>
@@ -47,7 +47,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono mb-2">Water Pumps (×4)</h3>
                 <p className="text-sm leading-relaxed">
                   {
-                    "Select the water pumps button on the control panel to toggle water pumps on and off. Pumps reduce reactor temperature by ensuring a steady flow of cooling water through the core, but they need to be in the ON position and powered. In recent days we have seen incoming power cuts that have resulted in the pumps being without power and turning off. If all pumpts are turned off or are without power, the remaining water in the pipes will quickly result in a build up of steam and risk a spike in radioactivity. The control panel lights indicate on/off and powered/unpowered state."
+                    "Select the water pumps button on the control panel to toggle water pumps on and off. Pumps reduce reactor temperature by ensuring a steady flow of cooling water through the core, but they need to be in the ON position and powered. In recent days we have seen incoming power cuts that have resulted in the pumps being without power and turning off. If all pumps are turned off or are without power, the remaining water in the pipes will quickly result in a build up of steam and risk a spike in radioactivity. The control panel lights indicate on/off and powered/unpowered state."
                   }
                 </p>
               </div>
@@ -95,7 +95,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Fuel Temperature</h3>
                 <p className="text-xs leading-relaxed">
                   {
-                  "Uranium fuel temperature increases and decreases as our reactor temperatures changes. It takes longer to change, and there is a negative temperature coefficient. This means cool uranium fuel is more radioactive, and hot uranium fuel is less radioactive. If you find your reactor is in a xenon pit, reduce the fuel temperature and remove control rods carefully to raise radioacitivty levels back up to stable levels"
+                  "Uranium fuel temperature increases and decreases as our reactor temperatures changes. It takes longer to change, and there is a negative temperature coefficient. This means cool uranium fuel is more radioactive, and hot uranium fuel is less radioactive. If you find your reactor is in a xenon pit, reduce the fuel temperature and remove control rods carefully to raise radioactivity levels back up to stable levels"
                   }
                 </p>
               </div>

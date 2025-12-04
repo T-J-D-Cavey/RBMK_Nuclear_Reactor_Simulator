@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button"
 interface DifficultyModalProps {
   open: boolean
   onSelectDifficulty: (isHard: boolean) => void
+  onOpenChange: (open: boolean) => void
 }
 
-export function DifficultyModal({ open, onSelectDifficulty }: DifficultyModalProps) {
+export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: DifficultyModalProps) {
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="bg-card border-4 border-primary max-w-md" showCloseButton={false}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-4 border-primary max-w-md" showCloseButton={true}>
         <DialogHeader>
           <DialogTitle className="text-2xl font-mono uppercase text-center">Select Difficulty</DialogTitle>
           <DialogDescription className="text-center font-mono text-sm pt-2">

@@ -115,7 +115,6 @@ export default function GamePage() {
       {/* MODALS */}
       <LeaveGameModal open={showLeaveModal} onOpenChange={setShowLeaveModal} onConfirm={handleConfirmLeave} />
 
-      {/* FIX: Corrected typo 'SoundeModal' -> 'SoundModal' */}
       <SoundModal
        open={showSoundModal}
        onOpenChange={setShowSoundModal}
@@ -162,7 +161,7 @@ export default function GamePage() {
 
           </div>
         </div>
-        <div className="text-sm text-reactor-blue font-mono space-y-1 bg-black text-center">
+        <div className="text-sm text-reactor-blue font-mono space-y-3 bg-black text-center">
           <p className="text-xs">{"© 1986 SKALA CONTROL SYSTEMS"}</p>
         </div>
     </div>
