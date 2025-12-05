@@ -87,16 +87,13 @@ function calculateTemperatures(state: GameState): GameState {
         // The cooling rate increases with tempDifference, capped at MAX_PASSIVE_COOLING_RATE
         reactorTempChange -= Math.min(tempDifference * COOLING_COEFFICIENT, MAX_PASSIVE_COOLING_RATE);
     }
-    // If reactorTemp is at or below ambient, it won't naturally cool further.
-    // It might even slightly warm up towards ambient if below it, but we handle the floor later.
 
-
-    // 2. RADIOACTIVE HEATING (4-Tier Continuous Scaling Logic) - UNCHANGED from your logic
+    // 2. RADIOACTIVE HEATING 
     let R_heat_factor = 0;
 
-    const THRESHOLD_1 = 50;  // Tier 1/2 transition (Rate increases from 0.01 to 0.021)
-    const THRESHOLD_2 = 150; // Tier 2/3 transition (Rate increases from 0.021 to 0.03)
-    const THRESHOLD_3 = 250; // Tier 3/4 transition (Rate increases from 0.03 to 0.09)
+    const THRESHOLD_1 = 50;  
+    const THRESHOLD_2 = 150; 
+    const THRESHOLD_3 = 250; 
 
     // --- TIER 1 BASELINE (R up to 50: Rate 0.01) ---
     if (R <= THRESHOLD_1) {
@@ -123,9 +120,7 @@ function calculateTemperatures(state: GameState): GameState {
         R_heat_factor += R_excess_3 * 0.045;
     }
 
-    // Add the total calculated heat factor to the temperature change
     reactorTempChange += R_heat_factor;
-
 
     // 3. WATER PUMPS AFFECT REACTOR TEMP (Inverse/Quick) - UNCHANGED
     const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
@@ -138,7 +133,6 @@ function calculateTemperatures(state: GameState): GameState {
     fuelTempChange = tempGap * THERMAL_TRANSFER_RATE
 
     // 5. APPLY CHANGES AND LIMITS
-    // Reactor Temp is now floored by the AMBIENT_SEA_TEMP
     const newReactorTemp = Math.max(5, state.reactorTemp + reactorTempChange)
     const newFuelTemp = Math.max(5, state.fuelTemp + fuelTempChange)
 
@@ -150,19 +144,14 @@ function calculateSteam(state: GameState): GameState {
   let steamChange = 0;
   const temp = state.reactorTemp;
 
-  // --- Tier 1: Below Cold Threshold (Temp < 90) - RAPID DECREASE ---
+  // --- Tier 1: Below Cold Threshold - RAPID DECREASE ---
   if (temp < 90) {
     // Steam rapidly condenses when the reactor is cold.
     steamChange -= (90 - temp) * 0.5;
 
-  // --- Tier 2: Operational Zone (90 <= Temp <= 800) - QUICK CHASE TARGET ---
-  // Tim: this will break if the thresholds are adjusted. Current reactor temp warning threshold is 800:
+  // --- Tier 2: Operational Zone  - QUICK CHASE TARGET ---
+  
   } else {
-    
-    // 1. Calculate the ideal STEAM volume for the current temperature.
-    // We'll define the linear relationship:
-    // Temp 90  -> Target Steam 0
-    // Temp 800 -> Target Steam 400 (A high, but non-max value for the operational zone)
     
     const MIN_TEMP = 90;
     const MAX_OPERATIONAL_TEMP = 800;
@@ -187,7 +176,6 @@ function calculateSteam(state: GameState): GameState {
     if(activePumps.length === 0) {
       steamChange += state.radioactivity * 0.1
     }
-
   } 
 
   const newSteam = Math.max(0, state.steamVolume + steamChange);
@@ -206,8 +194,8 @@ function calculatePerformance(state: GameState): GameState {
   let performanceChange = 0
 
   // Check if power output is within ±5% of target
-  const tolerance = state.powerTarget * THRESHOLDS.powerTolerance
-  const lowerBound = state.powerTarget - tolerance
+  const tolerance = THRESHOLDS.powerTolerance
+  const lowerBound = Math.max(state.powerTarget - tolerance, 0)
   const upperBound = state.powerTarget + tolerance
 
   if (state.powerOutput >= lowerBound && state.powerOutput <= upperBound) {

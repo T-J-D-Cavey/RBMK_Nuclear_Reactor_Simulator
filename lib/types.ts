@@ -135,5 +135,5 @@ export const THRESHOLDS = {
   xenon: {
     highWarning: 50,
   },
-  powerTolerance: 0.1, // 10%
+  powerTolerance: 500
 } as const

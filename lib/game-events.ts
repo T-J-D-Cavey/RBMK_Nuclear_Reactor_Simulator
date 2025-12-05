@@ -10,9 +10,9 @@ export function shouldTriggerEvent(state: GameState): boolean {
   // Hard mode: 30min = 1800s, so first minute is when gameTime > 1740
   // Easy mode: 15min = 900s, so first minute is when gameTime > 840
   
-  if ((state.difficultyIsHard && state.gameTime > 1770) || (!state.difficultyIsHard && state.gameTime > 870)) { 
-    return false
-  }
+  // if ((state.difficultyIsHard && state.gameTime > 1770) || (!state.difficultyIsHard && state.gameTime > 870)) { 
+  //   return false
+  // }
   
 
   const hasActivePowerCut = state.activeEvents.some((e) => e.type === "power-cut")
@@ -56,27 +56,7 @@ export function generateRandomEvent(state: GameState): GameEvent | null {
     return generateTargetChangeEvent(state)
   } 
 }
-/*
-function generateTargetChangeEvent(state: GameState): GameEvent {
-  // Target range: 1600 to 12000 MW (a difference of 10400)
-  const range = state.difficultyIsHard ? 10000 : 6000
-  const maxTargetDifference = state.difficultyIsHard ? state.powerTarget * 0.66 : 0.33
-  const minTarget = state.difficultyIsHard ? 1000 : 2000
 
-  // 1. Calculate a random number between the ranges
-  // 2. Divide by 100, round to the nearest whole number (e.g., 55.4 -> 55, 55.6 -> 56)
-  // 3. Multiply by 100 to get the final rounded target (e.g., 56 -> 5600)
-  const newTarget = Math.min(Math.round((Math.random() * range + minTarget) / 100) * 100, Math.round((Math.random() * maxTargetDifference + minTarget) / 100) * 100)
-
-  return {
-    id: `event-${Date.now()}`,
-    type: "target-change",
-    message: `⚡ INCOMING FROM GRID CONTROLLER: Power target changed to ${newTarget} MW`,
-    timestamp: state.gameTime,
-    data: { newTarget },
-  }
-}
-*/
 export function generateTargetChangeEvent(state: GameState): GameEvent {
     // --- 1. CONFIGURATION BASED ON DIFFICULTY ---  
     // Absolute bounds for the power target
