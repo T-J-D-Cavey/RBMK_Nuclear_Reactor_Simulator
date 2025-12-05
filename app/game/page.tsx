@@ -16,13 +16,13 @@ import { Home, Volume2, VolumeX } from "lucide-react"
 
 export default function GamePage() {
   const { gameState, updateGameState, resetGame, togglePause } = useGameState()
+  // Local state:
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSoundModal, setShowSoundModal] = useState(false)
   const router = useRouter()
 
   // BACKGROUND IMAGE LOGIC:
-  const controlRoomBackground = "control_room_background.jpg"
-  // const reactorRoomBackground = "reactor_hall_background.jpg" 
+  const controlRoomBackground = "control_room_background.jpg" 
   const reactorFromAboveNormal = "new_reactor_image_cropped.jpg"
   const reactorFromAboveRadioactive = "new_reactor_image_high_radioactivity_cropped.jpg"
   const reactorFromAboveTemp = "new_reactor_image_high_temp_cropped.jpg"
@@ -67,11 +67,15 @@ export default function GamePage() {
     powerCutOrRodStuckAlarm: powerCutOrRodStuckAlarm,
     highRadAlarm: highRadAlarm,
     highReactorTempAlarm: highReactorTempAlarm,
-    highSteamOrXenon: highSteamOrXenon
-  });
+    highSteamOrXenon: highSteamOrXenon,
+  })
   const handleInteraction = () => {
     initializeAudio();
-  };
+  }
+
+  if(gameState.isPaused) {
+    // needs testing in case unpausing is needed: updateGameState({soundsoundEnabled: false})
+  }
 
   if (gameState.hasWon) {
     return <SuccessScreen gameState={gameState} onReset={resetGame} />
@@ -125,7 +129,7 @@ export default function GamePage() {
       
       {/* Top Half - Control Panel */}
       <div className="flex-1 p-4 md:p-6 border-b-4 border-primary bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
-        <ControlPanel gameState={gameState} onTogglePause={togglePause} updateGameState={updateGameState} />
+        <ControlPanel gameState={gameState} onTogglePause={togglePause} updateGameState={updateGameState} onEnabledUpdate={(soundEnabled) => updateGameState({ soundEnabled })}/>
       </div>
 
       {/* Message Area */}

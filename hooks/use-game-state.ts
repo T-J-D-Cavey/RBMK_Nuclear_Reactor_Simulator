@@ -143,6 +143,12 @@ export function useGameState() {
     }
   }, [gameState.isPaused, gameState.isGameOver, gameState.hasWon])
 
+  useEffect(() => {
+    if(gameState.isGameOver || gameState.hasWon) {
+      setGameState((prev) => ({ ...prev, soundEnabled: false }))
+    }
+  }, [gameState.isGameOver, gameState.hasWon])
+
   return {
     gameState,
     updateGameState,

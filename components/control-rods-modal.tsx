@@ -150,14 +150,12 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                   </div>
 
                   {/* Top Cap */}
-                  {/* Width increased to w-8 (mobile) and w-12 (desktop) */}
-                  <div className="w-8 sm:w-12 h-2 sm:h-3 bg-accent border border-primary rounded-t" />
+                  <div className="w-8 sm:w-6 h-2 sm:h-3 bg-accent border border-primary rounded-t" />
 
                   {/* Rod Track */}
-                  {/* Width increased to w-8 (mobile) and w-12 (desktop) */}
                   <div
                     id={`rod-container-${idx}`}
-                    className="relative w-8 sm:w-12 h-36 sm:h-48 bg-muted border-2 border-border rounded-b"
+                    className="relative w-8 sm:w-6 h-36 sm:h-48 bg-muted border-2 border-border rounded-b"
                   >
                     <div
                       className={`absolute top-0 left-0 w-full ${rod.stuck ? "bg-destructive" : "bg-primary"}`}
@@ -167,9 +165,8 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                     />
 
                     {/* Draggable Lever Handle */}
-                    {/* Width made wider than the track for easier grabbing (w-12 / w-16) */}
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 -translate-y-2 w-12 sm:w-16 h-4 sm:h-5 rounded-sm shadow-sm touch-none ${
+                      className={`absolute left-1/2 -translate-x-1/2 -translate-y-2 w-12 sm:w-10 h-4 sm:h-5 rounded-sm shadow-sm touch-none ${
                         rod.stuck
                           ? "bg-destructive cursor-not-allowed"
                           : "bg-foreground cursor-grab active:cursor-grabbing"

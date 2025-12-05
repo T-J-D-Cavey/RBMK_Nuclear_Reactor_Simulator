@@ -17,7 +17,7 @@ export function useAudioManager({
   powerCutOrRodStuckAlarm,
   highRadAlarm,
   highReactorTempAlarm,
-  highSteamOrXenon
+  highSteamOrXenon,
 }: AudioManagerProps) {
   // --- REFS ---
   const humAudioRef1 = useRef<HTMLAudioElement | null>(null);
@@ -48,7 +48,7 @@ export function useAudioManager({
     humAudioRef2.current.loop = true;
     humAudioRef2.current.preload = "auto";
 
-    generalAlarmAudioRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/TP9kSYSVyp-gE6ir0jSnjV/public/alarm_general_full.mp3");
+    generalAlarmAudioRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/UDO0NctHis6Id7aEJ8C770/public/alarm_backup_full.mp3");
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
 
