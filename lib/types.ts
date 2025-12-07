@@ -64,6 +64,7 @@ export interface GameState {
   // Audio
   soundEnabled: boolean
   soundVolume: number
+  soundEnabledWhenPaused: boolean
 }
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -110,6 +111,7 @@ export const INITIAL_GAME_STATE: GameState = {
   
   soundEnabled: false,
   soundVolume: 1,
+  soundEnabledWhenPaused: false,
 }
 
 export const THRESHOLDS = {

@@ -15,10 +15,9 @@ interface ControlPanelProps {
   gameState: GameState
   onTogglePause: () => void
   updateGameState: (updates: Partial<GameState>) => void
-  onEnabledUpdate: (soundEnabled: boolean) => void
 }
 
-export default function ControlPanel({ gameState, onTogglePause, updateGameState, onEnabledUpdate }: ControlPanelProps) {
+export default function ControlPanel({ gameState, onTogglePause, updateGameState }: ControlPanelProps) {
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
@@ -45,7 +44,17 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const highXenonWarning = gameState.xenon > 50
   const lowFuelTempWarning = gameState.fuelTemp < 49
 
-  const currentlyPaused = gameState.isPaused
+  const handlePauseClick = () => {
+      if (gameState.isPaused) {
+        updateGameState({ soundEnabled: gameState.soundEnabledWhenPaused })
+      } else {
+        updateGameState({ 
+          soundEnabledWhenPaused: gameState.soundEnabled,
+          soundEnabled: false 
+        })
+      }
+    onTogglePause()
+  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -171,10 +180,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
               {/* PAUSE BUTTON  -  The Physical Button */}
               <div className="w-full flex-1 flex items-center justify-center">
                 <button
-                  onClick={() => {
-                    onEnabledUpdate(currentlyPaused ? true : false)
-                    onTogglePause()
-                  }}
+                  onClick={handlePauseClick}
                   className={`
                     w-32 h-12 mx-auto font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
                     border-t border-white/20 flex items-center justify-center
