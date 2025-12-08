@@ -136,7 +136,7 @@ export default function GamePage() {
       <MessageArea gameState={gameState} />
 
       {/* New reactor display being tested: */}
-      <div className="w-full bg-background rounded-lg flex justify-center items-center">
+      <div className="w-full bg-black rounded-lg flex justify-center items-center">
             <div className="relative w-full max-w-6xl border-l-4 border-r-4 border-b-4 border-primary aspect-square overflow-hidden rounded-lg shadow-lg bg-gray-900">
 
             {/* 1. BASE LAYER (Always Visible) */}
