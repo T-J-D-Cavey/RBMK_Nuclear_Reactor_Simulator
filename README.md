@@ -71,7 +71,10 @@ Be prepared for unexpected variables:
 
 ## Fixes and improvements to make
  
-- Change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on power station power geneartion.
+- Change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on steam generation volume, and power generation will be 0%.
+- New mode to be added: free-mode, with no power target or timer, 
+- Double check power threshold params are working as expected
+- One off sound affects when water pump changes / control rod changes / turbine are submitted
 
 ## Acceditations
 

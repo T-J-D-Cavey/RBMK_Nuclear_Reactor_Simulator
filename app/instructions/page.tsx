@@ -103,7 +103,7 @@ export default function InstructionsPage() {
                 <h3 className="font-bold font-mono text-sm mb-1">Performance</h3>
                 <p className="text-xs leading-relaxed">
                 {
-                "Our district's power grid requires us to stay within 10% of the power targets they set. If our power plant is consistently unable to meet these targets, you will be removed from your post as Chief Reactor Controller."
+                "Our district's power grid requires us to be within 500 MWs of the power targets they set. If our power plant is consistently unable to get close to these targets, you will be removed from your post as Chief Reactor Controller."
                 }
                 </p>
               </div>
