@@ -23,9 +23,9 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
   const [showReactorView, setShowReactorView] = useState(false)
 
-  const powerTolerance = 0.1 // 10%
-  const lowerBound = gameState.powerTarget * (1 - powerTolerance)
-  const upperBound = gameState.powerTarget * (1 + powerTolerance)
+  const powerTolerance = 500
+  const lowerBound = gameState.powerTarget - powerTolerance
+  const upperBound = gameState.powerTarget + powerTolerance
   const isOnTarget = gameState.powerOutput >= lowerBound && gameState.powerOutput <= upperBound
 
   const warnings = checkWarnings(gameState)

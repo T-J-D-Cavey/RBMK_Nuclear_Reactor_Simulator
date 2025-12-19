@@ -48,11 +48,6 @@ export default function HomePage() {
         {/* Control Panel Style Box */}
         <div className="bg-card border-4 border-primary p-8 md:p-12 space-y-6 shadow-2xl">
           <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-3 h-3 bg-led-green rounded-full animate-pulse" />
-              <span className="text-sm font-mono text-muted-foreground uppercase tracking-wider">SYSTEM STATUS: STABLE</span>
-            </div>
-
             <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
               {
                 "Manage a flawed RBMK nuclear reactor in real-time. Maintain balance and deliver the required power output whilst avoiding catastrophic failure."

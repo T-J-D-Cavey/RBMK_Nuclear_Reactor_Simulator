@@ -62,7 +62,7 @@ export default function MessageArea({ gameState }: MessageAreaProps) {
 
         {/* Placeholder when no messages */}
         {warnings.length === 0 && gameState.activeEvents.length === 0 && (
-          <div className="text-center text-muted-foreground font-mono text-sm">{"All systems nominal"}</div>
+          <div className="text-center text-muted-foreground font-mono text-sm">{"All systems stable"}</div>
         )}
       </div>
     </div>
