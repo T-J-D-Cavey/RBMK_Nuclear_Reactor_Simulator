@@ -24,9 +24,10 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const [showReactorView, setShowReactorView] = useState(false)
 
   const powerTolerance = 500
-  const lowerBound = gameState.powerTarget - powerTolerance
-  const upperBound = gameState.powerTarget + powerTolerance
-  const isOnTarget = gameState.powerOutput >= lowerBound && gameState.powerOutput <= upperBound
+  const hasTarget = gameState.powerTarget !== null
+  const lowerBound = (gameState.powerTarget ?? 0) - powerTolerance
+  const upperBound = (gameState.powerTarget ?? 0) + powerTolerance
+  const isOnTarget = !hasTarget || (gameState.powerOutput >= lowerBound && gameState.powerOutput <= upperBound)
 
   const warnings = checkWarnings(gameState)
   const hasWarnings = warnings.length > 0
@@ -85,7 +86,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           <div className="bg-background border-3 border-border p-3 space-y-1">
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Power Target</div>
             <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">
-              {gameState.powerTarget} MW
+              {gameState.powerTarget !== null ? `${gameState.powerTarget} MW` : "N/A"}
             </div>
           </div>
 
@@ -93,10 +94,10 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Performance</div>
             <div
               className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${
-                gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
+                gameState.powerTarget === null ? "led-green" : gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
               }`}
             >
-              {Math.round(gameState.performance)}%
+              {gameState.powerTarget !== null ? `${Math.round(gameState.performance)}%` : "100%"}
             </div>
           </div>
 
