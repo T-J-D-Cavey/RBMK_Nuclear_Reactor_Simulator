@@ -58,16 +58,16 @@ export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: Diff
           </div>
 
           {/* Free Mode */}
-          <div className="bg-background border-2 border-reactor-blue p-4 space-y-2">
-            <h3 className="font-mono font-bold text-lg uppercase text-reactor-blue">Free Mode</h3>
+          <div className="bg-background border-2 border-sky-500 p-4 space-y-2">
+            <h3 className="font-mono font-bold text-lg uppercase text-sky-600 dark:text-sky-400">Free Mode (Sandbox)</h3>
             <ul className="text-sm font-mono space-y-1 text-muted-foreground">
-              <li>• Unlimited time (no countdown)</li>
-              <li>• No grid power targets or power cuts</li>
-              <li>• Sandbox to experiment with reactor physics</li>
+              <li>• Unlimited time (counts up from 00:00:00)</li>
+              <li>• No grid power targets or random events</li>
+              <li>• Unlimited practice with active reactor physics</li>
             </ul>
             <Button
               onClick={() => onSelectDifficulty("free")}
-              className="w-full uppercase font-mono tracking-wider border-2 border-reactor-blue bg-reactor-blue/20 hover:bg-reactor-blue/30 text-reactor-blue mt-2 cursor-pointer"
+              className="w-full uppercase font-mono tracking-wider border-2 border-sky-600 bg-sky-600 hover:bg-sky-700 text-white font-bold mt-2 cursor-pointer shadow-sm"
               size="lg"
             >
               Start Free Mode

@@ -164,11 +164,11 @@ export interface GameModeConfig {
 ---
 
 ### Step 8: Verification & Testing Checklist
-- [ ] Main Menu start modal shows 3 modes with clear visual distinctions.
-- [ ] Free Mode starts with `00:00:00` clock counting up.
-- [ ] Free Mode displays `N/A` for power target and `100%` for performance.
-- [ ] No random events trigger during extended gameplay in Free Mode.
-- [ ] Meltdown can still be triggered at 1200°C.
-- [ ] Game Over screen displays "Time Elapsed" for Free Mode.
-- [ ] How to Play page includes full Free Mode documentation.
-- [ ] Zero regression on Easy & Hard modes.
+- [x] Main Menu start modal shows 3 modes with clear visual distinctions.
+- [x] Free Mode starts with `00:00:00` clock counting up.
+- [x] Free Mode displays `N/A` for power target and `100%` for performance.
+- [x] No random events trigger during extended gameplay in Free Mode.
+- [x] Meltdown can still be triggered at 1200°C.
+- [x] Game Over screen displays "Time Elapsed" for Free Mode.
+- [x] How to Play page includes full Free Mode documentation.
+- [x] Zero regression on Easy & Hard modes.

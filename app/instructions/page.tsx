@@ -30,6 +30,34 @@ export default function InstructionsPage() {
             </p>
           </section>
 
+          {/* Game Modes */}
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold font-mono uppercase text-accent">Game Modes</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="bg-background p-4 border-2 border-border">
+                <h3 className="font-bold font-mono text-base mb-1 text-accent">Easy Mode</h3>
+                <p className="text-xs leading-relaxed text-muted-foreground mb-2">15 Minute Shift</p>
+                <p className="text-sm leading-relaxed">
+                  Standard 15-minute countdown shift with predictable grid target requests, standard random events, and baseline performance monitoring. Perfect for learning core reactor mechanics.
+                </p>
+              </div>
+              <div className="bg-background p-4 border-2 border-border">
+                <h3 className="font-bold font-mono text-base mb-1 text-accent">Hard Mode</h3>
+                <p className="text-xs leading-relaxed text-muted-foreground mb-2">30 Minute Shift</p>
+                <p className="text-sm leading-relaxed">
+                  Demanding 30-minute shift with aggressive grid target swings, frequent power cuts, and stuck control rod events. Requires expert reactor management.
+                </p>
+              </div>
+              <div className="bg-background p-4 border-2 border-border">
+                <h3 className="font-bold font-mono text-base mb-1 text-accent">Free Mode (Sandbox)</h3>
+                <p className="text-xs leading-relaxed text-muted-foreground mb-2">Unlimited Practice</p>
+                <p className="text-sm leading-relaxed">
+                  Unlimited sandbox practice with a count-up clock, no power grid targets, and no random disruptions. Full reactor core physics (heat, steam, xenon, and meltdowns) remain active.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* Controls */}
           <section className="space-y-3">
             <h2 className="text-2xl font-bold font-mono uppercase text-accent">Controls</h2>
@@ -112,7 +140,7 @@ export default function InstructionsPage() {
 
           {/* Events */}
           <section className="space-y-3">
-            <h2 className="text-2xl font-bold font-mono uppercase text-accent">Random Events</h2>
+            <h2 className="text-2xl font-bold font-mono uppercase text-accent">Random Events (Easy & Hard Modes)</h2>
             <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
               <li>
                 <strong className="font-mono">Target Change:</strong> Power target increases or decreases
@@ -130,8 +158,8 @@ export default function InstructionsPage() {
           <section className="space-y-3">
             <h2 className="text-2xl font-bold font-mono uppercase text-destructive">Game Over Conditions</h2>
             <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
-              <li>{"Reactor Temperature reaches 1200 degress (MELTDOWN)"}</li>
-              <li>{"Performance drops to 0% (PERFORMANCE FAILURE)"}</li>
+              <li>{"Reactor Temperature reaches 1200 degrees (MELTDOWN - All Modes)"}</li>
+              <li>{"Performance drops to 0% (PERFORMANCE FAILURE - Easy & Hard Modes)"}</li>
             </ul>
           </section>
         </div>
