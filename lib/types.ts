@@ -25,6 +25,77 @@ export interface GameEvent {
   }
 }
 
+export type GameMode = "easy" | "hard" | "free" | "power_test"
+
+export interface GameModeConfig {
+  id: GameMode
+  name: string
+  badgeText: string
+  description: string
+  hasTimer: boolean
+  timerMode: "countdown" | "countup"
+  timeLimit: number | null // in seconds (e.g. 900 for easy, 1800 for hard, null for free)
+  hasPowerTarget: boolean
+  defaultPowerTarget: number | null // e.g. 5000 for standard, null for free
+  hasRandomEvents: boolean
+  performanceAffectsGameOver: boolean
+}
+
+export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
+  easy: {
+    id: "easy",
+    name: "Easy Mode",
+    badgeText: "EASY MODE",
+    description: "15 minute countdown with stable reactor mechanics and standard grid targets.",
+    hasTimer: true,
+    timerMode: "countdown",
+    timeLimit: 900,
+    hasPowerTarget: true,
+    defaultPowerTarget: 5000,
+    hasRandomEvents: true,
+    performanceAffectsGameOver: true,
+  },
+  hard: {
+    id: "hard",
+    name: "Hard Mode",
+    badgeText: "HARD MODE",
+    description: "30 minute countdown with challenging reactor mechanics and volatile grid targets.",
+    hasTimer: true,
+    timerMode: "countdown",
+    timeLimit: 1800,
+    hasPowerTarget: true,
+    defaultPowerTarget: 5000,
+    hasRandomEvents: true,
+    performanceAffectsGameOver: true,
+  },
+  free: {
+    id: "free",
+    name: "Free Mode",
+    badgeText: "FREE MODE",
+    description: "Unlimited time, no power grid targets, and no random events. Full reactor physics active.",
+    hasTimer: false,
+    timerMode: "countup",
+    timeLimit: null,
+    hasPowerTarget: false,
+    defaultPowerTarget: null,
+    hasRandomEvents: false,
+    performanceAffectsGameOver: false,
+  },
+  power_test: {
+    id: "power_test",
+    name: "Power Test",
+    badgeText: "POWER TEST",
+    description: "Simulate the safety test conditions. (Coming Soon)",
+    hasTimer: false,
+    timerMode: "countup",
+    timeLimit: null,
+    hasPowerTarget: false,
+    defaultPowerTarget: 200,
+    hasRandomEvents: false,
+    performanceAffectsGameOver: false,
+  },
+}
+
 export interface GameState {
   // Core metrics
   radioactivity: number
@@ -34,7 +105,7 @@ export interface GameState {
   steamVolume: number
 
   // Power & performance
-  powerTarget: number
+  powerTarget: number | null
   powerOutput: number
   performance: number
 
@@ -44,13 +115,14 @@ export interface GameState {
   turbineConnected: boolean
 
   // Game state
+  mode: GameMode
   isPaused: boolean
   isGameOver: boolean
   gameOverReason: string | null
-  gameTime: number // 15 minutes in seconds (easy mode default)
-  difficultyIsHard: boolean
+  gameTime: number // countdown or countup in seconds
+  difficultyIsHard: boolean // retained for backwards compatibility
   hasWon: boolean
-  timeLimit: number // 15 minutes default (easy mode)
+  timeLimit: number | null
 
   // Events
   activeEvents: GameEvent[]
@@ -94,6 +166,7 @@ export const INITIAL_GAME_STATE: GameState = {
 
   turbineConnected: true,
 
+  mode: "easy",
   isPaused: false,
   isGameOver: false,
   gameOverReason: null,
