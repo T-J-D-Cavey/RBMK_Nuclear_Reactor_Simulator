@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { type GameState, INITIAL_GAME_STATE } from "@/lib/types"
+import { type GameState, INITIAL_GAME_STATE, GAME_MODE_CONFIGS } from "@/lib/types"
 import { calculateGameTick } from "@/lib/game-mechanics"
 import { checkGameOver, checkWarnings } from "@/lib/game-utils"
 import { shouldTriggerEvent, generateRandomEvent, applyEvent, updateActiveEvents } from "@/lib/game-events"
@@ -91,18 +91,23 @@ export function useGameState() {
     if (!gameState.isPaused && !gameState.isGameOver && !gameState.hasWon) {
       tickIntervalRef.current = setInterval(() => {
         setGameState((prev) => {
+          const modeConfig = GAME_MODE_CONFIGS[prev.mode || "easy"] || GAME_MODE_CONFIGS.easy
+
           // Calculate all game mechanics
           const updates = calculateGameTick(prev)
 
-          const newGameTime = Math.max(0, prev.gameTime - 1)
+          // Countdown for timed modes, Countup for Free Mode & sandbox modes
+          const isCountUp = modeConfig.timerMode === "countup"
+          const newGameTime = isCountUp ? prev.gameTime + 1 : Math.max(0, prev.gameTime - 1)
 
-          let newState = {
+          let newState: GameState = {
             ...prev,
             ...updates,
             gameTime: newGameTime,
           }
 
-          if (newGameTime === 0 && !prev.hasWon) {
+          // Victory condition only applies to timed countdown modes
+          if (!isCountUp && modeConfig.hasTimer && newGameTime === 0 && !prev.hasWon) {
             newState.hasWon = true
             newState.isPaused = true
             return newState
@@ -112,8 +117,8 @@ export function useGameState() {
           const eventUpdates = updateActiveEvents(newState)
           newState = { ...newState, ...eventUpdates }
 
-          // Check if we should trigger a new event
-          if (shouldTriggerEvent(newState)) {
+          // Check if we should trigger a new event (only if mode supports events)
+          if (modeConfig.hasRandomEvents && shouldTriggerEvent(newState)) {
             const newEvent = generateRandomEvent(newState)
             if (newEvent) {
               const eventApply = applyEvent(newState, newEvent)
