@@ -1,4 +1,4 @@
-import { type GameState, type ControlRod, THRESHOLDS } from "./types"
+import { type GameState, type ControlRod, THRESHOLDS, GAME_MODE_CONFIGS } from "./types"
 
 export function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600)
@@ -78,7 +78,9 @@ export function checkGameOver(state: GameState): {
     }
   }
 
-  if (state.performance <= THRESHOLDS.performance.gameOver) {
+  const modeConfig = GAME_MODE_CONFIGS[state.mode || "easy"] || GAME_MODE_CONFIGS.easy
+
+  if (modeConfig.performanceAffectsGameOver && state.performance <= THRESHOLDS.performance.gameOver) {
     return {
       isGameOver: true,
       reason: "UNACCEPTABLE POWER GRID PERFORMANCE - You have been removed from your post due to poor performance meeting grid targets",

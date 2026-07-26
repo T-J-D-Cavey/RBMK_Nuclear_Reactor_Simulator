@@ -1,19 +1,16 @@
-import type { GameEvent, GameState } from "./types"
+import { type GameEvent, type GameState, GAME_MODE_CONFIGS } from "./types"
 
 const EVENT_MIN_INTERVAL = 120 // 2 minutes in seconds  
 const EVENT_MAX_INTERVAL = 240 // 4 minutes in seconds 
 
 
 export function shouldTriggerEvent(state: GameState): boolean {
-  const timeSinceLastEvent = state.lastEventTime - state.gameTime
+  const modeConfig = GAME_MODE_CONFIGS[state.mode || "easy"] || GAME_MODE_CONFIGS.easy
+  if (!modeConfig.hasRandomEvents) {
+    return false
+  }
 
-  // Hard mode: 30min = 1800s, so first minute is when gameTime > 1740
-  // Easy mode: 15min = 900s, so first minute is when gameTime > 840
-  
-  // if ((state.difficultyIsHard && state.gameTime > 1770) || (!state.difficultyIsHard && state.gameTime > 870)) { 
-  //   return false
-  // }
-  
+  const timeSinceLastEvent = Math.abs(state.lastEventTime - state.gameTime)
 
   const hasActivePowerCut = state.activeEvents.some((e) => e.type === "power-cut")
   const hasActiveRodStuck = state.activeEvents.some((e) => e.type === "rod-stuck")
@@ -71,16 +68,18 @@ export function generateTargetChangeEvent(state: GameState): GameEvent {
     // --- 2. CALCULATE BOUNDS AND DELTA LIMITS ---
     const MAX_DELTA_MW = TOTAL_RANGE_MW * MAX_DELTA_PERCENT;
 
+    const currentTarget = state.powerTarget ?? 5000
+
     // Calculate the minimum possible target (respecting both the max delta and the absolute minimum)
     const lowerBound = Math.max(
         ABSOLUTE_MIN_TARGET, 
-        state.powerTarget - MAX_DELTA_MW // Anchored by the constant delta
+        currentTarget - MAX_DELTA_MW // Anchored by the constant delta
     );
 
     // Calculate the maximum possible target (respecting both the max delta and the absolute maximum)
     const upperBound = Math.min(
         ABSOLUTE_MAX_TARGET, 
-        state.powerTarget + MAX_DELTA_MW // Anchored by the constant delta
+        currentTarget + MAX_DELTA_MW // Anchored by the constant delta
     );
     
     // --- 3. GENERATE THE NEW TARGET ---

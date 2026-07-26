@@ -191,9 +191,14 @@ function calculatePower(state: GameState): GameState {
 }
 
 function calculatePerformance(state: GameState): GameState {
+  // If mode does not use power targets (Free Mode), maintain 100% performance
+  if (state.powerTarget === null) {
+    return { ...state, performance: 100 }
+  }
+
   let performanceChange = 0
 
-  // Check if power output is within ±5% of target
+  // Check if power output is within ±500 MW of target
   const tolerance = THRESHOLDS.powerTolerance
   const lowerBound = Math.max(state.powerTarget - tolerance, 0)
   const upperBound = state.powerTarget + tolerance

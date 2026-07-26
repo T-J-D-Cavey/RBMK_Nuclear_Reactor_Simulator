@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
+import { GAME_MODE_CONFIGS } from "@/lib/types"
 import { formatTime } from "@/lib/game-utils"
 import { Atom, Star } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -13,6 +14,7 @@ interface SuccessScreenProps {
 
 export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
   const router = useRouter()
+  const modeConfig = GAME_MODE_CONFIGS[gameState.mode] || GAME_MODE_CONFIGS[gameState.difficultyIsHard ? "hard" : "easy"]
 
   const handleReturnToMenu = () => {
     localStorage.removeItem("chernobyl-game-state")
@@ -56,19 +58,25 @@ export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
             </p>
           </div>
 
-          {/* Difficulty Badge */}
+          {/* Mode Badge */}
           <div className="inline-block bg-background border-2 border-accent px-6 py-2">
-            <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Difficulty</div>
+            <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Mode</div>
             <div className="text-xl font-mono font-bold text-accent">
-              {gameState.difficultyIsHard ? "HARD MODE" : "EASY MODE"}
+              {modeConfig?.badgeText || (gameState.difficultyIsHard ? "HARD MODE" : "EASY MODE")}
             </div>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mx-auto pt-4">
             <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Time Limit</div>
-              <div className="text-xl md:text-2xl font-mono font-bold">{formatTime(gameState.timeLimit)}</div>
+              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">
+                {modeConfig?.hasTimer ? "Time Limit" : "Time Elapsed"}
+              </div>
+              <div className="text-xl md:text-2xl font-mono font-bold">
+                {gameState.timeLimit !== null && gameState.timeLimit !== undefined
+                  ? formatTime(gameState.timeLimit)
+                  : formatTime(gameState.gameTime)}
+              </div>
             </div>
 
             <div className="bg-background border-2 border-border p-4">

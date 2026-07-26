@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { DifficultyModal } from "@/components/difficulty-modal"
-import { INITIAL_GAME_STATE } from "@/lib/types"
+import { type GameMode, GAME_MODE_CONFIGS, INITIAL_GAME_STATE, type GameState } from "@/lib/types"
 
 export default function HomePage() {
   const [showDifficultyModal, setShowDifficultyModal] = useState(false)
@@ -15,16 +15,21 @@ export default function HomePage() {
     setShowDifficultyModal(true)
   }
 
-  const handleSelectDifficulty = (isHard: boolean) => {
-    // Easy = 15 minutes (900s), Hard = 30 minutes (1800s)
-    const timeLimit = isHard ? 1800 : 900
+  const handleSelectDifficulty = (mode: GameMode) => {
+    const config = GAME_MODE_CONFIGS[mode] || GAME_MODE_CONFIGS.easy
+    const isHard = mode === "hard"
+    const timeLimit = config.timeLimit
+    // Countdown starts at timeLimit; Countup (Free Mode) starts at 0
+    const gameTime = config.hasTimer ? (timeLimit ?? 900) : 0
 
-    const newGameState = {
+    const newGameState: GameState = {
       ...INITIAL_GAME_STATE,
+      mode,
       difficultyIsHard: isHard,
       timeLimit,
-      gameTime: timeLimit, // Start countdown at the time limit
-      lastEventTime: timeLimit, // Initialize to same value as gameTime
+      gameTime,
+      lastEventTime: gameTime,
+      powerTarget: config.defaultPowerTarget,
     }
 
     localStorage.setItem("chernobyl-game-state", JSON.stringify(newGameState))

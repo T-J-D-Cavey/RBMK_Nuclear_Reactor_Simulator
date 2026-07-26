@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { type GameState, INITIAL_GAME_STATE } from "@/lib/types"
+import { type GameState, type GameMode, INITIAL_GAME_STATE, GAME_MODE_CONFIGS } from "@/lib/types"
 import { calculateGameTick } from "@/lib/game-mechanics"
 import { checkGameOver, checkWarnings } from "@/lib/game-utils"
 import { shouldTriggerEvent, generateRandomEvent, applyEvent, updateActiveEvents } from "@/lib/game-events"
@@ -9,30 +9,55 @@ import { shouldTriggerEvent, generateRandomEvent, applyEvent, updateActiveEvents
 const STORAGE_KEY = "chernobyl-game-state"
 const TICK_INTERVAL = 1000 // 1 second
 
-export function useGameState() {
-  const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE)
-  const tickIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
+function loadSavedGameState(): GameState {
+  if (typeof window !== "undefined") {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
-        setGameState(parsed)
+        if (parsed && typeof parsed === "object") {
+          const mode = (parsed.mode as GameMode) || (parsed.difficultyIsHard ? "hard" : "easy")
+          const config = GAME_MODE_CONFIGS[mode] || GAME_MODE_CONFIGS.easy
+          const gameTime = parsed.gameTime !== undefined 
+            ? parsed.gameTime 
+            : (config.hasTimer ? (config.timeLimit ?? 900) : 0)
+          const powerTarget = parsed.powerTarget !== undefined 
+            ? parsed.powerTarget 
+            : config.defaultPowerTarget
+
+          return {
+            ...INITIAL_GAME_STATE,
+            ...parsed,
+            mode,
+            gameTime,
+            powerTarget,
+            timeLimit: parsed.timeLimit !== undefined ? parsed.timeLimit : config.timeLimit,
+          }
+        }
       } catch (e) {
-        console.error("Failed to load game state:", e)
+        console.error("Failed to load saved game state:", e)
       }
-    } else {
-      setGameState((prev) => ({
-        ...prev,
-        lastEventTime: prev.gameTime,
-      }))
     }
+  }
+  return INITIAL_GAME_STATE
+}
+
+export function useGameState() {
+  const [gameState, setGameState] = useState<GameState>(loadSavedGameState)
+  const isInitializedRef = useRef(false)
+  const tickIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    const loaded = loadSavedGameState()
+    setGameState(loaded)
+    isInitializedRef.current = true
   }, [])
 
-  // Save game state to local storage whenever it changes
+  // Save game state to local storage whenever it changes (only after client mount)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState))
+    if (isInitializedRef.current) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState))
+    }
   }, [gameState])
 
   // Update a specific field in game state
@@ -76,10 +101,34 @@ export function useGameState() {
       });
   }, [])
 
-  // Reset game to initial state
+  // Reset game to initial state for the active mode
   const resetGame = useCallback(() => {
-    setGameState(INITIAL_GAME_STATE)
-    localStorage.removeItem(STORAGE_KEY)
+    setGameState((prev) => {
+      const mode = prev.mode || "easy"
+      const config = GAME_MODE_CONFIGS[mode] || GAME_MODE_CONFIGS.easy
+      const isHard = mode === "hard"
+      const timeLimit = config.timeLimit
+      const gameTime = config.hasTimer ? (timeLimit ?? 900) : 0
+
+      const newState: GameState = {
+        ...INITIAL_GAME_STATE,
+        mode,
+        difficultyIsHard: isHard,
+        timeLimit,
+        gameTime,
+        lastEventTime: gameTime,
+        powerTarget: config.defaultPowerTarget,
+        performance: 100,
+        activeEvents: [],
+        eventHistory: [],
+        warnings: [],
+        isGameOver: false,
+        gameOverReason: null,
+        hasWon: false,
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newState))
+      return newState
+    })
   }, [])
 
   // Toggle pause
@@ -91,18 +140,23 @@ export function useGameState() {
     if (!gameState.isPaused && !gameState.isGameOver && !gameState.hasWon) {
       tickIntervalRef.current = setInterval(() => {
         setGameState((prev) => {
+          const modeConfig = GAME_MODE_CONFIGS[prev.mode || "easy"] || GAME_MODE_CONFIGS.easy
+
           // Calculate all game mechanics
           const updates = calculateGameTick(prev)
 
-          const newGameTime = Math.max(0, prev.gameTime - 1)
+          // Countdown for timed modes, Countup for Free Mode & sandbox modes
+          const isCountUp = modeConfig.timerMode === "countup"
+          const newGameTime = isCountUp ? prev.gameTime + 1 : Math.max(0, prev.gameTime - 1)
 
-          let newState = {
+          let newState: GameState = {
             ...prev,
             ...updates,
             gameTime: newGameTime,
           }
 
-          if (newGameTime === 0 && !prev.hasWon) {
+          // Victory condition only applies to timed countdown modes
+          if (!isCountUp && modeConfig.hasTimer && newGameTime === 0 && !prev.hasWon) {
             newState.hasWon = true
             newState.isPaused = true
             return newState
@@ -112,8 +166,8 @@ export function useGameState() {
           const eventUpdates = updateActiveEvents(newState)
           newState = { ...newState, ...eventUpdates }
 
-          // Check if we should trigger a new event
-          if (shouldTriggerEvent(newState)) {
+          // Check if we should trigger a new event (only if mode supports events)
+          if (modeConfig.hasRandomEvents && shouldTriggerEvent(newState)) {
             const newEvent = generateRandomEvent(newState)
             if (newEvent) {
               const eventApply = applyEvent(newState, newEvent)
