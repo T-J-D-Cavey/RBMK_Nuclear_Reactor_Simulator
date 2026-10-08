@@ -71,7 +71,7 @@ Be prepared for unexpected variables:
 
 ## Fixes and improvements to make
  
-- Change turbine modal so there is the option to power pumps. If on, the number of pumps that are powered is based on steam generation volume, and power generation will be 0%.
+- Change turbine modal so there is the option to power pumps. This option is only available if the turbine has been disconnected. If on, the number of pumps that are powered is based on steam generation volume, and as the turbine has been disconnected, power generation will be 0%.
 - Double check power threshold params are working as expected
 - One off sound affects when water pump changes / control rod changes / turbine are submitted
 
