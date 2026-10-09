@@ -1,6 +1,28 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS.** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS3 are built and waiting on Checkpoint A (owner playtest feedback).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+
+---
+
+## 0. Start here (for a new session)
+
+1. **Read, in order:**
+   1. bible §0–§2 (how to use the plan, pillars, guardrails);
+   2. this file's §7 (done / left to do) and §8 (open questions);
+   3. **the owner's playtest results**: a separate Markdown file in `ai/` written by the owner, e.g. `ai/playtest-results.md`. If that name doesn't exist, look for the newest file in `ai/` that isn't one of the plan files.
+2. **Check the baseline** before changing anything (commands in §9). All 34 acceptance checks should pass, and `tsc` should be clean.
+3. **Next job: Checkpoint A follow-up.** Turn each item of playtest feedback into one of:
+   - a tuning change in `lib/sim/tuning.ts`;
+   - a model change in `lib/sim/reactor.ts`;
+   - a UI fix.
+
+   Re-run the checks after each change. If feedback conflicts with an acceptance check in the bible, **stop and ask the owner**; don't quietly change the check. If the fix is purely numeric, edit `tuning.ts` and use `sim:trace` to confirm the scenario feels as described.
+4. When the owner is happy with the feel, move on to **WS4 (events and targets)**, then WS5, WS6 and WS7, following §4 and §7.
+5. **House rules:**
+   - Never commit. The owner commits.
+   - No new npm dependencies (see §2).
+   - `npx tsc --noEmit -p .` is the type gate, because `next.config.mjs` ignores type errors during the build.
+   - Update §6 (progress log) and §7 (status) of this file when you finish something.
 
 ---
 
@@ -81,8 +103,7 @@ Rules for parallel work: a file belongs to one workstream at a time. Shared type
 
 ## 5. Open items for the owner
 
-- **Sounds (WS7):** an agent can't audition audio, so please pick clips on Pixabay (searches: "relay click", "heavy switch", "electric motor loop", "emergency button") and drop them in `public/sounds/`.
-- **Tuning:** all numbers in the bible are starting targets. Checkpoints A and B are where you tell us how it *feels*; we then adjust `tuning.ts` and re-run the harness.
+See §8 for the full list of open questions.
 
 ---
 
@@ -103,3 +124,82 @@ Rules for parallel work: a file belongs to one workstream at a time. Shared type
     - With 3–4 pumps, even all rods out settles below meltdown (hot fuel is a strong brake). Only 2 pumps + rods out melts down.
     - Losing every pump from a hot state (R≈185) explodes ~21 s later; from the normal state, ~104 s.
   - Tools: `node --run sim:trace -- <scenario>` prints a second-by-second table; `node --run sim:shift` runs hands-off Easy/Hard shifts.
+- 2026-10-09: Owner ran a first playtest. Feedback is being collected in a separate file in `ai/` for the next session (see §0). The plan was restructured with §7–§9 for handover.
+
+---
+
+## 7. Status: done and left to do (by bible section)
+
+✅ built and checked · 🟡 partly done · ⬜ not started
+
+| Bible § | Item | Status | Notes / where |
+|---|---|---|---|
+| 5 | Reactivity balance, exponential radioactivity, source term, proportional noise | ✅ | `lib/sim/reactor.ts`, `lib/sim/tuning.ts`. **Feel unconfirmed** (Checkpoint A). |
+| 6 | Radioactivity → fuel → reactor chain; continuous fuel-temperature curve | ✅ | |
+| 7 | Pump cooling scales with flow/temperature/heat; flow ramps ~4 s; dry-out; boiling escalation at zero flow | ✅ | Timing: see §8 Q2. |
+| 8 | Steam follows reactor temperature only | ✅ | |
+| 8 | Turbine "Supply station pumps" (steam-based capacity, ON pumps first, no flicker, PUMPS lamp, output 0) | ✅ | `components/turbine-modal.tsx`, `control-panel.tsx`. Only matters during a power cut until WS6. |
+| 9 | Xenon build/burn, 0% in normal running, restart route | ✅ | |
+| 10 | Linear boron, graphite tips (+10 while insertion > 0), rod travel ~18 s, jams freeze mid-travel | ✅ | |
+| 10 | One-press AZ-5 (closes modal); live rod travel on panel; no text selection; touch grab area | ✅ | `components/control-rods-modal.tsx`. **Not yet tested on a real phone.** |
+| 10 | Rod-margin warning (minimum 200 of 1000) | ✅ | `THRESHOLDS.rodMargin` in `lib/types.ts`. |
+| 11 | Identical physics in every mode | ✅ | The engine has no mode branches. |
+| 11 | Core explosion (steam ≥ 600) and its own end screen | 🟡 | Minimal distinct visual + title only. Full incident report is WS5. |
+| 11/15 | Mode menu wording describes workload | ✅ | `components/difficulty-modal.tsx` (WS3). |
+| 12 | Event budget (Easy ≈1, Hard ≈3 major per shift), no early emergencies, warnings before majors | ⬜ | WS4. **Still the old scheduler** in `lib/game-events.ts` (event every 2–4 min, old 1-in-3 power-cut/jam rule). |
+| 12 | Power cut cuts mains only (turbine can supply pumps) | ✅ | Durations still the old ones (WS4). |
+| 12 | Single pump trip event | ⬜ | WS4. `WaterPump.tripped` exists in state and the engine honours it; nothing sets it yet. |
+| 12 | Turbine trip after sustained over-pressure | ⬜ | WS4. `overpressureSeconds` field exists, unused. |
+| 12 | Grid "hold" request (halves tolerance) | ⬜ | WS4. |
+| 13 | ±10% tolerance (min ±200 MW), shared by panel and performance | ✅ | `getPowerTolerance` in `lib/types.ts`, `isPowerOnTarget` in `lib/game-mechanics.ts`. |
+| 13 | Smaller, less frequent, announced target changes | ⬜ | WS4. Uses `state.log` for announcements. |
+| 14 | Safety Test mode | ⬜ | WS6. Menu card exists (IN DEVELOPMENT). Selecting it currently gives a plain 30-min shift with a fixed 5000 MW target and no events (`GAME_MODE_CONFIGS.safety_test`). |
+| 15 | CCTV reactor camera (inline + fullscreen), radiation interference | ✅ | `components/reactor-camera.tsx`. |
+| 15 | Chart recorder side panel, wide-screen layout | ✅ | `components/chart-recorder.tsx`, `app/game/page.tsx`. Narrow-screen layout checked by reading classes only. |
+| 15 | Homepage CRT treatment; Safety Test "historical scenario" card | ✅ | `app/page.tsx`, `difficulty-modal.tsx`. |
+| 15 | Message area: sources, teletype/log feel, timestamps | ⬜ | WS5. `LogEntry` type and `state.log` exist but nothing writes to them yet. |
+| 15 | End screens per ending + incident report | 🟡 | WS5. `state.stats` tracks peaks, lowest rod margin and seconds in danger. `emergenciesHandled` is never incremented yet (WS4 should do it when a major event ends). |
+| 15 | How to Play rewrite (red/blue cards, tips, rod travel, ±10%, same physics) | ⬜ | WS5. `app/instructions/page.tsx` still describes the old mechanics. |
+| 15 | README update | ⬜ | WS5. The README still describes the old mechanics; its "Fixes" list is now partly done. |
+| 15 | Sounds | ⬜ | WS7. Waiting on the owner's Pixabay picks. |
+
+---
+
+## 8. Open questions (for the owner)
+
+From the engine tuning (raised at Checkpoint A; the owner's playtest file may answer some):
+
+1. **Too forgiving with rods out?** With 3–4 pumps, even all rods withdrawn settles below meltdown (the hot-fuel brake is strong). Only 2 pumps with rods out melts down. Should rods-out be deadlier?
+   - Levers: `fuelBrakeMaxSlope`, `voidPerSteam`.
+2. **Pump-loss timing.** Losing every pump explodes ~21 s later from a hot state (radioactivity ≈185), at the short end of the bible's 30–60 s. From the normal state it takes ~104 s.
+   - Levers: `boilingEscalation`, `pumpRampSeconds`.
+3. **Rod sensitivity.** One rod moved 10% shifts radioactivity ~13% and settles in ~20 s. Is that right?
+   - Levers: `generationTime`, fuel brake.
+4. **Oscillation.** In some hot, low-flow states radioactivity swings up and down every few seconds before settling. Acceptable as "twitchy", or should it be damped?
+   - Lever: `fuelToReactorRate`.
+5. **Sounds (WS7).** Pick clips on Pixabay (searches: "relay click", "heavy switch", "electric motor loop", "emergency button") and put them in `public/sounds/`.
+
+Decisions made without the owner that they may want to revisit:
+
+- **Rod-margin minimum = 200** (the sum of all ten insertions, out of 1000).
+- **Jams:** a jammed rod keeps its position when the jam clears; it doesn't resume its old order.
+- **Tripped pumps** show their PWR lamp off.
+- **Safety Test camera clock** starts at 26-04-1986 00:00:00 like the other modes. It could start nearer 01:00 via the `clockStartMs` prop.
+- **Safety Test card text** says orders come from the test procedure. Check this still matches once WS6 is built.
+
+---
+
+## 9. How to run things
+
+Run these from the project folder in a terminal (VS Code: *Terminal → New Terminal*). They need Node 24+ and no extra installs.
+
+| Command | What it does |
+|---|---|
+| `node --run sim:test` | Runs the 34 automated acceptance checks (bible §5–§11). Prints ✔/✖ per check and a pass/fail count. |
+| `node --run sim:trace -- <scenario> [every]` | Prints a second-by-second table (R, fuel, reactor temp, steam, xenon, balance, flow, rod margin) for one scenario, e.g. `node --run sim:trace -- pumps0 5`. Run it with no scenario name to list them all. |
+| `node --run sim:shift` | Runs a hands-off Easy and Hard shift through the real game loop (engine + events + game over) and prints how each ended. |
+| `npx tsc --noEmit -p .` | Type check (the real gate; the build ignores type errors). |
+| `npm run dev` | Starts the game locally at http://localhost:3000. |
+| `npx next build` | Production build, as Vercel runs it. |
+
+Files: tests in `scripts/sim/acceptance.test.ts`, named scenarios in `scripts/sim/scenarios.ts`, helpers in `scripts/sim/harness.ts`. `scripts/sim/register.mjs` lets Node run the TypeScript directly.
