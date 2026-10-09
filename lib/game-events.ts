@@ -111,7 +111,7 @@ function generatePowerCutEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "power-cut",
-    message: `⚡ UPDATE FROM HEAD ENGINEER: Power cut detected. Pumps are not powered, so they're not moving cooling water through the core.`,
+    message: `⚡ UPDATE FROM HEAD ENGINEER: Power cut detected. The pumps' normal supply is down, so they're not moving cooling water through the core. The turbine can be disconnected from the grid to supply the pumps.`,
     timestamp: state.gameTime,
     duration,
     data: { affectedPumps: [0, 1, 2, 3] },
@@ -177,22 +177,16 @@ export function applyEvent(state: GameState, event: GameEvent): Partial<GameStat
       break
 
     case "power-cut":
-      if (event.data?.affectedPumps) {
-        const newPumps = state.waterPumps.map((pump, idx) => {
-          if (event.data!.affectedPumps!.includes(idx)) {
-            return { ...pump, powered: false }
-          }
-          return pump
-        })
-        updates.waterPumps = newPumps
-      }
+      // The pumps' normal supply is lost; the turbine can still supply them (bible §8)
+      updates.mainsPower = false
       break
 
     case "rod-stuck":
       if (event.data?.affectedRods) {
+        // A jammed rod stops wherever it is, including mid-travel, and stays there once freed (bible §10, §12)
         const newRods = state.controlRods.map((rod, idx) => {
           if (event.data!.affectedRods!.includes(idx)) {
-            return { ...rod, stuck: true }
+            return { ...rod, stuck: true, target: rod.insertion }
           }
           return rod
         })
@@ -219,17 +213,11 @@ export function updateActiveEvents(state: GameState): Partial<GameState> {
     updates.activeEvents = state.activeEvents.filter((event) => !expiredEvents.includes(event))
 
     // Restore affected systems
-    let newPumps = [...state.waterPumps]
     let newRods = [...state.controlRods]
 
     expiredEvents.forEach((event) => {
-      if (event.type === "power-cut" && event.data?.affectedPumps) {
-        newPumps = newPumps.map((pump, idx) => {
-          if (event.data!.affectedPumps!.includes(idx)) {
-            return { ...pump, powered: true }
-          }
-          return pump
-        })
+      if (event.type === "power-cut") {
+        updates.mainsPower = true
       }
 
       if (event.type === "rod-stuck" && event.data?.affectedRods) {
@@ -242,7 +230,6 @@ export function updateActiveEvents(state: GameState): Partial<GameState> {
       }
     })
 
-    updates.waterPumps = newPumps
     updates.controlRods = newRods
   }
 

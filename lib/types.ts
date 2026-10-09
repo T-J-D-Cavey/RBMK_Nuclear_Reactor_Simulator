@@ -1,15 +1,41 @@
+import { REFERENCE_STATE } from "./sim/tuning"
+
 export interface ControlRod {
   id: number
-  insertion: number // 0-100%
-  currentlyFullyRemoved: boolean
-  justReinserted: boolean
+  insertion: number // actual position, 0-100% (moves toward target at rod speed)
+  target: number // ordered position set by the lever modal / AZ-5, 0-100%
   stuck: boolean
 }
 
 export interface WaterPump {
   id: number
-  on: boolean
-  powered: boolean
+  on: boolean // switched on by the player
+  powered: boolean // receiving power from any source (mains or turbine)
+  flow: number // internal: 0-1, ramps over a few seconds after starting / stopping
+  tripped: boolean // pump has failed (pump trip event)
+}
+
+// "grid": turbine feeds the grid. "pumps": disconnected, supplying station pumps. "idle": disconnected.
+export type TurbineMode = "grid" | "pumps" | "idle"
+
+export type GameOverCause = "meltdown" | "explosion" | "performance"
+
+export type LogSource = "grid" | "engineer" | "procedure" | "alarm" | "system"
+
+export interface LogEntry {
+  id: string
+  time: number // gameTime when logged
+  source: LogSource
+  text: string
+}
+
+export interface GameStats {
+  peakRadioactivity: number
+  peakReactorTemp: number
+  peakSteam: number
+  lowestRodMargin: number
+  emergenciesHandled: number
+  secondsInDanger: number
 }
 
 export interface GameEvent {
@@ -25,7 +51,7 @@ export interface GameEvent {
   }
 }
 
-export type GameMode = "easy" | "hard" | "free" | "power_test"
+export type GameMode = "easy" | "hard" | "free" | "safety_test"
 
 export interface GameModeConfig {
   id: GameMode
@@ -81,16 +107,16 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     hasRandomEvents: false,
     performanceAffectsGameOver: false,
   },
-  power_test: {
-    id: "power_test",
-    name: "Power Test",
-    badgeText: "POWER TEST",
-    description: "Simulate the safety test conditions. (Coming Soon)",
-    hasTimer: false,
-    timerMode: "countup",
-    timeLimit: null,
-    hasPowerTarget: false,
-    defaultPowerTarget: 200,
+  safety_test: {
+    id: "safety_test",
+    name: "Safety Test",
+    badgeText: "SAFETY TEST",
+    description: "Historical scenario: the night of the Unit 4 turbine rundown test. (In development)",
+    hasTimer: true,
+    timerMode: "countdown",
+    timeLimit: 1800,
+    hasPowerTarget: true,
+    defaultPowerTarget: 5000,
     hasRandomEvents: false,
     performanceAffectsGameOver: false,
   },
@@ -112,13 +138,19 @@ export interface GameState {
   // Controls
   controlRods: ControlRod[]
   waterPumps: WaterPump[]
-  turbineConnected: boolean
+  turbineMode: TurbineMode
+  turbineConnected: boolean // derived: turbineMode === "grid" (kept for existing UI/saves)
+  mainsPower: boolean // the pumps' normal (station) supply is available
+  turbinePumpCapacity: number // internal: pumps the turbine can currently power (held steady near thresholds)
+  overpressureSeconds: number // internal: consecutive seconds of high steam while connected to the grid
+  reactivityNoise: number // internal: slow random drift in the reactivity balance
 
   // Game state
   mode: GameMode
   isPaused: boolean
   isGameOver: boolean
   gameOverReason: string | null
+  gameOverCause: GameOverCause | null
   gameTime: number // countdown or countup in seconds
   difficultyIsHard: boolean // retained for backwards compatibility
   hasWon: boolean
@@ -133,6 +165,12 @@ export interface GameState {
   // Warnings
   warnings: string[]
 
+  // Message log (grid controller, engineers, procedure, alarms)
+  log: LogEntry[]
+
+  // Incident report
+  stats: GameStats
+
   // Audio
   soundEnabled: boolean
   soundVolume: number
@@ -140,11 +178,11 @@ export interface GameState {
 }
 
 export const INITIAL_GAME_STATE: GameState = {
-  radioactivity: 100,
-  reactorTemp: 330,
-  fuelTemp: 330,
+  radioactivity: REFERENCE_STATE.radioactivity,
+  reactorTemp: REFERENCE_STATE.reactorTemp,
+  fuelTemp: REFERENCE_STATE.fuelTemp,
   xenon: 0,
-  steamVolume: 100,
+  steamVolume: REFERENCE_STATE.steam,
 
   powerTarget: 5000,
   powerOutput: 5000,
@@ -153,23 +191,30 @@ export const INITIAL_GAME_STATE: GameState = {
   controlRods: Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
     insertion: i < 6 ? 40 : 55,
+    target: i < 6 ? 40 : 55,
     stuck: false,
-    currentlyFullyRemoved: false,
-    justReinserted: false
   })),
 
   waterPumps: Array.from({ length: 4 }, (_, i) => ({
     id: i + 1,
     on: i < 2, // Only first 2 pumps on, but this provides adequate cooling
     powered: true,
+    flow: i < 2 ? 1 : 0,
+    tripped: false,
   })),
 
+  turbineMode: "grid",
   turbineConnected: true,
+  mainsPower: true,
+  turbinePumpCapacity: 0,
+  overpressureSeconds: 0,
+  reactivityNoise: 0,
 
   mode: "easy",
   isPaused: false,
   isGameOver: false,
   gameOverReason: null,
+  gameOverCause: null,
   gameTime: 900, // 15 minutes in seconds (easy mode default)
   difficultyIsHard: false,
   hasWon: false,
@@ -181,7 +226,18 @@ export const INITIAL_GAME_STATE: GameState = {
   justHadPowerCut: true,
 
   warnings: [],
-  
+
+  log: [],
+
+  stats: {
+    peakRadioactivity: REFERENCE_STATE.radioactivity,
+    peakReactorTemp: REFERENCE_STATE.reactorTemp,
+    peakSteam: REFERENCE_STATE.steam,
+    lowestRodMargin: 460,
+    emergenciesHandled: 0,
+    secondsInDanger: 0,
+  },
+
   soundEnabled: false,
   soundVolume: 1,
   soundEnabledWhenPaused: false,
@@ -203,6 +259,7 @@ export const THRESHOLDS = {
   steamVolume: {
     highWarning: 300,
     lowWarning: 0,
+    explosion: 600, // core explosion (bible §11): about double the high-steam warning
   },
   performance: {
     gameOver: 0,
@@ -210,5 +267,15 @@ export const THRESHOLDS = {
   xenon: {
     highWarning: 50,
   },
-  powerTolerance: 500
+  rodMargin: {
+    minimum: 200, // total insertion across all 10 rods (0-1000); the game's "15-rod minimum" (bible §10.2)
+  },
+  powerTolerance: {
+    fraction: 0.1, // ±10% of target (bible §13)
+    minimum: 200, // never tighter than ±200 MW
+  },
 } as const
+
+export function getPowerTolerance(powerTarget: number): number {
+  return Math.max(THRESHOLDS.powerTolerance.minimum, powerTarget * THRESHOLDS.powerTolerance.fraction)
+}

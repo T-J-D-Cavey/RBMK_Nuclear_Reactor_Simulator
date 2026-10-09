@@ -5,8 +5,9 @@ import { DoorOpen, ArrowLeft, Cctv  } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import type { GameState } from "@/lib/types"
-import { formatTime } from "@/lib/game-utils"
-import { checkWarnings } from "@/lib/game-utils"
+import { formatTime, checkWarnings, getWarningFlags } from "@/lib/game-utils"
+import { isPowerOnTarget } from "@/lib/game-mechanics"
+import ReactorCamera, { getShiftElapsedSeconds } from "./reactor-camera"
 import ControlRodsModal from "./control-rods-modal"
 import WaterPumpsModal from "./water-pumps-modal"
 import TurbineModal from "./turbine-modal"
@@ -23,24 +24,21 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
   const [showReactorView, setShowReactorView] = useState(false)
 
-  const powerTolerance = 500
-  const hasTarget = gameState.powerTarget !== null
-  const lowerBound = (gameState.powerTarget ?? 0) - powerTolerance
-  const upperBound = (gameState.powerTarget ?? 0) + powerTolerance
-  const isOnTarget = !hasTarget || (gameState.powerOutput >= lowerBound && gameState.powerOutput <= upperBound)
+  const isOnTarget = isPowerOnTarget(gameState)
 
   const warnings = checkWarnings(gameState)
   const hasWarnings = warnings.length > 0
   const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck")
 
-  const lowRadioactivityWarning = gameState.radioactivity < 50
-  const highRadioactivityWarning = gameState.radioactivity > 250
-  const highReactorTempWarning = gameState.reactorTemp > 800
-  const highSteamWarning = gameState.steamVolume > 300
-  const lowSteamWarning = gameState.steamVolume <= 0
-  const lowPerformanceWarning = gameState.performance < 30
-  const highXenonWarning = gameState.xenon > 50
-  const lowFuelTempWarning = gameState.fuelTemp < 49
+  // Same thresholds as the warning list in the message area
+  const flags = getWarningFlags(gameState)
+  const lowRadioactivityWarning = flags.lowRadioactivity
+  const highRadioactivityWarning = flags.highRadioactivity
+  const highReactorTempWarning = flags.highReactorTemp
+  const highSteamWarning = flags.highSteam
+  const lowSteamWarning = flags.lowSteam
+  const highXenonWarning = flags.highXenon
+  const lowFuelTempWarning = flags.lowFuelTemp
 
   const handlePauseClick = () => {
     if (gameState.isPaused) {
@@ -292,11 +290,11 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                     <div key={rod.id} className="relative w-full h-full border-r border-black/5 last:border-r-0">
                       <div
                         className={`
-                          absolute w-full text-center font-bold leading-none text-xs transition-all duration-500 ease-out
+                          absolute w-full text-center font-bold leading-none text-xs transition-all duration-1000 ease-linear
                           ${rod.stuck ? "animate-[pulse_0.5s_ease-in-out_infinite]" : ""}
                         `}
                         style={{
-                          // Position based on insertion %.
+                          // Position based on the rod's actual (travelling) insertion %.
                           // 0% is top, 100% is bottom. We clamp slightly to keep it inside the lines.
                           top: `${rod.insertion}%`,
                           transform: "translateY(-50%)", // Centers the dash on the exact % point
@@ -357,7 +355,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
               {/* The Lamp Display Container */}
               <div className="bg-black/80 border-2 border-neutral-800 rounded-md p-2 shadow-inner h-16 flex items-center justify-center">
-                <div className="flex gap-8">
+                <div className="flex gap-5">
                   {/* Light 1: Connection Status (Green) */}
                   <div className="flex flex-col gap-1.5 items-center">
                     <div
@@ -387,6 +385,21 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                               `}
                     />
                     <span className="text-[9px] font-mono text-neutral-500">OVR-P</span>
+                  </div>
+
+                  {/* Light 3: Turbine supplying station pumps (Amber) */}
+                  <div className="flex flex-col gap-1.5 items-center">
+                    <div
+                      className={`
+                                retro-lamp w-4 h-4 rounded-full
+                                ${
+                                  gameState.turbineMode === "pumps"
+                                    ? "bg-amber-400 text-amber-400 on shadow-[0_0_10px_currentColor]"
+                                    : "bg-amber-900/20"
+                                }
+                              `}
+                    />
+                    <span className="text-[9px] font-mono text-neutral-500">PUMPS</span>
                   </div>
                 </div>
               </div>
@@ -430,8 +443,8 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
       <TurbineModal
         open={turbineModalOpen}
         onOpenChange={setTurbineModalOpen}
-        turbineConnected={gameState.turbineConnected}
-        onUpdate={(connected) => updateGameState({ turbineConnected: connected })}
+        turbineMode={gameState.turbineMode}
+        onUpdate={(mode) => updateGameState({ turbineMode: mode, turbineConnected: mode === "grid" })}
       />
 
       {/* Fullscreen reactor view modal */}
@@ -449,47 +462,13 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             </Button>
           </div>
 
-          {/* Reactor view */}
-          <div className="w-full h-full flex justify-center items-center p-4">
-            <div className="relative w-full max-w-6xl border-4 border-primary aspect-square overflow-hidden rounded-lg shadow-lg bg-gray-900">
-              {/* 1. BASE LAYER (Always Visible) */}
-              <img
-                src="/new_reactor_image_cropped.jpg"
-                alt="Reactor Base"
-                className="absolute inset-0 w-full h-full object-cover z-0"
-              />
-
-              {/* 2. TEMPERATURE LAYER (Dynamic Opacity) */}
-              <img
-                src="/new_reactor_image_high_temp_cropped.jpg"
-                alt="Heat Overlay"
-                className="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 pointer-events-none mix-blend-screen"
-                style={{
-                  opacity: (() => {
-                    const value = gameState.reactorTemp
-                    if (value <= 600) return 0
-                    if (value >= 800) return 1
-                    return (value - 600) / 200
-                  })(),
-                }}
-              />
-
-              {/* 3. RADIOACTIVITY LAYER (Dynamic Opacity) */}
-              <img
-                src="/new_reactor_image_high_radioactivity_cropped.jpg"
-                alt="Radiation Overlay"
-                className="absolute inset-0 w-full h-full object-cover z-20 transition-opacity duration-500 pointer-events-none mix-blend-screen"
-                style={{
-                  opacity: (() => {
-                    const value = gameState.radioactivity
-                    if (value <= 150) return 0
-                    if (value >= 350) return 1
-                    return (value - 150) / 200
-                  })(),
-                }}
-              />
-            </div>
-          </div>
+          {/* Reactor view (security camera) */}
+          <ReactorCamera
+            variant="fullscreen"
+            radioactivity={gameState.radioactivity}
+            reactorTemp={gameState.reactorTemp}
+            elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
+          />
         </div>
       )}
     </div>

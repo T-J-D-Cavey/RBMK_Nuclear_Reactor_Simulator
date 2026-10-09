@@ -13,11 +13,15 @@ interface DifficultyModalProps {
 export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: DifficultyModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-4 border-primary max-w-md max-h-[90vh] overflow-y-auto" showCloseButton={true}>
+      <DialogContent
+        className="bg-card border-4 border-primary max-w-md max-h-[90dvh] overflow-y-auto"
+        showCloseButton={true}
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl font-mono uppercase text-center">Select Mode</DialogTitle>
           <DialogDescription className="text-center font-mono text-sm pt-2">
-            Choose your challenge level or play freely to begin reactor management
+            The reactor obeys the same physics in every mode. Modes differ only in your workload: shift length, grid
+            demands and emergencies.
           </DialogDescription>
         </DialogHeader>
 
@@ -26,9 +30,9 @@ export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: Diff
           <div className="bg-background border-2 border-border p-4 space-y-2">
             <h3 className="font-mono font-bold text-lg uppercase text-accent">Easy Mode</h3>
             <ul className="text-sm font-mono space-y-1 text-muted-foreground">
-              <li>• 15 minute countdown</li>
-              <li>• More stable reactor mechanics</li>
-              <li>• Recommended for beginners</li>
+              <li>• 15 minute shift</li>
+              <li>• About 1 major emergency per shift</li>
+              <li>• Smaller, less frequent power target changes</li>
             </ul>
             <Button
               onClick={() => onSelectDifficulty("easy")}
@@ -43,9 +47,9 @@ export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: Diff
           <div className="bg-background border-2 border-destructive p-4 space-y-2">
             <h3 className="font-mono font-bold text-lg uppercase text-destructive">Hard Mode</h3>
             <ul className="text-sm font-mono space-y-1 text-muted-foreground">
-              <li>• 30 minute countdown</li>
-              <li>• Challenging reactor mechanics</li>
-              <li>• For experienced operators</li>
+              <li>• 30 minute shift</li>
+              <li>• About 3 major emergencies per shift</li>
+              <li>• Larger, more frequent power target changes</li>
             </ul>
             <Button
               onClick={() => onSelectDifficulty("hard")}
@@ -73,10 +77,35 @@ export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: Diff
               Start Free Mode
             </Button>
           </div>
+
+          {/* Historical scenario: Safety Test */}
+          <div className="ws3-historical-card relative p-4 space-y-2 text-amber-950">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-amber-800">
+                Historical scenario · 25–26 April 1986
+              </span>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-black px-1.5 py-0.5 border border-amber-800">
+                In development
+              </span>
+            </div>
+            <h3 className="font-mono font-bold text-lg uppercase text-amber-900">Safety Test</h3>
+            <ul className="text-sm font-mono space-y-1 text-amber-900/80">
+              <li>• 30 minute scripted recreation of the night of the Unit 4 turbine rundown test</li>
+              <li>• Orders come from the test procedure, not random events</li>
+              <li>• No random emergencies</li>
+            </ul>
+            <Button
+              onClick={() => onSelectDifficulty("safety_test")}
+              className="w-full uppercase font-mono tracking-wider border-2 border-amber-900 bg-amber-800 hover:bg-amber-900 text-amber-50 font-bold mt-2 cursor-pointer shadow-sm"
+              size="lg"
+            >
+              Begin Safety Test
+            </Button>
+          </div>
         </div>
 
         <p className="text-xs text-center text-muted-foreground font-mono pt-2">
-          Survive until the countdown reaches zero, or test physics indefinitely in Free Mode
+          Survive until the shift ends, or test the physics indefinitely in Free Mode
         </p>
       </DialogContent>
     </Dialog>

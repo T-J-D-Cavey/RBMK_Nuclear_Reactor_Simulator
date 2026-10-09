@@ -40,14 +40,27 @@ export default function HomePage() {
   const controlRoomBackground = "control_room_background.jpg"
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
-      <div className="max-w-2xl w-full space-y-8 text-center">
-        {/* Title */}
-        <div className="space-y-4 bg-black/20">
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-reactor-blue uppercase font-mono">
-            R B M K
-          </h1>
-          <p className="text-xl md:text-2xl text-reactor-blue font-mono">Nuclear Reactor Control Simulation</p>
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
+      {/* Atmosphere: dark vignette + faint scanlines over the control room */}
+      <div className="ws3-home-vignette absolute inset-0 pointer-events-none" aria-hidden="true" />
+
+      <div className="relative max-w-2xl w-full space-y-8 text-center">
+        {/* Title on a CRT monitor */}
+        <div className="ws3-crt-panel px-4 py-6 sm:px-8 sm:py-8">
+          <div className="ws3-crt-sweep" aria-hidden="true" />
+          <div className="relative space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between gap-2 font-mono text-[10px] sm:text-xs uppercase tracking-widest text-reactor-blue/70">
+              <span className="truncate">ChNPP · Unit 4 · SKALA</span>
+              <span className="shrink-0">26-04-1986</span>
+            </div>
+            <h1 className="ws3-crt-title text-6xl md:text-8xl font-bold tracking-tight text-reactor-blue uppercase font-mono">
+              R B M K
+            </h1>
+            <p className="ws3-crt-subtitle text-lg sm:text-xl md:text-2xl text-reactor-blue font-mono">Nuclear Reactor Control Simulation</p>
+            <p className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-reactor-blue/60">
+              {"> Operator console ready_"}
+            </p>
+          </div>
         </div>
 
         {/* Control Panel Style Box */}

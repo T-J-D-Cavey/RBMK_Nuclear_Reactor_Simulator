@@ -1,193 +1,39 @@
-import { type GameState, THRESHOLDS } from "./types"
-import { getRadioactivityFromRods } from "./game-utils"
+import { type GameOverCause, type GameState, THRESHOLDS, getPowerTolerance } from "./types"
+import { advanceReactor, getRodMargin } from "./sim/reactor"
+import type { Rng } from "./sim/rng"
 
-export function calculateGameTick(state: GameState): Partial<GameState> {
+export interface TickResult {
+  updates: Partial<GameState>
+  ending: GameOverCause | null
+}
+
+// One second of game time. The reactor physics live in lib/sim (see ai/implementation-plan.md).
+export function calculateGameTick(state: GameState, rng: Rng = Math.random): TickResult {
   if (state.isPaused || state.isGameOver) {
-    return {}
+    return { updates: {}, ending: null }
   }
 
-  let newState = { ...state }
+  const physics = advanceReactor(state, rng)
+  let newState = physics.state
 
-  // 1. Calculate radioactivity changes
-  newState = calculateRadioactivity(newState)
-
-  // 2. Calculate temperature changes
-  newState = calculateTemperatures(newState)
-
-  // 3. Calculate steam changes
-  newState = calculateSteam(newState)
-
-  // 4. Calculate power output
   newState = calculatePower(newState)
-
-  // 5. Calculate performance
   newState = calculatePerformance(newState)
+  newState = updateStats(newState)
 
-  // 6. Calculate xenon changes
-  newState = calculateXenon(newState)
-
-  return newState
-}
-
-// Please note below is where most of the logic lives to change state. But there is logic in use-game-state.ts which increases radioactivity, steam and reactor temp when control rods went from full removed into a non fully removed state:
-
-function calculateRadioactivity(state: GameState): GameState {
-  let radioactivityChange = 0
-
-  // Uranium fuel is naturally radioactive and always produces baseline radioactivity
-  radioactivityChange += 10 // Constant baseline positive radioactivity
-
-  // Change plays a part in radioactivity. This adds a random change of a change by 2 either positively or negatively:
-  let randowmFactor = Math.random() * (2 * 2) - 2;
-  radioactivityChange += randowmFactor
-
-  // Control rods reduce radioactivity
-  radioactivityChange -= getRadioactivityFromRods(state.controlRods) * 0.025
-
-  // Fuel Temperature affects radioactivity
-  // Higher fuel temp reduces radioactivity
-  if (state.fuelTemp > 600) {
-    radioactivityChange -= (state.fuelTemp - 600) * 0.01
-  }
-  // Lower fuel temp increases radioactivity
-  if (state.fuelTemp < 100) {
-    radioactivityChange += (100 - state.fuelTemp) * 0.12
-  }
-
-  // Xenon affects radioactivity (inverse/fast)
-  // Higher xenon reduces radioactivity
-  radioactivityChange -= state.xenon * 0.2
-
-  // Steam Volume affects radioactivity (direct/quick)
-  // High steam slightly increases radioactivity
-  radioactivityChange += Math.min(10, (state.steamVolume) * 0.02)
-  
-  const newRadioactivity = Math.max(0, state.radioactivity + radioactivityChange)
-
-  return { ...state, radioactivity: newRadioactivity }
-}
-
-function calculateTemperatures(state: GameState): GameState {
-    let reactorTempChange = 0
-    let fuelTempChange = 0
-    const R = state.radioactivity;
-
-    // Generate a random ambient sea temperature between 1 and 5 degrees Celsius
-    // This value represents the lowest temperature the reactor can naturally cool to.
-    const AMBIENT_SEA_TEMP = Math.floor(Math.random() * 4) + 1; // Random integer between 1 and 5
-
-    // 1. DYNAMIC PASSIVE COOLING (Faster at higher temps, slows as it approaches ambient)
-    // Cooling rate is proportional to the temperature difference from ambient.
-    // Max cooling rate capped for realism and to ensure meltdown is possible.
-    const MAX_PASSIVE_COOLING_RATE = 3; // Maximum temp decrease per second (e.g., 2 units/sec)
-    const COOLING_COEFFICIENT = 0.0003; // Adjust this to fine-tune how quickly it cools down
-
-    if (state.reactorTemp > AMBIENT_SEA_TEMP) {
-        const tempDifference = state.reactorTemp - AMBIENT_SEA_TEMP;
-        // The cooling rate increases with tempDifference, capped at MAX_PASSIVE_COOLING_RATE
-        reactorTempChange -= Math.min(tempDifference * COOLING_COEFFICIENT, MAX_PASSIVE_COOLING_RATE);
-    }
-
-    // 2. RADIOACTIVE HEATING 
-    let R_heat_factor = 0;
-
-    const THRESHOLD_1 = 50;  
-    const THRESHOLD_2 = 150; 
-    const THRESHOLD_3 = 250; 
-
-    // --- TIER 1 BASELINE (R up to 50: Rate 0.01) ---
-    if (R <= THRESHOLD_1) {
-        R_heat_factor = R * 0.01;
-    } else {
-        R_heat_factor = THRESHOLD_1 * 0.01;
-    }
-
-    // --- TIER 2 ACCELERATION (R > 50: Total Rate 0.021) ---
-    if (R > THRESHOLD_1) {
-        const R_excess_1 = Math.min(R, THRESHOLD_2) - THRESHOLD_1;
-        R_heat_factor += R_excess_1 * 0.032;
-    }
-
-    // --- TIER 3 ACCELERATION (R > 150: Total Rate 0.03) ---
-    if (R > THRESHOLD_2) {
-        const R_excess_2 = Math.min(R, THRESHOLD_3) - THRESHOLD_2;
-        R_heat_factor += R_excess_2 * 0.013;
-    }
-
-    // --- TIER 4 ACCELERATION (R > 250: Total Rate 0.09) ---
-    if (R > THRESHOLD_3) {
-        const R_excess_3 = R - THRESHOLD_3;
-        R_heat_factor += R_excess_3 * 0.045;
-    }
-
-    reactorTempChange += R_heat_factor;
-
-    // 3. WATER PUMPS AFFECT REACTOR TEMP (Inverse/Quick) - UNCHANGED
-    const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
-    reactorTempChange -= (activePumps.length + 0.002) // Cooling rate matches number of active pumps (1:1)
-
-
-    // 4. THERMAL LAG (Reactor Temp affects Fuel Temp) - UNCHANGED
-    const tempGap = state.reactorTemp - state.fuelTemp
-    const THERMAL_TRANSFER_RATE = 0.03
-    fuelTempChange = tempGap * THERMAL_TRANSFER_RATE
-
-    // 5. APPLY CHANGES AND LIMITS
-    const newReactorTemp = Math.max(5, state.reactorTemp + reactorTempChange)
-    const newFuelTemp = Math.max(5, state.fuelTemp + fuelTempChange)
-
-    return { ...state, reactorTemp: newReactorTemp, fuelTemp: newFuelTemp }
-}
-
-
-function calculateSteam(state: GameState): GameState {
-  let steamChange = 0;
-  const temp = state.reactorTemp;
-
-  // --- Tier 1: Below Cold Threshold - RAPID DECREASE ---
-  if (temp < 90) {
-    // Steam rapidly condenses when the reactor is cold.
-    steamChange -= (90 - temp) * 0.5;
-
-  // --- Tier 2: Operational Zone  - QUICK CHASE TARGET ---
-  
-  } else {
-    
-    const MIN_TEMP = 90;
-    const MAX_OPERATIONAL_TEMP = 800;
-    const MAX_OPERATIONAL_STEAM = 300; // Define max steam capacity for the operational range
-
-    // Normalized ratio of temperature within the operational range (0 to 1)
-    const tempRatio = (temp - MIN_TEMP) / (MAX_OPERATIONAL_TEMP - MIN_TEMP); 
-    
-    // Target steam volume for this exact temperature
-    const steamTarget = Math.max(0, tempRatio * MAX_OPERATIONAL_STEAM);
-
-    // 2. Calculate the difference (the gap we need to close)
-    const steamGap = steamTarget - state.steamVolume;
-
-    // 3. Apply Aggressive Correction (0.5 means 50% of the gap is closed per second)
-    const CHASE_RATE = 0.5; 
-    steamChange = steamGap * CHASE_RATE;
-
-    // If all water pumps are turned off, steam rapidly rises in relation to radioactivity
-    const activePumps = state.waterPumps.filter((pump) => pump.on && pump.powered)
-    
-    if(activePumps.length === 0) {
-      steamChange += state.radioactivity * 0.1
-    }
-  } 
-
-  const newSteam = Math.max(0, state.steamVolume + steamChange);
-
-  return { ...state, steamVolume: newSteam };
+  return { updates: newState, ending: physics.ending }
 }
 
 function calculatePower(state: GameState): GameState {
-  // Power Output = Steam Volume × 50 (if turbine connected)
-  const newPowerOutput = state.turbineConnected ? state.steamVolume * 50 : 0
+  // Power Output = Steam Volume × 50, only while the turbine feeds the grid (bible §8)
+  const newPowerOutput = state.turbineMode === "grid" ? state.steamVolume * 50 : 0
 
-  return { ...state, powerOutput: newPowerOutput }
+  return { ...state, powerOutput: newPowerOutput, turbineConnected: state.turbineMode === "grid" }
+}
+
+export function isPowerOnTarget(state: Pick<GameState, "powerOutput" | "powerTarget">): boolean {
+  if (state.powerTarget === null) return true
+  const tolerance = getPowerTolerance(state.powerTarget)
+  return Math.abs(state.powerOutput - state.powerTarget) <= tolerance
 }
 
 function calculatePerformance(state: GameState): GameState {
@@ -196,49 +42,33 @@ function calculatePerformance(state: GameState): GameState {
     return { ...state, performance: 100 }
   }
 
-  let performanceChange = 0
-
-  // Check if power output is within ±500 MW of target
-  const tolerance = THRESHOLDS.powerTolerance
-  const lowerBound = Math.max(state.powerTarget - tolerance, 0)
-  const upperBound = state.powerTarget + tolerance
-
-  if (state.powerOutput >= lowerBound && state.powerOutput <= upperBound) {
-    // Within range: increase performance
-    performanceChange = 0.2 // +1% every 5 seconds
-  } else {
-    // Outside range: decrease performance
-    performanceChange = -0.2 // -1% every 5 seconds
-  }
+  // Within ±10% of target (never tighter than ±200 MW): +1% every 5 seconds, otherwise -1% every 5 seconds
+  const performanceChange = isPowerOnTarget(state) ? 0.2 : -0.2
 
   const newPerformance = Math.max(0, Math.min(100, state.performance + performanceChange))
 
   return { ...state, performance: newPerformance }
 }
 
-function calculateXenon(state: GameState): GameState {
-  let xenonChange = 0
-  let randomFactor = Math.random() * (1 * 2) - 1;
+export function isInDanger(state: GameState): boolean {
+  return (
+    state.radioactivity >= THRESHOLDS.radioactivity.highWarning ||
+    state.reactorTemp >= THRESHOLDS.reactorTemp.warning ||
+    state.steamVolume >= THRESHOLDS.steamVolume.highWarning
+  )
+}
 
-  // Xenon Generation: Produced only when radioactivity < 50
-  if(state.radioactivity < 65) {
-    xenonChange += (55 - state.radioactivity) * 0.0033
-    xenonChange += randomFactor
+function updateStats(state: GameState): GameState {
+  const stats = state.stats
+  return {
+    ...state,
+    stats: {
+      ...stats,
+      peakRadioactivity: Math.max(stats.peakRadioactivity, state.radioactivity),
+      peakReactorTemp: Math.max(stats.peakReactorTemp, state.reactorTemp),
+      peakSteam: Math.max(stats.peakSteam, state.steamVolume),
+      lowestRodMargin: Math.min(stats.lowestRodMargin, getRodMargin(state.controlRods)),
+      secondsInDanger: stats.secondsInDanger + (isInDanger(state) ? 1 : 0),
+    },
   }
-
-  // Xenon Reduction: Decreases when radioactivity > 90
-  if (state.radioactivity > 110) {
-    if (state.radioactivity > 150) {
-      // Faster reduction if radioactivity > 150
-      xenonChange -= 24
-      xenonChange += randomFactor
-    } else {
-      xenonChange -= 16
-      xenonChange += randomFactor
-    }
-  }
-
-  const newXenon = Math.max(0, Math.min(100, state.xenon + xenonChange))
-
-  return { ...state, xenon: newXenon }
 }

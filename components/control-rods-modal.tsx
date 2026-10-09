@@ -19,78 +19,66 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
   const [tempValues, setTempValues] = useState<number[]>([])
   const [isDragging, setIsDragging] = useState<number | null>(null)
 
+  // Levers show where each rod has been ordered to go (the panel shows where it actually is).
+  // Initialise only when the modal opens: rods move every second and must not reset a lever mid-drag.
   useEffect(() => {
     if (open) {
-      setTempValues(controlRods.map((rod) => rod.insertion))
+      setTempValues(controlRods.map((rod) => rod.target))
     }
-  }, [open, controlRods])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const handleApply = () => {
-    const updatedRods = controlRods.map((rod, idx) => {
-      // 1. Calculate the NEW insertion value first
-      const newInsertion = rod.stuck ? rod.insertion : Math.max(0, Math.min(100, tempValues[idx] || 0))
-
-      // --- Calculate NEW Flag Values ---
-
-      // A. currentlyFullyRemoved: TRUE if the new insertion value is 0.
-      const newCurrentlyFullyRemoved = newInsertion === 0
-
-      // B. justReinserted: TRUE if the rod *was* fully removed (old state)
-      //    AND the new insertion value is > 0.
-      const newJustReinserted = rod.currentlyFullyRemoved && newInsertion > 0
-
-      // 3. Return the new rod object with updated properties
-      return {
-        ...rod,
-        insertion: newInsertion,
-        currentlyFullyRemoved: newCurrentlyFullyRemoved,
-        justReinserted: newJustReinserted,
-      }
-    })
-
-    // Pass the state update to your state management system
+    const updatedRods = controlRods.map((rod, idx) =>
+      rod.stuck ? rod : { ...rod, target: Math.max(0, Math.min(100, tempValues[idx] ?? rod.target)) },
+    )
     onUpdate(updatedRods)
     onOpenChange(false)
   }
 
+  // AZ-5 takes effect with a single press: every rod that isn't jammed is driven toward 100% (bible §10).
   const handleAZ5 = () => {
-    const newValues = controlRods.map((rod) => (rod.stuck ? tempValues[rod.id - 1] : 100))
-    setTempValues(newValues)
+    onUpdate(controlRods.map((rod) => (rod.stuck ? rod : { ...rod, target: 100 })))
+    onOpenChange(false)
   }
 
+  const setLeverFromPointer = (idx: number, clientY: number) => {
+    const container = document.getElementById(`rod-container-${idx}`)
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const y = Math.max(0, Math.min(container.clientHeight, clientY - rect.top))
+    const percentage = Math.round((y / container.clientHeight) * 100)
+    setTempValues((prev) => {
+      const next = [...prev]
+      next[idx] = percentage
+      return next
+    })
+  }
+
+  // A drag can start anywhere on the rod's track or the handle's enlarged grab area.
   const handleStart = (idx: number, e: React.MouseEvent | React.TouchEvent) => {
     if (!controlRods[idx].stuck) {
-      // touching the lever shouldn't scroll the modal
-      e.stopPropagation() 
+      // touching the lever shouldn't scroll the modal or select text
+      e.stopPropagation()
+      if (!("touches" in e)) e.preventDefault()
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
+      setLeverFromPointer(idx, clientY)
       setIsDragging(idx)
     }
   }
 
-  const handleMove = (e: MouseEvent | TouchEvent, idx: number, containerHeight: number) => {
-    if (isDragging === idx) {
-      // Prevent scrolling on mobile while dragging
-      if (e.cancelable) e.preventDefault() 
-      
-      const container = document.getElementById(`rod-container-${idx}`)
-      if (container) {
-        const rect = container.getBoundingClientRect()
-        const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
-        const y = Math.max(0, Math.min(containerHeight, clientY - rect.top))
-        const percentage = Math.round((y / containerHeight) * 100)
-        const newValues = [...tempValues]
-        newValues[idx] = percentage
-        setTempValues(newValues)
-      }
-    }
+  const handleMove = (e: MouseEvent | TouchEvent, idx: number) => {
+    // Prevent scrolling on mobile while dragging
+    if (e.cancelable) e.preventDefault()
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
+    setLeverFromPointer(idx, clientY)
   }
 
   useEffect(() => {
     if (isDragging !== null) {
       const container = document.getElementById(`rod-container-${isDragging}`)
       if (container) {
-        const containerHeight = container.clientHeight
-
-        const handleMoveEvent = (e: MouseEvent | TouchEvent) => handleMove(e, isDragging, containerHeight)
+        const handleMoveEvent = (e: MouseEvent | TouchEvent) => handleMove(e, isDragging)
         const handleEnd = () => setIsDragging(null)
 
         // { passive: false } is required to allow e.preventDefault() in touch events
@@ -107,11 +95,12 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
         }
       }
     }
-  }, [isDragging, tempValues])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-4 border-primary max-w-2xl w-full max-h-[90vh] overflow-y-auto p-2 sm:p-6">
+      <DialogContent className="bg-card border-4 border-primary max-w-2xl w-full max-h-[90vh] overflow-y-auto p-2 sm:p-6 select-none">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl font-mono uppercase text-center">Control Rods</DialogTitle>
         </DialogHeader>
@@ -122,6 +111,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
               Drag the LEVERS to adjust rod insertion (0-100%). A higher insertion percentage for any rod will reduce
               radioactivity.
             </p>
+            <p className="mt-1">Rods take about 18 seconds to travel their full length.</p>
             <p className="mt-1 font-bold">Use AZ5 button for emergency full insertion.</p>
           </div>
 
@@ -155,7 +145,11 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                   {/* Rod Track */}
                   <div
                     id={`rod-container-${idx}`}
-                    className="relative w-8 sm:w-6 h-36 sm:h-48 bg-muted border-2 border-border rounded-b"
+                    className={`relative w-8 sm:w-6 h-36 sm:h-48 bg-muted border-2 border-border rounded-b touch-none ${
+                      rod.stuck ? "cursor-not-allowed" : "cursor-grab"
+                    }`}
+                    onMouseDown={(e) => handleStart(idx, e)}
+                    onTouchStart={(e) => handleStart(idx, e)}
                   >
                     <div
                       className={`absolute top-0 left-0 w-full ${rod.stuck ? "bg-destructive" : "bg-primary"}`}
@@ -164,19 +158,21 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                       }}
                     />
 
-                    {/* Draggable Lever Handle */}
+                    {/* Draggable Lever Handle, inside a transparent fingertip-sized grab area */}
                     <div
-                      className={`absolute left-1/2 -translate-x-1/2 -translate-y-2 w-12 sm:w-10 h-4 sm:h-5 rounded-sm shadow-sm touch-none ${
-                        rod.stuck
-                          ? "bg-destructive cursor-not-allowed"
-                          : "bg-foreground cursor-grab active:cursor-grabbing"
+                      className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-11 flex items-center justify-center touch-none ${
+                        rod.stuck ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"
                       }`}
                       style={{
                         top: `${currentInsertion}%`,
                       }}
                       onMouseDown={(e) => handleStart(idx, e)}
                       onTouchStart={(e) => handleStart(idx, e)}
-                    />
+                    >
+                      <div
+                        className={`w-12 sm:w-10 h-4 sm:h-5 rounded-sm shadow-sm ${rod.stuck ? "bg-destructive" : "bg-foreground"}`}
+                      />
+                    </div>
                   </div>
 
                   <span className="font-mono text-[10px] sm:text-xs font-bold mt-1">{currentInsertion}%</span>

@@ -17,11 +17,13 @@ interface WaterPumpsModalProps {
 export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpdate }: WaterPumpsModalProps) {
   const [tempStates, setTempStates] = useState<boolean[]>([])
 
+  // Initialise only when the modal opens: pump flow changes every second and must not reset choices.
   useEffect(() => {
     if (open) {
       setTempStates(waterPumps.map((pump) => pump.on))
     }
-  }, [open, waterPumps])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const handleApply = () => {
     const updatedPumps = waterPumps.map((pump, idx) => ({
@@ -43,7 +45,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
           <div className="bg-background border-2 border-border p-3 text-xs leading-relaxed text-center">
             <p>
               {
-                "Toggle water pumps On/Off. Pumps reduce reactor temperature when both ON and POWERED."
+                "Toggle water pumps On/Off. Pumps cool the reactor and keep water from boiling into steam when both ON and POWERED. Flow takes a few seconds to start and stop."
               }
             </p>
           </div>

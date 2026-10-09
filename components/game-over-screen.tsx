@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
 import { GAME_MODE_CONFIGS } from "@/lib/types"
 import { formatTime } from "@/lib/game-utils"
-import { Radiation, TrendingDown } from "lucide-react"
+import { Flame, Radiation, TrendingDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface GameOverScreenProps {
@@ -13,7 +13,9 @@ interface GameOverScreenProps {
 
 export default function GameOverScreen({ gameState, onReset }: GameOverScreenProps) {
   const router = useRouter()
-  const isMeltdown = gameState.gameOverReason?.includes("MELTDOWN")
+  const cause = gameState.gameOverCause ?? (gameState.gameOverReason?.includes("MELTDOWN") ? "meltdown" : "performance")
+  const isMeltdown = cause === "meltdown"
+  const isExplosion = cause === "explosion"
   const modeConfig = GAME_MODE_CONFIGS[gameState.mode] || GAME_MODE_CONFIGS[gameState.difficultyIsHard ? "hard" : "easy"]
 
   const handleReturnToMenu = () => {
@@ -31,7 +33,18 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
       <div className="max-w-2xl w-full space-y-6 text-center">
         {/* Reactor Visual */}
         <div className="flex justify-center mb-8">
-          {isMeltdown ? (
+          {isExplosion ? (
+            <div
+              className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-orange-500 animate-pulse relative"
+              style={{
+                boxShadow: "0 0 140px 70px rgb(249 115 22 / 0.7), 0 0 60px 20px rgb(255 255 255 / 0.5)",
+              }}
+            >
+              <div className="w-full h-full rounded-full border-8 border-primary flex items-center justify-center bg-orange-600/80 backdrop-blur">
+                <Flame className="w-24 h-24 md:w-32 md:h-32 text-background animate-pulse" />
+              </div>
+            </div>
+          ) : isMeltdown ? (
             <div
               className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-destructive animate-pulse relative"
               style={{
@@ -60,7 +73,7 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold font-mono uppercase text-destructive leading-tight">
-            Game Over
+            {isExplosion ? "Core Explosion" : isMeltdown ? "Meltdown" : "Game Over"}
           </h1>
 
           <p className="text-lg md:text-xl font-mono text-foreground leading-relaxed">{gameState.gameOverReason}</p>

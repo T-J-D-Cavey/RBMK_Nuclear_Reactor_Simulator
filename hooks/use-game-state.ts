@@ -25,14 +25,14 @@ function loadSavedGameState(): GameState {
             ? parsed.powerTarget 
             : config.defaultPowerTarget
 
-          return {
+          return migrateSavedState({
             ...INITIAL_GAME_STATE,
             ...parsed,
             mode,
             gameTime,
             powerTarget,
             timeLimit: parsed.timeLimit !== undefined ? parsed.timeLimit : config.timeLimit,
-          }
+          })
         }
       } catch (e) {
         console.error("Failed to load saved game state:", e)
@@ -40,6 +40,28 @@ function loadSavedGameState(): GameState {
     }
   }
   return INITIAL_GAME_STATE
+}
+
+// Saves from before the reactor rework lack rod targets, pump flow, turbine mode, log and stats.
+function migrateSavedState(state: GameState): GameState {
+  return {
+    ...state,
+    controlRods: state.controlRods.map((rod) => ({
+      id: rod.id,
+      insertion: rod.insertion,
+      target: typeof rod.target === "number" ? rod.target : rod.insertion,
+      stuck: rod.stuck,
+    })),
+    waterPumps: state.waterPumps.map((pump) => ({
+      ...pump,
+      flow: typeof pump.flow === "number" ? pump.flow : pump.on && pump.powered ? 1 : 0,
+      tripped: pump.tripped ?? false,
+    })),
+    turbineMode: state.turbineMode ?? (state.turbineConnected ? "grid" : "idle"),
+    mainsPower: state.mainsPower ?? state.waterPumps.every((pump) => pump.powered),
+    log: Array.isArray(state.log) ? state.log : [],
+    stats: { ...INITIAL_GAME_STATE.stats, ...state.stats },
+  }
 }
 
 export function useGameState() {
@@ -60,45 +82,10 @@ export function useGameState() {
     }
   }, [gameState])
 
-  // Update a specific field in game state
+  // Update a specific field in game state. Rods only change their ordered position here;
+  // the engine moves them at rod speed (bible §10).
   const updateGameState = useCallback((updates: Partial<GameState>) => {
-      setGameState((prev) => {
-
-          // 1. Intercept controlRods updates:
-          if (updates.controlRods) {
-
-              let radioactivityChange = 0;
-              let reactorTempChange = 0;
-              let steamChange = 0;
-              let XenonChange = 0;
-              const updatedRods = updates.controlRods.map(rod => {
-
-                  // Check if the rod is transitioning (flag is true)
-                  if (rod.justReinserted) {
-                      // Control rods entering core from a fully removed position causes a spike in radioactivity, fuel temp and steam due to the graphic tips of the rods
-                      radioactivityChange += 50;
-                      reactorTempChange += 20;
-
-                      // 2. Reset the flag immediately in the same state update
-                      return { ...rod, justReinserted: false };
-                  }
-                  return rod;
-              });
-
-              // 3. Merge the updates: apply the reset rods and the radioactivity change
-              return { 
-                  ...prev, 
-                  ...updates, // Includes all other updates (like closing the modal)
-                  controlRods: updatedRods, // Commits the rods with the flag reset
-                  // Assumes 'radioactivity' is part of GameState
-                  radioactivity: (prev.radioactivity || 0) + radioactivityChange,
-                  reactorTemp: (prev.reactorTemp || 0) + reactorTempChange, 
-              };
-          }
-
-          // Standard update if controlRods are not being updated
-          return { ...prev, ...updates };
-      });
+    setGameState((prev) => ({ ...prev, ...updates }))
   }, [])
 
   // Reset game to initial state for the active mode
@@ -143,7 +130,7 @@ export function useGameState() {
           const modeConfig = GAME_MODE_CONFIGS[prev.mode || "easy"] || GAME_MODE_CONFIGS.easy
 
           // Calculate all game mechanics
-          const updates = calculateGameTick(prev)
+          const { updates, ending } = calculateGameTick(prev)
 
           // Countdown for timed modes, Countup for Free Mode & sandbox modes
           const isCountUp = modeConfig.timerMode === "countup"
@@ -155,8 +142,8 @@ export function useGameState() {
             gameTime: newGameTime,
           }
 
-          // Victory condition only applies to timed countdown modes
-          if (!isCountUp && modeConfig.hasTimer && newGameTime === 0 && !prev.hasWon) {
+          // Victory condition only applies to timed countdown modes (a disaster in the final second still counts)
+          if (!ending && !isCountUp && modeConfig.hasTimer && newGameTime === 0 && !prev.hasWon) {
             newState.hasWon = true
             newState.isPaused = true
             return newState
@@ -180,10 +167,11 @@ export function useGameState() {
           newState.warnings = warnings
 
           // Check for game over conditions
-          const gameOverCheck = checkGameOver(newState)
+          const gameOverCheck = checkGameOver(newState, ending)
           if (gameOverCheck.isGameOver) {
             newState.isGameOver = true
             newState.gameOverReason = gameOverCheck.reason
+            newState.gameOverCause = gameOverCheck.cause
           }
           return newState
         })
