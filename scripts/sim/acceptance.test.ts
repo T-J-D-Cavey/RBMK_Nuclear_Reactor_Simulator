@@ -25,13 +25,14 @@ test("§5 the balanced reference state is roughly steady; hands-off drift is slo
   }
 })
 
-test("§5 the game starts with a slow upward creep: no correction needed for tens of seconds, then needed within a few minutes", () => {
-  const r = runQuiet(gameStart(), 300)
-  const output = (t: number) => r.samples[t].S * 50 // MW while connected to the grid
-  for (let t = 0; t <= 30; t++) assert.ok(r.samples[t].R < 125, `t=${t} R=${r.samples[t].R.toFixed(0)}`)
+test("§5 the game starts climbing: radioactivity rises from the start and needs a correction within a couple of minutes", () => {
+  const r = runQuiet(gameStart(), 600)
+  const R = (t: number) => r.samples[t].R
+  for (const t of [30, 60, 120, 180]) assert.ok(R(t) > R(t - 30), `not rising at t=${t}`)
   const leaves = r.samples.find((x) => Math.abs(x.S * 50 - 5000) > 500)
-  assert.ok(leaves && leaves.t >= 45 && leaves.t <= 180, `output leaves ±10% at ${leaves?.t}s`)
-  assert.ok(r.samples[300].R > r.samples[30].R && output(300) > output(60), "still creeping up")
+  assert.ok(leaves && leaves.t <= 60, `output leaves ±10% at ${leaves?.t}s`)
+  assert.ok(R(180) > 2 * R(0), `R=${R(180).toFixed(0)} at 3 min`)
+  assert.ok(r.ending, "left alone, it should end in disaster")
 })
 
 test("§5 a hands-off reactor is never perfectly static (noise present)", () => {
@@ -91,13 +92,24 @@ test("§6 at steady radioactivity, fuel temperature sits above reactor temperatu
   assert.ok(s.fuelTemp > s.reactorTemp + 50)
 })
 
-test("§6 at high radioactivity, raising it further is self-limiting through hot fuel", () => {
-  const high = steadyAt(180)
-  // Pull another 30 points of rods: radioactivity settles rather than running away.
-  const r = runQuiet(high, 120, { 0: (s) => withRod(s, 0, 0, false) })
-  assert.equal(r.ending, null)
-  const end = r.final.radioactivity
-  assert.ok(Math.abs(runQuiet(r.final, 20).final.radioactivity - end) < end * 0.05)
+test("§6 hot fuel never stops a rise: with rods and pumps unchanged, a small push ends in disaster", () => {
+  // Rod 1 just 1% out of balance, two pumps, hands off. Only rods or pumps could have stopped it.
+  const r = runQuiet(baseState(), 3600, { 10: (s) => withRod(s, 0, 39, false) })
+  assert.ok(r.ending === "meltdown" || r.ending === "explosion", `ended ${r.ending}`)
+})
+
+test("§6 very hot fuel slows the rise without stopping it", () => {
+  const r = runQuiet(baseState(), 1800, { 10: (s) => withRod(s, 0, 30, false) })
+  // Relative growth rate of radioactivity (per second) while the fuel heats through a range.
+  const growth = (from: number, to: number) => {
+    const a = r.samples.find((x) => x.F >= from)!
+    const b = r.samples.find((x) => x.F >= to)!
+    return Math.log(b.R / a.R) / (b.t - a.t)
+  }
+  const warm = growth(700, 1000)
+  const veryHot = growth(1500, 1800)
+  assert.ok(veryHot > 0 && veryHot < warm * 0.7, `warm ${warm.toFixed(4)}/s, very hot ${veryHot.toFixed(4)}/s`)
+  assert.ok(r.ending, "expected disaster in the end")
 })
 
 test("§6 more pumps lower fuel temperature as well as reactor temperature", () => {
@@ -143,7 +155,7 @@ test("§7 losing all pumps at high radioactivity can be saved by rapid rod inser
 })
 
 test("§7 zero pumps at low radioactivity: a slower but real climb", () => {
-  const r = scenarios.pumps0.run()
+  const r = runQuiet(steadyAt(60), 900, { 10: (s) => setPumps(s, 0) })
   assert.ok(r.ending, "expected the climb to end badly if ignored")
   assert.ok(r.endedAt! - 10 > 60, `ended after only ${r.endedAt! - 10}s`)
 })
@@ -277,9 +289,10 @@ test("§10 a jammed rod stops where it is, including mid-travel", () => {
 })
 
 test("§10 AZ-5 with most rods at 0%, high steam and low flow can be fatal", () => {
-  // Rods 1–6 parked at 0%, held by fully inserted rods 7–10, one pump, hot and steamy.
-  const fragile = settle(setPumps(setRods(baseState(), [0, 0, 0, 0, 0, 0, 100, 100, 100, 100], { instant: true }), 1, { instant: true }), 400)
-  assert.ok(fragile.steamVolume > 250)
+  // Rods 1–6 parked at 0%, held by fully inserted rods 7–10, one pump: a runaway (no state like this is
+  // steady). AZ-5 is pressed once it is hot and steamy.
+  const climb = runQuiet(setPumps(setRods(baseState(), [0, 0, 0, 0, 0, 0, 100, 100, 100, 100], { instant: true }), 1, { instant: true }), 400)
+  const fragile = climb.samples.find((x) => x.S > 250)!.state
   const r = runQuiet(fragile, 30, { 0: az5 })
   assert.ok(r.ending === "explosion" || maxR(r) > fragile.radioactivity * 1.4)
 })

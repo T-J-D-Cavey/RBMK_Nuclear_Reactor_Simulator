@@ -1,6 +1,6 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS. WS1–WS3 are built. Mechanics iterations 1 (§10) and 2 (§12) are done, along with the message-area split (§11.1); waiting on the owner's next manual tests.** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS3 are built. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1); waiting on the owner's next manual tests.** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
 
 ---
 
@@ -11,8 +11,8 @@ Status: **IN PROGRESS. WS1–WS3 are built. Mechanics iterations 1 (§10) and 2 
    2. this file's §7 (done / left to do) and §8 (open questions);
    3. **the owner's playtest results**: `ai/manual-test-results.MD`;
    4. **§10 (the next step):** iteration 1 changes worked out from those results.
-2. **Check the baseline** before changing anything (commands in §9). All 34 acceptance checks should pass, and `tsc` should be clean.
-3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after iteration 2, §12), then plan and make the next iteration the same way.** Open candidates are listed in §12.4. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
+2. **Check the baseline** before changing anything (commands in §9). All 36 acceptance checks should pass, and `tsc` should be clean.
+3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after iteration 6, §16), then plan and make the next iteration the same way.** Open candidates are listed in §15.4. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
    - a tuning change in `lib/sim/tuning.ts`;
    - a model change in `lib/sim/reactor.ts`;
    - a UI fix.
@@ -64,7 +64,7 @@ Every quantity below is a red or blue "card", in **points** (1 point = 1% of one
 - **Cooling:** effFlow(flow) × (c₁·(T − inlet) + c₂·heat-in). Diminishing returns per pump (§7).
 - **Steam:** chases a target that is 0 below boiling. Above boiling it is set by (T − boiling) × perDegree(flow), with extra escalation as flow → 0 (§7, §8). It never depends on fuel temperature directly.
 - **Xenon:** builds below R_build, faster the lower R is. Burns above R_burn at a rate ∝ (R − R_burn) (§9).
-- **Fuel effect:** a continuous curve counted from normal running temperature (0 at `REFERENCE_STATE.fuelTemp`). It's blue when hotter, strengthening as fuel heats, and red when cooler, with an extra strong red card below ~120° (§6, §9). Because the hot brake and the cold push are one curve, the xenon cap is derived against the cold push (`xenonCapBelowExcess`).
+- **Fuel effect:** a continuous curve counted from normal running temperature (0 at `REFERENCE_STATE.fuelTemp`). It's blue when hotter (mild per degree, firming a little above ~1,300°, but always weaker than the steam that comes with it, so it never stops a rise), and red when cooler, with an extra strong red card below ~120° (§6, §9). Because the hot brake and the cold push are one curve, the xenon cap is derived against the cold push (`xenonCapBelowExcess`).
 - **Rods:** constant travel speed (full stroke ~18 s). Boron is linear in insertion. The tip is +10 whenever insertion > 0 (§10).
 - **Endings:** meltdown at T ≥ 1200. Explosion at steam ≥ ~600 (double the 300 warning) (§11).
 
@@ -189,7 +189,7 @@ From the engine tuning (raised at Checkpoint A; the owner's playtest file may an
 1. ~~**Too forgiving with rods out?**~~ **Answered (test 2): yes, the hot-fuel brake is too strong.** Addressed by §10 M1.
 2. **Pump-loss timing.** Losing every pump explodes ~21 s later from a hot state (radioactivity ≈185), at the short end of the bible's 30–60 s. From the normal state it takes ~104 s. *Still open; re-check after §10 (M2 changes the zero-flow steam factor).*
    - Levers: `boilingEscalation`, `pumpRampSeconds`.
-3. **Rod sensitivity.** One rod moved 10% shifts radioactivity ~13% and settles in ~20 s. *After §10 M1 this becomes ~+24%. Owner to judge at the iteration 1 playtest.*
+3. **Rod sensitivity.** One rod moved 10% shifts radioactivity ~13% and settles in ~20 s. *After §10 M1 this becomes ~+24%; after §14 M8, +38% at 30 s; after §15 M10, +52% at 30 s and it never settles (+170% at 200 s).*
    - Levers: `generationTime`, fuel brake.
 4. **Oscillation.** In some hot, low-flow states radioactivity swings up and down every few seconds before settling. *Seen in test 2 ("another huge swing"). Deferred to §10.5 D1, together with spike size and fuel speed.*
    - Lever: `fuelToReactorRate`.
@@ -429,3 +429,161 @@ Source: the owner's Free-mode test after iteration 1 (`ai/manual-test-results.MD
 - **§8 Q2. Pump-loss timing.** ~18 s from a hot state (bible: 30–60 s). Still short.
 - **"Gradual" part of observation #3.** M5 makes the 1-pump climb go further but not faster. If the owner still finds it slow, faster following could be revisited *together with* a fix for pump-loss timing.
 
+---
+
+## 13. Mechanics iteration 3: DONE 2026-10-12
+
+Source: the owner repeated the 1-pump Free-mode test after iteration 2 and reported it in chat.
+
+### 13.1 What the test showed
+
+- **Observation:** with 1 pump, everything still levels off.
+  - Fuel temperature rises, then stops; reactor temperature and steam follow, so radioactivity stops climbing.
+  - "The feedback loop no longer exists... the hot fuel brake is too strong. 1 pump on should result in a disaster, not a steady state."
+  - The owner accepts the fuel–reactor gap as permanent.
+- **Why:** as the fuel heats, the brake grows faster than the extra steam push (the gap means fuel rises ~2° per unit of radioactivity on top of the reactor's rise). So the loop always finds a balance point.
+- **New owner rule:** one pump left alone ends in disaster. Bible §7's 1-pump row was updated (changelog v2.3).
+
+### 13.2 Change made
+
+**M7. Weaker hot-fuel brake:** `fuelBrakeMaxSlope` 0.3 → **0.27**. Xenon worth follows automatically (derived), so the xenon pit stays escapable.
+
+Trials:
+
+| Brake | 1 pump, left alone | Side effects |
+|---|---|---|
+| 0.3 (before) | levels off at reactor ~1,020° | — |
+| **0.27** | meltdown ~7.5–8.5 min after the switch (reference start) or ~7 min (game start); first warning ~3 min | normal 2-pump running unchanged |
+| 0.28 | meltdown after 9–12 min | — |
+| 0.25 | meltdown after 5–6 min | — |
+| 0.22 | meltdown after ~4 min | hands-off 2-pump runs collapse to 0 on some seeds; too unstable |
+
+### 13.3 Results
+
+- 35/35 checks pass and `tsc` is clean.
+- **Test set-up changes (no assertion loosened):**
+  - **"Zero pumps at low radioactivity"** started at normal radioactivity (100) despite its name. It now starts at a genuinely low level (`steadyAt(60)`), where the zero-pump climb takes ~96 s. From 100 it had dropped to exactly 60 s, right at the check's edge.
+  - **`az5AllOut`** now presses AZ-5 when the restart first passes radioactivity 20 instead of 60, before xenon starts burning off. The peak is at 2 s, ×4.7, which is the bible's "about 2 seconds".
+    - From 60, the tip push still ended at ~2 s, but xenon burning off kept radioactivity rising for another 4 s. That's bible §9 behaviour, not the tip.
+- **Side effects to watch in the playtest:**
+  - **3 pumps left alone from the balanced reference state** slide down: the low-radioactivity warning appears after ~5 min, xenon builds, and the reactor falls into the pit by ~10 min. That's the mirror image of the 1-pump runaway.
+    - From the real game start, which creeps up, 3 pumps settles at radioactivity ~74.
+    - Bible §7 calls 2–3 pumps the "normal operating band", so this needs the owner's view.
+  - **A single rod move now goes slightly further:** 10% gives +30% at 30 s and +41% after 200 s (was +26% / +31%).
+  - **The cooldown-and-restart sequence peaks higher** (~2,400 vs ~2,000) and melts down sooner if left alone.
+  - **`sim:shift`:** an ignored power cut cuts all pumps and explodes ~45 s later (bible §7). Hands-off Hard ended on performance.
+
+### 13.4 Still open (candidates for the next iteration)
+
+- **D1. Fuel speed, spike size and swings.** Unchanged; the spike is now a bit bigger.
+- **D2. Cooling after shutdown.** Unchanged.
+- **§8 Q2. Pump-loss timing.** ~17 s from a hot state (bible: 30–60 s). Still short.
+- **3-pump slide** (above). Owner to judge.
+
+---
+
+## 14. Mechanics iteration 4: DONE 2026-10-12
+
+Source: the owner's Free-mode test after iteration 3 (`ai/manual-test-results.MD`). Trials were run on a scratch copy of the engine before anything changed in the repo.
+
+### 14.1 What the test showed
+
+| # | Owner observation | What the sim shows | Action |
+|---|---|---|---|
+| 1 | Still too easy at the start: 9 min in, radioactivity steady ~120. Suggests rod 1 a further 4% out. | Reproduced: the game start creeps to ~126 and stops. | Fixed by M8 (the start now keeps climbing). Start offset left at 5%: a further 4% fails the bible §5 start check (output leaves ±10% after 36 s, check needs ≥45 s). |
+| 2 | **The core loop doesn't work.** Pulling rod 1 out 2%, 4%, then 6%: radioactivity rises a little (~155) and stalls; fuel stops ~750°, reactor temperature and steam barely move, and the extra steam (175, 8,700 MW) doesn't push radioactivity up. Suspects the hot-fuel brake acting through the fuel–reactor gap before the reactor has heated. | Confirmed. From the balanced state, rod 1 out 2% gives only +12% after 15 min; 10% gives ~+47% and stops. Fuel rises ~5° per unit of radioactivity (reactor ~3° plus the gap ~2°), and the brake there (~0.18 points/°) took back nearly everything the extra steam added. The owner's reading of the gap is right: the brake works on fuel, which moves further than the reactor. | M8 |
+| 3 | Radioactivity drops 20% (155 → 130) with no input: "no idea why". | That's the random drift: its spread was ~4.4 points, worth ±20–30% of radioactivity, which hid the player's own moves. | M9 |
+
+### 14.2 Changes made
+
+- **M8. Brake reshaped: mild in the normal range, firm when hot.** `fuelBrakeMaxSlope`/`fuelBrakeHalfTemp` replaced by `fuelBrakeMildSlope` **0.16** points/°, `fuelBrakeHotSlope` **0.24**, `fuelBrakeFirmsAt` **900°** (the high fuel warning) and `fuelBrakeFirmWidth` **80°**, a smooth step between the two slopes (`fuelBrake` in `lib/sim/tuning.ts`).
+  - The steam loop now beats the brake through the normal range, so a rise keeps feeding itself for minutes. With two pumps it's caught once fuel is past ~900°; with one pump it isn't.
+  - The cold push (the same curve below normal) gets a little stronger; xenon worth is derived from it, so the pit stays escapable (restart begins at 16 s, was 15 s).
+  - Trials: mild 0.14–0.15 made the balanced state itself run away; 0.17–0.175 still stalled early. Hot 0.20–0.22 broke the fragile AZ-5 check; 0.24 passes and keeps one pump fatal.
+- **M9. Smaller random drift.** `noise.sigma` 0.8 → **0.2** (spread ~1.1 points). Hands-off balanced runs now stay within ~89–113 over 15 min (was 64–137). Still never static (bible §5).
+
+### 14.3 Results
+
+- 35/35 checks pass, no test changed. `tsc` is clean.
+- Owner replay (game start, then rod 1 to 33/31/29% at 9 / 11 / 13 min, no noise):
+
+  | | Before | After |
+  |---|---|---|
+  | 9 min, no input | R 126, fuel 660°, steam 133 (6,650 MW) | R 156, fuel 803°, steam 167 (8,350 MW), still rising |
+  | 18 min | R 150, fuel 785°, steam 164 | R 186, fuel 971° (fuel warning), steam 212 (10,600 MW) |
+
+- From the balanced state, rod 1 out 2% / 5%: +11% / +28% at 2 min and +33% / +62% at 15 min (was +8% / +19% and +12% / +26%). One rod 10%: +38% at 30 s, +66% at 200 s (was +30% / +41%).
+- The game start, hands off: output leaves ±10% at 62 s (was 77 s) and climbs to ~9,000 MW over 15 min, levelling at ~9,250 MW (fuel ~860°) by 30 min.
+- 1 pump left alone: meltdown after ~7 min (balanced state) / ~6 min (game start). Unchanged.
+- Pump-loss timing, explosion vs meltdown: unchanged (hot state ~17 s; normal ~56 s).
+- Cooldown-and-restart peak ~2,170 (was ~2,400).
+- `sim:shift`: hands-off Easy explodes after an ignored power cut (as before); hands-off Hard ends on performance.
+
+### 14.4 Still open (candidates for the next iteration)
+
+- **Pump switches kick harder again.** Because the loop now amplifies every push, 2→1 / 2→3 / 2→4 pumps moves radioactivity +54% / −31% / −57% within 30 s (iteration 1: +28% / −21% / −37%). Rods are amplified equally, so a pump switch is still worth about one 10% rod move, but 3 pumps from the balanced state now slides into the xenon pit within ~5 min (from the game start it settles ~62). Owner to judge.
+- **Over-inserting slides down** (as before): rod 1 in 5% from balanced runs down into the pit over ~15 min. Bible §5 wants this direction.
+- **D1. Fuel speed, spike size and swings.** Unchanged.
+- **D2. Cooling after shutdown.** Unchanged.
+- **§8 Q2. Pump-loss timing.** ~17 s from a hot state (bible: 30–60 s). Still short.
+
+---
+
+## 15. Mechanics iteration 5: DONE 2026-10-12
+
+Source: the owner's Free-mode test after iteration 4 (reported in chat), plus an owner decision.
+
+### 15.1 What the test showed
+
+- **Observation:** game start still felt balanced. Restarted with rod 1 a further 5% out (30%): radioactivity 160 at 3 min, 170 at 5 min, 180 at 9 min, with steam ~200 (~10,000 MW) and fuel passing 900° at 8 min. "Where is the feedback loop... steam and its effect on rad is not enough."
+- **Sim:** matched (165 / 176 / 182 at 3 / 5 / 9 min). The brake was already firming from ~820°, and with two pumps it caught the rise.
+- **Trials:**
+  - Stronger steam push alone (`voidPerSteam` 0.8) made the climb twice as big, but it still slowed down and stopped (~310, reactor ~990°).
+  - Steam formation growing faster than linear with temperature gave the accelerating loop, but every run exploded, broke 4–5 checks and would change bible §16.
+- **Owner decision** (bible changelog v2.5): hot fuel never stops the loop. Very hot fuel may make it "less exponential", but the only ways out are rod insertion and water pumps. The bible §6 "self-limiting" check was replaced.
+
+### 15.2 Changes made
+
+- **M10. Brake always weaker than the steam loop.** `fuelBrakeMildSlope` 0.16 → **0.13**, `fuelBrakeHotSlope` 0.24 → **0.17**, `fuelBrakeFirmsAt` 900° → **1,300°**, `fuelBrakeFirmWidth` 80° → **100°**. Steam is unchanged (still proportional, still linear in temperature at normal flow), so bible §11 and §16 hold: with pumps running, an overheat ends in meltdown.
+  - Trials: mild 0.14 / hot 0.18 still stalled (a hands-off start reached R ~355, reactor ~1,130° at 20 min and barely moving). 0.12 made the hands-off start too fast and broke the start check.
+- **M11. Starting offset 5% → 3%** (`STARTING_RODS`: rod 1 at 37%). With the stronger loop, 5% left ±10% too soon for the bible §5 start check. 3% leaves it at 72 s.
+- **Tests:**
+  - The §6 "self-limiting" check is replaced by two new checks: "hot fuel never stops a rise" (rod 1 out 1%, two pumps, hands off → disaster within an hour; it melts down at ~19 min) and "very hot fuel slows the rise without stopping it" (relative growth 0.0013/s at fuel 1,500–1,800° vs 0.0036/s at 700–1,000°).
+  - The fragile AZ-5 check (rods 1–6 at 0%, one pump) can no longer settle, because no such state is steady. It now presses AZ-5 during the runaway, when steam first passes 250 (79 s in). Assertion unchanged.
+  - Note: `steadyAt()` now finds a state on its way up, not a true steady state, for anything above the balanced reference. The tests that use it still check what they say.
+
+### 15.3 Results
+
+- 36/36 checks pass; `tsc` is clean.
+- **Game start, hands off:** 121 / 149 / 194 / 325 at 1 / 3 / 5 / 9 min; output leaves ±10% at 72 s; meltdown ~13.5 min (12 seeds with noise: 13–15 min). Warnings: fuel 900° at ~5 min, radioactivity 250 at ~6.7 min, reactor 800° and steam 300 at ~8.5 min.
+- **Owner's test (rod 1 to 30%):** 169 / 261 / 348 / 402 at 1 / 3 / 5 / 7 min; meltdown ~8 min.
+- **Rescue trials (rod 1 at 30%):**
+  - At 3 min, rod 1 back to 40%: not enough (meltdown ~12 min).
+  - At 3 min, rod 1 to 50%: holds ~190–260 for 10 min, still creeping.
+  - At 5 min, all rods +5% / +10%, AZ-5, or 4 pumps: stops it, then slides to 0 (xenon pit) unless the player steers back.
+- **1 pump:** meltdown ~3 min (was ~7). **0 pumps:** unchanged timing (hot ~17 s, normal ~45 s).
+- **Pump kicks within 30 s:** 2→1 +80%, 2→3 −42%, 2→4 −82%. One rod 10%: +52%. Pumps and rods are both amplified; the ratio is unchanged.
+- **Downward:** rod 1 in 2% from balanced slides to 0 within 5–10 min; 3 pumps from the game start slides to 0 in ~5 min.
+- Cooldown-and-restart peak ~3,000 (was ~2,170).
+- `sim:shift`: hands-off Easy and Hard both explode after an ignored power cut.
+
+### 15.4 Still open (candidates for the next iteration)
+
+- **Over-correction slides into the pit.** Any decisive correction (several rods, AZ-5, extra pumps) stops a runaway but then collapses radioactivity unless the player steers back. Owner to judge whether that's the intended "vice versa" or too harsh.
+- **Pump kicks are large** (above). Owner to judge.
+- **D1. Restart spike** now peaks ~3,000. **D2. Cooling after shutdown.** **§8 Q2. Pump-loss timing.** Unchanged.
+
+---
+
+## 16. Mechanics iteration 6: DONE 2026-10-12
+
+Source: the owner's test after iteration 5 (reported in chat).
+
+- **Observation:** the start (rod 1 at 37%) still felt balanced. Rod 1 pulled to 30% took radioactivity over 200 within two minutes: "just about fast enough for the user to feel they need to act". The owner asked for the equivalent of rod 1 at 29%, spread over three rods (3%, 3%, 2% further out than the iteration 5 start).
+- **Change M12:** `STARTING_RODS` is now the reference minus `STARTING_OFFSETS` [6, 3, 2]. Rods 1–3 start at 34 / 37 / 38%; the rest are unchanged (40% and 55%).
+- **Bible §5 start check rewritten** at the owner's request (changelog v2.6). The new test checks that radioactivity rises every 30 s for the first 3 min, output leaves ±10% within 60 s, radioactivity has doubled by 3 min, and hands-off ends in disaster.
+- **Results:** 36/36 checks pass; `tsc` is clean.
+  - Game start, hands off: radioactivity 152 at 10 s (a quick step from the rods), then 177 / 222 / 277 / 360 at 1 / 2 / 3 / 5 min.
+  - Output leaves ±10% at 25 s.
+  - Warnings: fuel 900° at ~110 s, radioactivity 250 at ~150 s, reactor 800° and steam 300 at ~4.3 min.
+  - Meltdown at ~7.5 min (6 noise seeds: 448–476 s).

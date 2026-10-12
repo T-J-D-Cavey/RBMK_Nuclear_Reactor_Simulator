@@ -16,9 +16,10 @@ export const REFERENCE_STATE = {
   flow: 2, // two pumps running
 } as const
 
-// The game starts slightly off balance (owner request, bible §5): rod 1 sits 5% further out than the
-// reference, so radioactivity creeps up and power output needs a correction within a minute or two.
-export const STARTING_RODS = REFERENCE_RODS.map((v, i) => (i === 0 ? v - 5 : v))
+// The game starts off balance (owner request, bible §5): rods 1–3 sit 6%, 3% and 2% further out than the
+// reference, so radioactivity climbs from the start and the player soon feels they need to act.
+const STARTING_OFFSETS = [6, 3, 2]
+export const STARTING_RODS = REFERENCE_RODS.map((v, i) => v - (STARTING_OFFSETS[i] ?? 0))
 
 const TUNING_BASE = {
   // --- Integration ---
@@ -30,8 +31,8 @@ const TUNING_BASE = {
   maxRadioactivity: 50000,
   voidPerSteam: 0.6, // red card: points per unit of steam in the core (§16: proportional)
   noise: {
-    sigma: 0.8, // points per √s
-    tau: 60, // s: slow, correlated drift (stationary s.d. = sigma·√(tau/2) ≈ 4.4 points)
+    sigma: 0.2, // points per √s
+    tau: 60, // s: slow, correlated drift (stationary s.d. = sigma·√(tau/2) ≈ 1.1 points)
   },
 
   // --- §10 Control rods ---
@@ -40,10 +41,13 @@ const TUNING_BASE = {
 
   // --- §6 Fuel effect on reactivity (continuous curve) ---
   // Counted from normal running: 0 at the reference fuel temperature (a healthy reactor), blue when
-  // hotter, red when cooler. Per degree it pushes sMax·F/(F + halfTemp): gentle when cool, firmer when hot.
-  // Kept below the void effect per degree in the normal range, so losing a pump raises radioactivity (§5).
-  fuelBrakeMaxSlope: 0.3, // points per degree, approached when fuel is very hot
-  fuelBrakeHalfTemp: 250,
+  // hotter, red when cooler. Per degree it is mild up to about firmsAt, then firms up over ~firmWidth
+  // degrees to hotSlope. Always weaker than the steam a rise produces, with two pumps or fewer, so hot fuel
+  // never stops the loop: only rods and pumps do (owner, §5–§6). Very hot fuel just slows the rise.
+  fuelBrakeMildSlope: 0.13, // points per degree in the normal range
+  fuelBrakeHotSlope: 0.17, // points per degree once fuel is very hot
+  fuelBrakeFirmsAt: 1300, // °
+  fuelBrakeFirmWidth: 100, // °
   // Extra red card when very cold (restart lever, §9): coldCoeff·(coldBelow − F)².
   fuelColdBelow: 120,
   fuelColdCoeff: 0.0045,
@@ -89,9 +93,12 @@ const TUNING_BASE = {
   xenonBurnRate: 0.06, // %/s per unit of radioactivity above the burn level
 } as const
 
-// The brake's shape, measured from 0°: the integral of the per-degree slope above.
-const fuelBrake = (F: number) =>
-  TUNING_BASE.fuelBrakeMaxSlope * (F - TUNING_BASE.fuelBrakeHalfTemp * Math.log(1 + F / TUNING_BASE.fuelBrakeHalfTemp))
+// The brake's shape, measured from 0°: the integral of the per-degree slope above (a smooth step).
+const softplus = (x: number) => (x > 30 ? x : Math.log1p(Math.exp(x)))
+const fuelBrake = (F: number) => {
+  const { fuelBrakeMildSlope: mild, fuelBrakeHotSlope: hot, fuelBrakeFirmsAt: at, fuelBrakeFirmWidth: w } = TUNING_BASE
+  return mild * F + (hot - mild) * w * (softplus((F - at) / w) - softplus(-at / w))
+}
 
 // The fuel card (§6, §9): 0 at normal running temperature, plus the extra push when very cold.
 const fuelEffect = (fuelTemp: number) => {

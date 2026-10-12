@@ -2,6 +2,23 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.6 – 2026-10-12 (after the sixth playtest)
+
+- **The start climbs straight away** (Section 5 acceptance check). The v2.2 "slow creep, no correction for tens of seconds" start still felt balanced. The owner tested rod 1 at 30% (radioactivity over 200 in two minutes, "just about fast enough for the player to feel they need to act") and asked for an equivalent start spread over three rods.
+
+## v2.5 – 2026-10-12 (after the fifth playtest)
+
+- **Hot fuel never stops the loop** (Sections 3, 5, 6, 7 table, 16; Section 6 acceptance check replaced). v2.4 let the hot-fuel brake catch a two-pump rise once the fuel was hot, and in play the rise visibly slowed and stalled around 180. The owner decided that with rods and pumps unchanged, a rise keeps feeding itself until disaster. Very hot fuel may slow it ("less exponential") but isn't the brake: the only ways out are rod insertion and water pumps. This replaces the old check that a hot reactor limits itself. Kept: steam stays proportional and builds evenly with temperature at normal flow (Section 16), and with pumps running an overheat still ends in meltdown, not explosion (Section 11).
+- Consequence (to confirm with the owner): a fall feeds itself the same way, so the reactor is never hands-off in either direction, and a big correction can tip it into a slide toward the xenon pit.
+
+## v2.4 – 2026-10-12 (after the fourth playtest)
+
+- **The radioactivity → temperature → steam → radioactivity loop must be felt** (Section 5 player outcome, Section 6 fuel curve). The plan said a healthy reactor is "calm" and changes "settle" within seconds. In play, pulling a rod 2–6% gave a small rise that the hot-fuel brake caught almost at once, so the owner never saw the core loop work and found the reactor too easy. Now the brake is mild through the normal range, so a rise keeps feeding itself for minutes, and only firms up once the fuel is genuinely hot (around the high fuel warning). Section 6's acceptance check (self-limiting at high radioactivity) is unchanged.
+
+## v2.3 – 2026-10-12 (after the third playtest)
+
+- **One pump left alone ends in disaster** (Section 7 table). It was "workable at modest radioactivity with care", and in play it settled into a hot steady state. The owner wants losing down to one pump to be a real emergency: left alone, it runs away within minutes; it's workable only with active rod control. Done by weakening the hot-fuel brake (tuning, not this plan).
+
 ## v2.2 – 2026-10-12 (after the second playtest)
 
 - **The starting state creeps upward** (Section 5 acceptance check). The owner found a perfectly balanced start left nothing to do in the first minutes, and asked for a slow uptick from a slightly withdrawn starting rod. A correction is now needed within a minute or two. The engine is still calibrated on an exactly balanced reference state.

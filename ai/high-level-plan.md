@@ -60,7 +60,7 @@ In this real-world history, "power" means the reactor's thermal power, which the
 | Characteristic | Game meaning |
 |---|---|
 | Positive void coefficient: steam in the core increases reactivity | Steam is a "red card". More steam → more radioactivity → more heat → more steam. |
-| Most unstable at low power (a low fission level). Not because there is much steam then (there isn't), but because cool fuel gives little braking, and holding the fission level up against xenon meant pulling rods out. Once steam did start to form, little stood in its way. | Low radioactivity is not twitchy in itself; the state needed to hold it there is. High radioactivity is self-steadying because hot fuel brakes. |
+| Most unstable at low power (a low fission level). Not because there is much steam then (there isn't), but because cool fuel gives little braking, and holding the fission level up against xenon meant pulling rods out. Once steam did start to form, little stood in its way. | Low radioactivity is not twitchy in itself; the state needed to hold it there is. Hot fuel slows a high-radioactivity rise but never stops it (owner); only rods and pumps do. |
 | Few rods in the core: little boron holding the fission level down, and rods parked fully out have their graphite tips out of the core | Withdrawn rods = fewer brakes, plus a trap for AZ-5. Rod margin is the player's safety buffer. |
 | Rods take many seconds to travel (~18 s) | Rods are not instant brakes. |
 | Hot fuel is less reactive; cold fuel more reactive | Fuel temperature is a gentle brake when hot and the restart lever when very cold. |
@@ -125,7 +125,7 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 **Effect on power output:** none directly. Radioactivity heats the fuel, the fuel heats the reactor, the reactor makes steam (Sections 6–8), and only steam reaches the turbine. So power output follows radioactivity with a delay of seconds, and only once the reactor is above boiling.
 
 **Player outcome:**
-- At healthy radioactivity with rods reasonably inserted, the reactor is calm. Changes respond within seconds and settle.
+- At healthy radioactivity with rods reasonably inserted, the reactor is steady but never hands-off. A rise in radioactivity feeds itself: hotter fuel, a hotter reactor, more steam, and the steam pushes radioactivity further, gathering pace. A fall feeds itself the same way. With rods and pumps unchanged, nothing stops the loop: very hot fuel slows the rise but never ends it. The only ways out are inserting rods and adding pumps (owner). With one pump the loop runs fastest (Section 7).
 - As the player pulls rods, lets the fuel cool or loses flow, the reactor loses its brakes: the same push runs further and faster before anything stops it.
 - In truly bad states (rods out, low flow, cold fuel, rising steam), radioactivity can go from "fine" to "catastrophic" in seconds.
 - Over-inserting rods or flooding the core with water at low radioactivity makes radioactivity **collapse quickly**, sliding toward the xenon pit.
@@ -133,7 +133,7 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 **Must preserve:** baseline drift so a hands-off reactor is never perfectly static; some small randomness (now proportional, not fixed).
 
 **Acceptance checks:**
-- Starting state with default rods and two pumps is roughly steady: hands-off, it begins a slow upward creep that needs no correction for tens of seconds but does need one within a minute or two (owner request; the engine's balance point is a separate, exactly steady reference state).
+- Starting state with default rods and two pumps climbs from the start: hands-off, radioactivity rises straight away, power output leaves its target band within a minute, and the player feels they need to act within a couple of minutes (owner request; the engine's balance point is a separate, exactly steady reference state).
 - Moving a rod by the same amount always changes its boron effect by the same amount, at any depth (the tip aside). With everything else equal, including current radioactivity, 10%→5% and 50%→45% have the same effect.
 - The same push moves radioactivity further and faster when radioactivity is high than when it is low.
 - There exists a reachable state where radioactivity at least doubles within a few seconds with no player input.
@@ -146,7 +146,7 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 **Change:** reverse today's chain to **radioactivity → fuel temperature → reactor temperature → steam**. Fission heat is produced in the fuel, so this matches reality, and the fuel's brake arrives on time instead of late.
 - **Radioactivity heats the fuel.** Fuel temperature responds fairly quickly (seconds) and runs hotter than the reactor while radioactivity is up.
 - **Fuel heats the reactor.** Heat flows from fuel to reactor in proportion to the gap between them. Reactor temperature is slower and steadier, representing the bulk of coolant and graphite.
-- **Fuel temperature feeds back on reactivity continuously:** the fuel card is counted from **normal running temperature**, where it is 0. A healthy reactor at power has hot fuel (hundreds of degrees above the coolant), and that is normal. Fuel hotter than normal is a blue card that grows stronger the hotter it gets and steadies the reactor at high radioactivity. Fuel cooler than normal is a red card, and very cold fuel gives the strong red card used for restarting (Section 9). In the normal middle range the effect per degree is mild.
+- **Fuel temperature feeds back on reactivity continuously:** the fuel card is counted from **normal running temperature**, where it is 0. A healthy reactor at power has hot fuel (hundreds of degrees above the coolant), and that is normal. Fuel hotter than normal is a mild blue card that firms up a little once the fuel is very hot. It slows a rise but never stops one: with rods and pumps unchanged, the steam that comes with hot fuel always outweighs it (owner). Fuel cooler than normal is a red card, and very cold fuel gives the strong red card used for restarting (Section 9). At every temperature the effect per degree is weaker than the steam it comes with, so the loop in Section 5 always runs.
   - *Deliberate (decided with the owner):* real fuel's brake is always working at power. Counting it from normal running keeps that behaviour, while a healthy reactor reads as "neither hot nor cold". The brake and the cold push are one curve, so weakening one weakens the other.
 - **Meltdown stays on reactor temperature** at the existing limit, so players' existing understanding holds.
 
@@ -157,7 +157,8 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 **Acceptance checks:**
 - After a rise in radioactivity, fuel temperature rises before reactor temperature.
 - At steady radioactivity, fuel temperature sits above reactor temperature.
-- At high radioactivity, raising it further is noticeably self-limiting through hot fuel (unless cooling is lost or xenon is burning off).
+- With rods and pumps unchanged, a small rise in radioactivity ends in disaster: hot fuel never stops it (owner).
+- Very hot fuel slows the rise: radioactivity grows noticeably more slowly once the fuel is very hot than while it is warming.
 - More pumps lower fuel temperature as well as reactor temperature (indirectly, through the reactor).
 
 ---
@@ -175,8 +176,8 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 | Pumps | Feel |
 |---|---|
 | 4 | Strong cooling, little steam, cooler fuel. At low radioactivity this suppresses reactivity and can push the reactor toward collapse (the "extra pumps" trap from the test). |
-| 2–3 | Normal operating band. |
-| 1 | Hot, steamy, twitchy. Workable at modest radioactivity with care. |
+| 2–3 | Normal operating band, but never hands-off: with rods unchanged, a rise or fall keeps feeding itself until the player acts. |
+| 1 | Hot, steamy, twitchy. Left alone it runs away to disaster within minutes; workable only with active rod control. |
 | 0 | At high radioactivity, a runaway within roughly 30–60 s if ignored. At low radioactivity, a slower but real climb. |
 
 **Acceptance checks:**
@@ -422,7 +423,7 @@ A one-page summary of Sections 5–10.
 | Xenon effect | **Proportional** to the xenon level (a blue card) | Simple and readable. |
 | Xenon build-up | **Gradual** (minutes) at low radioactivity, faster the lower it is; 0% in normal running | Slow, ominous, readable. |
 | Xenon burn-off | **Accelerates with radioactivity**: slow just above the burn-off level, seconds during a surge | Removing a brake as radioactivity rises feeds the rise; the escape must be caught. |
-| Fuel temperature effect | **Continuous curve, 0 at normal running temperature**: a brake when hotter than normal that strengthens as fuel heats, a push when cooler, strongest when very cold | Steadies high radioactivity; restart lever; a healthy reactor reads 0. |
+| Fuel temperature effect | **Continuous curve, 0 at normal running temperature**: a mild brake when hotter than normal, firming a little when very hot but always weaker than the steam that comes with it; a push when cooler, strongest when very cold | Slows a runaway without ever stopping it (only rods and pumps do); restart lever; a healthy reactor reads 0. |
 | Fuel / reactor temperature | **Lagged heat balance** (not exponential) | Fast only because radioactivity is fast. |
 | Pump cooling | **Proportional** to flow and temperature, diminishing per extra pump; flow ramps over a few seconds | Physical, readable. |
 | Power output from steam | **Linear** | Keeps targets predictable. |
