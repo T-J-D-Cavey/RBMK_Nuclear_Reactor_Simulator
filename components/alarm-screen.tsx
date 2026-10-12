@@ -48,21 +48,17 @@ export default function AlarmScreen({ warnings }: { warnings: Warning[] }) {
         aria-expanded={visible}
         className="w-full flex items-center justify-between gap-2 px-1 pb-2 text-left"
       >
-        <span className="flex items-center gap-2 min-w-0">
+        <span className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-200 truncate">
+          SKALA · Alarm Monitor
+        </span>
+        <span className="flex items-center gap-1.5 shrink-0">
           <span
             className={`retro-lamp inline-block w-2.5 h-2.5 shrink-0 ${count ? "bg-red-500 text-red-500 on" : "bg-green-500 text-green-500 on"}`}
           />
-          <span className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-200 truncate">
-            SKALA · Alarm Monitor
+          <span className={`font-mono text-[10px] sm:text-xs font-bold uppercase ${count ? "text-red-400" : "text-green-400"}`}>
+            {count ? `${count} Warning${count > 1 ? "s" : ""}` : "All systems stable"}
           </span>
-        </span>
-        <span className="flex items-center gap-2 shrink-0">
-          {count > 0 && (
-            <span className="font-mono text-xs font-bold uppercase text-red-400">
-              {count} Warning{count > 1 ? "s" : ""}
-            </span>
-          )}
-          <Chevron className="h-5 w-5 text-neutral-300" />
+          <Chevron className="h-5 w-5 ml-1 text-neutral-300" />
         </span>
       </button>
 

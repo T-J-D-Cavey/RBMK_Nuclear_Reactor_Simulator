@@ -585,12 +585,15 @@
 }
 
 .ws5-printer-paper {
-  --lh: 1.375rem;
+  --lh: 1.5rem;
   position: relative;
+  /* Blank paper fills the window, with spare below the roller so a feed never shows a gap under a short log */
+  min-height: calc(100% + 4 * var(--lh));
   padding: 0.5rem 1.6rem var(--lh);
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   line-height: var(--lh);
-  color: #2b2a24;
+  color: #2b2a24; /* one ribbon, all capitals: a teleprinter (owner) */
+  text-transform: uppercase;
   user-select: none;
   background:
     linear-gradient(to right, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0) 95%, rgba(0, 0, 0, 0.12)),
@@ -601,8 +604,8 @@
 
 @media (min-width: 640px) {
   .ws5-printer-paper {
-    --lh: 1.5rem;
-    font-size: 0.875rem;
+    --lh: 1.625rem;
+    font-size: 1rem;
   }
 }
 
@@ -626,13 +629,9 @@
   right: 0;
 }
 
-/* The housing's lamp while a line feeds and prints */
-.ws5-lamp-blink {
-  animation: ws3-rec-blink 0.6s steps(1, end) infinite;
-}
-
-.ws5-printer-stamp {
-  color: #6b6b5a;
+/* The Printing lamp flashes three times before a message (FLASH_MS in shift-log-printer.tsx) */
+.ws5-lamp-flash {
+  animation: ws3-rec-blink 0.4s steps(1, end) infinite;
 }
 
 /* The print head's cursor: takes no width, so line breaks don't move while a line prints */
@@ -722,7 +721,7 @@
   .ws5-crt-text,
   .ws5-crt-cursor-blink,
   .ws5-print-cursor::after,
-  .ws5-lamp-blink,
+  .ws5-lamp-flash,
   .ws5-unread,
   .ws5-flash,
   .ws5-shock-ring {

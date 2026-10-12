@@ -753,10 +753,10 @@ Source: the owner's Easy-mode playtest (test two in `ai/manual-test-results.MD`)
 ### 18.1 What changed
 
 - **Two machines, one per kind of message** (`components/message-area.tsx`). They always stack, the alarm monitor above the shift log (owner). Each still collapses on its own.
-  - **Alarm monitor** (`components/alarm-screen.tsx`): the plant computer's screen, "SKALA" after the footer's "© 1986 SKALA CONTROL SYSTEMS". It has green phosphor, scanlines and the VT323 terminal font (`next/font`, no new npm package). Every computer-generated warning types itself out like a command line, with "WARNING" in inverse video. A warning keeps its line while it lasts, new ones are added at the bottom, and the turbine countdown updates in place. With no warnings it reads "ALL SYSTEMS STABLE." The header shows the warning count when there are warnings, and nothing otherwise (owner: no "All clear" label).
-  - **Shift log teleprinter** (`components/shift-log-printer.tsx`): printed on the chart recorder's paper, with sprocket holes and faint rules.
-    - **Housing** (owner: the first version's box looked plain) matches the chart recorder: a 4 px border and a bold, tracked header. It has a status lamp: green "On line", or blinking amber "Printing" while a line feeds and prints. An ink key in the chart recorder's legend style shows Grid, Station crew and Urgent, each with the time that kind of sender last spoke. In the Safety Test the phase and orders card takes the ink key's place.
-    - A new message feeds the paper down by its height (0.45 s), then prints at the top behind a print cursor. Messages that arrive together print one after another.
+  - **Alarm monitor** (`components/alarm-screen.tsx`): the plant computer's screen, "SKALA" after the footer's "© 1986 SKALA CONTROL SYSTEMS". It has green phosphor, scanlines and the VT323 terminal font (`next/font`, no new npm package). Every computer-generated warning types itself out like a command line, with "WARNING" in inverse video. A warning keeps its line while it lasts, new ones are added at the bottom, and the turbine countdown updates in place. With no warnings it reads "ALL SYSTEMS STABLE." The header's status lamp reads "All systems stable" in green, or "N Warnings" in red (owner, restored after it was briefly removed).
+  - **Shift log teleprinter** (`components/shift-log-printer.tsx`): printed on the chart recorder's paper, with sprocket holes and faint rules. Every message is in one ink and in capitals, in a larger type (owner: no colour printers then). Blank paper always fills the window.
+    - **Housing** is the alarm monitor's dark bezel, headed "SKALA · Shift Log" ("SKALA · Test Procedure" in the Safety Test, with the phase and orders card above the paper). Its yellow "Printing" lamp is dark when idle. It flashes three times (1.2 s) before each message, then stays lit while the paper feeds and the line prints. The old ink key and the "Teleprinter · Unit 4" plate label are gone (owner).
+    - A new message flashes the lamp, feeds the paper down by its height (0.45 s), then prints at the top behind a print cursor. Messages that arrive together print one after another.
     - At most four messages are in view. Older ones feed out of sight below the roller.
     - To read back, drag the paper (mouse or finger), use the mouse wheel, or focus it and use the arrow keys. There is no scrollbar. "Back to latest" returns to the top, and a new message rolls the paper back anyway. Read-back only works once there are more than four messages.
     - Screen readers get the latest messages as plain text.
@@ -788,7 +788,7 @@ Source: the owner's Easy-mode playtest (test two in `ai/manual-test-results.MD`)
 - **The low-performance and turbine over-pressure warnings moved to the alarm monitor**, since they are computer-generated. Before, they were in the events box (§11.1), so hiding the warnings kept them visible. Now hiding the alarm monitor hides them too.
 - **Safety Test phase and standing orders** stay visible on a typed card above the paper (on the housing, not printed on it), because bible §14 asks for the current phase and next instruction to be shown.
 - "a adjustment" was corrected to "an adjustment".
-- **Typing speeds:** the monitor types 90 characters a second and the teleprinter 70. The paper feeds in 0.45 s.
+- **Typing speeds:** the monitor types 90 characters a second and the teleprinter 70. The teleprinter's lamp flashes for 1.2 s before each message, then the paper feeds in 0.45 s.
 
 ### 18.3 Target changes no longer give the number in advance. Answered 2026-10-12: keep it
 
