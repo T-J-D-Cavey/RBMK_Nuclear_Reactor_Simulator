@@ -25,6 +25,7 @@ export function getWarningFlags(state: GameState) {
   }
 }
 
+// Warnings about the reactor's own condition (the collapsible red box).
 export function checkWarnings(state: GameState): string[] {
   const warnings: string[] = []
   const flags = getWarningFlags(state)
@@ -65,10 +66,16 @@ export function checkWarnings(state: GameState): string[] {
     warnings.push("WARNING: Rod margin below minimum. Too few control rods in the core: radioactivity is being held by something less reliable than boron. Recommend inserting control rods.")
   }
 
-  if (flags.lowPerformance) {
+  return warnings
+}
+
+// Warnings about the shift rather than the reactor itself: shown in the events box, not the reactor
+// warnings box, so a player can hide the reactor warnings and still see these (plan §11.1).
+export function checkEventWarnings(state: GameState): string[] {
+  const warnings: string[] = []
+  if (getWarningFlags(state).lowPerformance) {
     warnings.push("WARNING: Our power station is reporting low grid target performance. Review power targets")
   }
-
   return warnings
 }
 

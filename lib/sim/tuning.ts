@@ -2,17 +2,23 @@
 // Reactivity is counted in "points": 1 point = 1% of one rod's boron (bible §10.4).
 // This file must not import anything (lib/types.ts imports it).
 
-// The calm starting state (bible §5: roughly steady with default rods and two pumps).
+// The balanced reference state: exactly steady with these rods and two pumps. The engine is calibrated here.
 // Constants marked "derived" below are solved from this state so it stays balanced when others change.
+const REFERENCE_RODS = [40, 40, 40, 40, 40, 40, 55, 55, 55, 55]
 export const REFERENCE_STATE = {
   radioactivity: 100,
   reactorTemp: 330,
   fuelTemp: 530, // runs hotter than the reactor at steady radioactivity (§6)
   steam: 100,
-  rodBoron: 6 * 40 + 4 * 55, // default rods
+  rods: REFERENCE_RODS,
+  rodBoron: REFERENCE_RODS.reduce((a, b) => a + b, 0),
   tipsIn: 10,
   flow: 2, // two pumps running
 } as const
+
+// The game starts slightly off balance (owner request, bible §5): rod 1 sits 5% further out than the
+// reference, so radioactivity creeps up and power output needs a correction within a minute or two.
+export const STARTING_RODS = REFERENCE_RODS.map((v, i) => (i === 0 ? v - 5 : v))
 
 const TUNING_BASE = {
   // --- Integration ---
@@ -22,7 +28,7 @@ const TUNING_BASE = {
   generationTime: 100, // Λ: dR/dt = R·ρ/Λ. A balance of +10 points grows radioactivity ~10%/s
   source: 0.05, // radioactivity/s that is always present, so it never sticks at zero
   maxRadioactivity: 50000,
-  voidPerSteam: 0.5, // red card: points per unit of steam in the core (§16: proportional)
+  voidPerSteam: 0.6, // red card: points per unit of steam in the core (§16: proportional)
   noise: {
     sigma: 0.8, // points per √s
     tau: 60, // s: slow, correlated drift (stationary s.d. = sigma·√(tau/2) ≈ 4.4 points)
@@ -33,10 +39,12 @@ const TUNING_BASE = {
   tipWorth: 10, // red card per rod whose tip is in the core (= boron in the first 10% of travel)
 
   // --- §6 Fuel effect on reactivity (continuous curve) ---
-  // Brake: slope rises with temperature, sMax·F/(F + halfTemp): weak when cool, mild mid-range, firm when hot.
-  fuelBrakeMaxSlope: 0.5, // points per degree, approached when fuel is very hot
+  // Counted from normal running: 0 at the reference fuel temperature (a healthy reactor), blue when
+  // hotter, red when cooler. Per degree it pushes sMax·F/(F + halfTemp): gentle when cool, firmer when hot.
+  // Kept below the void effect per degree in the normal range, so losing a pump raises radioactivity (§5).
+  fuelBrakeMaxSlope: 0.3, // points per degree, approached when fuel is very hot
   fuelBrakeHalfTemp: 250,
-  // Strong red card when very cold (restart lever, §9): coldCoeff·(coldBelow − F)².
+  // Extra red card when very cold (restart lever, §9): coldCoeff·(coldBelow − F)².
   fuelColdBelow: 120,
   fuelColdCoeff: 0.0045,
 
@@ -60,8 +68,8 @@ const TUNING_BASE = {
   boilingTemp: 90,
   steamChaseRate: 1.0, // 1/s
   // Steam per degree above boiling × exp(−k·(flow − 2)): 1 at two pumps
-  // (zero flow alone ≈ ×1.65, one pump ≈ ×1.28, three ≈ ×0.78, four ≈ ×0.61).
-  steamFlowK: 0.25,
+  // (zero flow alone ≈ ×1.35, one pump ≈ ×1.16, three ≈ ×0.86, four ≈ ×0.74).
+  steamFlowK: 0.15,
   // Boiling escalation as flow → 0 (§7): × (1 + esc·(1 − flow)²·((T − boil)/scale)³).
   // Sharp in temperature, so with no flow the danger arrives as the reactor heats, not instantly.
   boilingEscalation: 0.25,
@@ -72,24 +80,33 @@ const TUNING_BASE = {
   turbineHysteresis: 0.25, // in pumps: supply holds until steam has clearly moved
 
   // --- §9 Xenon ---
-  xenonWorthPerPercent: 4.0, // blue card: points at 1% xenon (400 at the cap)
+  // Blue card. Its worth is derived: full xenon sits this many points below everything pushing up in a
+  // cold reactor with rods out, so a poisoned reactor can always restart with rods (nearly) all out (§9).
+  xenonCapBelowExcess: 33,
   xenonBuildBelow: 50,
   xenonBuildRate: 0.42, // %/s at radioactivity 0, scaled by how far below the build level
   xenonBurnAbove: 70,
   xenonBurnRate: 0.06, // %/s per unit of radioactivity above the burn level
 } as const
 
+// The brake's shape, measured from 0°: the integral of the per-degree slope above.
 const fuelBrake = (F: number) =>
   TUNING_BASE.fuelBrakeMaxSlope * (F - TUNING_BASE.fuelBrakeHalfTemp * Math.log(1 + F / TUNING_BASE.fuelBrakeHalfTemp))
+
+// The fuel card (§6, §9): 0 at normal running temperature, plus the extra push when very cold.
+const fuelEffect = (fuelTemp: number) => {
+  const F = Math.max(0, fuelTemp)
+  const veryCold = TUNING_BASE.fuelColdCoeff * Math.max(0, TUNING_BASE.fuelColdBelow - F) ** 2
+  return veryCold - (fuelBrake(F) - fuelBrake(REFERENCE_STATE.fuelTemp))
+}
 
 const pumpEffect = (flow: number) => flow / (flow + TUNING_BASE.pumpFlowHalf)
 
 function derive() {
   const r = REFERENCE_STATE
   const t = TUNING_BASE
-  // Base excess reactivity of the fuel: makes the reference balance exactly zero.
-  const baseExcess =
-    r.rodBoron - r.tipsIn * t.tipWorth - t.voidPerSteam * r.steam + fuelBrake(r.fuelTemp)
+  // Base excess reactivity of the fuel: makes the reference balance exactly zero (the fuel card is 0 there).
+  const baseExcess = r.rodBoron - r.tipsIn * t.tipWorth - t.voidPerSteam * r.steam
   // Fuel heating is set so the reference fuel/reactor gap holds.
   const gap = r.fuelTemp - r.reactorTemp
   const fuelHeat = (t.fuelToReactorRate * gap) / r.radioactivity
@@ -100,9 +117,14 @@ function derive() {
   const pumpTempCoeff = (heatIn - passive - eff * t.pumpHeatInShare * heatIn) / (eff * (r.reactorTemp - t.coolantInletTemp))
   // Steam per degree that gives the reference steam at the reference temperature, two pumps.
   const steamPerDegree = r.steam / (r.reactorTemp - t.boilingTemp)
-  return { baseExcess, fuelHeat, pumpTempCoeff, steamPerDegree }
+  // Xenon points per 1% (the cap is 100%). Measured against base excess plus the push from fuel
+  // fully cooled to 0° (not counting the extra very-cold push).
+  const coldRodsOutPush = baseExcess + fuelBrake(r.fuelTemp)
+  const xenonWorthPerPercent = (coldRodsOutPush - t.xenonCapBelowExcess) / 100
+  return { baseExcess, fuelHeat, pumpTempCoeff, steamPerDegree, xenonWorthPerPercent }
 }
 
-export const TUNING = { ...TUNING_BASE, fuelHeatPerRadioactivity: derive().fuelHeat, ...derive() }
+const derived = derive()
+export const TUNING = { ...TUNING_BASE, fuelHeatPerRadioactivity: derived.fuelHeat, ...derived }
 
-export { fuelBrake, pumpEffect }
+export { fuelEffect, pumpEffect }

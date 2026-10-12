@@ -2,6 +2,18 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.2 – 2026-10-12 (after the second playtest)
+
+- **The starting state creeps upward** (Section 5 acceptance check). The owner found a perfectly balanced start left nothing to do in the first minutes, and asked for a slow uptick from a slightly withdrawn starting rod. A correction is now needed within a minute or two. The engine is still calibrated on an exactly balanced reference state.
+
+## v2.1 – 2026-10-12 (after the first playtests)
+
+- **The fuel card is counted from normal running temperature** (Sections 5, 6, 16). The owner found it surprising that a healthy reactor at the start counted as having "hot fuel" with a brake on.
+  - Physics unchanged, for realism: fuel at power is always hot, its brake (Doppler) is always working, and real reactors hold extra reactivity in reserve, pulling rods out as they heat up to compensate. That always-on brake is part of what makes a healthy reactor steady.
+  - Counting changed, for readability: the card is 0 at normal running, blue when hotter, red when cooler. The game plays identically, but a healthy reactor reads as "neither hot nor cold", which is also what How to Play will teach.
+  - Consequence made visible: the hot-side brake and the cold-side push are one curve, so weakening the brake also weakens the push that restarts a cold, poisoned reactor. Xenon's full load is therefore set against that cold push (tuning, not this plan).
+  - The owner is happy to revisit this later.
+
 ## v2 – 2026-10-09 (after the owner's review of the first draft)
 
 **Reactor physics**

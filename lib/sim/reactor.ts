@@ -1,6 +1,6 @@
 // Pure reactor physics (bible §5–§11, §16). No React, no hidden randomness: callers pass an Rng.
 import { type ControlRod, type GameOverCause, type GameState, type WaterPump, THRESHOLDS } from "../types"
-import { TUNING as T, fuelBrake, pumpEffect } from "./tuning"
+import { TUNING as T, fuelEffect, pumpEffect } from "./tuning"
 import { gaussian, type Rng } from "./rng"
 
 export interface ReactivityCards {
@@ -9,7 +9,7 @@ export interface ReactivityCards {
   tips: number // red: graphite tips in the core
   boron: number // blue (negative)
   xenon: number // blue (negative)
-  fuel: number // blue when warm/hot, red when very cold
+  fuel: number // 0 at normal running; blue when hotter, red when cooler (strongly when very cold)
   noise: number
   total: number
 }
@@ -27,10 +27,7 @@ export function tipsInCore(rods: ControlRod[]): number {
   return rods.filter((rod) => rod.insertion > TIP_EPSILON).length
 }
 
-export function fuelEffect(fuelTemp: number): number {
-  const cold = T.fuelColdCoeff * Math.max(0, T.fuelColdBelow - fuelTemp) ** 2
-  return cold - fuelBrake(Math.max(0, fuelTemp))
-}
+export { fuelEffect }
 
 export function getReactivityCards(state: GameState): ReactivityCards {
   const cards = {

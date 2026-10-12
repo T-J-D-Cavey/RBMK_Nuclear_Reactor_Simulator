@@ -20,6 +20,7 @@
   --accent: oklch(0.4664 0.0978 187.55); /* NEW GREEN HERE */
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.55 0.22 25); /* Warning red */
+  --event: oklch(0.42 0.13 262); /* Events box: deep teletype blue (plan §11.1) */
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.65 0.01 85);
   --input: oklch(0.75 0.01 85);
@@ -61,6 +62,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
+  --event: oklch(0.72 0.12 262);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
@@ -123,7 +125,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-reactor-blue: var(--reactor-blue)
+  --color-reactor-blue: var(--reactor-blue);
+  --color-event: var(--event);
 }
 
 @layer base {

@@ -1,4 +1,4 @@
-import { REFERENCE_STATE } from "./sim/tuning"
+import { REFERENCE_STATE, STARTING_RODS } from "./sim/tuning"
 
 export interface ControlRod {
   id: number
@@ -188,10 +188,10 @@ export const INITIAL_GAME_STATE: GameState = {
   powerOutput: 5000,
   performance: 100,
 
-  controlRods: Array.from({ length: 10 }, (_, i) => ({
+  controlRods: STARTING_RODS.map((insertion, i) => ({
     id: i + 1,
-    insertion: i < 6 ? 40 : 55,
-    target: i < 6 ? 40 : 55,
+    insertion,
+    target: insertion,
     stuck: false,
   })),
 

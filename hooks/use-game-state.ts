@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { type GameState, type GameMode, INITIAL_GAME_STATE, GAME_MODE_CONFIGS } from "@/lib/types"
 import { calculateGameTick } from "@/lib/game-mechanics"
-import { checkGameOver, checkWarnings } from "@/lib/game-utils"
+import { checkEventWarnings, checkGameOver, checkWarnings } from "@/lib/game-utils"
 import { shouldTriggerEvent, generateRandomEvent, applyEvent, updateActiveEvents } from "@/lib/game-events"
 
 const STORAGE_KEY = "chernobyl-game-state"
@@ -162,9 +162,8 @@ export function useGameState() {
             }
           }
 
-          // Check for warnings
-          const warnings = checkWarnings(newState)
-          newState.warnings = warnings
+          // Check for warnings (both kinds, so the general alarm sounds for either)
+          newState.warnings = [...checkWarnings(newState), ...checkEventWarnings(newState)]
 
           // Check for game over conditions
           const gameOverCheck = checkGameOver(newState, ending)

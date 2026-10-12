@@ -111,7 +111,7 @@ function generatePowerCutEvent(state: GameState): GameEvent {
   return {
     id: `event-${Date.now()}`,
     type: "power-cut",
-    message: `⚡ UPDATE FROM HEAD ENGINEER: Power cut detected. The pumps' normal supply is down, so they're not moving cooling water through the core. The turbine can be disconnected from the grid to supply the pumps.`,
+    message: `⚡ UPDATE FROM HEAD ENGINEER: Power cut detected. Recommend disconnecting turbine to power the pumps.`,
     timestamp: state.gameTime,
     duration,
     data: { affectedPumps: [0, 1, 2, 3] },

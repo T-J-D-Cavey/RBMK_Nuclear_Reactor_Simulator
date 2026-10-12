@@ -121,10 +121,12 @@ export default function GamePage() {
       {/* Message Area */}
       <MessageArea gameState={gameState} />
 
-      {/* Reactor camera + side panels (WS3 presentation) */}
+      {/* Reactor camera + side panels (WS3 presentation).
+          Wide screens: three columns, so the camera sits on the control panel's centre line (same max width)
+          with the chart recorder to its right; the empty left column balances it. Narrower: stacked. */}
       <div className="w-full bg-black px-2 py-3 sm:px-4 md:py-6">
-        <div className="mx-auto w-full max-w-[96rem] flex flex-col xl:flex-row xl:items-start xl:justify-center gap-4">
-          <div className="w-full min-w-0 max-w-6xl mx-auto xl:mx-0 xl:flex-1">
+        <div className="mx-auto w-full flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(18rem,1fr)_minmax(0,72rem)_minmax(18rem,1fr)] xl:items-start">
+          <div className="w-full min-w-0 max-w-6xl mx-auto xl:col-start-2">
             <ReactorCamera
               variant="inline"
               radioactivity={gameState.radioactivity}
@@ -132,7 +134,7 @@ export default function GamePage() {
               elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
             />
           </div>
-          <aside className="w-full min-w-0 max-w-xl mx-auto xl:mx-0 xl:w-[22rem] xl:max-w-none xl:shrink-0 xl:sticky xl:top-4">
+          <aside className="w-full min-w-0 max-w-xl mx-auto xl:col-start-3 xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">
             <ChartRecorder
               radioactivity={gameState.radioactivity}
               reactorTemp={gameState.reactorTemp}

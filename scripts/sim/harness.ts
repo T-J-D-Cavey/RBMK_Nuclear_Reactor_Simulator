@@ -1,5 +1,6 @@
 // Headless driver for the reactor engine: scripted inputs, seeded randomness, per-second traces.
 import { INITIAL_GAME_STATE, type GameState, type GameOverCause } from "../../lib/types"
+import { REFERENCE_STATE } from "../../lib/sim/tuning"
 import { advanceReactor, getReactivityCards, getRodMargin, totalFlow } from "../../lib/sim/reactor"
 import { seededRng, type Rng } from "../../lib/sim/rng"
 
@@ -26,8 +27,14 @@ export interface RunResult {
 // Inputs applied at given seconds (before that second is simulated).
 export type Script = Record<number, (s: GameState) => GameState>
 
+// The balanced reference state (exactly steady), which physics tests start from.
 export function baseState(overrides: Partial<GameState> = {}): GameState {
-  return { ...structuredClone(INITIAL_GAME_STATE), mode: "free", powerTarget: null, ...overrides }
+  return { ...setRods(gameStart(), [...REFERENCE_STATE.rods], { instant: true }), ...overrides }
+}
+
+// The state a real game starts in (slightly off balance on purpose, bible §5), in Free mode.
+export function gameStart(): GameState {
+  return { ...structuredClone(INITIAL_GAME_STATE), mode: "free", powerTarget: null }
 }
 
 export function setRods(s: GameState, positions: number | number[], { instant = false } = {}): GameState {
@@ -90,6 +97,24 @@ export function runQuiet(start: GameState, seconds: number, script: Script = {})
 // Settle a state with no player input so tests start from equilibrium, not from arbitrary numbers.
 export function settle(s: GameState, seconds = 600): GameState {
   return runQuiet(s, seconds).final
+}
+
+// A settled state at roughly the target radioactivity, found by shifting every default rod by the same
+// amount. Keeps test set-ups meaningful when tuning changes what a fixed set of rod positions produces.
+export function steadyAt(target: number, pumps = 2, seconds = 400): GameState {
+  const start = setPumps(baseState(), pumps, { instant: true })
+  const defaults = start.controlRods.map((r) => r.target)
+  const at = (offset: number) =>
+    settle(setRods(start, defaults.map((v) => Math.max(0, Math.min(100, v + offset))), { instant: true }), seconds)
+  // More rod in → lower settled radioactivity, so bisect on the offset.
+  let lo = -60
+  let hi = 60
+  for (let i = 0; i < 14; i++) {
+    const mid = (lo + hi) / 2
+    if (at(mid).radioactivity > target) lo = mid
+    else hi = mid
+  }
+  return at((lo + hi) / 2)
 }
 
 export function formatTrace(result: RunResult, every = 1): string {

@@ -49,17 +49,10 @@ export default function HomePage() {
         <div className="ws3-crt-panel px-4 py-6 sm:px-8 sm:py-8">
           <div className="ws3-crt-sweep" aria-hidden="true" />
           <div className="relative space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between gap-2 font-mono text-[10px] sm:text-xs uppercase tracking-widest text-reactor-blue/70">
-              <span className="truncate">ChNPP · Unit 4 · SKALA</span>
-              <span className="shrink-0">26-04-1986</span>
-            </div>
             <h1 className="ws3-crt-title text-6xl md:text-8xl font-bold tracking-tight text-reactor-blue uppercase font-mono">
               R B M K
             </h1>
             <p className="ws3-crt-subtitle text-lg sm:text-xl md:text-2xl text-reactor-blue font-mono">Nuclear Reactor Control Simulation</p>
-            <p className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-reactor-blue/60">
-              {"> Operator console ready_"}
-            </p>
           </div>
         </div>
 

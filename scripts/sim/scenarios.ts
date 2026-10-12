@@ -1,6 +1,6 @@
 // Named scenarios shared by the trace tool and the acceptance tests. Bible sections in brackets.
 import type { GameState } from "../../lib/types"
-import { az5, baseState, run, runQuiet, setPumps, setRods, settle, type RunResult } from "./harness"
+import { az5, baseState, run, runQuiet, setPumps, setRods, settle, steadyAt, type RunResult } from "./harness"
 
 export interface Scenario {
   description: string
@@ -58,8 +58,8 @@ export const scenarios: Record<string, Scenario> = {
       }),
   },
   allPumpsLostHighR: {
-    description: "[§7/§11] Running hot (R≈200), all pumps lost at t=30, no response",
-    run: () => runQuiet(settle(setRods(baseState(), [32, 32, 32, 32, 32, 32, 40, 40, 40, 40], { instant: true }), 600), 180, { 30: (s) => setPumps(s, 0) }),
+    description: "[§7/§11] Running hot (R≈185), all pumps lost at t=30, no response",
+    run: () => runQuiet(steadyAt(185, 2, 600), 180, { 30: (s) => setPumps(s, 0) }),
   },
   collapse: {
     description: "[§9] Rods driven deep at t=10: collapse into the xenon pit",
@@ -72,6 +72,21 @@ export const scenarios: Record<string, Scenario> = {
   restartNoCatch: {
     description: "[§9] As restart, but the player never re-inserts rods",
     run: () => runQuiet(poisonedState(), 900, { 0: (s) => setPumps(setRods(s, 0), 4) }),
+  },
+  // Replays of the owner's manual tests (ai/manual-test-results.MD), kept for comparing tuning iterations.
+  ownerPumpSwitch: {
+    description: "[owner test 1] Default start, 2→1 pumps at t=10, back to 2 at t=120",
+    run: () => runQuiet(baseState(), 300, { 10: (s) => setPumps(s, 1), 120: (s) => setPumps(s, 2) }),
+  },
+  ownerCooldownRestart: {
+    description: "[owner test 2] AZ-5 at t=10, pumps off at t=60, all four on at t=180, all rods to 10% at t=360",
+    run: () =>
+      runQuiet(baseState(), 700, {
+        10: az5,
+        60: (s) => setPumps(s, 0),
+        180: (s) => setPumps(s, 4),
+        360: (s) => setRods(s, 10),
+      }),
   },
   az5AllOut: {
     description: "[§10/§11] Fragile: rods at 0%, one pump, cold fuel and climbing; AZ-5 at t=0",

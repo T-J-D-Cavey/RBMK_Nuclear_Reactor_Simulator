@@ -111,7 +111,6 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
               Drag the LEVERS to adjust rod insertion (0-100%). A higher insertion percentage for any rod will reduce
               radioactivity.
             </p>
-            <p className="mt-1">Rods take about 18 seconds to travel their full length.</p>
             <p className="mt-1 font-bold">Use AZ5 button for emergency full insertion.</p>
           </div>
 

@@ -5,7 +5,7 @@ import { DoorOpen, ArrowLeft, Cctv  } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import type { GameState } from "@/lib/types"
-import { formatTime, checkWarnings, getWarningFlags } from "@/lib/game-utils"
+import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import ReactorCamera, { getShiftElapsedSeconds } from "./reactor-camera"
 import ControlRodsModal from "./control-rods-modal"
@@ -26,8 +26,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
   const isOnTarget = isPowerOnTarget(gameState)
 
-  const warnings = checkWarnings(gameState)
-  const hasWarnings = warnings.length > 0
+  const hasWarnings = checkWarnings(gameState).length > 0 || checkEventWarnings(gameState).length > 0
   const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck")
 
   // Same thresholds as the warning list in the message area

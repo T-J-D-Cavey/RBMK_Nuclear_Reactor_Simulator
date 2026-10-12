@@ -45,7 +45,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
           <div className="bg-background border-2 border-border p-3 text-xs leading-relaxed text-center">
             <p>
               {
-                "Toggle water pumps On/Off. Pumps cool the reactor and keep water from boiling into steam when both ON and POWERED. Flow takes a few seconds to start and stop."
+                "Toggle water pumps On/Off. Pumps cool the reactor and keep water from boiling into steam when both ON and POWERED."
               }
             </p>
           </div>

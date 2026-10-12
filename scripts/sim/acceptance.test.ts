@@ -3,7 +3,7 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { scenarios, poisonedState } from "./scenarios"
-import { az5, baseState, run, runQuiet, setPumps, setRods, settle } from "./harness"
+import { az5, baseState, gameStart, run, runQuiet, setPumps, setRods, settle, steadyAt } from "./harness"
 import { getReactivityCards, nextTurbineCapacity, steamTarget, supplyPumps, xenonRate } from "../../lib/sim/reactor"
 import type { GameState } from "../../lib/types"
 
@@ -15,7 +15,7 @@ const maxR = (r: ReturnType<typeof run>, from = 0, to = Infinity) =>
 
 // ---------- §5 Reactivity and radioactivity ----------
 
-test("§5 default start is roughly steady; hands-off drift is slow", () => {
+test("§5 the balanced reference state is roughly steady; hands-off drift is slow", () => {
   const quiet = scenarios.steadyQuiet.run()
   assert.ok(Math.abs(quiet.final.radioactivity - 100) < 2, `quiet drift ${quiet.final.radioactivity}`)
   // With noise: no runaway or collapse in the first 30 s, across several seeds.
@@ -23,6 +23,15 @@ test("§5 default start is roughly steady; hands-off drift is slow", () => {
     const r = run(baseState(), 30, {}, seed)
     for (const x of r.samples) assert.ok(x.R > 70 && x.R < 130, `seed ${seed} t=${x.t} R=${x.R}`)
   }
+})
+
+test("§5 the game starts with a slow upward creep: no correction needed for tens of seconds, then needed within a few minutes", () => {
+  const r = runQuiet(gameStart(), 300)
+  const output = (t: number) => r.samples[t].S * 50 // MW while connected to the grid
+  for (let t = 0; t <= 30; t++) assert.ok(r.samples[t].R < 125, `t=${t} R=${r.samples[t].R.toFixed(0)}`)
+  const leaves = r.samples.find((x) => Math.abs(x.S * 50 - 5000) > 500)
+  assert.ok(leaves && leaves.t >= 45 && leaves.t <= 180, `output leaves ±10% at ${leaves?.t}s`)
+  assert.ok(r.samples[300].R > r.samples[30].R && output(300) > output(60), "still creeping up")
 })
 
 test("§5 a hands-off reactor is never perfectly static (noise present)", () => {
@@ -41,8 +50,8 @@ test("§5/§10 the same rod step has the same boron effect at any depth", () => 
 
 test("§5 the same push moves radioactivity further and faster when radioactivity is high", () => {
   // Same +10 point push from two steady states; compare the change over 3 s.
-  const low = settle(setRods(baseState(), [44, 44, 44, 44, 44, 44, 55, 55, 55, 55], { instant: true }), 400)
-  const high = settle(setRods(baseState(), [30, 30, 30, 30, 30, 30, 45, 45, 45, 45], { instant: true }), 400)
+  const low = steadyAt(70)
+  const high = steadyAt(180)
   assert.ok(high.radioactivity > low.radioactivity * 1.5)
   const kick = (s: GameState) => ({ ...s, reactivityNoise: 10 })
   for (const seconds of [1, 3]) {
@@ -83,7 +92,7 @@ test("§6 at steady radioactivity, fuel temperature sits above reactor temperatu
 })
 
 test("§6 at high radioactivity, raising it further is self-limiting through hot fuel", () => {
-  const high = settle(setRods(baseState(), [30, 30, 30, 30, 30, 30, 45, 45, 45, 45], { instant: true }), 400)
+  const high = steadyAt(180)
   // Pull another 30 points of rods: radioactivity settles rather than running away.
   const r = runQuiet(high, 120, { 0: (s) => withRod(s, 0, 0, false) })
   assert.equal(r.ending, null)
@@ -107,14 +116,14 @@ test("§7 a pump's effect builds over a few seconds after switching, not instant
 })
 
 test("§7 turning a pump on/off has a visibly larger effect at high radioactivity than at low", () => {
-  const low = settle(setRods(baseState(), [44, 44, 44, 44, 44, 44, 55, 55, 55, 55], { instant: true }), 400)
-  const high = settle(setRods(baseState(), [30, 30, 30, 30, 30, 30, 45, 45, 45, 45], { instant: true }), 400)
+  const low = steadyAt(70)
+  const high = steadyAt(180)
   const effect = (s: GameState) => Math.abs(runQuiet(s, 30, { 0: (x) => setPumps(x, 1) }).final.reactorTemp - s.reactorTemp)
   assert.ok(effect(high) > effect(low) * 1.3, `low ${effect(low).toFixed(1)}°, high ${effect(high).toFixed(1)}°`)
 })
 
 test("§7 running all four pumps at low radioactivity measurably lowers radioactivity", () => {
-  const low = settle(setRods(baseState(), [44, 44, 44, 44, 44, 44, 55, 55, 55, 55], { instant: true }), 400)
+  const low = steadyAt(70)
   const two = runQuiet(low, 60).final.radioactivity
   const four = runQuiet(low, 60, { 0: (s) => setPumps(s, 4) }).final.radioactivity
   assert.ok(four < two * 0.9, `two pumps ${two.toFixed(1)}, four ${four.toFixed(1)}`)
@@ -268,8 +277,8 @@ test("§10 a jammed rod stops where it is, including mid-travel", () => {
 })
 
 test("§10 AZ-5 with most rods at 0%, high steam and low flow can be fatal", () => {
-  // Rods 1–7 parked at 0%, held by deep rods 8–10, one pump, hot and steamy.
-  const fragile = settle(setPumps(setRods(baseState(), [0, 0, 0, 0, 0, 0, 0, 85, 85, 85], { instant: true }), 1, { instant: true }), 400)
+  // Rods 1–6 parked at 0%, held by fully inserted rods 7–10, one pump, hot and steamy.
+  const fragile = settle(setPumps(setRods(baseState(), [0, 0, 0, 0, 0, 0, 100, 100, 100, 100], { instant: true }), 1, { instant: true }), 400)
   assert.ok(fragile.steamVolume > 250)
   const r = runQuiet(fragile, 30, { 0: az5 })
   assert.ok(r.ending === "explosion" || maxR(r) > fragile.radioactivity * 1.4)
