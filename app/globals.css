@@ -465,6 +465,78 @@
   box-shadow: inset 0 0 0 3px rgba(146, 64, 14, 0.08);
 }
 
+/* === WS5 message area and end screens === */
+
+/* Safety Test: the log is a typed test procedure sheet */
+.ws5-procedure-sheet {
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 1.45rem, rgba(146, 64, 14, 0.07) 1.45rem 1.5rem),
+    #f3ead2;
+  border-style: dashed;
+  border-color: #92400e;
+}
+
+/* The newest log line types itself in, with a blinking cursor */
+.ws5-teletype-new {
+  animation: ws5-type-in 0.7s steps(28, end) 1;
+}
+
+.ws5-teletype-new::after {
+  content: "▌";
+  margin-left: 0.15em;
+  opacity: 0.7;
+  animation: ws3-rec-blink 1s steps(1, end) infinite;
+}
+
+@keyframes ws5-type-in {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* "New message" marker on a collapsed log */
+.ws5-unread {
+  background: var(--color-event);
+  color: #fff;
+  padding: 0 0.35rem;
+  animation: ws3-rec-blink 1.2s steps(1, end) infinite;
+}
+
+/* Incident report: typed on the same paper as the chart recorder */
+.ws5-report-paper {
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 1.7rem, rgba(85, 96, 74, 0.12) 1.7rem 1.75rem),
+    #efe7cf;
+  color: #2b2a24;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.ws5-stamp {
+  border: 3px double currentColor;
+  transform: rotate(-6deg);
+  letter-spacing: 0.15em;
+}
+
+/* Core explosion: a white flash and a shock ring behind the end screen's emblem */
+.ws5-flash {
+  animation: ws5-flash 1.6s ease-out 1 both;
+}
+
+@keyframes ws5-flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.ws5-shock-ring {
+  animation: ws5-shock 2.4s ease-out infinite;
+}
+
+@keyframes ws5-shock {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
 /* ---- Reduced motion: no flicker, no moving static, steady indicators ---- */
 @media (prefers-reduced-motion: reduce) {
   .ws3-cam-flicker,
@@ -473,8 +545,16 @@
   .ws3-cam-static,
   .ws3-chart-offscale,
   .ws3-crt-title,
-  .ws3-crt-subtitle {
+  .ws3-crt-subtitle,
+  .ws5-teletype-new,
+  .ws5-teletype-new::after,
+  .ws5-unread,
+  .ws5-flash,
+  .ws5-shock-ring {
     animation: none;
+  }
+  .ws5-flash {
+    opacity: 0;
   }
   .ws3-cam-flicker {
     opacity: 0.4;

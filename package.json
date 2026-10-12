@@ -7,7 +7,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
-    "sim:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs --test --test-reporter=spec scripts/sim/acceptance.test.ts",
+    "sim:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs --test --test-reporter=spec scripts/sim/acceptance.test.ts scripts/sim/events.test.ts",
     "sim:trace": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs scripts/sim/trace.ts",
     "sim:shift": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs scripts/sim/shift.ts"
   },

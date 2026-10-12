@@ -1,6 +1,6 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS. WS1–WS3 are built. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1); waiting on the owner's next manual tests.** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Waiting on the owner's next manual tests: Free mode (physics, iteration 6) and Checkpoints B and C (§17.6).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
 
 ---
 
@@ -11,14 +11,15 @@ Status: **IN PROGRESS. WS1–WS3 are built. Mechanics iterations 1 (§10), 2 (§
    2. this file's §7 (done / left to do) and §8 (open questions);
    3. **the owner's playtest results**: `ai/manual-test-results.MD`;
    4. **§10 (the next step):** iteration 1 changes worked out from those results.
-2. **Check the baseline** before changing anything (commands in §9). All 36 acceptance checks should pass, and `tsc` should be clean.
-3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after iteration 6, §16), then plan and make the next iteration the same way.** Open candidates are listed in §15.4. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
+2. **Check the baseline** before changing anything (commands in §9). All 53 acceptance checks should pass (36 physics in `acceptance.test.ts`, 17 events/targets/Safety Test in `events.test.ts`), and `tsc` should be clean.
+3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after iteration 6, §16, and the WS4–WS6 build, §17), then plan and make the next iteration the same way.** Physics candidates are listed in §15.4; events, targets and Safety Test questions in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
    - a tuning change in `lib/sim/tuning.ts`;
    - a model change in `lib/sim/reactor.ts`;
    - a UI fix.
 
    Re-run the checks after each change. If feedback conflicts with an acceptance check in the bible, **stop and ask the owner**; don't quietly change the check. If the fix is purely numeric, edit `tuning.ts` and use `sim:trace` to confirm the scenario feels as described.
-4. When the owner is happy with the feel (possibly after several §10-style iterations), move on to **WS4 (events and targets)**, then WS5, WS6 and WS7, following §4 and §7.
+   - Event and target numbers live in `EVENT_TUNING` (end of `lib/sim/tuning.ts`); the Safety Test script is `lib/safety-test.ts`. A physics change can move what the Safety Test's targets demand, so re-run `sim:test` (its §14 checks play the whole test with a bot).
+4. WS4, WS5 and WS6 are built (§17). WS7 (sounds) waits on the owner's Pixabay picks (§8 Q5).
 5. **House rules:**
    - Never commit. The owner commits.
    - No new npm dependencies (see §2).
@@ -142,6 +143,9 @@ See §8 for the full list of open questions.
   - `fuelEffect` now lives in `tuning.ts` and reads 0 at 530°, so base excess is 310 instead of 384.
   - Xenon is derived from base excess plus the push from fully cold fuel, so its value is unchanged (≈3.51 per %).
   - **Behaviour is identical:** traces of six scenarios matched the previous code row for row (1,472 rows), and all 34 checks pass. Only the `fuel` and `base` card values in traces change.
+- 2026-10-12: **WS4, WS5 and WS6 built** (details in §17). The owner asked for as many next steps as made sense before the next round of manual tests. **No reactor physics changed:** every `TUNING` value is as iteration 6 left it, so the owner's next Free-mode test still measures iteration 6.
+  - One pure game loop (`lib/game-loop.ts`) now drives the React hook and the harness alike.
+  - 53/53 checks pass (17 new, for bible §12–§14). `tsc` is clean and `next build` passes.
 
 ---
 
@@ -161,23 +165,24 @@ See §8 for the full list of open questions.
 | 10 | One-press AZ-5 (closes modal); live rod travel on panel; no text selection; touch grab area | ✅ | `components/control-rods-modal.tsx`. **Not yet tested on a real phone.** |
 | 10 | Rod-margin warning (minimum 200 of 1000) | ✅ | `THRESHOLDS.rodMargin` in `lib/types.ts`. |
 | 11 | Identical physics in every mode | ✅ | The engine has no mode branches. |
-| 11 | Core explosion (steam ≥ 600) and its own end screen | 🟡 | Minimal distinct visual + title only. Full incident report is WS5. |
-| 11/15 | Mode menu wording describes workload | ✅ | `components/difficulty-modal.tsx` (WS3). |
-| 12 | Event budget (Easy ≈1, Hard ≈3 major per shift), no early emergencies, warnings before majors | ⬜ | WS4. **Still the old scheduler** in `lib/game-events.ts` (event every 2–4 min, old 1-in-3 power-cut/jam rule). |
-| 12 | Power cut cuts mains only (turbine can supply pumps) | ✅ | Durations still the old ones (WS4). |
-| 12 | Single pump trip event | ⬜ | WS4. `WaterPump.tripped` exists in state and the engine honours it; nothing sets it yet. |
-| 12 | Turbine trip after sustained over-pressure | ⬜ | WS4. `overpressureSeconds` field exists, unused. |
-| 12 | Grid "hold" request (halves tolerance) | ⬜ | WS4. |
+| 11 | Core explosion (steam ≥ 600) and its own end screen | ✅ | Flash and shock ring, own title, incident report (WS5). |
+| 11/15 | Mode menu wording describes workload | ✅ | `components/difficulty-modal.tsx` (WS3); `GAME_MODE_CONFIGS` descriptions now match. |
+| 12 | Event budget (Easy ≈1, Hard ≈3 major per shift), no early emergencies, warnings before majors | ✅ | `planShiftEvents` / `runShiftEvents` in `lib/game-events.ts`; numbers in `EVENT_TUNING` (§17.1). |
+| 12 | Power cut cuts mains only (turbine can supply pumps); shorter | ✅ | Easy 20–45 s, Hard 30–60 s. Warned 40 s ahead ("grid instability"). |
+| 12 | Rod jam as today, freezing rods mid-travel | ✅ | Warned 25 s ahead ("pressure fluctuations"). |
+| 12 | Single pump trip event | ✅ | A running pump trips for 60–90 s (Hard 60–120 s); the pump modal shows TRIPPED. |
+| 12 | Turbine trip after sustained over-pressure | ✅ | `checkTurbineTrip`: 20 s of OVR-P on the grid, with a countdown warning. Easy and Hard only. |
+| 12 | Grid "hold" request (halves tolerance) | ✅ | `getPowerTolerance(target, hold)`; no new target is announced during a hold. |
 | 13 | ±10% tolerance (min ±200 MW), shared by panel and performance | ✅ | `getPowerTolerance` in `lib/types.ts`, `isPowerOnTarget` in `lib/game-mechanics.ts`. |
-| 13 | Smaller, less frequent, announced target changes | ⬜ | WS4. Uses `state.log` for announcements. |
-| 14 | Safety Test mode | ⬜ | WS6. Menu card exists (IN DEVELOPMENT). Selecting it currently gives a plain 30-min shift with a fixed 5000 MW target and no events (`GAME_MODE_CONFIGS.safety_test`). |
-| 15 | CCTV reactor camera (inline + fullscreen), radiation interference | ✅ | `components/reactor-camera.tsx`. |
+| 13 | Smaller, less frequent, announced target changes | ✅ | 60 s notice via `pendingTarget`; low targets kept rarely (§17.1). |
+| 14 | Safety Test mode | ✅ | `lib/safety-test.ts` (§17.3). **Open question on the test's rundown: §17.5.** |
+| 15 | CCTV reactor camera (inline + fullscreen), radiation interference | ✅ | `components/reactor-camera.tsx`. The Safety Test's clock starts at 01:00:00. |
 | 15 | Chart recorder side panel, wide-screen layout | ✅ | `components/chart-recorder.tsx`, `app/game/page.tsx`. Narrow-screen layout checked by reading classes only. |
-| 15 | Homepage CRT treatment; Safety Test "historical scenario" card | ✅ | `app/page.tsx`, `difficulty-modal.tsx`. |
-| 15 | Message area: sources, teletype/log feel, timestamps | 🟡 | The owner's two-box split is done (§11.1). Sources, teletype feel and timestamps are WS5. `LogEntry` type and `state.log` exist but nothing writes to them yet. |
-| 15 | End screens per ending + incident report | 🟡 | WS5. `state.stats` tracks peaks, lowest rod margin and seconds in danger. `emergenciesHandled` is never incremented yet (WS4 should do it when a major event ends). |
-| 15 | How to Play rewrite (red/blue cards, tips, rod travel, ±10%, same physics) | ⬜ | WS5. `app/instructions/page.tsx` still describes the old mechanics. |
-| 15 | README update | ⬜ | WS5. The README still describes the old mechanics; its "Fixes" list is now partly done. |
+| 15 | Homepage CRT treatment; Safety Test "historical scenario" card | ✅ | `app/page.tsx`, `difficulty-modal.tsx` (no longer "In development"). |
+| 15 | Message area: sources, teletype/log feel, timestamps | ✅ | `components/message-area.tsx` (§17.2). |
+| 15 | End screens per ending + incident report | ✅ | `components/incident-report.tsx`, `game-over-screen.tsx`, `success-screen.tsx`. |
+| 15 | How to Play rewrite (red/blue cards, tips, rod travel, ±10%, same physics) | ✅ | `app/instructions/page.tsx`; numbers read from `THRESHOLDS`, `TUNING` and `EVENT_TUNING`. |
+| 15 | README update | ✅ | Describes the current game; "Still to come" lists the sounds. |
 | 15 | Sounds | ⬜ | WS7. Waiting on the owner's Pixabay picks. |
 
 ---
@@ -200,8 +205,9 @@ Decisions made without the owner that they may want to revisit:
 - **Rod-margin minimum = 200** (the sum of all ten insertions, out of 1000).
 - **Jams:** a jammed rod keeps its position when the jam clears; it doesn't resume its old order.
 - **Tripped pumps** show their PWR lamp off.
-- **Safety Test camera clock** starts at 26-04-1986 00:00:00 like the other modes. It could start nearer 01:00 via the `clockStartMs` prop.
-- **Safety Test card text** says orders come from the test procedure. Check this still matches once WS6 is built.
+- **Safety Test camera clock** now starts at 01:00:00 (was 00:00:00), so the test begins at 01:23:04 as it did on the night. The procedure log uses the same clock.
+- **Safety Test card text** now says orders come from the test procedure, the Deputy Chief Engineer and the Kiev grid controller (checked against WS6).
+- **WS4–WS6 choices** (event numbers, timings, script targets): listed in §17.4.
 
 ---
 
@@ -211,14 +217,14 @@ Run these from the project folder in a terminal (VS Code: *Terminal → New Term
 
 | Command | What it does |
 |---|---|
-| `node --run sim:test` | Runs the 34 automated acceptance checks (bible §5–§11). Prints ✔/✖ per check and a pass/fail count. |
+| `node --run sim:test` | Runs the 53 automated acceptance checks: bible §5–§11 (physics) and §12–§14 (events, targets, Safety Test). Prints ✔/✖ per check and a pass/fail count. |
 | `node --run sim:trace -- <scenario> [every]` | Prints a second-by-second table (R, fuel, reactor temp, steam, xenon, balance, flow, rod margin) for one scenario, e.g. `node --run sim:trace -- pumps0 5`. Run it with no scenario name to list them all. |
-| `node --run sim:shift` | Runs a hands-off Easy and Hard shift through the real game loop (engine + events + game over) and prints how each ended. |
+| `node --run sim:shift [-- seed]` | Plays hands-off Easy, Hard and Safety Test games through the real game loop (`lib/game-loop.ts`) and prints how each ended, its stats and its full message log. |
 | `npx tsc --noEmit -p .` | Type check (the real gate; the build ignores type errors). |
 | `npm run dev` | Starts the game locally at http://localhost:3000. |
 | `npx next build` | Production build, as Vercel runs it. |
 
-Files: tests in `scripts/sim/acceptance.test.ts`, named scenarios in `scripts/sim/scenarios.ts`, helpers in `scripts/sim/harness.ts`. `scripts/sim/register.mjs` lets Node run the TypeScript directly.
+Files: physics tests in `scripts/sim/acceptance.test.ts`, event/target/Safety Test tests in `scripts/sim/events.test.ts`, named scenarios in `scripts/sim/scenarios.ts`, helpers in `scripts/sim/harness.ts`, scripted players in `scripts/sim/bot.ts` (§17.1). `scripts/sim/register.mjs` lets Node run the TypeScript directly.
 
 ---
 
@@ -587,3 +593,146 @@ Source: the owner's test after iteration 5 (reported in chat).
   - Output leaves ±10% at 25 s.
   - Warnings: fuel 900° at ~110 s, radioactivity 250 at ~150 s, reactor 800° and steam 300 at ~4.3 min.
   - Meltdown at ~7.5 min (6 noise seeds: 448–476 s).
+
+---
+
+## 17. WS4, WS5 and WS6: built 2026-10-12
+
+Source: the owner asked for as many next steps as made sense before the next round of manual tests. The owner's next Free-mode test (header only in `ai/manual-test-results.MD`) still measures physics iteration 6: **nothing in `TUNING` changed.**
+
+### 17.1 WS4: events and targets (bible §12–§13)
+
+**One game loop.** `advanceGame(state, rng)` in `lib/game-loop.ts` is one second of the whole game:
+
+1. physics, power and performance (`calculateGameTick`);
+2. the clock, and victory at 0;
+3. events ending, the turbine trip and an announced target taking effect;
+4. either the shift's events (Easy/Hard) or the Safety Test script;
+5. warnings and endings.
+
+The React hook and the harness both call it, so `sim:test` and `sim:shift` exercise the real game. `createNewGame(mode)` builds a fresh game (used by the home page and the hook's reset). The old `lastEventTime`/`justHadPowerCut` fields are gone, and old saves migrate.
+
+**The shift's plan** (`planShiftEvents`, on the first tick):
+- **Budget.** Major emergencies (power cuts, rod jams) and smaller events (pump trips, grid hold requests) per the table below. Kinds are random, with no alternation.
+- **Placement.**
+  - No major emergency in the first 3 min, and majors are at least 4 min apart.
+  - Smaller events start after 2 min and keep 2.5 min clear of every other planned event.
+  - Nothing is planned in the last 90 s.
+- **At runtime** (`runShiftEvents`), one event runs at a time:
+  - An event due while another runs waits until 20 s after it ends.
+  - A hold request waits until a target change has been in force for 90 s.
+  - Anything pushed past the end of the shift is dropped.
+- **Warnings.** The grid reports instability 40 s before a power cut, and the shift foreman reports pressure fluctuations 25 s before a rod jam. Pump trips and holds come without warning.
+
+| (`EVENT_TUNING`) | Easy (15 min) | Hard (30 min) |
+|---|---|---|
+| Major emergencies | 1 (80%) or 2 (20%) | 2 (20%), 3 (60%) or 4 (20%) |
+| Smaller events | 1 or 2 | 3 or 4 |
+| Power cut | 20–45 s | 30–60 s |
+| Rod jam | 4–7 rods, 30–90 s | 5–8 rods, 60–180 s |
+| Pump trip (one running pump) | 60–90 s | 60–120 s |
+| Grid hold (tolerance halved) | 90–150 s | 120–180 s |
+| Target range | 2,000–8,000 MW | 500–10,000 MW |
+| Target change | 500–1,500 MW, every 4–5 min | 500–2,500 MW, every 2–3 min |
+| Low targets (kept 30% of the times one is drawn) | below 3,000 MW | below 2,000 MW |
+
+**Target changes.** The Kiev grid controller announces each change 60 s ahead ("Increase output to 6,500 MW…"), held in `pendingTarget`. The grid waits while a major emergency or hold runs, and once a major emergency has been warned of. A hold request halves the window (`getPowerTolerance(target, hold)`).
+
+**Turbine trip** (Easy and Hard only, since Free and the Safety Test have no events):
+- 20 consecutive seconds of OVR-P (steam ≥ 300) while on the grid trips the turbine to "disconnected".
+- A countdown warning shows in the events box the whole time.
+- There is no lockout: the player can reconnect at once.
+
+**Emergencies handled** counts major emergencies that ran their course.
+
+**Bot yardstick** (`scripts/sim/bot.ts`). A scripted player that reads only the panel and acts every 3 s:
+- It uses a rule of thumb for which radioactivity gives which output, and watches the output trend, easing off as output closes in.
+- It chases an announced target 20 s before it takes effect, responds to power cuts, trips and jams, and never parks a rod below 1%.
+- Over 20 shifts per mode: **Easy** survived 20/20, on target 87% of the time (lowest 76%), final performance 98%. **Hard** survived 20/20, on target 69% (lowest 46%), final performance 88% (lowest 24%).
+- The hardest Hard runs are low targets: xenon builds, and climbing back out overshoots as it burns off (the §13 "xenon trap").
+- Every planned major emergency fired (21/21 Easy, 59/59 Hard). A few late hold requests were pushed past the end and dropped (4 of 72 smaller events on Hard).
+
+### 17.2 WS5: message log, end screens, How to Play, README (bible §15)
+
+- **Message area** (`components/message-area.tsx`). The red reactor-warnings box is unchanged. The blue box is now the **Shift Log**:
+  - **Pinned lines:** running events, an announced target with its countdown, the over-pressure countdown and low performance.
+  - **The log below:** a teletype of messages, newest last. The newest line types itself in.
+  - **Timestamps** match the panel's TIME, so a countdown in Easy/Hard.
+  - **Senders:** each line shows who spoke, e.g. KIEV GRID CONTROLLER, HEAD ENGINEER, SHIFT FOREMAN, PUMP HALL, TURBINE HALL or SYSTEM, coloured by kind.
+  - **Collapsing:** when collapsed, the header keeps its active count and shows NEW when a message arrives.
+  - **Safety Test:** the box is a typed procedure sheet headed by "Phase n of 6" and the standing orders, with night-clock timestamps.
+- **End screens:**
+  - Meltdown, core explosion (white flash and shock ring), removed from post, and success, each with its own title, text and stamp.
+  - All share a typed **incident report** (`components/incident-report.tsx`): mode, shift time, final performance, peak radioactivity, reactor temperature and steam, lowest rod margin (flagged below 200), emergencies handled and time in danger.
+- **How to Play** (`app/instructions/page.tsx`) is rewritten around the red and blue cards, covering every item bible §15 lists, plus events, the Safety Test and endings. Numbers come from `THRESHOLDS`, `TUNING` and `EVENT_TUNING`, so they track tuning.
+- **README:** rewritten to match the game.
+- **Small fixes:**
+  - The performance readout shows the real value when there is no target (it freezes in the Safety Test after the turbine switch, and stays at 100% in Free mode).
+  - The panel's warning lamp lights during a pump trip.
+  - The pump modal says TRIPPED for a tripped pump.
+
+### 17.3 WS6: Safety Test (bible §14)
+
+`lib/safety-test.ts` holds the script. Each step logs a message from a named role. It may also announce a target (the usual 60 s notice) or make one automated change, which happens once. The player can reverse any change and the script never undoes it. There are no random events.
+
+- **Clock.** The night clock (camera and log) reads 01:00:00 at the start, so the test begins at 01:23:04.
+- **Performance** can remove the player from post (`performanceAffectsGameOver` is now true).
+
+| Shift time | Night clock | Phase | Who | What |
+|---|---|---|---|---|
+| 0:00 | 01:00 | 1 Briefing and power reduction | Test procedure | The test's purpose |
+| 0:15 / 1:40 | 01:00 / 01:01 | | Deputy Chief Engineer | Targets 3,500, then 2,500 MW |
+| 3:00 | 01:03 | 2 Kiev's delay | Kiev Grid Controller | Test postponed: hold 1,000 MW |
+| 5:30 / 8:00 | 01:05 / 01:08 | | Senior Reactor Control Engineer / Shift Foreman | Xenon is building: draw rods, watch the margin |
+| 10:00 | 01:10 | 3 Shift change: reduction to test output | Shift Foreman, Deputy Chief Engineer | Targets 700, then 500 MW (13:00) |
+| 16:00 | 01:16 | 4 Raise the power | Deputy Chief Engineer | Target 1,000 MW; the margin warning; "We run the test tonight" |
+| 22:00 | 01:22 | 5 The test | Test procedure | **Automatic:** all four pumps on |
+| 22:30 | 01:22:30 | | Test procedure | **Automatic:** turbine off the grid, supplying the pumps; no target from now on (N/A, performance frozen) |
+| 23:04 | 01:23:04 | | Test procedure | Test begins: the pumps' mains supply is cut |
+| 25:00 | 01:25 | 6 After the test | Test procedure | Test complete: mains restored; no more orders |
+
+**Why these targets.** With two pumps, steady output is about 900 MW at radioactivity 40, 1,240 MW at 45, 1,570 MW at 50 and 2,500 MW at 64. Xenon builds only below radioactivity 50, so Kiev's 1,000 MW builds it slowly and the 700 → 500 MW test band builds it fast.
+
+**Bot results:**
+- **Following the targets:** xenon reaches 47% by 10:00 and 100% by about 16:15. The rod margin drops below 200 from about 13:50 and sits around 115 through phase 4. The bot ends with 95% performance.
+- **Inserting rods, or pressing AZ-5, as the test begins** (no rod at 0%): survives.
+- **Doing nothing once the test begins:** xenon burns off in seconds (radioactivity peaks around 4,800) and the reactor melts down about 80 s into the test.
+- **Turbine put back on the grid during the test** (nothing powers the pumps): core explosion about 55 s in.
+
+### 17.4 Decisions made without the owner (please review)
+
+- All the WS4 numbers in the §17.1 table, including the pump-trip and hold durations (the bible gives none) and the warning lead times.
+- The grid hold ("hold your current output", bible §12) keeps the current target and halves its tolerance; the target itself doesn't change.
+- The turbine trips after 20 s of over-pressure, with no lockout. There are no turbine trips in Free mode or the Safety Test.
+- One event at a time, plus the wait rules in §17.1.
+- Log timestamps follow the panel clock (night clock in the Safety Test). Reactor warnings stay out of the log, per the owner's §11.1 split.
+- Every line of the Safety Test script: wording, targets and timings. The bible's phase timings are kept, and the test begins at 01:23:04.
+
+### 17.5 Open questions for the owner
+
+1. **The Safety Test's rundown doesn't reach the show's ending.**
+   - **What happens now.** Bible §8 and §14 say the turbine powers pumps in proportion to steam. So once the test begins, steam is low, flow collapses and the runaway starts, but the steam it makes powers the pumps again within about 40 s.
+   - **Result.** A test ignored ends in **meltdown**, not explosion. Any AZ-5, however late and even with rods parked at 0%, saves the reactor.
+   - **The bible conflict.** Bible §11 expects "the Safety Test rundown" to be a low-flow runaway ending in an explosion.
+   - **Options** (no code changed yet):
+     - **(a) A real rundown.** When the test begins, the turbine's steam is shut off, so its pump supply runs down over ~45 s whatever the steam is. Measured with the extreme case (no supply at all): ignoring it explodes about 55 s in. Prompt rods or AZ-5 still save it. *A late AZ-5 still saves it too, even with rods at 0%,* because steam is low when it is pressed. Needs a bible change (§14 phase 5, perhaps §8).
+     - **(b) Turbine inertia.** The supply follows steam but can only add a pump every few seconds, so a fast runaway outruns the pumps. This keeps bible §8's rule but also changes power cuts in Easy/Hard.
+     - **(c) Keep it as built.**
+   - **A deadly late AZ-5** (the show's actual ending) would also need physics changes, e.g. a stronger tip or slower rods. That is the owner's call, after the physics playtests.
+2. **Event feel** (Checkpoint B): budgets, durations, warning lead times, hold tolerance, the 20 s turbine trip with no lockout, and the target sizes and intervals.
+3. **Low targets on Hard** (down to 500 MW) are a real xenon trap for the bot. Are they too punishing at 30% frequency?
+
+### 17.6 What to test (Checkpoints B and C)
+
+- **Free mode (physics, iteration 6):** as planned in `ai/manual-test-results.MD`. The only visible change in Free mode is the new end screen.
+- **Checkpoint B, full Easy and Hard shifts.**
+  - Do emergencies feel memorable rather than constant?
+  - Does 60 s of notice make target changes plannable?
+  - Are the warnings (grid instability, pressure fluctuations, turbine over-pressure countdown) noticed in time?
+  - Is the Shift Log readable and compact? Is collapsing the warnings box and keeping the log open useful?
+- **Checkpoint C, the Safety Test end to end.**
+  - Is each phase and order clear?
+  - Is the xenon pressure felt in phases 2–4?
+  - Does phase 4 push the rod margin under its minimum?
+  - How does the test itself feel (see question 1 above)?
+- **Everywhere:** the end screens and incident report, How to Play, and the message area on a phone.

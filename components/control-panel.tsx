@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
 import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
-import ReactorCamera, { getShiftElapsedSeconds } from "./reactor-camera"
+import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
 import ControlRodsModal from "./control-rods-modal"
 import WaterPumpsModal from "./water-pumps-modal"
 import TurbineModal from "./turbine-modal"
@@ -27,7 +27,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const isOnTarget = isPowerOnTarget(gameState)
 
   const hasWarnings = checkWarnings(gameState).length > 0 || checkEventWarnings(gameState).length > 0
-  const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck")
+  const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck" || event.type === "pump-trip")
 
   // Same thresholds as the warning list in the message area
   const flags = getWarningFlags(gameState)
@@ -89,12 +89,13 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
           <div className={"bg-background p-3 space-y-1 transition-all border-3 border-border"}>
             <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Performance</div>
+            {/* With no target, performance holds its value (Free mode stays at 100%; the Safety Test freezes it) */}
             <div
               className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${
-                gameState.powerTarget === null ? "led-green" : gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
+                gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
               }`}
             >
-              {gameState.powerTarget !== null ? `${Math.round(gameState.performance)}%` : "100%"}
+              {`${Math.round(gameState.performance)}%`}
             </div>
           </div>
 
@@ -467,6 +468,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             radioactivity={gameState.radioactivity}
             reactorTemp={gameState.reactorTemp}
             elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
+            clockStartMs={getCameraClockStartMs(gameState.mode)}
           />
         </div>
       )}

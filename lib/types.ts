@@ -24,8 +24,9 @@ export type LogSource = "grid" | "engineer" | "procedure" | "alarm" | "system"
 
 export interface LogEntry {
   id: string
-  time: number // gameTime when logged
-  source: LogSource
+  time: number // shift time (seconds since the shift started) when logged
+  source: LogSource // sets the colour in the message area
+  from?: string // who is speaking, e.g. "KIEV GRID CONTROLLER" (defaults by source)
   text: string
 }
 
@@ -38,17 +39,35 @@ export interface GameStats {
   secondsInDanger: number
 }
 
+// Shift events (bible §12). Power cuts and rod jams are the major emergencies.
+export type EventKind = "power-cut" | "rod-stuck" | "pump-trip" | "grid-hold"
+export const MAJOR_EVENT_KINDS: readonly EventKind[] = ["power-cut", "rod-stuck"]
+
 export interface GameEvent {
   id: string
-  type: "target-change" | "power-cut" | "rod-stuck"
-  message: string
-  timestamp: number
-  duration?: number // in milliseconds
+  type: EventKind
+  message: string // shown in the events box while the event lasts
+  timestamp: number // gameTime when it started
+  duration: number // seconds
   data?: {
-    newTarget?: number
-    affectedPumps?: number[]
-    affectedRods?: number[]
+    affectedPumps?: number[] // pump ids
+    affectedRods?: number[] // rod indices (0-9)
   }
+}
+
+// One event in this shift's plan (shift time = seconds since the shift started).
+export interface ScheduledEvent {
+  at: number
+  kind: EventKind
+  warned: boolean // advance warning already given
+}
+
+// A target change the grid (or the Safety Test script) has announced but which is not yet in force.
+export interface PendingTargetChange {
+  target: number
+  at: number // shift time when it takes effect
+  source: LogSource
+  from?: string
 }
 
 export type GameMode = "easy" | "hard" | "free" | "safety_test"
@@ -64,61 +83,67 @@ export interface GameModeConfig {
   hasPowerTarget: boolean
   defaultPowerTarget: number | null // e.g. 5000 for standard, null for free
   hasRandomEvents: boolean
+  turbineTrips: boolean // sustained over-pressure trips the turbine off the grid (bible §12)
   performanceAffectsGameOver: boolean
 }
 
+// Every mode runs identical reactor physics (bible §11); modes differ only in workload.
 export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
   easy: {
     id: "easy",
     name: "Easy Mode",
     badgeText: "EASY MODE",
-    description: "15 minute countdown with stable reactor mechanics and standard grid targets.",
+    description: "15 minute shift: about one major emergency, smaller and less frequent power target changes.",
     hasTimer: true,
     timerMode: "countdown",
     timeLimit: 900,
     hasPowerTarget: true,
     defaultPowerTarget: 5000,
     hasRandomEvents: true,
+    turbineTrips: true,
     performanceAffectsGameOver: true,
   },
   hard: {
     id: "hard",
     name: "Hard Mode",
     badgeText: "HARD MODE",
-    description: "30 minute countdown with challenging reactor mechanics and volatile grid targets.",
+    description: "30 minute shift: about three major emergencies, larger and more frequent power target changes.",
     hasTimer: true,
     timerMode: "countdown",
     timeLimit: 1800,
     hasPowerTarget: true,
     defaultPowerTarget: 5000,
     hasRandomEvents: true,
+    turbineTrips: true,
     performanceAffectsGameOver: true,
   },
   free: {
     id: "free",
     name: "Free Mode",
     badgeText: "FREE MODE",
-    description: "Unlimited time, no power grid targets, and no random events. Full reactor physics active.",
+    description: "Unlimited time, no power grid targets, and no events. Same reactor physics as every mode.",
     hasTimer: false,
     timerMode: "countup",
     timeLimit: null,
     hasPowerTarget: false,
     defaultPowerTarget: null,
     hasRandomEvents: false,
+    turbineTrips: false,
     performanceAffectsGameOver: false,
   },
   safety_test: {
     id: "safety_test",
     name: "Safety Test",
     badgeText: "SAFETY TEST",
-    description: "Historical scenario: the night of the Unit 4 turbine rundown test. (In development)",
+    description: "Historical scenario: the night of the Unit 4 turbine rundown test. Scripted orders, no random events.",
     hasTimer: true,
     timerMode: "countdown",
     timeLimit: 1800,
     hasPowerTarget: true,
     defaultPowerTarget: 5000,
     hasRandomEvents: false,
-    performanceAffectsGameOver: false,
+    turbineTrips: false,
+    performanceAffectsGameOver: true,
   },
 }
 
@@ -156,11 +181,13 @@ export interface GameState {
   hasWon: boolean
   timeLimit: number | null
 
-  // Events
+  // Events and targets (bible §12–§14)
   activeEvents: GameEvent[]
   eventHistory: GameEvent[]
-  lastEventTime: number
-  justHadPowerCut: boolean
+  eventPlan: ScheduledEvent[] | null // this shift's upcoming events; planned on the first tick (Easy/Hard)
+  nextTargetChangeAt: number | null // shift time when the grid next announces a target change
+  pendingTarget: PendingTargetChange | null // announced, not yet in force
+  scriptStep: number // Safety Test: index of the next script step to run
 
   // Warnings
   warnings: string[]
@@ -222,8 +249,10 @@ export const INITIAL_GAME_STATE: GameState = {
 
   activeEvents: [],
   eventHistory: [],
-  lastEventTime: 900, // Match initial gameTime (easy mode)
-  justHadPowerCut: true,
+  eventPlan: null,
+  nextTargetChangeAt: null,
+  pendingTarget: null,
+  scriptStep: 0,
 
   warnings: [],
 
@@ -233,7 +262,7 @@ export const INITIAL_GAME_STATE: GameState = {
     peakRadioactivity: REFERENCE_STATE.radioactivity,
     peakReactorTemp: REFERENCE_STATE.reactorTemp,
     peakSteam: REFERENCE_STATE.steam,
-    lowestRodMargin: 460,
+    lowestRodMargin: STARTING_RODS.reduce((a, b) => a + b, 0),
     emergenciesHandled: 0,
     secondsInDanger: 0,
   },
@@ -273,9 +302,22 @@ export const THRESHOLDS = {
   powerTolerance: {
     fraction: 0.1, // ±10% of target (bible §13)
     minimum: 200, // never tighter than ±200 MW
+    holdFactor: 0.5, // a grid "hold" request halves the window while it lasts (bible §12)
   },
 } as const
 
-export function getPowerTolerance(powerTarget: number): number {
-  return Math.max(THRESHOLDS.powerTolerance.minimum, powerTarget * THRESHOLDS.powerTolerance.fraction)
+export function getPowerTolerance(powerTarget: number, hold = false): number {
+  const { minimum, fraction, holdFactor } = THRESHOLDS.powerTolerance
+  return Math.max(minimum, powerTarget * fraction) * (hold ? holdFactor : 1)
+}
+
+export function isGridHoldActive(state: Pick<GameState, "activeEvents">): boolean {
+  return state.activeEvents.some((event) => event.type === "grid-hold")
+}
+
+// Seconds since the shift started, in every mode (countdown modes count gameTime down from timeLimit).
+export function getShiftTime(state: Pick<GameState, "gameTime" | "timeLimit" | "mode">): number {
+  const config = GAME_MODE_CONFIGS[state.mode]
+  if (config && config.timerMode === "countdown" && state.timeLimit !== null) return Math.max(0, state.timeLimit - state.gameTime)
+  return Math.max(0, state.gameTime)
 }

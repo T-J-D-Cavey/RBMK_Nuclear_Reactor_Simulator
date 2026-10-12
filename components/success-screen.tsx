@@ -2,28 +2,22 @@
 
 import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
-import { GAME_MODE_CONFIGS } from "@/lib/types"
-import { formatTime } from "@/lib/game-utils"
 import { Atom, Star } from "lucide-react"
 import { useRouter } from "next/navigation"
+import IncidentReport from "./incident-report"
 
 interface SuccessScreenProps {
   gameState: GameState
   onReset: () => void
 }
 
-export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
+export function SuccessScreen({ gameState }: SuccessScreenProps) {
   const router = useRouter()
-  const modeConfig = GAME_MODE_CONFIGS[gameState.mode] || GAME_MODE_CONFIGS[gameState.difficultyIsHard ? "hard" : "easy"]
+  const isTest = gameState.mode === "safety_test"
 
   const handleReturnToMenu = () => {
     localStorage.removeItem("chernobyl-game-state")
     router.push("/")
-  }
-
-  const handlePlayAgain = () => {
-    localStorage.removeItem("chernobyl-game-state")
-    onReset()
   }
 
   return (
@@ -49,77 +43,26 @@ export function SuccessScreen({ gameState, onReset }: SuccessScreenProps) {
             <div className="flex items-center justify-center gap-2">
               <Star className="w-8 h-8 text-accent" />
               <h1 className="text-4xl md:text-6xl font-bold font-mono uppercase text-accent leading-tight">
-                Mission Success
+                {isTest ? "Unit 4 Survives" : "Mission Success"}
               </h1>
               <Star className="w-8 h-8 text-accent" />
             </div>
             <p className="text-lg md:text-xl font-mono text-foreground leading-relaxed">
-              Reactor stable. Your shift is over, good job!
+              {isTest
+                ? "The test is over and Unit 4 is intact. On the real night, the same test ended in disaster."
+                : "Reactor stable. Your shift is over, good job!"}
             </p>
           </div>
 
-          {/* Mode Badge */}
-          <div className="inline-block bg-background border-2 border-accent px-6 py-2">
-            <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Mode</div>
-            <div className="text-xl font-mono font-bold text-accent">
-              {modeConfig?.badgeText || (gameState.difficultyIsHard ? "HARD MODE" : "EASY MODE")}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mx-auto pt-4">
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">
-                {modeConfig?.hasTimer ? "Time Limit" : "Time Elapsed"}
-              </div>
-              <div className="text-xl md:text-2xl font-mono font-bold">
-                {gameState.timeLimit !== null && gameState.timeLimit !== undefined
-                  ? formatTime(gameState.timeLimit)
-                  : formatTime(gameState.gameTime)}
-              </div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Final Performance</div>
-              <div className="text-xl md:text-2xl font-mono font-bold text-accent">
-                {Math.round(gameState.performance)}%
-              </div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Reactor Temp</div>
-              <div className="text-xl md:text-2xl font-mono font-bold">{Math.round(gameState.reactorTemp)}°</div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Events Handled</div>
-              <div className="text-xl md:text-2xl font-mono font-bold">{gameState.eventHistory.length}</div>
-            </div>
-          </div>
-
-          {/* Additional Stats */}
-          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto text-sm">
-            <div className="bg-background border-2 border-border p-3">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Radioactivity</div>
-              <div className="text-lg font-mono font-bold">{Math.round(gameState.radioactivity)}</div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-3">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Final Power</div>
-              <div className="text-lg font-mono font-bold">{Math.round(gameState.powerOutput)} MW</div>
-            </div>
-          </div>
+          <IncidentReport
+            gameState={gameState}
+            title={isTest ? "Test report" : "Shift report"}
+            stamp={isTest ? "Test complete" : "Shift complete"}
+            stampClassName="text-emerald-800"
+          />
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            {/* <Button
-              onClick={handlePlayAgain}
-              size="lg"
-              className="uppercase font-mono tracking-wider px-8 border-2 border-accent bg-accent hover:bg-accent/90"
-            >
-              Play Again
-            </Button> */}
-
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
             <Button
               size="lg"
               variant="outline"

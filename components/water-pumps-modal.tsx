@@ -57,9 +57,9 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
                   Pump {pump.id}
                 </Label>
                 <div className="flex items-center gap-2">
-                  <Power className={`h-4 w-4 ${pump.powered ? "text-accent" : "text-muted-foreground"}`} />
-                  <span className={`text-xs font-mono ${pump.powered ? "text-accent" : "text-muted-foreground"}`}>
-                    {pump.powered ? "POWERED" : "NO POWER"}
+                  <Power className={`h-4 w-4 ${pump.powered ? "text-accent" : pump.tripped ? "text-destructive" : "text-muted-foreground"}`} />
+                  <span className={`text-xs font-mono ${pump.powered ? "text-accent" : pump.tripped ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                    {pump.powered ? "POWERED" : pump.tripped ? "TRIPPED" : "NO POWER"}
                   </span>
                 </div>
               </div>

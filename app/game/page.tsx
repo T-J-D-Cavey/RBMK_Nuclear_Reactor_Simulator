@@ -13,7 +13,7 @@ import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Home, Volume2, VolumeX } from "lucide-react"
-import ReactorCamera, { getShiftElapsedSeconds } from "@/components/reactor-camera"
+import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
 import ChartRecorder from "@/components/chart-recorder"
 
 export default function GamePage() {
@@ -132,6 +132,7 @@ export default function GamePage() {
               radioactivity={gameState.radioactivity}
               reactorTemp={gameState.reactorTemp}
               elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
+              clockStartMs={getCameraClockStartMs(gameState.mode)}
             />
           </div>
           <aside className="w-full min-w-0 max-w-xl mx-auto xl:col-start-3 xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">

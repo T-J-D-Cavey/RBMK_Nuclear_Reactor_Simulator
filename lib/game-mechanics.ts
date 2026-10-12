@@ -1,4 +1,4 @@
-import { type GameOverCause, type GameState, THRESHOLDS, getPowerTolerance } from "./types"
+import { type GameOverCause, type GameState, THRESHOLDS, getPowerTolerance, isGridHoldActive } from "./types"
 import { advanceReactor, getRodMargin } from "./sim/reactor"
 import type { Rng } from "./sim/rng"
 
@@ -30,19 +30,21 @@ function calculatePower(state: GameState): GameState {
   return { ...state, powerOutput: newPowerOutput, turbineConnected: state.turbineMode === "grid" }
 }
 
-export function isPowerOnTarget(state: Pick<GameState, "powerOutput" | "powerTarget">): boolean {
+export function isPowerOnTarget(state: Pick<GameState, "powerOutput" | "powerTarget" | "activeEvents">): boolean {
   if (state.powerTarget === null) return true
-  const tolerance = getPowerTolerance(state.powerTarget)
+  const tolerance = getPowerTolerance(state.powerTarget, isGridHoldActive(state))
   return Math.abs(state.powerOutput - state.powerTarget) <= tolerance
 }
 
 function calculatePerformance(state: GameState): GameState {
-  // If mode does not use power targets (Free Mode), maintain 100% performance
+  // No target (Free mode, or the Safety Test once the turbine is switched to the pumps): performance
+  // neither rises nor falls (bible §14). Free mode starts at 100% and stays there.
   if (state.powerTarget === null) {
-    return { ...state, performance: 100 }
+    return state
   }
 
-  // Within ±10% of target (never tighter than ±200 MW): +1% every 5 seconds, otherwise -1% every 5 seconds
+  // Within ±10% of target (never tighter than ±200 MW; halved during a grid hold): +1% every 5 seconds,
+  // otherwise -1% every 5 seconds
   const performanceChange = isPowerOnTarget(state) ? 0.2 : -0.2
 
   const newPerformance = Math.max(0, Math.min(100, state.performance + performanceChange))

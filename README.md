@@ -4,76 +4,78 @@ Manage a nuclear reactor in real-time. Control the forces involved to meet power
 
 ## Objective
 
-Your goal is to maintain a stable RBMK reactor at optimal performance. You must generate enough electricity to meet the dynamic power targets set by the district grid while preventing the reactor temperature from exceeding safe limits.
+You are the reactor control engineer on Unit 4. Deliver the power output the grid asks for, and keep the reactor away from its two ways to fail: a meltdown (reactor temperature too high) and a core explosion (too much steam).
 
-You are tasked with balancing multiple volatile variables including radioactivity, reactor temperature, steam volume, uranium fuel temperature, and xenon poisoning levels.
+## Game modes
+
+The reactor obeys the same physics in every mode. Modes differ only in workload.
+
+- **Easy:** 15 minute shift, about one major emergency, smaller and less frequent power target changes.
+- **Hard:** 30 minute shift, about three major emergencies, larger and more frequent power target changes.
+- **Free (sandbox):** no targets, no events, unlimited time.
+- **Safety Test:** a scripted, 30 minute recreation of the night of the Unit 4 turbine rundown test (25–26 April 1986). Orders come from the test procedure, the Deputy Chief Engineer and the Kiev grid controller.
+
+## How the reactor works: red cards and blue cards
+
+Radioactivity (the fission level) changes in proportion to itself. Every second, the balance of "cards" in play sets how fast it grows or shrinks:
+
+- **Red cards (push up):** steam in the core (the positive void coefficient), graphite rod tips in the core, fuel cooler than normal (strongly when very cold).
+- **Blue cards (push down):** boron in the control rods, xenon, fuel hotter than normal (a mild brake).
+
+Removing a blue card raises radioactivity as surely as playing a red one: pulling rods out, or xenon burning off.
+
+The core loop: radioactivity heats the fuel, the fuel heats the reactor, the hot reactor boils water into steam, and steam pushes radioactivity up. Left alone, a rise feeds itself to disaster and a fall feeds itself into the xenon pit. Hot fuel slows a rise but never stops it; only rods and pumps do.
+
+Power output is steam × 50 MW while the turbine is on the grid, so it follows radioactivity only through heat and steam, with a delay.
 
 ## Controls
 
-Control Rods (×10)
-- Function: Boron rods act as the primary brake for radioactivity.
-- Usage: Adjust insertion percentage (0-100%) via the control panel.
-- AZ-5 (Scram): Immediately inserts all rods fully. Use only in emergencies.
-- ⚠️ WARNING - The Graphite Tip Effect: Be extremely careful when reinserting fully removed control rods. Due to a design flaw in the RBMK reactor, the graphite tips of the rods may cause a momentary, dangerous spike in radioactivity and steam generation before the boron takes effect.
+**Control rods (×10).** Drag the levers to order new positions. Rods travel at a steady speed (about 18 s for a full stroke); the panel shows where each rod actually is. Every 1% of insertion is the same amount of boron at any depth. The rod margin (total insertion of all ten rods, out of 1,000) should stay above 200.
 
-Water Pumps (×4)
-- Function: Circulate cooling water from the sea through the core to reduce reactor temperature.
-- Usage: Toggle pumps ON/OFF via the control panel.
-- Power Dependency: Pumps require electricity to function. If the station suffers a power cut, pumps will fail.
-- Risk: If pumps are unpowered or turned off, stagnant water will rapidly boil into steam, causing a massive spike in radioactivity (Positive Void Coefficient).
+**Graphite tips.** A rod at 0% has its graphite tip out of the core. Moving it off 0% puts the tip in, pushing radioactivity up for about 2 seconds before the boron takes over. Rods at 1% or more never spike, so don't park rods at 0%.
 
-Turbine
-- Function: Converts steam into electricity for the district.
-- Usage: Connect/Disconnect via the control panel.
-- Grid Management: If power generation exceeds grid capacity, you must disconnect the turbine to prevent grid damage. Watch for the warning light on the panel.
+**AZ-5.** One press drives every rod that isn't jammed to 100% at rod speed. Safe from a normal state; deadly with many rods at 0%, high steam and little flow.
 
-## Key Metrics & Physics
+**Water pumps (×4).** A pump moves water when it is ON and powered, and flow takes a few seconds to change. More pumps mean more cooling and less steam (lower radioactivity). One pump left alone runs away; no pumps at all ends in a steam explosion.
 
-Understanding the feedback loops inside the core is essential for survival.
+**Turbine.** On the grid it turns steam into power output. Disconnected, it can supply the station pumps during a power cut: more steam powers more pumps, and output is 0 meanwhile. Sustained over-pressure trips the turbine off the grid.
 
-### Radioactivity
-The measure of nuclear reaction rate.
-- Increases with: High Steam volume (Positive Void Coefficient), Low Fuel Temperature.
-- Decreases with: Boron Control Rod insertion, Xenon buildup.
+## Xenon
 
-### Reactor Temperature
-Generated by the radioactive reaction.
-- Relation: High radioactivity leads to high temperatures.
-- Cooling: Managed by active Water Pumps.
-- Meltdown: Occurs at 1200°. Avoid at all costs.
+Xenon reads 0% in normal running and builds over minutes when radioactivity is low. It burns off faster the higher radioactivity goes. To climb out of the xenon pit, pull rods (nearly) all out and let the fuel cool, then catch the rise by re-inserting rods as the xenon clears.
 
-### Steam Volume
-Steam drives the turbine but is dangerous in the core.
-- Generation: Begins when Reactor Temperature > ~90°.
-- Positive Void Coefficient: As steam increases, it facilitates the nuclear reaction, creating more radioactivity, which creates more heat, which creates more steam. This is a deadly feedback loop.
+## Performance
 
-### Fuel Temperature & Xenon
-- Negative Temperature Coefficient: Cool uranium is more reactive; hot uranium is less reactive. This change happens slowly.
-- Xenon Pit: If the reactor runs at low power for too long, xenon gas builds up, poisoning the reaction. To escape a xenon pit, reduce fuel temperature and carefully withdraw control rods.
+Stay within ±10% of the power target (never tighter than ±200 MW) and performance rises by 1% every 5 seconds; outside it falls at the same rate. Target changes are announced 60 seconds ahead.
 
-## Performance & Scoring
+## Shift events (Easy and Hard)
 
-You must keep power generation within 10% of the current target.
-- Success: Consistent power generation yields a high performance score.
-- Failure: If your performance drops to 0%, you will be removed from your post as Chief Reactor Controller.
+- **Power cut** (major): the pumps lose their mains supply. Grid instability is reported first.
+- **Control rod jam** (major): several rods freeze where they are, even mid-travel.
+- **Pump trip:** one running pump fails for a while.
+- **Grid hold:** hold output at the target with half the usual tolerance.
+- **Turbine trip:** a consequence of sustained over-pressure, never random.
 
-Random Events
-Be prepared for unexpected variables:
-1. Target Change: The grid demands more or less power suddenly.
-2. Power Cut: External power fails, disabling water pumps.
-3. Stuck Rods: Mechanical failure prevents rod movement.
+## Game over
 
-## Game Over Conditions
+1. **Meltdown:** reactor temperature reaches 1200°.
+2. **Core explosion:** steam reaches 600.
+3. **Removed from post:** performance drops to 0% (Easy, Hard and the Safety Test).
 
-1. MELTDOWN: Reactor Temperature reaches 1200°.
-2. PERFORMANCE FAILURE: Performance score drops to 0%.
+## Development
 
+The reactor physics live in `lib/sim/` and run headlessly for testing (Node 24, no extra installs):
 
-## Fixes and improvements to make
- 
-- Change turbine modal so there is the option to power pumps. This option is only available if the turbine has been disconnected. If on, the number of pumps that are powered is based on steam generation volume, and as the turbine has been disconnected, power generation will be 0%.
-- Double check power threshold params are working as expected
-- One off sound affects when water pump changes / control rod changes / turbine are submitted
+- `node --run sim:test` runs the design's acceptance checks (physics, events, targets, Safety Test).
+- `node --run sim:trace -- <scenario>` prints a second-by-second trace of a physics scenario.
+- `node --run sim:shift` plays hands-off Easy, Hard and Safety Test games through the real game loop.
+- `npx tsc --noEmit -p .` is the type check (the build ignores type errors).
+
+Design documents are in `ai/`.
+
+## Still to come
+
+- One-off sounds when rod, pump and turbine changes are applied, a rod-drive sound while rods travel, and a distinct AZ-5 sound.
 
 ## Acceditations
 

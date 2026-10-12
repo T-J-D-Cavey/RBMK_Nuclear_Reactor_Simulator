@@ -1,4 +1,5 @@
-// Every reactor-physics number lives here. Section numbers refer to ai/high-level-plan.md.
+// Every reactor-physics number lives here, plus (at the end, separately) the shift's events and power
+// targets. Section numbers refer to ai/high-level-plan.md.
 // Reactivity is counted in "points": 1 point = 1% of one rod's boron (bible §10.4).
 // This file must not import anything (lib/types.ts imports it).
 
@@ -135,3 +136,81 @@ const derived = derive()
 export const TUNING = { ...TUNING_BASE, fuelHeatPerRadioactivity: derived.fuelHeat, ...derived }
 
 export { fuelEffect, pumpEffect }
+
+// --- §12–§13 Shift events and power targets (not reactor physics: the engine never reads these) ---
+// Times are seconds of shift time. Starting values from the bible, to tune in playtests (Checkpoint B).
+
+type Range = readonly [number, number]
+
+export interface ShiftEventTuning {
+  majorCounts: readonly (readonly [count: number, weight: number])[] // power cuts and rod jams per shift
+  smallCounts: readonly (readonly [count: number, weight: number])[] // pump trips and grid hold requests
+  firstMajorAfter: number // no major emergency in the first few minutes
+  firstSmallAfter: number
+  majorSpacing: number // at least this long between the starts of two major emergencies
+  smallSpacing: number // smaller events keep this far from every other planned event
+  lastStartBefore: number // nothing is planned to start this close to the end of the shift
+  powerCutSeconds: Range
+  rodJamRods: Range
+  rodJamSeconds: Range
+  pumpTripSeconds: Range
+  gridHoldSeconds: Range
+  targetRange: Range // MW
+  targetMaxStep: number // largest single change, MW
+  targetMinStep: number // smallest change worth announcing, MW
+  targetInterval: Range // between two target changes taking effect
+  lowTargetBelow: number // targets below this risk the xenon pit, so they are rarer (§13)
+  lowTargetChance: number // chance a low target is kept when one is drawn
+}
+
+const EASY_EVENTS: ShiftEventTuning = {
+  majorCounts: [[1, 0.8], [2, 0.2]], // ≈1 per 15-minute shift
+  smallCounts: [[1, 0.5], [2, 0.5]],
+  firstMajorAfter: 180,
+  firstSmallAfter: 120,
+  majorSpacing: 240,
+  smallSpacing: 150,
+  lastStartBefore: 90,
+  powerCutSeconds: [20, 45],
+  rodJamRods: [4, 7],
+  rodJamSeconds: [30, 90],
+  pumpTripSeconds: [60, 90],
+  gridHoldSeconds: [90, 150],
+  targetRange: [2000, 8000],
+  targetMaxStep: 1500,
+  targetMinStep: 500,
+  targetInterval: [240, 300],
+  lowTargetBelow: 3000,
+  lowTargetChance: 0.3,
+}
+
+const HARD_EVENTS: ShiftEventTuning = {
+  majorCounts: [[2, 0.2], [3, 0.6], [4, 0.2]], // ≈3 per 30-minute shift
+  smallCounts: [[3, 0.5], [4, 0.5]],
+  firstMajorAfter: 180,
+  firstSmallAfter: 120,
+  majorSpacing: 240,
+  smallSpacing: 150,
+  lastStartBefore: 90,
+  powerCutSeconds: [30, 60],
+  rodJamRods: [5, 8],
+  rodJamSeconds: [60, 180],
+  pumpTripSeconds: [60, 120],
+  gridHoldSeconds: [120, 180],
+  targetRange: [500, 10000],
+  targetMaxStep: 2500,
+  targetMinStep: 500,
+  targetInterval: [120, 180],
+  lowTargetBelow: 2000,
+  lowTargetChance: 0.3,
+}
+
+export const EVENT_TUNING = {
+  easy: EASY_EVENTS,
+  hard: HARD_EVENTS,
+  targetNotice: 60, // the grid announces a target change this long before it takes effect (§13)
+  eventGap: 20, // an event due while another is running waits until this long after it ends
+  holdAfterTargetChange: 90, // a hold request waits this long after a target change, so the player can settle
+  warningLead: { "power-cut": 40, "rod-stuck": 25 } as Partial<Record<string, number>>, // advance warning (§12)
+  turbineTripSeconds: 20, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12)
+}

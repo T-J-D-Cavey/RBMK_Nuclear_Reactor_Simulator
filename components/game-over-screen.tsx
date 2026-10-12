@@ -1,47 +1,65 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import type { GameState } from "@/lib/types"
-import { GAME_MODE_CONFIGS } from "@/lib/types"
-import { formatTime } from "@/lib/game-utils"
 import { Flame, Radiation, TrendingDown } from "lucide-react"
 import { useRouter } from "next/navigation"
+import IncidentReport from "./incident-report"
 
 interface GameOverScreenProps {
   gameState: GameState
   onReset: () => void
 }
 
-export default function GameOverScreen({ gameState, onReset }: GameOverScreenProps) {
+// A separate presentation for each way the shift can end badly (bible §11, §15).
+const ENDINGS = {
+  meltdown: {
+    title: "Meltdown",
+    stamp: "Meltdown",
+    lead: "The core overheated faster than the pumps could carry the heat away, and the reactor temperature passed its limit.",
+  },
+  explosion: {
+    title: "Core Explosion",
+    stamp: "Core destroyed",
+    lead: "Steam flashed faster than the channels could hold it. With little water flowing, the runaway ended the way it did on 26 April 1986.",
+  },
+  performance: {
+    title: "Removed from Post",
+    stamp: "Dismissed",
+    lead: "By order of the station director you are relieved of duty. The grid did not get the power it asked for.",
+  },
+} as const
+
+export default function GameOverScreen({ gameState }: GameOverScreenProps) {
   const router = useRouter()
   const cause = gameState.gameOverCause ?? (gameState.gameOverReason?.includes("MELTDOWN") ? "meltdown" : "performance")
   const isMeltdown = cause === "meltdown"
   const isExplosion = cause === "explosion"
-  const modeConfig = GAME_MODE_CONFIGS[gameState.mode] || GAME_MODE_CONFIGS[gameState.difficultyIsHard ? "hard" : "easy"]
+  const ending = ENDINGS[cause]
 
   const handleReturnToMenu = () => {
     localStorage.removeItem("chernobyl-game-state")
     router.push("/")
   }
 
-  const handleTryAgain = () => {
-    localStorage.removeItem("chernobyl-game-state")
-    onReset()
-  }
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {isExplosion && <div className="ws5-flash pointer-events-none fixed inset-0 z-10 bg-white" aria-hidden="true" />}
+
       <div className="max-w-2xl w-full space-y-6 text-center">
         {/* Reactor Visual */}
         <div className="flex justify-center mb-8">
           {isExplosion ? (
-            <div
-              className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-orange-500 animate-pulse relative"
-              style={{
-                boxShadow: "0 0 140px 70px rgb(249 115 22 / 0.7), 0 0 60px 20px rgb(255 255 255 / 0.5)",
-              }}
-            >
-              <div className="w-full h-full rounded-full border-8 border-primary flex items-center justify-center bg-orange-600/80 backdrop-blur">
-                <Flame className="w-24 h-24 md:w-32 md:h-32 text-background animate-pulse" />
+            <div className="relative w-64 h-64 md:w-80 md:h-80">
+              <div className="ws5-shock-ring absolute inset-0 rounded-full border-8 border-orange-400" aria-hidden="true" />
+              <div
+                className="w-full h-full rounded-full bg-orange-500 animate-pulse relative"
+                style={{
+                  boxShadow: "0 0 140px 70px rgb(249 115 22 / 0.7), 0 0 60px 20px rgb(255 255 255 / 0.5)",
+                }}
+              >
+                <div className="w-full h-full rounded-full border-8 border-primary flex items-center justify-center bg-orange-600/80 backdrop-blur">
+                  <Flame className="w-24 h-24 md:w-32 md:h-32 text-background animate-pulse" />
+                </div>
               </div>
             </div>
           ) : isMeltdown ? (
@@ -63,70 +81,27 @@ export default function GameOverScreen({ gameState, onReset }: GameOverScreenPro
         </div>
 
         {/* Game Over Message */}
-        <div className="bg-card border-4 border-destructive p-6 md:p-8 space-y-6">
-          {/* Mode Badge */}
-          <div className="inline-block bg-background border-2 border-destructive px-6 py-2">
-            <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Mode</div>
-            <div className="text-xl font-mono font-bold text-destructive">
-              {modeConfig?.badgeText || (gameState.difficultyIsHard ? "HARD MODE" : "EASY MODE")}
-            </div>
-          </div>
-
-          <h1 className="text-4xl md:text-6xl font-bold font-mono uppercase text-destructive leading-tight">
-            {isExplosion ? "Core Explosion" : isMeltdown ? "Meltdown" : "Game Over"}
+        <div className={`bg-card border-4 p-6 md:p-8 space-y-6 ${cause === "performance" ? "border-primary" : "border-destructive"}`}>
+          <h1
+            className={`text-4xl md:text-6xl font-bold font-mono uppercase leading-tight ${
+              cause === "performance" ? "text-foreground" : "text-destructive"
+            }`}
+          >
+            {ending.title}
           </h1>
 
           <p className="text-lg md:text-xl font-mono text-foreground leading-relaxed">{gameState.gameOverReason}</p>
+          <p className="text-sm md:text-base font-mono text-muted-foreground leading-relaxed">{ending.lead}</p>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-3xl mx-auto pt-4">
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">
-                {modeConfig?.timerMode === "countup" ? "Time Elapsed" : "Time Remaining"}
-              </div>
-              <div className="text-xl md:text-2xl font-mono font-bold">{formatTime(gameState.gameTime)}</div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Final Performance</div>
-              <div className="text-xl md:text-2xl font-mono font-bold">{Math.round(gameState.performance)}%</div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Reactor Temp</div>
-              <div className="text-xl md:text-2xl font-mono font-bold">{Math.round(gameState.reactorTemp)}°</div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-4">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-2">Events Handled</div>
-              <div className="text-xl md:text-2xl font-mono font-bold">{gameState.eventHistory.length}</div>
-            </div>
-          </div>
-
-          {/* Additional Stats */}
-          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto text-sm">
-            <div className="bg-background border-2 border-border p-3">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Radioactivity</div>
-              <div className="text-lg font-mono font-bold">{Math.round(gameState.radioactivity)}</div>
-            </div>
-
-            <div className="bg-background border-2 border-border p-3">
-              <div className="text-xs text-muted-foreground font-mono uppercase mb-1">Final Power</div>
-              <div className="text-lg font-mono font-bold">{Math.round(gameState.powerOutput)} MW</div>
-            </div>
-          </div>
+          <IncidentReport
+            gameState={gameState}
+            title="Incident report"
+            stamp={ending.stamp}
+            stampClassName={cause === "performance" ? "text-neutral-700" : "text-red-700"}
+          />
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-             
-            {/* <Button
-              onClick={handleTryAgain}
-              size="lg"
-              className="uppercase font-mono tracking-wider px-8 border-2 border-primary"
-            >
-              Try Again
-            </Button>  */}
-
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
             <Button
               size="lg"
               variant="outline"

@@ -84,15 +84,12 @@ export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: Diff
               <span className="font-mono text-[10px] uppercase tracking-widest text-amber-800">
                 Historical scenario · 25–26 April 1986
               </span>
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-black px-1.5 py-0.5 border border-amber-800">
-                In development
-              </span>
             </div>
             <h3 className="font-mono font-bold text-lg uppercase text-amber-900">Safety Test</h3>
             <ul className="text-sm font-mono space-y-1 text-amber-900/80">
               <li>• 30 minute scripted recreation of the night of the Unit 4 turbine rundown test</li>
-              <li>• Orders come from the test procedure, not random events</li>
-              <li>• No random emergencies</li>
+              <li>• Orders from the test procedure, the Deputy Chief Engineer and the Kiev grid controller</li>
+              <li>• No random emergencies: every disruption is scripted</li>
             </ul>
             <Button
               onClick={() => onSelectDifficulty("safety_test")}
