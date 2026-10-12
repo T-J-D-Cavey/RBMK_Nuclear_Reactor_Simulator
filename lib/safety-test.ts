@@ -16,12 +16,17 @@ export const SAFETY_TEST_PHASES: Record<number, string> = {
   6: "After the test",
 }
 
+// Every message comes from a person (owner, 2026-10-12), so the procedure is read out by a test supervisor and
+// the automated changes are reported by the crew who make them. Kiev keeps its name here: it is the night of the
+// real test (bible §14), whereas Easy and Hard have a plain "GRID CONTROLLER".
 const ROLES = {
-  procedure: { source: "procedure", from: "TEST PROCEDURE" },
+  procedure: { source: "procedure", from: "TEST SUPERVISOR" },
   deputy: { source: "engineer", from: "DEPUTY CHIEF ENGINEER" },
   kiev: { source: "grid", from: "KIEV GRID CONTROLLER" },
   foreman: { source: "engineer", from: "SHIFT FOREMAN" },
   srce: { source: "engineer", from: "SENIOR REACTOR CONTROL ENGINEER" },
+  pumps: { source: "engineer", from: "PUMP OPERATOR" },
+  turbine: { source: "engineer", from: "TURBINE OPERATOR" },
 } satisfies Record<string, { source: LogSource; from: string }>
 
 type Action = "pumps-on" | "turbine-to-pumps" | "mains-off" | "mains-on"
@@ -182,10 +187,15 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
   switch (step.action) {
     case "pumps-on":
       s = { ...s, waterPumps: s.waterPumps.map((p) => ({ ...p, on: true })) }
-      return addLog(s, "system", "Automatic: all four pumps switched on.")
+      return addLog(s, ROLES.pumps.source, "All four pumps switched on, as the procedure requires.", ROLES.pumps.from)
     case "turbine-to-pumps":
       s = { ...s, turbineMode: "pumps", turbineConnected: false }
-      return addLog(s, "system", "Automatic: turbine disconnected from the grid and supplying the station pumps. No grid target from now on.")
+      return addLog(
+        s,
+        ROLES.turbine.source,
+        "Turbine disconnected from the grid and supplying the station pumps, as the procedure requires. No grid target from now on.",
+        ROLES.turbine.from,
+      )
     case "mains-off":
       return { ...s, mainsPower: false }
     case "mains-on":
@@ -195,7 +205,7 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
   }
 }
 
-// What the procedure log shows above the messages: the current phase and the standing order.
+// What the procedure log's header shows above the paper: the current phase and the standing order.
 export function getSafetyTestStatus(state: Pick<GameState, "scriptStep">): { phase: number; name: string; order: string | null } {
   const done = SAFETY_TEST_SCRIPT.slice(0, Math.max(1, state.scriptStep))
   const phase = [...done].reverse().find((step) => step.phase)?.phase ?? 1

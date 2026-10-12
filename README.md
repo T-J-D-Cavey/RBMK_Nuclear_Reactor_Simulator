@@ -46,7 +46,7 @@ Xenon reads 0% in normal running and builds over minutes when radioactivity is l
 
 ## Performance
 
-Stay within ±10% of the power target (never tighter than ±200 MW) and performance rises by 1% every 5 seconds; outside it falls at the same rate. Target changes are announced 60 seconds ahead.
+Stay within ±10% of the power target (never tighter than ±200 MW) and performance rises by 1% every 5 seconds; outside it falls at the same rate. The grid controller warns of a target change 60 seconds before confirming the new target.
 
 ## Shift events (Easy and Hard)
 

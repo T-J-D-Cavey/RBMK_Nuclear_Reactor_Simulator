@@ -20,13 +20,15 @@ export type TurbineMode = "grid" | "pumps" | "idle"
 
 export type GameOverCause = "meltdown" | "explosion" | "performance"
 
-export type LogSource = "grid" | "engineer" | "procedure" | "alarm" | "system"
+// Sets a message's ink colour in the shift log. Who sent it is always a named person (`from`): the
+// computer's own warnings go on the alarm screen, never in the log (owner, 2026-10-12).
+export type LogSource = "grid" | "engineer" | "procedure" | "alarm"
 
 export interface LogEntry {
   id: string
   time: number // shift time (seconds since the shift started) when logged
   source: LogSource // sets the colour in the message area
-  from?: string // who is speaking, e.g. "KIEV GRID CONTROLLER" (defaults by source)
+  from: string // who is speaking, e.g. "GRID CONTROLLER"
   text: string
 }
 
@@ -46,7 +48,6 @@ export const MAJOR_EVENT_KINDS: readonly EventKind[] = ["power-cut", "rod-stuck"
 export interface GameEvent {
   id: string
   type: EventKind
-  message: string // shown in the events box while the event lasts
   timestamp: number // gameTime when it started
   duration: number // seconds
   data?: {
@@ -67,7 +68,7 @@ export interface PendingTargetChange {
   target: number
   at: number // shift time when it takes effect
   source: LogSource
-  from?: string
+  from: string
 }
 
 export type GameMode = "easy" | "hard" | "free" | "safety_test"

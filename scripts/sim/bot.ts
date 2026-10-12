@@ -71,8 +71,10 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
     } else if (s.powerTarget !== null) {
       // Output lags radioactivity by a couple of minutes, so steer by where output is heading: aim
       // radioactivity past the target while output is far off, and ease off as the trend closes the gap.
-      // An announced target is chased shortly before it takes effect.
-      const pending = s.pendingTarget && s.pendingTarget.at - now <= 20 ? s.pendingTarget.target : null
+      // The bot only uses a target the player can see. The Safety Test's orders give the new target with their
+      // notice, so it is chased shortly before it takes effect. In Easy and Hard the grid's warning gives no number
+      // (bible §13), so the bot waits for the confirmation.
+      const pending = s.mode === "safety_test" && s.pendingTarget && s.pendingTarget.at - now <= 20 ? s.pendingTarget.target : null
       const target = pending ?? s.powerTarget
       if (s.turbineMode !== "grid") {
         // No output while the turbine is off the grid (e.g. supplying the pumps in a power cut): hold the

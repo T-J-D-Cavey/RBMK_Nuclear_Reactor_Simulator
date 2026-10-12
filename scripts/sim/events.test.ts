@@ -199,7 +199,7 @@ test("§13 tolerance is ±10% of the target, never tighter than ±200 MW, in eve
   assert.equal(isPowerOnTarget({ powerOutput: 5510, powerTarget: 5000, activeEvents: [] }), false)
 })
 
-test("§13 target changes are announced 60 s ahead, smaller than before, within range; Hard's are bigger and more frequent", () => {
+test("§13 target changes are warned 60 s ahead, smaller than before, within range; Hard's are bigger and more frequent", () => {
   const sizes: Record<string, number[]> = { easy: [], hard: [] }
   const gaps: Record<string, number[]> = { easy: [], hard: [] }
   for (const mode of ["easy", "hard"] as const) {

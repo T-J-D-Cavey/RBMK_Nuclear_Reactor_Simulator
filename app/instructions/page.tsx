@@ -195,8 +195,8 @@ export default function InstructionsPage() {
           <Section title="Shift Events (Easy & Hard)">
             <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
               <li>
-                <strong className="font-mono">Target change:</strong> the Kiev grid controller announces each new target{" "}
-                {EVENT_TUNING.targetNotice} seconds before it takes effect. Plan the manoeuvre. Low targets are a xenon trap.
+                <strong className="font-mono">Target change:</strong> the grid controller warns that demand has changed, then
+                confirms the new target {EVENT_TUNING.targetNotice} seconds later, when it takes effect. Low targets are a xenon trap.
               </li>
               <li>
                 <strong className="font-mono">Power cut</strong> (major): the pumps lose their mains supply. Reports of grid

@@ -2,6 +2,10 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.7 – 2026-10-12 (after the Easy-mode playtest of the events build)
+
+- **Target changes are warned, not announced** (Section 13 change list and acceptance check). The grid's notice used to give the new target 60 seconds ahead ("increase to X MW in 60 seconds"), so the player could plan the manoeuvre. The owner rewrote the messages: the grid now only warns that demand has changed, and confirms the new target when it takes effect. A target change is now something the player reacts to, with a minute's warning that one is coming. The acceptance check now asks a competent player to meet Hard targets once confirmed, rather than with planned manoeuvres. The Safety Test's scripted orders still give their targets in advance.
+
 ## v2.6 – 2026-10-12 (after the sixth playtest)
 
 - **The start climbs straight away** (Section 5 acceptance check). The v2.2 "slow creep, no correction for tens of seconds" start still felt balanced. The owner tested rod 1 at 30% (radioactivity over 200 in two minutes, "just about fast enough for the player to feel they need to act") and asked for an equivalent start spread over three rods.

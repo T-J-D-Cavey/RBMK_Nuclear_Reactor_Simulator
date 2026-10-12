@@ -467,7 +467,7 @@
 
 /* === WS5 message area and end screens === */
 
-/* Safety Test: the log is a typed test procedure sheet */
+/* Safety Test: the phase and standing orders, on a typed procedure card above the teleprinter */
 .ws5-procedure-sheet {
   background:
     repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 1.45rem, rgba(146, 64, 14, 0.07) 1.45rem 1.5rem),
@@ -476,21 +476,194 @@
   border-color: #92400e;
 }
 
-/* The newest log line types itself in, with a blinking cursor */
-.ws5-teletype-new {
-  animation: ws5-type-in 0.7s steps(28, end) 1;
+/* ---- Alarm monitor: the plant computer's green-phosphor screen (owner, 2026-10-12) ---- */
+.ws5-crt-screen {
+  position: relative;
+  overflow: hidden;
+  color: #5cff9a;
+  background: radial-gradient(ellipse at 50% 45%, #0a2a16 0%, #04170b 65%, #020c06 100%);
+  border-radius: 0.9rem / 0.7rem;
+  box-shadow:
+    0 0 0 2px #0b0b0b,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 0 36px rgba(0, 0, 0, 0.85);
 }
 
-.ws5-teletype-new::after {
-  content: "▌";
-  margin-left: 0.15em;
-  opacity: 0.7;
+/* Scanlines */
+.ws5-crt-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.3) 3px,
+    rgba(0, 0, 0, 0) 4px
+  );
+  z-index: 2;
+}
+
+/* Curved glass: darker corners and a faint reflection */
+.ws5-crt-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.55) 100%),
+    radial-gradient(ellipse at 22% 12%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 38%);
+  z-index: 3;
+}
+
+.ws5-crt-text {
+  font-family: var(--font-terminal), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-shadow:
+    0 0 2px rgba(92, 255, 154, 0.85),
+    0 0 9px rgba(92, 255, 154, 0.4);
+  animation: ws5-crt-flicker 5s steps(1, end) infinite;
+}
+
+@keyframes ws5-crt-flicker {
+  0%, 100% { opacity: 1; }
+  37% { opacity: 1; }
+  38% { opacity: 0.88; }
+  39% { opacity: 1; }
+  83% { opacity: 0.93; }
+  84% { opacity: 1; }
+}
+
+.ws5-crt-dim {
+  opacity: 0.6;
+}
+
+/* "WARNING" in inverse video */
+.ws5-crt-inverse {
+  background: #5cff9a;
+  color: #04170b;
+  text-shadow: none;
+  box-shadow: 0 0 8px rgba(92, 255, 154, 0.45);
+  padding: 0 0.2em;
+}
+
+.ws5-crt-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.95em;
+  margin-left: 0.05em;
+  vertical-align: -0.12em;
+  background: currentColor;
+  box-shadow: 0 0 6px rgba(92, 255, 154, 0.6);
+}
+
+.ws5-crt-cursor-blink {
   animation: ws3-rec-blink 1s steps(1, end) infinite;
 }
 
-@keyframes ws5-type-in {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
+/* ---- Shift log teleprinter: the chart recorder's paper, newest line at the top (owner, 2026-10-12) ---- */
+.ws5-printer-viewport {
+  position: relative;
+  overflow: hidden;
+  min-height: 6rem;
+  transition: height 450ms ease-out;
+  outline: none;
+}
+
+.ws5-printer-viewport:focus-visible {
+  box-shadow: 0 0 0 2px #f59e0b;
+}
+
+/* Only when there is paper to read back: then a finger on the paper moves the paper, not the page */
+.ws5-printer-draggable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.ws5-printer-draggable:active {
+  cursor: grabbing;
+}
+
+.ws5-printer-paper {
+  --lh: 1.375rem;
+  position: relative;
+  padding: 0.5rem 1.6rem var(--lh);
+  font-size: 0.8125rem;
+  line-height: var(--lh);
+  color: #2b2a24;
+  user-select: none;
+  background:
+    linear-gradient(to right, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0) 95%, rgba(0, 0, 0, 0.12)),
+    repeating-linear-gradient(to bottom, rgba(85, 96, 74, 0) 0 calc(var(--lh) - 1px), rgba(85, 96, 74, 0.16) calc(var(--lh) - 1px) var(--lh)),
+    #efe7cf;
+  background-position: 0 0, 0 0.5rem, 0 0;
+}
+
+@media (min-width: 640px) {
+  .ws5-printer-paper {
+    --lh: 1.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Sprocket holes down both edges, moving with the paper like the chart recorder's */
+.ws5-printer-paper::before,
+.ws5-printer-paper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1.1rem;
+  pointer-events: none;
+  background: radial-gradient(circle, #3f3f46 0 2.5px, rgba(63, 63, 70, 0) 3px) 0 0 / 100% var(--lh) repeat-y;
+}
+
+.ws5-printer-paper::before {
+  left: 0;
+}
+
+.ws5-printer-paper::after {
+  right: 0;
+}
+
+/* The housing's lamp while a line feeds and prints */
+.ws5-lamp-blink {
+  animation: ws3-rec-blink 0.6s steps(1, end) infinite;
+}
+
+.ws5-printer-stamp {
+  color: #6b6b5a;
+}
+
+/* The print head's cursor: takes no width, so line breaks don't move while a line prints */
+.ws5-print-cursor {
+  position: relative;
+}
+
+.ws5-print-cursor::after {
+  content: "▌";
+  position: absolute;
+  left: 0.05em;
+  top: 0;
+  opacity: 0.7;
+  animation: ws3-rec-blink 0.5s steps(1, end) infinite;
+}
+
+.ws5-print-head {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 0.6rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #1c1c1b 0 3px, rgba(0, 0, 0, 0.45) 3px, rgba(0, 0, 0, 0));
+}
+
+/* The paper curves away over the roller and out of sight */
+.ws5-printer-roller {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 0.75rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3) 60%, #1c1c1b 100%);
 }
 
 /* "New message" marker on a collapsed log */
@@ -546,12 +719,17 @@
   .ws3-chart-offscale,
   .ws3-crt-title,
   .ws3-crt-subtitle,
-  .ws5-teletype-new,
-  .ws5-teletype-new::after,
+  .ws5-crt-text,
+  .ws5-crt-cursor-blink,
+  .ws5-print-cursor::after,
+  .ws5-lamp-blink,
   .ws5-unread,
   .ws5-flash,
   .ws5-shock-ring {
     animation: none;
+  }
+  .ws5-printer-viewport {
+    transition: none;
   }
   .ws5-flash {
     opacity: 0;

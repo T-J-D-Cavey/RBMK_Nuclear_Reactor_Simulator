@@ -335,7 +335,7 @@ Each ending gets its own game-over presentation.
 
 **Change** (values are starting points for playtesting):
 - **Smaller, less frequent changes.** Cap each change at a fraction of today's maximum (roughly ±1,500–2,500 MW), at intervals of several minutes.
-- **Announced changes:** the grid controller gives notice ("increase to X MW in 60 seconds"), so the player plans a manoeuvre rather than reacting to a jump.
+- **Warned changes:** the grid controller warns that demand has changed ("We may require an adjustment in your power output. Confirmation to follow shortly"), then confirms the new target 60 seconds later, when it takes effect. The player knows a change is coming, but not its size or direction until it is confirmed. (The Safety Test's orders still state the new target with their notice.)
 - **Tolerance proportional to target:** ±10%, never tighter than about ±200 MW, the same in every mode. Low targets become precise rather than trivially wide.
 - **Keep low targets as a deliberate danger, but rarer.** A low target is a xenon trap; that is good tension, used sparingly.
 - **Easy and Hard differ in the size and frequency of changes** (starting values):
@@ -348,7 +348,7 @@ Each ending gets its own game-over presentation.
 
 - Final values are tuned together with Sections 5–12, not independently.
 
-**Acceptance checks:** a competent player can meet every Hard target with planned manoeuvres but the targets are still harder to meet than on easy. Low targets visibly risk xenon buildup.
+**Acceptance checks:** a competent player, reacting once each target is confirmed, can meet every Hard target, but the targets are still harder to meet than on easy. Low targets visibly risk xenon buildup.
 
 ---
 

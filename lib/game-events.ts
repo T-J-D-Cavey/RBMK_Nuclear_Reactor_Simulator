@@ -20,6 +20,13 @@ import type { Rng } from "./sim/rng"
 
 type Range = readonly [number, number]
 
+// Who sends each message. Every message comes from a person (owner, 2026-10-12).
+const GRID_CONTROLLER = "GRID CONTROLLER"
+const HEAD_ENGINEER = "HEAD ENGINEER"
+const SHIFT_FOREMAN = "SHIFT FOREMAN"
+const PUMP_OPERATOR = "PUMP OPERATOR"
+const TURBINE_OPERATOR = "TURBINE OPERATOR"
+
 export const isMajorEvent = (kind: EventKind) => MAJOR_EVENT_KINDS.includes(kind)
 
 const between = (rng: Rng, [lo, hi]: Range) => lo + rng() * (hi - lo)
@@ -135,7 +142,7 @@ function startShift(state: GameState, tuning: ShiftEventTuning, now: number, rng
       s,
       "grid",
       `Unit 4, your shift has started. Hold output at ${formatMW(s.powerTarget)}, within ±${formatMW(getPowerTolerance(s.powerTarget))}.`,
-      "KIEV GRID CONTROLLER",
+      GRID_CONTROLLER,
     )
   }
   return s
@@ -144,12 +151,12 @@ function startShift(state: GameState, tuning: ShiftEventTuning, now: number, rng
 const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; text: string }>> = {
   "power-cut": {
     source: "grid",
-    from: "KIEV GRID CONTROLLER",
+    from: GRID_CONTROLLER,
     text: "Grid instability reported across the region. Unit 4 may lose station power.",
   },
   "rod-stuck": {
     source: "engineer",
-    from: "SHIFT FOREMAN",
+    from: SHIFT_FOREMAN,
     text: "Pressure fluctuations in the fuel channels. Control rod channels may deform and jam.",
   },
 }
@@ -162,25 +169,16 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
   switch (kind) {
     case "power-cut": {
       // The pumps' normal supply is lost; the turbine can still supply them (bible §8)
-      s = addLog({ ...s, mainsPower: false }, "engineer", "Power cut detected. Recommend disconnecting turbine to power the pumps.", "HEAD ENGINEER")
-      return begin(s, {
-        ...base,
-        duration: Math.round(between(rng, tuning.powerCutSeconds)),
-        message: "POWER CUT: the pumps have lost their mains supply. The turbine can supply them once it is off the grid.",
-      })
+      s = addLog({ ...s, mainsPower: false }, "engineer", "Power cut detected. Recommend disconnecting turbine to power the pumps.", HEAD_ENGINEER)
+      return begin(s, { ...base, duration: Math.round(between(rng, tuning.powerCutSeconds)) })
     }
     case "rod-stuck": {
       const rods = pickDistinct(rng, s.controlRods.length, wholeBetween(rng, tuning.rodJamRods))
       const names = rods.map((i) => i + 1).join(", ")
       // A jammed rod stops wherever it is, including mid-travel, and stays there once freed (bible §10, §12)
       s = { ...s, controlRods: s.controlRods.map((rod, i) => (rods.includes(i) ? { ...rod, stuck: true, target: rod.insertion } : rod)) }
-      s = addLog(s, "engineer", `Control rods ${names} are stuck in position and can't be moved due to a ruptured fuel channel.`, "HEAD ENGINEER")
-      return begin(s, {
-        ...base,
-        duration: Math.round(between(rng, tuning.rodJamSeconds)),
-        message: `RODS ${names} JAMMED: they hold their current positions.`,
-        data: { affectedRods: rods },
-      })
+      s = addLog(s, "engineer", `Control rods ${names} are stuck in position and can't be moved due to a ruptured fuel channel.`, HEAD_ENGINEER)
+      return begin(s, { ...base, duration: Math.round(between(rng, tuning.rodJamSeconds)), data: { affectedRods: rods } })
     }
     case "pump-trip": {
       const running = s.waterPumps.filter((p) => p.on && !p.tripped)
@@ -188,13 +186,8 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
       if (!pool.length) return s
       const pump = pool[Math.floor(rng() * pool.length)]
       s = { ...s, waterPumps: s.waterPumps.map((p) => (p.id === pump.id ? { ...p, tripped: true } : p)) }
-      s = addLog(s, "alarm", `Pump ${pump.id} has tripped. Switch on a standby pump to keep the flow up.`, "PUMP HALL")
-      return begin(s, {
-        ...base,
-        duration: Math.round(between(rng, tuning.pumpTripSeconds)),
-        message: `PUMP ${pump.id} TRIPPED: out of service while the crew repairs it.`,
-        data: { affectedPumps: [pump.id] },
-      })
+      s = addLog(s, "alarm", `Pump ${pump.id} has tripped. Switch on a standby pump to keep the flow up.`, PUMP_OPERATOR)
+      return begin(s, { ...base, duration: Math.round(between(rng, tuning.pumpTripSeconds)), data: { affectedPumps: [pump.id] } })
     }
     case "grid-hold": {
       if (s.powerTarget === null) return s
@@ -204,9 +197,9 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
         s,
         "grid",
         `Grid frequency is unstable. Hold output at ${formatMW(s.powerTarget)}, within ±${formatMW(getPowerTolerance(s.powerTarget, true))}, for about ${minutes} minute${minutes > 1 ? "s" : ""}.`,
-        "KIEV GRID CONTROLLER",
+        GRID_CONTROLLER,
       )
-      return begin(s, { ...base, duration, message: "GRID HOLD: tolerance halved." })
+      return begin(s, { ...base, duration })
     }
   }
 }
@@ -230,22 +223,27 @@ function endEvent(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case "power-cut":
       s = { ...s, mainsPower: true }
-      s = addLog(s, "system", s.turbineMode === "grid" ? "Station power restored." : "Station power restored. Reconnect the turbine to the grid when ready.")
+      s = addLog(
+        s,
+        "engineer",
+        s.turbineMode === "grid" ? "Station power restored." : "Station power restored. Reconnect the turbine to the grid when ready.",
+        HEAD_ENGINEER,
+      )
       break
     case "rod-stuck": {
       const rods = event.data?.affectedRods ?? []
       s = { ...s, controlRods: s.controlRods.map((rod, i) => (rods.includes(i) ? { ...rod, stuck: false } : rod)) }
-      s = addLog(s, "system", `Control rods ${rods.map((i) => i + 1).join(", ")} are free again. They stay where they stopped.`)
+      s = addLog(s, "engineer", `Control rods ${rods.map((i) => i + 1).join(", ")} are free again. They stay where they stopped.`, HEAD_ENGINEER)
       break
     }
     case "pump-trip": {
       const pumps = event.data?.affectedPumps ?? []
       s = { ...s, waterPumps: s.waterPumps.map((p) => (pumps.includes(p.id) ? { ...p, tripped: false } : p)) }
-      s = addLog(s, "system", `Pump ${pumps.join(", ")} is back in service.`)
+      s = addLog(s, "engineer", `Pump ${pumps.join(", ")} is back in service.`, PUMP_OPERATOR)
       break
     }
     case "grid-hold":
-      s = addLog(s, "grid", "Hold lifted. Normal tolerance restored.", "KIEV GRID CONTROLLER")
+      s = addLog(s, "grid", "Hold lifted. Normal tolerance restored.", GRID_CONTROLLER)
       break
   }
   if (isMajorEvent(event.type)) s = { ...s, stats: { ...s.stats, emergenciesHandled: s.stats.emergenciesHandled + 1 } }
@@ -270,8 +268,9 @@ export function nextTarget(current: number, tuning: ShiftEventTuning, rng: Rng):
   return Math.min(max, Math.max(min, current + towardMiddle * tuning.targetMinStep))
 }
 
-// The grid gives notice ("increase to X MW in 60 seconds"), and waits while a major emergency or a hold runs,
-// or once a major emergency has been warned of, so crises don't pile up.
+// The grid warns that demand has changed and confirms the new target when it takes effect, 60 s later (owner
+// wording, 2026-10-12: the warning doesn't give the number). It waits while a major emergency or a hold
+// runs, or once a major emergency has been warned of, so crises don't pile up.
 function announceTargetChange(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
   const current = state.powerTarget
   if (current === null || state.pendingTarget || state.nextTargetChangeAt === null || now < state.nextTargetChangeAt) return state
@@ -281,14 +280,14 @@ function announceTargetChange(state: GameState, tuning: ShiftEventTuning, now: n
   const at = now + EVENT_TUNING.targetNotice
   const s: GameState = {
     ...state,
-    pendingTarget: { target, at, source: "grid", from: "KIEV GRID CONTROLLER" },
+    pendingTarget: { target, at, source: "grid", from: GRID_CONTROLLER },
     nextTargetChangeAt: at + Math.round(between(rng, tuning.targetInterval)) - EVENT_TUNING.targetNotice,
   }
   return addLog(
     s,
     "grid",
-    `${target > current ? "Increase" : "Reduce"} output to ${formatMW(target)}. The new target takes effect in ${EVENT_TUNING.targetNotice} seconds.`,
-    "KIEV GRID CONTROLLER",
+    "Grid demand has changed. We may require an adjustment in your power output. Confirmation to follow shortly.",
+    GRID_CONTROLLER,
   )
 }
 
@@ -296,7 +295,12 @@ function announceTargetChange(state: GameState, tuning: ShiftEventTuning, now: n
 export function applyPendingTarget(state: GameState): GameState {
   const pending = state.pendingTarget
   if (!pending || getShiftTime(state) < pending.at) return state
-  return addLog({ ...state, powerTarget: pending.target, pendingTarget: null }, pending.source, `New target in force: ${formatMW(pending.target)}.`, pending.from)
+  return addLog(
+    { ...state, powerTarget: pending.target, pendingTarget: null },
+    pending.source,
+    `Confirmed that a change is required: new power output requested to be ${formatMW(pending.target)}.`,
+    pending.from,
+  )
 }
 
 // --- Turbine trip (bible §12): a consequence of sustained over-pressure, never random ---
@@ -311,6 +315,6 @@ export function checkTurbineTrip(state: GameState): GameState {
     s,
     "alarm",
     `Turbine tripped on over-pressure and is off the grid. Reconnect it from the turbine panel once steam is below ${THRESHOLDS.steamVolume.highWarning}.`,
-    "TURBINE HALL",
+    TURBINE_OPERATOR,
   )
 }

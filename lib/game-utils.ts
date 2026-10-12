@@ -5,7 +5,6 @@ import {
   type LogSource,
   THRESHOLDS,
   GAME_MODE_CONFIGS,
-  getPowerTolerance,
   getShiftTime,
 } from "./types"
 import { getRodMargin } from "./sim/reactor"
@@ -31,24 +30,17 @@ export function formatMinutes(seconds: number): string {
 
 // --- Message log (bible §15): who said what, and when ---
 
-export const LOG_SOURCE_LABELS: Record<LogSource, string> = {
-  grid: "GRID CONTROLLER",
-  engineer: "HEAD ENGINEER",
-  procedure: "TEST PROCEDURE",
-  alarm: "ALARM",
-  system: "SYSTEM",
-}
-
 const LOG_LIMIT = 60
 
-export function addLog(state: GameState, source: LogSource, text: string, from?: string): GameState {
+// Every message is sent by a named person (`from`); the computer's warnings go on the alarm screen instead.
+export function addLog(state: GameState, source: LogSource, text: string, from: string): GameState {
   const last = state.log[state.log.length - 1]
   const entry: LogEntry = {
     id: String((last ? Number(last.id) || 0 : 0) + 1),
     time: getShiftTime(state),
     source,
+    from,
     text,
-    ...(from ? { from } : {}),
   }
   return { ...state, log: [...state.log, entry].slice(-LOG_LIMIT) }
 }
@@ -69,36 +61,6 @@ export function formatLogTime(state: Pick<GameState, "mode" | "timeLimit">, entr
   return formatTime(entry.time)
 }
 
-// Ongoing conditions pinned at the top of the events box: running events and announced target changes.
-export interface StatusLine {
-  key: string
-  source: LogSource
-  text: string
-}
-
-export function getStatusLines(state: GameState): StatusLine[] {
-  const lines: StatusLine[] = []
-  for (const event of state.activeEvents) {
-    let text = event.message
-    if (event.type === "grid-hold" && state.powerTarget !== null) {
-      const left = event.duration - Math.abs(event.timestamp - state.gameTime)
-      text = `GRID HOLD: keep output within ±${formatMW(getPowerTolerance(state.powerTarget, true))} of ${formatMW(state.powerTarget)} (${formatMinutes(left)} left).`
-    }
-    const source: LogSource = event.type === "grid-hold" ? "grid" : event.type === "pump-trip" ? "alarm" : "engineer"
-    lines.push({ key: event.id, source, text })
-  }
-  if (state.pendingTarget) {
-    const left = Math.max(0, state.pendingTarget.at - getShiftTime(state))
-    lines.push({
-      key: "pending-target",
-      source: state.pendingTarget.source,
-      text: `NEW TARGET: ${formatMW(state.pendingTarget.target)} in ${left} s.`,
-    })
-  }
-  return lines
-}
-
-
 // Every warning condition in one place, so the panel's flashing borders and the message area agree.
 export function getWarningFlags(state: GameState) {
   return {
@@ -115,65 +77,57 @@ export function getWarningFlags(state: GameState) {
   }
 }
 
-// Warnings about the reactor's own condition (the collapsible red box).
-export function checkWarnings(state: GameState): string[] {
-  const warnings: string[] = []
-  const flags = getWarningFlags(state)
-
-  if (flags.highRadioactivity) {
-    warnings.push("WARNING: High radioactivity. Reactor temperature expected to spike. Recommend to increase insertion of control rods to reduce radioactivity.")
-  }
-
-  if (flags.lowRadioactivity) {
-    warnings.push("WARNING: Low radioactivity. Xenon levels are expected to spike, further reducing radioactivity. Recommend reducing control rod insertion to increase radioactivity")
-  }
-
-  if (flags.highReactorTemp) {
-    warnings.push("WARNING: High reactor temperature. Steam levels and radioactivity expected to spike. Recommend turning on more water pumps to cool reactor")
-  }
-
-  if (flags.highFuelTemp) {
-    warnings.push("WARNING: High fuel temperature. Radioactivity may drop as a result. Recommend turning on more water pumps to cool fuel")
-  }
-
-  if (flags.lowFuelTemp) {
-    warnings.push("WARNING: Low fuel temperature. Radiation is expected to spike. Recommended turning off some water pumps to increase reactor and fuel temperature")
-  }
-
-  if (flags.highSteam) {
-    warnings.push("WARNING: High steam pressure. Disconnect turbine to avoid damage to the transmission infrastructure")
-  }
-
-  if (flags.lowSteam) {
-    warnings.push("WARNING: Low steam pressure causing reduced power generation. Recommend turning off some water pumps to increase reactor temperature and reducing control rod insertion to increase radioactivity")
-  }
-
-  if (flags.highXenon) {
-    warnings.push("WARNING: High xenon levels detected, lowering radioactivity. Recommend reducing control rod insertion to increase radioactivity.")
-  }
-
-  if (flags.lowRodMargin) {
-    warnings.push("WARNING: Rod margin below minimum. Too few control rods in the core: radioactivity is being held by something less reliable than boron. Recommend inserting control rods.")
-  }
-
-  return warnings
+// One line on the computer's alarm screen. The key stays the same while the condition lasts, so the screen
+// types a warning out once and a countdown in it updates in place.
+export interface Warning {
+  key: string
+  text: string
 }
 
-// Warnings about the shift rather than the reactor itself: shown in the events box, not the reactor
-// warnings box, so a player can hide the reactor warnings and still see these (plan §11.1).
-export function checkEventWarnings(state: GameState): string[] {
-  const warnings: string[] = []
+type WarningFlag = keyof ReturnType<typeof getWarningFlags>
+
+const REACTOR_WARNINGS: [WarningFlag, string][] = [
+  ["highRadioactivity", "WARNING: High radioactivity. Reactor temperature expected to spike. Recommend to increase insertion of control rods to reduce radioactivity."],
+  ["lowRadioactivity", "WARNING: Low radioactivity. Xenon levels are expected to spike, further reducing radioactivity. Recommend reducing control rod insertion to increase radioactivity"],
+  ["highReactorTemp", "WARNING: High reactor temperature. Steam levels and radioactivity expected to spike. Recommend turning on more water pumps to cool reactor"],
+  ["highFuelTemp", "WARNING: High fuel temperature. Radioactivity may drop as a result. Recommend turning on more water pumps to cool fuel"],
+  ["lowFuelTemp", "WARNING: Low fuel temperature. Radiation is expected to spike. Recommended turning off some water pumps to increase reactor and fuel temperature"],
+  ["highSteam", "WARNING: High steam pressure. Disconnect turbine to avoid damage to the transmission infrastructure"],
+  ["lowSteam", "WARNING: Low steam pressure causing reduced power generation. Recommend turning off some water pumps to increase reactor temperature and reducing control rod insertion to increase radioactivity"],
+  ["highXenon", "WARNING: High xenon levels detected, lowering radioactivity. Recommend reducing control rod insertion to increase radioactivity."],
+  ["lowRodMargin", "WARNING: Rod margin below minimum. Too few control rods in the core: radioactivity is being held by something less reliable than boron. Recommend inserting control rods."],
+]
+
+// Warnings about the reactor's own condition.
+export function getReactorWarnings(state: GameState): Warning[] {
+  const flags = getWarningFlags(state)
+  return REACTOR_WARNINGS.filter(([flag]) => flags[flag]).map(([key, text]) => ({ key, text }))
+}
+
+export function checkWarnings(state: GameState): string[] {
+  return getReactorWarnings(state).map((warning) => warning.text)
+}
+
+// Warnings about the shift rather than the reactor itself. They are computer-generated too, so they share the
+// alarm screen with the reactor warnings; the shift log only holds messages from people.
+export function getEventWarnings(state: GameState): Warning[] {
+  const warnings: Warning[] = []
   if (getWarningFlags(state).lowPerformance) {
-    warnings.push("WARNING: Our power station is reporting low grid target performance. Review power targets")
+    warnings.push({ key: "lowPerformance", text: "WARNING: Our power station is reporting low grid target performance. Review power targets" })
   }
   // Sustained over-pressure trips the turbine off the grid (bible §12): count down so it never comes unannounced.
   if (state.overpressureSeconds > 0 && state.turbineMode === "grid" && GAME_MODE_CONFIGS[state.mode]?.turbineTrips) {
     const left = Math.max(0, EVENT_TUNING.turbineTripSeconds - state.overpressureSeconds)
-    warnings.push(
-      `WARNING: Turbine over-pressure. The turbine will trip off the grid in ${left} s unless steam falls below ${THRESHOLDS.steamVolume.highWarning}.`,
-    )
+    warnings.push({
+      key: "turbineOverpressure",
+      text: `WARNING: Turbine over-pressure. The turbine will trip off the grid in ${left} s unless steam falls below ${THRESHOLDS.steamVolume.highWarning}.`,
+    })
   }
   return warnings
+}
+
+export function checkEventWarnings(state: GameState): string[] {
+  return getEventWarnings(state).map((warning) => warning.text)
 }
 
 export const GAME_OVER_REASONS: Record<GameOverCause, string> = {

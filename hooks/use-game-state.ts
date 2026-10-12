@@ -66,7 +66,14 @@ function migrateSavedState(state: GameState): GameState {
     nextTargetChangeAt: state.nextTargetChangeAt ?? null,
     pendingTarget: state.pendingTarget ?? null,
     scriptStep: state.scriptStep ?? 0,
-    log: Array.isArray(state.log) ? state.log : [],
+    // Saves from before every message had a named sender (owner, 2026-10-12) hold unsigned "system" lines.
+    log: Array.isArray(state.log)
+      ? state.log.map((entry) => ({
+          ...entry,
+          source: (entry.source as string) === "system" ? "engineer" : entry.source,
+          from: entry.from ?? "SHIFT FOREMAN",
+        }))
+      : [],
     stats: { ...INITIAL_GAME_STATE.stats, ...state.stats },
   }
 }

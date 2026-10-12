@@ -146,6 +146,11 @@ See §8 for the full list of open questions.
 - 2026-10-12: **WS4, WS5 and WS6 built** (details in §17). The owner asked for as many next steps as made sense before the next round of manual tests. **No reactor physics changed:** every `TUNING` value is as iteration 6 left it, so the owner's next Free-mode test still measures iteration 6.
   - One pure game loop (`lib/game-loop.ts`) now drives the React hook and the harness alike.
   - 53/53 checks pass (17 new, for bible §12–§14). `tsc` is clean and `next build` passes.
+- 2026-10-12: **Message area rebuilt from the owner's Easy-mode playtest** (details in §18). Only the notification items were done; the owner's other notes in that test (pumps on turbine power, pump strength) wait for more testing. **No physics or event numbers changed.**
+  - Warnings are typed on a green-screen computer monitor; the shift log is a teleprinter printing on paper, newest at the top, four messages in view.
+  - Every log message now comes from a named person. New target-change wording, which no longer gives the number in advance. The owner kept it: bible §13 updated (changelog v2.7), and the bot no longer chases a grid target before it is confirmed (§18.3).
+  - Owner follow-up: the two machines always stack, the alarm monitor's "All clear" label is gone, and the shift log has the chart recorder's housing.
+  - 53/53 checks pass, `tsc` is clean, and the UI was checked in headless Chrome at 1400 px and 390 px.
 
 ---
 
@@ -174,12 +179,12 @@ See §8 for the full list of open questions.
 | 12 | Turbine trip after sustained over-pressure | ✅ | `checkTurbineTrip`: 20 s of OVR-P on the grid, with a countdown warning. Easy and Hard only. |
 | 12 | Grid "hold" request (halves tolerance) | ✅ | `getPowerTolerance(target, hold)`; no new target is announced during a hold. |
 | 13 | ±10% tolerance (min ±200 MW), shared by panel and performance | ✅ | `getPowerTolerance` in `lib/types.ts`, `isPowerOnTarget` in `lib/game-mechanics.ts`. |
-| 13 | Smaller, less frequent, announced target changes | ✅ | 60 s notice via `pendingTarget`; low targets kept rarely (§17.1). |
-| 14 | Safety Test mode | ✅ | `lib/safety-test.ts` (§17.3). **Open question on the test's rundown: §17.5.** |
+| 13 | Smaller, less frequent, warned target changes | ✅ | 60 s warning via `pendingTarget`; the number comes with the confirmation (bible v2.7, §18.3). Low targets kept rarely (§17.1). |
+| 14 | Safety Test mode | ✅ | `lib/safety-test.ts` (§17.3). The test's rundown is kept as built (owner, §17.5). |
 | 15 | CCTV reactor camera (inline + fullscreen), radiation interference | ✅ | `components/reactor-camera.tsx`. The Safety Test's clock starts at 01:00:00. |
 | 15 | Chart recorder side panel, wide-screen layout | ✅ | `components/chart-recorder.tsx`, `app/game/page.tsx`. Narrow-screen layout checked by reading classes only. |
 | 15 | Homepage CRT treatment; Safety Test "historical scenario" card | ✅ | `app/page.tsx`, `difficulty-modal.tsx` (no longer "In development"). |
-| 15 | Message area: sources, teletype/log feel, timestamps | ✅ | `components/message-area.tsx` (§17.2). |
+| 15 | Message area: sources, teletype/log feel, timestamps | ✅ | Rebuilt as an alarm monitor and a shift-log teleprinter (§18): `components/message-area.tsx`, `alarm-screen.tsx`, `shift-log-printer.tsx`. |
 | 15 | End screens per ending + incident report | ✅ | `components/incident-report.tsx`, `game-over-screen.tsx`, `success-screen.tsx`. |
 | 15 | How to Play rewrite (red/blue cards, tips, rod travel, ±10%, same physics) | ✅ | `app/instructions/page.tsx`; numbers read from `THRESHOLDS`, `TUNING` and `EVENT_TUNING`. |
 | 15 | README update | ✅ | Describes the current game; "Still to come" lists the sounds. |
@@ -636,7 +641,7 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
 | Target change | 500–1,500 MW, every 4–5 min | 500–2,500 MW, every 2–3 min |
 | Low targets (kept 30% of the times one is drawn) | below 3,000 MW | below 2,000 MW |
 
-**Target changes.** The Kiev grid controller announces each change 60 s ahead ("Increase output to 6,500 MW…"), held in `pendingTarget`. The grid waits while a major emergency or hold runs, and once a major emergency has been warned of. A hold request halves the window (`getPowerTolerance(target, hold)`).
+**Target changes.** The Kiev grid controller announces each change 60 s ahead ("Increase output to 6,500 MW…"), held in `pendingTarget`. *Since §18 the grid controller only warns, and gives the number when it confirms the change.* The grid waits while a major emergency or hold runs, and once a major emergency has been warned of. A hold request halves the window (`getPowerTolerance(target, hold)`).
 
 **Turbine trip** (Easy and Hard only, since Free and the Safety Test have no events):
 - 20 consecutive seconds of OVR-P (steam ≥ 300) while on the grid trips the turbine to "disconnected".
@@ -647,7 +652,7 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
 
 **Bot yardstick** (`scripts/sim/bot.ts`). A scripted player that reads only the panel and acts every 3 s:
 - It uses a rule of thumb for which radioactivity gives which output, and watches the output trend, easing off as output closes in.
-- It chases an announced target 20 s before it takes effect, responds to power cuts, trips and jams, and never parks a rod below 1%.
+- It chases an announced target 20 s before it takes effect, responds to power cuts, trips and jams, and never parks a rod below 1%. *Since §18.3 it chases early only in the Safety Test, whose orders give the number; the results below are from before that.*
 - Over 20 shifts per mode: **Easy** survived 20/20, on target 87% of the time (lowest 76%), final performance 98%. **Hard** survived 20/20, on target 69% (lowest 46%), final performance 88% (lowest 24%).
 - The hardest Hard runs are low targets: xenon builds, and climbing back out overshoots as it burns off (the §13 "xenon trap").
 - Every planned major emergency fired (21/21 Easy, 59/59 Hard). A few late hold requests were pushed past the end and dropped (4 of 72 smaller events on Hard).
@@ -710,7 +715,9 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
 
 ### 17.5 Open questions for the owner
 
-1. **The Safety Test's rundown doesn't reach the show's ending.**
+1. **Answered 2026-10-12: keep it as built (option c) for now.** The owner may revisit after the physics playtests. Bible §11's example ("the Safety Test rundown") is knowingly not met by the scripted rundown. Its physics still holds: a Safety Test runaway with the pumps unpowered explodes (checked in `events.test.ts`).
+
+   **The Safety Test's rundown doesn't reach the show's ending.**
    - **What happens now.** Bible §8 and §14 say the turbine powers pumps in proportion to steam. So once the test begins, steam is low, flow collapses and the runaway starts, but the steam it makes powers the pumps again within about 40 s.
    - **Result.** A test ignored ends in **meltdown**, not explosion. Any AZ-5, however late and even with rods parked at 0%, saves the reactor.
    - **The bible conflict.** Bible §11 expects "the Safety Test rundown" to be a low-flow runaway ending in an explosion.
@@ -736,3 +743,80 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
   - Does phase 4 push the rod margin under its minimum?
   - How does the test itself feel (see question 1 above)?
 - **Everywhere:** the end screens and incident report, How to Play, and the message area on a phone.
+
+---
+
+## 18. Message area rework: built 2026-10-12
+
+Source: the owner's Easy-mode playtest (test two in `ai/manual-test-results.MD`). The owner asked for the notification changes only, and wants more testing before the other notes in that test are acted on. Nothing in `TUNING` or `EVENT_TUNING` changed.
+
+### 18.1 What changed
+
+- **Two machines, one per kind of message** (`components/message-area.tsx`). They always stack, the alarm monitor above the shift log (owner). Each still collapses on its own.
+  - **Alarm monitor** (`components/alarm-screen.tsx`): the plant computer's screen, "SKALA" after the footer's "© 1986 SKALA CONTROL SYSTEMS". It has green phosphor, scanlines and the VT323 terminal font (`next/font`, no new npm package). Every computer-generated warning types itself out like a command line, with "WARNING" in inverse video. A warning keeps its line while it lasts, new ones are added at the bottom, and the turbine countdown updates in place. With no warnings it reads "ALL SYSTEMS STABLE." The header shows the warning count when there are warnings, and nothing otherwise (owner: no "All clear" label).
+  - **Shift log teleprinter** (`components/shift-log-printer.tsx`): printed on the chart recorder's paper, with sprocket holes and faint rules.
+    - **Housing** (owner: the first version's box looked plain) matches the chart recorder: a 4 px border and a bold, tracked header. It has a status lamp: green "On line", or blinking amber "Printing" while a line feeds and prints. An ink key in the chart recorder's legend style shows Grid, Station crew and Urgent, each with the time that kind of sender last spoke. In the Safety Test the phase and orders card takes the ink key's place.
+    - A new message feeds the paper down by its height (0.45 s), then prints at the top behind a print cursor. Messages that arrive together print one after another.
+    - At most four messages are in view. Older ones feed out of sight below the roller.
+    - To read back, drag the paper (mouse or finger), use the mouse wheel, or focus it and use the arrow keys. There is no scrollbar. "Back to latest" returns to the top, and a new message rolls the paper back anyway. Read-back only works once there are more than four messages.
+    - Screen readers get the latest messages as plain text.
+  - Shared typing: `hooks/use-typewriter.ts` and `components/typed-text.tsx`. Reduced motion shows everything at once.
+- **No more pinned lines.** The running-event summaries, the grid-hold countdown, "NEW TARGET: … in N s" and the "N ACTIVE" count are gone. Everything on the paper is a message someone sent. `getStatusLines` and `GameEvent.message` were removed.
+- **Every message comes from a named person** (`LogEntry.from` is now required; the `system` source is gone):
+
+  | Was | Now |
+  |---|---|
+  | KIEV GRID CONTROLLER (Easy/Hard) | GRID CONTROLLER |
+  | SYSTEM: station power restored; rods free again | HEAD ENGINEER |
+  | SYSTEM: pump back in service; PUMP HALL | PUMP OPERATOR |
+  | TURBINE HALL | TURBINE OPERATOR |
+  | TEST PROCEDURE (Safety Test) | TEST SUPERVISOR |
+  | SYSTEM "Automatic: all four pumps switched on" | PUMP OPERATOR: "All four pumps switched on, as the procedure requires." |
+  | SYSTEM "Automatic: turbine disconnected…" | TURBINE OPERATOR: "Turbine disconnected from the grid and supplying the station pumps, as the procedure requires. No grid target from now on." |
+
+  Old saves keep their log: unsigned "system" lines are migrated (`hooks/use-game-state.ts`).
+- **Target-change wording** (owner's text):
+  - **Warning:** "Grid demand has changed. We may require an adjustment in your power output. Confirmation to follow shortly."
+  - **When the target takes effect, 60 s later:** "Confirmed that a change is required: new power output requested to be X MW."
+  - The Safety Test's target confirmations use the same wording.
+- How to Play and the README now describe the new target-change flow.
+
+### 18.2 Decisions made without the owner (please review)
+
+- **Safety Test keeps "KIEV GRID CONTROLLER".** Bible §14 names the role, and phase 2 is "Kiev's delay". Easy and Hard use "GRID CONTROLLER".
+- **The new senders:** PUMP OPERATOR, TURBINE OPERATOR and TEST SUPERVISOR. PUMP HALL and TURBINE HALL were places, and the test procedure is a document, not a person.
+- **The low-performance and turbine over-pressure warnings moved to the alarm monitor**, since they are computer-generated. Before, they were in the events box (§11.1), so hiding the warnings kept them visible. Now hiding the alarm monitor hides them too.
+- **Safety Test phase and standing orders** stay visible on a typed card above the paper (on the housing, not printed on it), because bible §14 asks for the current phase and next instruction to be shown.
+- "a adjustment" was corrected to "an adjustment".
+- **Typing speeds:** the monitor types 90 characters a second and the teleprinter 70. The paper feeds in 0.45 s.
+
+### 18.3 Target changes no longer give the number in advance. Answered 2026-10-12: keep it
+
+- **The conflict.** The new wording gives no number or direction, and the "NEW TARGET in N s" line is gone, so the player learns the target only when it takes effect. Bible §13 said the notice gave the number so the player could plan a manoeuvre.
+- **Owner's decision: keep it.**
+  - Bible §13 now describes warned changes, and its acceptance check asks for Hard targets to be met once confirmed (changelog v2.7).
+  - The bot (`scripts/sim/bot.ts`) only uses a target a player can see. It still chases a Safety Test target 20 s early, because those orders state the number, but in Easy and Hard it waits for the confirmation.
+  - The §13 test is now named "warned 60 s ahead". No assertion changed, and all 53 checks pass.
+- **What it costs the bot**, over 20 shifts per mode:
+
+  | | Chasing early (before) | Waiting for confirmation (now) |
+  |---|---|---|
+  | Easy, time on target | 87% (lowest 76%) | 82% (lowest 71%) |
+  | Easy, final performance | 98% (lowest 88%) | 96% (lowest 84%) |
+  | Hard, time on target | 69% (lowest 46%) | 59% (lowest 39%) |
+  | Hard, final performance | 88% (lowest 24%) | 76% (lowest 0%) |
+  | Shifts lost | 0 / 40 | 1 / 40 (Hard, removed from post) |
+
+- **Worth watching at Checkpoint B:** Hard is noticeably harder now. The tests' 10 seeds all still survive. Event and target numbers are unchanged, so it's the owner's call whether Hard's target sizes or intervals need easing.
+
+### 18.4 How it was checked
+
+- `node --run sim:test`: 53/53. `npx tsc --noEmit -p .` is clean.
+- Headless Chrome, driven over the DevTools protocol with no new dependency, at 1400 px and 390 px (touch):
+  - the paper feeds −48 px → 0 then prints;
+  - four messages are fully in view;
+  - mouse drag, touch drag and wheel all read back without scrolling the page;
+  - "Back to latest" works;
+  - warnings type out in the VT323 font;
+  - the Safety Test card shows.
+- **Not changed, already there:** the game page has a React hydration mismatch, because it reads the saved game from localStorage on its first client render. Next's dev overlay shows it as "1 Issue".

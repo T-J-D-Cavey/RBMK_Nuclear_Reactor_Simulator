@@ -1,11 +1,13 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, VT323 } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
+// The alarm monitor's 80s terminal lettering (.ws5-crt-text)
+const terminalFont = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal" })
 
 export const metadata: Metadata = {
   title: "RBMK Nuclear Reactor Simulation",
@@ -37,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased min-w-[340px]`}>
+      <body className={`${terminalFont.variable} font-sans antialiased min-w-[340px]`}>
         {children}
         <div className="text-sm text-reactor-blue font-mono py-3 bg-black text-center">
           <a 
