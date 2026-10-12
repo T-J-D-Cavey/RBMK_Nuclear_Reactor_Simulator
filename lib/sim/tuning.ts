@@ -88,9 +88,13 @@ const TUNING_BASE = {
   // Blue card. Its worth is derived: full xenon sits this many points below everything pushing up in a
   // cold reactor with rods out, so a poisoned reactor can always restart with rods (nearly) all out (§9).
   xenonCapBelowExcess: 33,
+  // Below normal radioactivity xenon creeps up slowly (owner), reaching this rate at the build level and
+  // keeping it below. So a dip under 100 sees a little xenon, and staying under lets it accumulate.
+  xenonCreepBelow: 100,
+  xenonCreepRate: 0.03, // %/s at the build level and below, scaled by how far below the creep level
   xenonBuildBelow: 50,
-  xenonBuildRate: 0.42, // %/s at radioactivity 0, scaled by how far below the build level
-  xenonBurnAbove: 70,
+  xenonBuildRate: 0.42, // %/s at radioactivity 0 on top of the creep, scaled by how far below the build level
+  xenonBurnAbove: 100,
   xenonBurnRate: 0.06, // %/s per unit of radioactivity above the burn level
 } as const
 

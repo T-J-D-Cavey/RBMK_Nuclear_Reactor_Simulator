@@ -225,11 +225,13 @@ test("§9 a poisoned, collapsed reactor restarts within ~1–3 minutes with rods
 })
 
 test("§9 burn-off speed depends on radioactivity", () => {
-  // Time for a full load (100%) to clear while radioactivity is held at R.
+  // Time for a full load (100%) to clear while radioactivity is held at R. Burn-off starts just above
+  // normal radioactivity (100); below it xenon creeps up.
   const clearTime = (R: number) => 100 / -xenonRate(R)
-  assert.ok(clearTime(80) >= 60, `just above burn level: ${clearTime(80)}s`)
-  const normal = clearTime(100)
-  assert.ok(normal >= 10 && normal <= 90, `normal: ${normal}s`)
+  assert.ok(xenonRate(90) > 0, "xenon creeps up just below normal radioactivity")
+  assert.ok(clearTime(110) >= 60, `just above burn level: ${clearTime(110)}s`)
+  const higher = clearTime(130)
+  assert.ok(higher >= 10 && higher <= 90, `well above burn level: ${higher}s`)
   assert.ok(clearTime(500) <= 6, `spike: ${clearTime(500)}s`)
 })
 

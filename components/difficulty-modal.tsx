@@ -87,8 +87,8 @@ export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: Diff
             </div>
             <h3 className="font-mono font-bold text-lg uppercase text-amber-900">Safety Test</h3>
             <ul className="text-sm font-mono space-y-1 text-amber-900/80">
-              <li>• 30 minute scripted recreation of the night of the Unit 4 turbine rundown test</li>
-              <li>• Orders from the test procedure, the Deputy Chief Engineer and the Kiev grid controller</li>
+              <li>• 20 minute scripted recreation of the night of the Unit 4 turbine rundown test</li>
+              <li>• Orders from the test supervisor, the Deputy Chief Engineer and the Kiev grid controller</li>
               <li>• No random emergencies: every disruption is scripted</li>
             </ul>
             <Button

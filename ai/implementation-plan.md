@@ -181,7 +181,7 @@ See §8 for the full list of open questions.
 | 13 | ±10% tolerance (min ±200 MW), shared by panel and performance | ✅ | `getPowerTolerance` in `lib/types.ts`, `isPowerOnTarget` in `lib/game-mechanics.ts`. |
 | 13 | Smaller, less frequent, warned target changes | ✅ | 60 s warning via `pendingTarget`; the number comes with the confirmation (bible v2.7, §18.3). Low targets kept rarely (§17.1). |
 | 14 | Safety Test mode | ✅ | `lib/safety-test.ts` (§17.3). The test's rundown is kept as built (owner, §17.5). |
-| 15 | CCTV reactor camera (inline + fullscreen), radiation interference | ✅ | `components/reactor-camera.tsx`. The Safety Test's clock starts at 01:00:00. |
+| 15 | CCTV reactor camera (inline + fullscreen), radiation interference | ✅ | `components/reactor-camera.tsx`. The Safety Test's clock starts at 01:10:00. |
 | 15 | Chart recorder side panel, wide-screen layout | ✅ | `components/chart-recorder.tsx`, `app/game/page.tsx`. Narrow-screen layout checked by reading classes only. |
 | 15 | Homepage CRT treatment; Safety Test "historical scenario" card | ✅ | `app/page.tsx`, `difficulty-modal.tsx` (no longer "In development"). |
 | 15 | Message area: sources, teletype/log feel, timestamps | ✅ | Rebuilt as an alarm monitor and a shift-log teleprinter (§18): `components/message-area.tsx`, `alarm-screen.tsx`, `shift-log-printer.tsx`. |
@@ -210,8 +210,8 @@ Decisions made without the owner that they may want to revisit:
 - **Rod-margin minimum = 200** (the sum of all ten insertions, out of 1000).
 - **Jams:** a jammed rod keeps its position when the jam clears; it doesn't resume its old order.
 - **Tripped pumps** show their PWR lamp off.
-- **Safety Test camera clock** now starts at 01:00:00 (was 00:00:00), so the test begins at 01:23:04 as it did on the night. The procedure log uses the same clock.
-- **Safety Test card text** now says orders come from the test procedure, the Deputy Chief Engineer and the Kiev grid controller (checked against WS6).
+- **Safety Test camera clock** now starts at 01:10:00 (was 01:00:00 for the 30-minute test), so the test still begins at 01:23:04 as it did on the night and the shift ends at 01:30. The procedure log uses the same clock.
+- **Safety Test card text** says orders come from the test supervisor, the Deputy Chief Engineer and the Kiev grid controller.
 - **WS4–WS6 choices** (event numbers, timings, script targets): listed in §17.4.
 
 ---
@@ -680,6 +680,8 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
 
 `lib/safety-test.ts` holds the script. Each step logs a message from a named role. It may also announce a target (the usual 60 s notice) or make one automated change, which happens once. The player can reverse any change and the script never undoes it. There are no random events.
 
+*Superseded by §19 (20-minute test, Test Supervisor gives the targets). The table below is the original 30-minute build.*
+
 - **Clock.** The night clock (camera and log) reads 01:00:00 at the start, so the test begins at 01:23:04.
 - **Performance** can remove the player from post (`performanceAffectsGameOver` is now true).
 
@@ -821,3 +823,38 @@ Source: the owner's Easy-mode playtest (test two in `ai/manual-test-results.MD`)
   - warnings type out in the VT323 font;
   - the Safety Test card shows.
 - **Not changed, already there:** the game page has a React hydration mismatch, because it reads the saved game from localStorage on its first client render. Next's dev overlay shows it as "1 Issue".
+
+---
+
+## 19. Safety Test playtest 2: built 2026-10-12
+
+From the owner's "Test five: safety test" notes in `ai/manual-test-results.MD`.
+
+### 19.1 Changes
+
+- **Xenon creep (physics, bible §9).** New `xenonCreepBelow: 100` and `xenonCreepRate: 0.03` in `lib/sim/tuning.ts`. Below radioactivity 100 xenon creeps up, rising linearly to 0.03 %/s at radioactivity 50. Below 50 the old build-up is added on top, so the rate at 0 is now 0.45 %/s (was 0.42). `xenonBurnAbove` moved from 70 to 100. Clearing a full load takes 167 s at radioactivity 110, 56 s at 130 and 4 s at 500. With two pumps, radioactivity 100 is about 5,000 MW, so any steady output below that now builds a little xenon.
+- **Safety Test is 20 minutes** (`timeLimit: 1200`). The script in `lib/safety-test.ts` is shortened phase by phase. The night clock starts at 01:10:00, so the test still begins at 01:23:04 and the shift ends at 01:30.
+- **Messages.** The deputy chief engineer still gives the station's target orders. When each takes effect, the "New power output requested to be …" confirmation now comes from the TEST SUPERVISOR (it came from whoever gave the order); Kiev still confirms its own. The xenon explanations (SRCE at 5:30 and 14:30, foreman at 8:00) are removed. The deputy chief engineer says "Bunch of amateurs. Get it done!" and "I want this done already!" during Kiev's hold instead.
+- **Test harness.** `steadyAt` holds xenon at 0 while it settles, because below 100 there is no longer a true steady state. Without this it silently settled at ~100 for every target below 100. The §9 burn-off check now measures at 110 and 130 (was 80 and 100), and also checks that xenon creeps just below 100.
+
+| Shift time | Night clock | Phase | Who | What |
+|---|---|---|---|---|
+| 0:00 | 01:10:00 | 1 Briefing and power reduction | Test Supervisor | The test is about to start |
+| 0:15 / 1:15 | 01:10 / 01:11 | | Deputy Chief Engineer | Targets 3,500, then 2,500 MW (each confirmed by the Test Supervisor 60 s later) |
+| 2:15 | 01:12:15 | 2 Kiev's delay | Kiev Grid Controller | Hold 1,000 MW |
+| 3:40 / 5:10 | 01:13 / 01:15 | | Deputy Chief Engineer | "Bunch of amateurs. Get it done!" / "I want this done already!" |
+| 6:15 | 01:16:15 | 3 Shift change: reduction to test output | Shift Foreman, Deputy Chief Engineer | Targets 700 (6:30), then 500 MW (7:45) |
+| 9:00 | 01:19 | 4 Raise the power | Deputy, SRCE | Target 1,000 MW; margin warning (11:00); "We run the test tonight" (11:15) |
+| 12:00 | 01:22 | 5 The test (8 min left) | Test Supervisor | **Automatic:** all four pumps on |
+| 12:30 | 01:22:30 | | Test Supervisor | **Automatic:** turbine supplies the pumps; no target from now on |
+| 13:04 | 01:23:04 | | Test Supervisor | Test begins: the pumps' mains supply is cut |
+| 15:00 | 01:25 | 6 After the test | Test Supervisor | Test complete: mains restored |
+
+### 19.2 Results (bot, seed 1)
+
+- **Safety Test:** xenon reaches 42% by the shift change (6:15), 71% at "raise the power" (9:00) and 96% as the pumps come on (12:00). The rod margin drops below 200 at about 10:00 and is 130 as the pumps come on. The bot survives. All 53 checks pass.
+- **Easy / Hard (seeds 1–3):** all survive. Peak xenon on Easy is 0–2% and on Hard 1–8% (was 0% everywhere). Final performance is within a few points of before.
+
+### 19.3 Open
+
+- Nothing. (The owner's cut-off note about the power target at the 8-minutes-left mark can be ignored, per the owner.)

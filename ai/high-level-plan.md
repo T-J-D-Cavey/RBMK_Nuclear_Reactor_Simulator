@@ -218,8 +218,8 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 
 **Change:**
 - **Xenon reads 0% during normal running.** It builds only when radioactivity is low, and burns away as radioactivity rises until none remains. Xenon remains capped at 100%. (*Deliberate:* the gauge shows xenon beyond what a reactor in normal running always holds, so 0% means "normal".)
-- **Build-up:** below a low radioactivity level, xenon builds steadily toward the cap over several minutes; the lower the radioactivity, the faster. (The build-up and burn-off levels may differ, leaving a band where xenon holds steady, as today.)
-- **Burn-off speeds up with radioactivity.** Just above the burn-off level it is slow and steady. As radioactivity rises it speeds up: at normal radioactivity a full load clears in tens of seconds, and during a sudden spike it clears in seconds.
+- **Build-up:** anywhere below normal radioactivity (100), xenon creeps up very slowly, so a brief dip sees a little xenon but staying below lets it accumulate. Below a low radioactivity level it builds steadily toward the cap over several minutes; the lower the radioactivity, the faster.
+- **Burn-off speeds up with radioactivity.** It starts just above normal radioactivity, so getting back above 100 soon clears what a dip built up. Just above that level it is slow and steady. As radioactivity rises it speeds up: well above normal a full load clears in tens of seconds, and during a sudden spike it clears in seconds.
 - **Xenon is a blue card, and burn-off takes it away.** Burn-off does not push radioactivity up by itself; it rises because a brake is going. Because burn-off speeds up as radioactivity rises, the two feed each other: when radioactivity suddenly spikes, xenon burns off quickly and the spike grows further. A player who pulled every rod to escape the pit must re-insert rods as xenon clears, or overshoot.
 - **The restart route stays:** sufficiently cold fuel provides a strong red card, and the source term (Section 5) keeps a spark alive. With rods fully or almost fully withdrawn and fuel cold, a fully poisoned, collapsed reactor will always restart.
 
@@ -227,7 +227,8 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 
 **Acceptance checks (invariants, test these explicitly):**
 - From radioactivity ≈ 0 and xenon at cap, with rods (nearly) fully withdrawn and pumps used to cool the fuel, radioactivity begins climbing within roughly 1–3 minutes.
-- Burn-off speed depends on radioactivity: just above the burn-off level a full load takes a minute or more to clear; at normal radioactivity, tens of seconds; during a spike, a few seconds.
+- Xenon creeps up just below normal radioactivity.
+- Burn-off speed depends on radioactivity: just above the burn-off level a full load takes a minute or more to clear; well above normal, tens of seconds; during a spike, a few seconds.
 - After sustained normal running, xenon reads 0%.
 - If the player does nothing during burn-off with rods fully withdrawn, radioactivity overshoots dangerously.
 - Collapse → full xenon takes several minutes, giving the player time to notice and react.
@@ -354,30 +355,30 @@ Each ending gets its own game-over presentation.
 
 ## 14. New mode: Safety Test
 
-A scripted scenario of 30 minutes that recreates the show's night: the player spends most of the game getting the reactor into an unfavourable state under pressure, then the test exposes it. Same reactor physics as every other mode (Section 11).
+A scripted scenario of 20 minutes that recreates the show's night: the player spends most of the game getting the reactor into an unfavourable state under pressure, then the test exposes it. Same reactor physics as every other mode (Section 11).
 
-**Communication:** the same shift log as Easy and Hard, with no separate procedure display. Every instruction is a message in the log, from a named role. Messages come from roles, not real people's names: Deputy Chief Engineer, Kiev Grid Controller, Shift Foreman, Senior Reactor Control Engineer.
+**Communication:** the same shift log as Easy and Hard, with no separate procedure display. Every instruction is a message in the log, from a named role. Messages come from roles, not real people's names: Test Supervisor, Deputy Chief Engineer, Kiev Grid Controller, Shift Foreman, Senior Reactor Control Engineer. The Deputy Chief Engineer gives the station's target orders; when each takes effect, the Test Supervisor confirms it ("New power output requested…"). Kiev confirms its own.
 
 **No random events.** All disruptions are scripted. Targets are scripted and still show in the same Power Target display to help the player. Same rules apply for being within / outside of range for targret, impacting performance. 
 
 **Automated changes:** some phases change controls without the player doing anything. Each automated change is announced in the log as it happens and happens once. The player can reverse it at any time, and the script never undoes the player's reversal.
 
 **Phases** (timings are starting values for pacing):
-1. **Briefing & power reduction** (≈0–3 min). Reactor starts at normal output. Procedure: reduce power output to about half. Messages explain the test's purpose.
-2. **Kiev's delay** (≈3–10 min). The grid controller orders the station to hold a power output low enough that the radioactivity needed for it causes slow but steady xenon build-up (the show's 10-hour delay, compressed to a few minutes).
-3. **Shift change & reduction to test output** (≈10–16 min). Targets step down toward the test band. Xenon peaks. Either radioactivity tanks or the player removes control rods.
-4. **"Raise the power."** (≈16–22 min). The Deputy Chief Engineer demands the test power output. To get there the player must withdraw more rods, dropping below minimum rod margin (warnings fire). Performance pressure applies: failing to reach and hold the test output drains performance, and at zero the player is removed from their post. Safe play is not free. Fuel temperature is likely starting to get low.
-5. **Test** (≈22–24 min). Procedure orders **all four pumps on**, and the game switches them on automatically. Fuel temperature drops further as a result. Then a "Switch turbine to power pumps" message appears, and the game automatically disconnects the turbine from the grid and sets it to supply the pumps. As the test begins, the pumps' normal supply is cut (the loss of station power the test exists to simulate), so the turbine is their only power: high steam powers all 4 pumps; low steam powers fewer. The player is able to intervene at any point.
-6. **End of test** (≈25–30 min). After the test time has elapsed a message reads "Test complete" and the pumps' normal supply returns. There are no more automated changes. It's up to the player to avoid a catastrophe until the shift ends.
+1. **Briefing & power reduction** (≈0–2 min). Reactor starts at normal output. Procedure: reduce power output to about half. Messages explain the test's purpose.
+2. **Kiev's delay** (≈2–6 min). The grid controller orders the station to hold a power output low enough that the radioactivity needed for it causes slow but steady xenon build-up (the show's 10-hour delay, compressed to a few minutes).
+3. **Shift change & reduction to test output** (≈6–9 min). Targets step down toward the test band. Xenon peaks. Either radioactivity tanks or the player removes control rods.
+4. **"Raise the power."** (≈9–12 min). The Deputy Chief Engineer demands the test power output. To get there the player must withdraw more rods, dropping below minimum rod margin (warnings fire). Performance pressure applies: failing to reach and hold the test output drains performance, and at zero the player is removed from their post. Safe play is not free. Fuel temperature is likely starting to get low.
+5. **Test** (≈12–15 min, with 8 minutes left). Procedure orders **all four pumps on**, and the game switches them on automatically. Fuel temperature drops further as a result. Then a "Switch turbine to power pumps" message appears, and the game automatically disconnects the turbine from the grid and sets it to supply the pumps. As the test begins, the pumps' normal supply is cut (the loss of station power the test exists to simulate), so the turbine is their only power: high steam powers all 4 pumps; low steam powers fewer. The player is able to intervene at any point.
+6. **End of test** (≈15–20 min). After the test time has elapsed a message reads "Test complete" and the pumps' normal supply returns. There are no more automated changes. It's up to the player to avoid a catastrophe until the shift ends.
 
 **Targets during and after the test:** from the turbine switch in phase 5 onwards there is no grid target (the script itself has disconnected the turbine), so performance neither rises nor falls, and the Power Target display shows N/A as in Free mode. After "Test complete" the only goal left is survival.
 
 **Outcomes:**
-- Same as any other mode: reach the end of the 30-minute countdown, or be removed from post / suffer a disaster.
+- Same as any other mode: reach the end of the 20-minute countdown, or be removed from post / suffer a disaster.
 
 **Player outcome:** Safety Test feels unlike the shift modes. It is a slow-burn story where the player is pushed, step by step, into the configuration the show warns about, and some things change without the player doing anything. Then they have to survive the consequences. Surviving should be possible but require skill.
 
-**Acceptance checks:** each phase is triggered, any automated changes take place per phase and are announced clearly. The player can reverse any automated change. With the xenon from phases 2–3, reaching the test output probably requires going below the minimum rod margin. Surviving to the end of the 30 minutes is possible with skilful play.
+**Acceptance checks:** each phase is triggered, any automated changes take place per phase and are announced clearly. The player can reverse any automated change. With the xenon from phases 2–3, reaching the test output probably requires going below the minimum rod margin. Surviving to the end of the 20 minutes is possible with skilful play.
 
 ---
 
@@ -421,7 +422,7 @@ A one-page summary of Sections 5–10.
 | Rod movement | **Constant travel speed** (~18 s full stroke), the same in every mode | Rods are not instant brakes. |
 | Rod margin | **Not a physics rule**: a warning threshold on total insertion | Names the dangerous state without hidden effects. |
 | Xenon effect | **Proportional** to the xenon level (a blue card) | Simple and readable. |
-| Xenon build-up | **Gradual** (minutes) at low radioactivity, faster the lower it is; 0% in normal running | Slow, ominous, readable. |
+| Xenon build-up | **Gradual**: a slow creep anywhere below normal radioactivity, minutes to the cap at low radioactivity, faster the lower it is; 0% in normal running | Slow, ominous, readable. |
 | Xenon burn-off | **Accelerates with radioactivity**: slow just above the burn-off level, seconds during a surge | Removing a brake as radioactivity rises feeds the rise; the escape must be caught. |
 | Fuel temperature effect | **Continuous curve, 0 at normal running temperature**: a mild brake when hotter than normal, firming a little when very hot but always weaker than the steam that comes with it; a push when cooler, strongest when very cold | Slows a runaway without ever stopping it (only rods and pumps do); restart lever; a healthy reactor reads 0. |
 | Fuel / reactor temperature | **Lagged heat balance** (not exponential) | Fast only because radioactivity is fast. |

@@ -139,7 +139,7 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     description: "Historical scenario: the night of the Unit 4 turbine rundown test. Scripted orders, no random events.",
     hasTimer: true,
     timerMode: "countdown",
-    timeLimit: 1800,
+    timeLimit: 1200,
     hasPowerTarget: true,
     defaultPowerTarget: 5000,
     hasRandomEvents: false,

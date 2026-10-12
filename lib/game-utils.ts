@@ -45,9 +45,9 @@ export function addLog(state: GameState, source: LogSource, text: string, from: 
   return { ...state, log: [...state.log, entry].slice(-LOG_LIMIT) }
 }
 
-// The Safety Test's clocks (camera and procedure log) read 01:00:00 at the start, so the test begins at
+// The Safety Test's clocks (camera and procedure log) read 01:10:00 at the start, so the test begins at
 // 01:23:04 as it did on 26 April 1986. Every other mode starts at 00:00:00.
-export const SAFETY_TEST_CLOCK_START = 3600
+export const SAFETY_TEST_CLOCK_START = 4200
 
 export function getClockStartSeconds(mode: GameState["mode"]): number {
   return mode === "safety_test" ? SAFETY_TEST_CLOCK_START : 0

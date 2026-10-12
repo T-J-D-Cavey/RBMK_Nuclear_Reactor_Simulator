@@ -47,8 +47,8 @@ export default function InstructionsPage() {
               <Card title="Free Mode (Sandbox)" subtitle="Unlimited practice">
                 No targets and no events. The clock counts up. Use it to learn how the reactor responds.
               </Card>
-              <Card title="Safety Test" subtitle="Historical scenario · 30 minutes">
-                A scripted recreation of the night of the Unit 4 turbine rundown test. Orders come from the test procedure, the
+              <Card title="Safety Test" subtitle="Historical scenario · 20 minutes">
+                A scripted recreation of the night of the Unit 4 turbine rundown test. Orders come from the test supervisor, the
                 Deputy Chief Engineer and the Kiev grid controller. No random events.
               </Card>
             </div>
@@ -172,8 +172,9 @@ export default function InstructionsPage() {
                 {t.steamVolume.explosion}. With little or no flow, each degree makes far more steam.
               </Card>
               <Card title="Xenon">
-                Reads 0% in normal running. It builds over minutes when radioactivity is low (below about{" "}
-                {TUNING.xenonBuildBelow}), and burns off as radioactivity rises: slowly at first, then in seconds during a surge.
+                Reads 0% in normal running. It creeps up slowly whenever radioactivity is below {TUNING.xenonCreepBelow}, and
+                builds over minutes once it is below about {TUNING.xenonBuildBelow}. Above {TUNING.xenonBurnAbove} it burns
+                off: slowly at first, then in seconds during a surge.
               </Card>
               <Card title="Power Target and Performance">
                 Stay within ±{Math.round(t.powerTolerance.fraction * 100)}% of the target (never tighter than ±
@@ -225,7 +226,7 @@ export default function InstructionsPage() {
 
           <Section title="The Safety Test">
             <p className="text-sm leading-relaxed">
-              The night of 25–26 April 1986, compressed into 30 minutes. You will be ordered to reduce power, hold it low while
+              The night of 25–26 April 1986, compressed into 20 minutes. You will be ordered to reduce power, hold it low while
               xenon builds, and then raise it again for the test, which takes the rod margin below its minimum. Then the test
               begins: the turbine is switched to the pumps and the pumps&apos; normal supply is cut. Some controls change by
               themselves; each change is announced in the procedure log, and you can reverse it. Decide in advance what you will do

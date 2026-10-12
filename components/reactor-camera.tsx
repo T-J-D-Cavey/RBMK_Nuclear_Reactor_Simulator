@@ -47,7 +47,7 @@ export function getShiftElapsedSeconds(gameTime: number, timeLimit: number | nul
 /** Default camera clock start: 26-04-1986 00:00:00 (UTC is used purely as a fixed, timezone-free clock). */
 export const CAMERA_CLOCK_START_MS = Date.UTC(1986, 3, 26, 0, 0, 0)
 
-/** The Safety Test's camera starts at 01:00:00, so the test begins at 01:23:04 as it did. Other modes: 00:00:00. */
+/** The Safety Test's camera starts at 01:10:00, so the test begins at 01:23:04 as it did. Other modes: 00:00:00. */
 export function getCameraClockStartMs(mode: GameMode): number {
   return CAMERA_CLOCK_START_MS + getClockStartSeconds(mode) * 1000
 }

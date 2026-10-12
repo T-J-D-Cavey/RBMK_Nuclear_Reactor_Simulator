@@ -1,4 +1,4 @@
-// The Safety Test (bible §14): a scripted 30-minute recreation of the night of the Unit 4 turbine rundown
+// The Safety Test (bible §14): a scripted 20-minute recreation of the night of the Unit 4 turbine rundown
 // test. Same reactor physics as every mode. The script only sends orders, sets targets (with the usual
 // notice) and makes the automated control changes the procedure calls for. Each automated change happens
 // once and is announced as it happens; the player can reverse it and the script never undoes that.
@@ -23,18 +23,19 @@ const ROLES = {
 type Action = "pumps-on" | "turbine-to-pumps" | "mains-off" | "mains-on"
 
 interface ScriptStep {
-  at: number // shift time (s). The night clock reads 01:00:00 + at.
+  at: number // shift time (s). The night clock reads 01:10:00 + at.
   role: keyof typeof ROLES
   text: string
   target?: number | null // announce a target change (usual notice), or null: no grid target from now on
   action?: Action
 }
 
-// Targets follow the physics: with two pumps, xenon builds once radioactivity is below ~50, i.e. output
-// below ~1,550 MW. Kiev's hold (~1,000 MW) builds it slowly; the test band (700 → 500 MW) builds it fast,
-// so that raising output to 1,000 MW for the test takes the rod margin below its minimum.
+// Targets follow the physics: with two pumps, xenon creeps up below radioactivity 100 (output below ~5,000 MW)
+// and builds fast below ~50. Kiev's hold (~1,000 MW) builds it steadily; the test band
+// (700 → 500 MW) builds it fast, so that raising output to 1,000 MW for the test takes the rod margin below
+// its minimum.
 export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
-  // Phase 1: briefing and power reduction (00–03 min)
+  // Phase 1: briefing and power reduction (00–02 min)
   {
     at: 0,
     role: "procedure",
@@ -47,91 +48,86 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     target: 3500,
   },
   {
-    at: 100,
+    at: 75,
     role: "deputy",
     text: "Get on with it! 2,500 MW next",
     target: 2500,
   },
-  // Phase 2: Kiev's delay (03–10 min)
+  // Phase 2: Kiev's delay (02–06 min)
   {
-    at: 180,
+    at: 135,
     role: "kiev",
     text: "We have orders to delay your safety test until the evening peak has passed. Stay on the grid at 1,000 MW and hold it till we confirm.",
     target: 1000,
   },
   {
-    at: 330,
-    role: "srce",
-    text: "At this level xenon builds up in the core. Radioactivity will sag: we will have to draw rods to hold output.",
+    at: 220,
+    role: "deputy",
+    text: "Bunch of amateurs. Get it done!",
   },
   {
-    at: 480,
-    role: "foreman",
-    text: "Xenon is still climbing. Keep drawing rods to hold 1,000 MW, and watch the rod margin.",
+    at: 310,
+    role: "deputy",
+    text: "I want this done already!",
   },
-  // Phase 3: shift change and reduction to the test output (10–16 min)
+  // Phase 3: shift change and reduction to the test output (06–09 min)
   {
-    at: 600,
+    at: 375,
     role: "foreman",
     text: "Shift change: the night shift is on duty. Get them up to speed on the test's progress.",
   },
   {
-    at: 615,
+    at: 390,
     role: "deputy",
     text: "Bring it down to 700 MW for the test.",
     target: 700,
   },
   {
-    at: 780,
+    at: 465,
     role: "deputy",
     text: "Lower. 500 MW.",
     target: 500,
   },
+  // Phase 4: "Raise the power." (09–12 min)
   {
-    at: 870,
-    role: "srce",
-    text: "Xenon is near its peak. Radioactivity will keep falling unless rods come out.",
-  },
-  // Phase 4: "Raise the power." (16–22 min)
-  {
-    at: 960,
+    at: 540,
     role: "deputy",
     text: "This is taking too long. Raise the power to 1,000 MW: the test needs it. Pull rods if you have to.",
     target: 1000,
   },
   {
-    at: 1110,
+    at: 660,
     role: "srce",
     text: "Watch the rod margin. Regulations say that below the minimum we must shut the reactor down.",
   },
   {
-    at: 1125,
+    at: 675,
     role: "deputy",
     text: "No. Another three months waiting for this test? Hold 1,000 MW. We run the test tonight.",
   },
-  // Phase 5: the test (22–25 min). The clock reads 01:23:04 as the test begins.
+  // Phase 5: the test (12–15 min), with 8 minutes left. The clock reads 01:23:04 as the test begins.
   {
-    at: 1320,
+    at: 720,
     role: "procedure",
     text: "Test step 1: start all four main circulation pumps.",
     action: "pumps-on",
   },
   {
-    at: 1350,
+    at: 750,
     role: "procedure",
     text: "Test step 2: switch the turbine to power the pumps.",
     target: null,
     action: "turbine-to-pumps",
   },
   {
-    at: 1384,
+    at: 784,
     role: "procedure",
     text: "Test begins. Station power to the pumps is cut: the coasting turbine is now their only supply. Keep the reactor under control.",
     action: "mains-off",
   },
-  // Phase 6: after the test (25–30 min)
+  // Phase 6: after the test (15–20 min)
   {
-    at: 1500,
+    at: 900,
     role: "procedure",
     text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until the shift ends at 01:30.",
     action: "mains-on",
@@ -156,7 +152,9 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
   if (step.target === null) {
     s = { ...s, powerTarget: null, pendingTarget: null }
   } else if (step.target !== undefined) {
-    s = { ...s, pendingTarget: { target: step.target, at: now + EVENT_TUNING.targetNotice, source: role.source, from: role.from } }
+    // The test supervisor confirms the station's own orders when they take effect (owner); Kiev confirms its own.
+    const confirm = step.role === "kiev" ? role : ROLES.procedure
+    s = { ...s, pendingTarget: { target: step.target, at: now + EVENT_TUNING.targetNotice, source: confirm.source, from: confirm.from } }
   }
   switch (step.action) {
     case "pumps-on":

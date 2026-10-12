@@ -2,6 +2,12 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.9 – 2026-10-12 (after the second Safety Test playtest)
+
+- **Xenon creeps up below normal radioactivity** (Section 9 build-up and burn-off, acceptance checks, Section 16 table). Xenon used to build only below about 50 and burn off above 70, so a reactor hovering just above 50 never saw any. The owner wants it to creep up very slowly anywhere below 100, faster the lower radioactivity goes, so staying below 100 lets it accumulate. Burn-off now starts above 100, so getting back above normal soon clears it. There is no longer a band where xenon holds steady. The "normal radioactivity clears a full load in tens of seconds" check now refers to well above normal, because at 100 itself xenon neither builds nor burns.
+- **The Safety Test lasts 20 minutes, not 30** (Section 14). The owner found it too long. The phases keep their order and are shortened. The test still starts with 8 minutes left, and the clock still reads 01:23:04 as it begins.
+- **The Test Supervisor confirms the Safety Test's target changes** (Section 14 communication). The Deputy Chief Engineer still gives the orders, but the "New power output requested" message when each takes effect now comes from the Test Supervisor. Kiev still confirms its own order.
+
 ## v2.8 – 2026-10-12 (after the Safety Test playtest)
 
 - **The Safety Test uses the ordinary shift log** (Section 14 communication; Section 15 message area). The plan asked for a distinct test-procedure style showing the current phase and the next instruction. In play, the owner found the separate "Phase x of 6" card unnecessary and asked for the log to look and behave as it does on Easy and Hard. So the phase is no longer shown, and every instruction is a message from a named role. The script's six phases still structure the scenario, and Section 14's acceptance checks are unchanged.

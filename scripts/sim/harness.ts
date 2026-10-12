@@ -101,11 +101,13 @@ export function settle(s: GameState, seconds = 600): GameState {
 
 // A settled state at roughly the target radioactivity, found by shifting every default rod by the same
 // amount. Keeps test set-ups meaningful when tuning changes what a fixed set of rod positions produces.
+// Xenon is held at 0 while it settles: below normal radioactivity it never stops creeping up (bible §9), so
+// there is no true steady state there. The result is the state a player who has just arrived would be in.
 export function steadyAt(target: number, pumps = 2, seconds = 400): GameState {
   const start = setPumps(baseState(), pumps, { instant: true })
   const defaults = start.controlRods.map((r) => r.target)
   const at = (offset: number) =>
-    settle(setRods(start, defaults.map((v) => Math.max(0, Math.min(100, v + offset))), { instant: true }), seconds)
+    settleWithoutXenon(setRods(start, defaults.map((v) => Math.max(0, Math.min(100, v + offset))), { instant: true }), seconds)
   // More rod in → lower settled radioactivity, so bisect on the offset.
   let lo = -60
   let hi = 60
@@ -115,6 +117,12 @@ export function steadyAt(target: number, pumps = 2, seconds = 400): GameState {
     else hi = mid
   }
   return at((lo + hi) / 2)
+}
+
+function settleWithoutXenon(s: GameState, seconds: number): GameState {
+  let state = s
+  for (let t = 0; t < seconds; t++) state = { ...runQuiet(state, 1).final, xenon: 0 }
+  return state
 }
 
 export function formatTrace(result: RunResult, every = 1): string {

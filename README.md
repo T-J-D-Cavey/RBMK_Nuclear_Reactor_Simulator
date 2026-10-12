@@ -13,7 +13,7 @@ The reactor obeys the same physics in every mode. Modes differ only in workload.
 - **Easy:** 15 minute shift, about one major emergency, smaller and less frequent power target changes.
 - **Hard:** 30 minute shift, about three major emergencies, larger and more frequent power target changes.
 - **Free (sandbox):** no targets, no events, unlimited time.
-- **Safety Test:** a scripted, 30 minute recreation of the night of the Unit 4 turbine rundown test (25–26 April 1986). Orders come from the test procedure, the Deputy Chief Engineer and the Kiev grid controller.
+- **Safety Test:** a scripted, 20 minute recreation of the night of the Unit 4 turbine rundown test (25–26 April 1986). Orders come from the test supervisor, the Deputy Chief Engineer and the Kiev grid controller.
 
 ## How the reactor works: red cards and blue cards
 
