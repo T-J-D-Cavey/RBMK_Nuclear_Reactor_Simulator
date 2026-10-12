@@ -1,43 +1,32 @@
 "use client"
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import type { GameState, LogEntry } from "@/lib/types"
 import { formatLogTime } from "@/lib/game-utils"
-import { getSafetyTestStatus } from "@/lib/safety-test"
-import { useTypewriter } from "@/hooks/use-typewriter"
 import { usePrefersReducedMotion } from "@/components/presentation-use-reduced-motion"
-import { type Segment, TypedSegments } from "@/components/typed-text"
 
-const VISIBLE_MESSAGES = 4 // the rest have fed out of sight below the window
-const MIN_LINES = 4 // blank paper the window shows before the shift has said much
-const FLASH_MS = 1200 // the Printing lamp flashes three times before the paper feeds
-const FEED_MS = 450
-const CHARS_PER_SECOND = 70
+const FULL_MESSAGES = 2 // messages wholly in view (owner); older ones are on the roll below
+const PEEK_LINES = 0.5 // the top half of the next line down shows at the roller, so the roll looks like it goes on
+const TYPICAL_CHARS = 110 // a typical message with its time and sender (the median is about 107), for sizing the window
+const FLASH_MS = 1200 // the Printing lamp flashes three times as the message starts printing
+const PRINT_MS = 800 // then shines steadily while it finishes
+const FEED_MS = 450 // then the paper feeds to show the printed message
 const FEED_EASING = "cubic-bezier(0.2, 0.7, 0.3, 1)"
 
 type Lamp = "off" | "flash" | "on"
-
-// One ink for every sender: a teleprinter has a single ribbon (owner).
-function segmentsFor(gameState: GameState, entry: LogEntry): Segment[] {
-  return [
-    { text: `[${formatLogTime(gameState, entry)}] `, className: "tabular-nums" },
-    { text: `${entry.from}: `, className: "font-bold" },
-    { text: entry.text },
-  ]
-}
+type Stage = "idle" | "flash" | "print" | "feed"
 
 // The shift log as a teleprinter (owner, 2026-10-12): every message comes from a person and is printed in
-// capitals on the chart recorder's paper. The newest line prints at the top, the paper feeds down to make room
-// for it, and the oldest of the four in view feeds out of sight below. The player can drag the paper (or use the
-// mouse wheel or arrow keys) to read back. The housing matches the alarm monitor's, and its Printing lamp flashes
-// before each message, then stays lit while it prints. In the Safety Test it is the test procedure, with the
-// phase and standing orders on a card above the paper.
+// capitals, in one ink, on the chart recorder's paper. A new message is printed out of sight under the print head
+// while the Printing lamp flashes and then shines; then the paper feeds down to show it whole at the top, and the
+// message that was on top drops to about halfway. Two messages are in view, with half a line of the next showing
+// at the roller and the rest of the roll below it. The player can drag the paper (or use the mouse wheel or arrow
+// keys) to read back. The housing matches the alarm monitor's. The Safety Test uses the same log: its orders are
+// messages on the paper (owner).
 export default function ShiftLogPrinter({ gameState }: { gameState: GameState }) {
   const [visible, setVisible] = useState(true)
   const [lamp, setLamp] = useState<Lamp>("off")
-  const isTest = gameState.mode === "safety_test"
-  const status = isTest ? getSafetyTestStatus(gameState) : null
 
   // Unread marker while the log is collapsed
   const log = gameState.log
@@ -60,7 +49,7 @@ export default function ShiftLogPrinter({ gameState }: { gameState: GameState })
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-200 truncate">
-            SKALA · {isTest ? "Test Procedure" : "Shift Log"}
+            SKALA · Shift Log
           </span>
           {hasUnread && <span className="ws5-unread font-mono text-[10px] font-bold uppercase">New</span>}
         </span>
@@ -77,55 +66,65 @@ export default function ShiftLogPrinter({ gameState }: { gameState: GameState })
         </span>
       </button>
 
-      {visible && (
-        <div className="space-y-2">
-          {status && (
-            <div className="ws5-procedure-sheet border-2 px-3 py-1.5 font-mono text-xs sm:text-sm text-amber-950 space-y-0.5">
-              <div className="font-bold uppercase tracking-wide">
-                Phase {status.phase} of 6 · {status.name}
-              </div>
-              {status.order && (
-                <div>
-                  <span className="font-bold uppercase">Orders: </span>
-                  {status.order}
-                </div>
-              )}
-            </div>
-          )}
-          <Paper gameState={gameState} onLamp={setLamp} />
-        </div>
-      )}
+      {visible && <Paper gameState={gameState} onLamp={setLamp} />}
     </section>
   )
 }
 
+// Which messages are on the paper, and what the printer is doing. Messages already in the log when the paper
+// appears are on it from the start. Each new one goes through flash, print and feed before the next starts, so a
+// burst of messages prints in order. Reduced motion puts each on the paper at once.
+function usePrintQueue(log: LogEntry[], reduced: boolean) {
+  const printedIds = useRef<Set<string> | null>(null)
+  if (printedIds.current === null) printedIds.current = new Set(log.map((entry) => entry.id))
+  const printed = printedIds.current
+  const [stage, setStage] = useState<Stage>("idle")
+  const [, rerender] = useReducer((n: number) => n + 1, 0)
+  const waiting = log.find((entry) => !printed.has(entry.id))?.id
+
+  useEffect(() => {
+    if (stage === "idle") {
+      if (!waiting) return
+      if (reduced) {
+        printed.add(waiting)
+        rerender()
+      } else {
+        setStage("flash")
+      }
+      return
+    }
+    const timer = window.setTimeout(
+      () => {
+        if (stage === "flash") return setStage("print")
+        if (stage === "feed") return setStage("idle")
+        if (waiting) printed.add(waiting) // printed: now the paper feeds to show it
+        setStage("feed")
+      },
+      { flash: FLASH_MS, print: PRINT_MS, feed: FEED_MS }[stage],
+    )
+    return () => window.clearTimeout(timer)
+  }, [stage, waiting, reduced, printed])
+
+  return { onPaper: log.filter((entry) => printed.has(entry.id)), stage }
+}
+
 function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lamp) => void }) {
   const reduced = usePrefersReducedMotion()
-  const segments = new Map(gameState.log.map((entry) => [entry.id, segmentsFor(gameState, entry)]))
-  const lines = gameState.log.map((entry) => ({ key: entry.id, text: (segments.get(entry.id) ?? []).map((segment) => segment.text).join("") }))
-  // Oldest first, so a burst of messages prints in order; shown newest first. Each line waits for the lamp to
-  // flash and the paper to feed before it prints.
-  const lead = reduced ? 0 : FLASH_MS + FEED_MS
-  const printed = useTypewriter(lines, { charsPerSecond: CHARS_PER_SECOND, delayMs: lead, instant: reduced }).reverse()
-  const newest = printed[0]?.key
+  const { onPaper, stage } = usePrintQueue(gameState.log, reduced)
+  const entries = onPaper.reverse() // newest at the top
+  const newest = entries[0]?.id
 
-  // The housing's lamp: flashes while a new message is waiting, then stays lit while the paper feeds and it prints.
-  const printing = printed.some((line) => line.typing)
-  const [flashing, setFlashing] = useState(false)
-  useEffect(() => {
-    if (!flashing) return
-    const timer = window.setTimeout(() => setFlashing(false), FLASH_MS)
-    return () => window.clearTimeout(timer)
-  }, [flashing])
-  useEffect(() => onLamp(flashing ? "flash" : printing ? "on" : "off"), [flashing, printing, onLamp])
+  // The housing's lamp: flashes as a message starts printing, then shines until the paper has fed.
+  useLayoutEffect(() => onLamp(stage === "flash" ? "flash" : stage === "idle" ? "off" : "on"), [stage, onLamp])
   useEffect(() => () => onLamp("off"), [onLamp])
 
   const viewportRef = useRef<HTMLDivElement>(null)
   const paperRef = useRef<HTMLDivElement>(null)
+  const probeRef = useRef<HTMLDivElement>(null) // an invisible one-line message, for sizing the window
   const offset = useRef(0) // paper position: 0 shows the newest line, negative reads back
   const windowHeight = useRef(0)
   const lineHeight = useRef(22)
-  const hasEarlier = useRef(false) // more than four messages, so some have fed out of sight
+  const hasEarlier = useRef(false) // some printed text is below the window
   const drag = useRef<{ y: number; from: number } | null>(null)
   const [height, setHeight] = useState<number | null>(null)
   const [canReadBack, setCanReadBack] = useState(false)
@@ -138,36 +137,40 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
   }
   const lowest = () => (hasEarlier.current ? Math.min(0, windowHeight.current - printedEnd()) : 0)
 
-  const moveTo = useCallback((y: number, animate: boolean, delayMs = 0) => {
+  const moveTo = useCallback((y: number, animate: boolean) => {
     offset.current = y
     const paper = paperRef.current
     if (paper) {
-      paper.style.transition = animate ? `transform ${FEED_MS}ms ${FEED_EASING} ${delayMs}ms` : "none"
+      paper.style.transition = animate ? `transform ${FEED_MS}ms ${FEED_EASING}` : "none"
       paper.style.transform = `translateY(${y}px)`
     }
     setReadingBack(y < -1)
   }, [])
 
-  // The window shows the newest four messages (or a few blank lines before there are four).
+  // The window is a fixed height for the paper's width, so it never changes as messages come and go (owner): room
+  // for two messages of typical length and half of the first line of the next. Only the paper moves.
   const measure = useCallback(() => {
     const paper = paperRef.current
-    if (!paper) return
+    const probe = probeRef.current
+    if (!paper || !probe) return
     const style = getComputedStyle(paper)
     const top = parseFloat(style.paddingTop) || 0
-    lineHeight.current = parseFloat(style.lineHeight) || lineHeight.current
-    const rows = paper.querySelectorAll<HTMLElement>("[data-entry]")
-    let h = top
-    for (let i = 0; i < Math.min(VISIBLE_MESSAGES, rows.length); i++) h += rows[i].offsetHeight
-    // A few pixels spare, so the roller shading falls below the last line of text rather than across it
-    const next = Math.ceil(Math.max(h, top + MIN_LINES * lineHeight.current)) + 6
+    const lh = (lineHeight.current = parseFloat(style.lineHeight) || lineHeight.current)
+    const gap = parseFloat(getComputedStyle(probe).paddingTop) || 0 // space above a message's text
+    const charWidth = probe.firstElementChild?.getBoundingClientRect().width || 9
+    const textWidth = paper.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0)
+    const linesPerMessage = Math.max(1, Math.round(TYPICAL_CHARS / Math.max(1, Math.floor(textWidth / charWidth))))
+    const message = probe.offsetHeight + (linesPerMessage - 1) * lh
+    const next = Math.round(top + FULL_MESSAGES * message + gap + PEEK_LINES * lh)
     windowHeight.current = next
-    hasEarlier.current = rows.length > VISIBLE_MESSAGES
+    const last = paper.querySelector<HTMLElement>("[data-entry]:last-child")
+    hasEarlier.current = !!last && last.offsetTop + last.offsetHeight > next + 1 // some printed text is out of sight
     setHeight(next)
     setCanReadBack(hasEarlier.current)
     if (offset.current < lowest()) moveTo(lowest(), false)
   }, [moveTo])
 
-  useLayoutEffect(measure, [measure, printed.length, newest])
+  useLayoutEffect(measure, [measure, entries.length, newest])
 
   useEffect(() => {
     const paper = paperRef.current
@@ -177,8 +180,8 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
     return () => observer.disconnect()
   }, [measure])
 
-  // A new message: the paper stays where it was while the lamp flashes, then feeds down by the new line's height
-  // and the line prints.
+  // A message has been printed: it starts out of sight above the window, and the paper feeds down by its height
+  // to show it.
   const lastNewest = useRef(newest)
   useLayoutEffect(() => {
     if (newest === lastNewest.current) return
@@ -186,10 +189,9 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
     const paper = paperRef.current
     const row = paper?.querySelector<HTMLElement>("[data-entry]")
     if (!paper || !row || reduced) return moveTo(0, false)
-    setFlashing(true)
     moveTo(offset.current - row.offsetHeight, false)
     void paper.offsetHeight // commit the start position before animating
-    moveTo(0, true, FLASH_MS)
+    moveTo(0, true)
   }, [newest, reduced, moveTo])
 
   // Mouse wheel moves the paper, not the page, until the paper reaches its end. Needs a non-passive listener.
@@ -230,7 +232,7 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
     moveTo(Math.max(lowest(), Math.min(0, next)), !reduced)
   }
 
-  const recent = gameState.log.slice(-VISIBLE_MESSAGES)
+  const recent = gameState.log.slice(-(FULL_MESSAGES + 1))
 
   return (
     <div className="ws3-chart-window bg-neutral-800 border-2 border-neutral-900 p-1">
@@ -240,7 +242,7 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
         role="group"
         aria-label="Shift log paper. Drag it, or use the arrow keys, to read earlier messages."
         className={`ws5-printer-viewport ${canReadBack ? "ws5-printer-draggable" : ""}`}
-        style={{ height: height ?? undefined, transitionDelay: flashing ? `${FLASH_MS}ms` : undefined }}
+        style={{ height: height ?? undefined }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -248,14 +250,14 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
         onKeyDown={onKeyDown}
       >
         <div ref={paperRef} className="ws5-printer-paper font-mono" aria-hidden="true">
-          {printed.map((line) => (
-            <div key={line.key} data-entry={line.key} className="break-words">
-              <TypedSegments
-                segments={segments.get(line.key) ?? []}
-                shown={line.shown}
-                reserve
-                cursor={line.typing && !flashing ? <span className="ws5-print-cursor" /> : null}
-              />
+          <div ref={probeRef} className="ws5-printer-entry invisible absolute">
+            <span>M</span>
+          </div>
+          {entries.map((entry) => (
+            <div key={entry.id} data-entry={entry.id} className="ws5-printer-entry break-words">
+              <span className="tabular-nums">[{formatLogTime(gameState, entry)}] </span>
+              <span className="font-bold">{entry.from}: </span>
+              {entry.text}
             </div>
           ))}
         </div>

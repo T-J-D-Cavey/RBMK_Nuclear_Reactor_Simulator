@@ -467,15 +467,6 @@
 
 /* === WS5 message area and end screens === */
 
-/* Safety Test: the phase and standing orders, on a typed procedure card above the teleprinter */
-.ws5-procedure-sheet {
-  background:
-    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 1.45rem, rgba(146, 64, 14, 0.07) 1.45rem 1.5rem),
-    #f3ead2;
-  border-style: dashed;
-  border-color: #92400e;
-}
-
 /* ---- Alarm monitor: the plant computer's green-phosphor screen (owner, 2026-10-12) ---- */
 .ws5-crt-screen {
   position: relative;
@@ -565,7 +556,7 @@
 .ws5-printer-viewport {
   position: relative;
   overflow: hidden;
-  min-height: 6rem;
+  min-height: 4rem;
   transition: height 450ms ease-out;
   outline: none;
 }
@@ -585,11 +576,11 @@
 }
 
 .ws5-printer-paper {
-  --lh: 1.5rem;
+  --lh: 1.25rem; /* tight, so the lines of one message read as one block (owner) */
   position: relative;
   /* Blank paper fills the window, with spare below the roller so a feed never shows a gap under a short log */
   min-height: calc(100% + 4 * var(--lh));
-  padding: 0.5rem 1.6rem var(--lh);
+  padding: 0.25rem 1.6rem var(--lh);
   font-size: 0.9375rem;
   line-height: var(--lh);
   color: #2b2a24; /* one ribbon, all capitals: a teleprinter (owner) */
@@ -597,16 +588,20 @@
   user-select: none;
   background:
     linear-gradient(to right, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0) 95%, rgba(0, 0, 0, 0.12)),
-    repeating-linear-gradient(to bottom, rgba(85, 96, 74, 0) 0 calc(var(--lh) - 1px), rgba(85, 96, 74, 0.16) calc(var(--lh) - 1px) var(--lh)),
     #efe7cf;
-  background-position: 0 0, 0 0.5rem, 0 0;
 }
 
 @media (min-width: 640px) {
   .ws5-printer-paper {
-    --lh: 1.625rem;
+    --lh: 1.375rem;
     font-size: 1rem;
   }
+}
+
+/* One message: a gap above and below, with a faint rule between messages instead of one under every line */
+.ws5-printer-entry {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(85, 96, 74, 0.2);
 }
 
 /* Sprocket holes down both edges, moving with the paper like the chart recorder's */
@@ -618,7 +613,7 @@
   bottom: 0;
   width: 1.1rem;
   pointer-events: none;
-  background: radial-gradient(circle, #3f3f46 0 2.5px, rgba(63, 63, 70, 0) 3px) 0 0 / 100% var(--lh) repeat-y;
+  background: radial-gradient(circle, #3f3f46 0 2.5px, rgba(63, 63, 70, 0) 3px) 0 0 / 100% 1.5rem repeat-y;
 }
 
 .ws5-printer-paper::before {
@@ -629,23 +624,9 @@
   right: 0;
 }
 
-/* The Printing lamp flashes three times before a message (FLASH_MS in shift-log-printer.tsx) */
+/* The Printing lamp flashes three times as a message starts printing (FLASH_MS in shift-log-printer.tsx) */
 .ws5-lamp-flash {
   animation: ws3-rec-blink 0.4s steps(1, end) infinite;
-}
-
-/* The print head's cursor: takes no width, so line breaks don't move while a line prints */
-.ws5-print-cursor {
-  position: relative;
-}
-
-.ws5-print-cursor::after {
-  content: "▌";
-  position: absolute;
-  left: 0.05em;
-  top: 0;
-  opacity: 0.7;
-  animation: ws3-rec-blink 0.5s steps(1, end) infinite;
 }
 
 .ws5-print-head {
@@ -660,7 +641,7 @@
 .ws5-printer-roller {
   position: absolute;
   inset: auto 0 0 0;
-  height: 0.75rem;
+  height: 0.4rem; /* short, so the half line of the next message still shows above it */
   pointer-events: none;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3) 60%, #1c1c1b 100%);
 }
@@ -720,7 +701,6 @@
   .ws3-crt-subtitle,
   .ws5-crt-text,
   .ws5-crt-cursor-blink,
-  .ws5-print-cursor::after,
   .ws5-lamp-flash,
   .ws5-unread,
   .ws5-flash,

@@ -95,7 +95,7 @@ const REACTOR_WARNINGS: [WarningFlag, string][] = [
   ["highSteam", "WARNING: High steam pressure. Disconnect turbine to avoid damage to the transmission infrastructure"],
   ["lowSteam", "WARNING: Low steam pressure causing reduced power generation. Recommend turning off some water pumps to increase reactor temperature and reducing control rod insertion to increase radioactivity"],
   ["highXenon", "WARNING: High xenon levels detected, lowering radioactivity. Recommend reducing control rod insertion to increase radioactivity."],
-  ["lowRodMargin", "WARNING: Rod margin below minimum. Too few control rods in the core: radioactivity is being held by something less reliable than boron. Recommend inserting control rods."],
+  ["lowRodMargin", "WARNING: Rod margin below minimum. Too few control rods in the core. Recommend inserting control rods."],
 ]
 
 // Warnings about the reactor's own condition.

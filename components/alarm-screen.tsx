@@ -65,7 +65,6 @@ export default function AlarmScreen({ warnings }: { warnings: Warning[] }) {
       {visible && (
         <div className="ws5-crt-screen min-h-[7rem] px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="ws5-crt-text text-base sm:text-lg leading-tight space-y-1" aria-hidden="true">
-            <div className="ws5-crt-dim">SKALA UNIT 4 &gt; ALARM SCAN</div>
             {typed.map((line) => (
               <div key={line.key} className="pl-[2ch] -indent-[2ch]">
                 <span className="ws5-crt-dim">&gt; </span>

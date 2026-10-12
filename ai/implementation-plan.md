@@ -754,13 +754,14 @@ Source: the owner's Easy-mode playtest (test two in `ai/manual-test-results.MD`)
 
 - **Two machines, one per kind of message** (`components/message-area.tsx`). They always stack, the alarm monitor above the shift log (owner). Each still collapses on its own.
   - **Alarm monitor** (`components/alarm-screen.tsx`): the plant computer's screen, "SKALA" after the footer's "© 1986 SKALA CONTROL SYSTEMS". It has green phosphor, scanlines and the VT323 terminal font (`next/font`, no new npm package). Every computer-generated warning types itself out like a command line, with "WARNING" in inverse video. A warning keeps its line while it lasts, new ones are added at the bottom, and the turbine countdown updates in place. With no warnings it reads "ALL SYSTEMS STABLE." The header's status lamp reads "All systems stable" in green, or "N Warnings" in red (owner, restored after it was briefly removed).
-  - **Shift log teleprinter** (`components/shift-log-printer.tsx`): printed on the chart recorder's paper, with sprocket holes and faint rules. Every message is in one ink and in capitals, in a larger type (owner: no colour printers then). Blank paper always fills the window.
-    - **Housing** is the alarm monitor's dark bezel, headed "SKALA · Shift Log" ("SKALA · Test Procedure" in the Safety Test, with the phase and orders card above the paper). Its yellow "Printing" lamp is dark when idle. It flashes three times (1.2 s) before each message, then stays lit while the paper feeds and the line prints. The old ink key and the "Teleprinter · Unit 4" plate label are gone (owner).
-    - A new message flashes the lamp, feeds the paper down by its height (0.45 s), then prints at the top behind a print cursor. Messages that arrive together print one after another.
-    - At most four messages are in view. Older ones feed out of sight below the roller.
-    - To read back, drag the paper (mouse or finger), use the mouse wheel, or focus it and use the arrow keys. There is no scrollbar. "Back to latest" returns to the top, and a new message rolls the paper back anyway. Read-back only works once there are more than four messages.
+  - **Shift log teleprinter** (`components/shift-log-printer.tsx`): printed on the chart recorder's paper, with sprocket holes. Every message is in one ink and in capitals, in a larger type (owner: no colour printers then). The lines of one message sit close together, with a gap and a faint rule between messages (owner). Blank paper always fills the window.
+    - **Housing** is the alarm monitor's dark bezel, headed "SKALA · Shift Log" in every mode, the Safety Test included (owner, test five: the phase and orders card is gone and its instructions are in the messages). Its yellow "Printing" lamp is dark when idle. The old ink key and the "Teleprinter · Unit 4" plate label are gone (owner).
+    - **No typing effect** (owner): a new message is printed out of sight under the print head while the lamp flashes three times (1.2 s) and then shines (0.8 s). Then the paper feeds down by the message's height (0.45 s) to show it whole. Messages that arrive together print one after another.
+    - Two messages are in view, with the top half of the next line showing at the roller (owner: less clutter, and it looks like a roll that goes on). A new message feeds the line that was on top down to about halfway. Older ones are on the roll below.
+    - The window's height is fixed for the paper's width and never changes as messages arrive (owner): only the paper moves. It is sized for two messages of typical length (110 characters with time and sender; the median is about 107) plus the half line. A longer message takes more of the window, as it would on a real roll.
+    - To read back, drag the paper (mouse or finger), use the mouse wheel, or focus it and use the arrow keys. There is no scrollbar. "Back to latest" returns to the top, and a new message rolls the paper back anyway. Read-back only works once there are more than two messages.
     - Screen readers get the latest messages as plain text.
-  - Shared typing: `hooks/use-typewriter.ts` and `components/typed-text.tsx`. Reduced motion shows everything at once.
+  - The alarm monitor's typing: `hooks/use-typewriter.ts` and `components/typed-text.tsx`. Reduced motion shows everything at once, on both machines.
 - **No more pinned lines.** The running-event summaries, the grid-hold countdown, "NEW TARGET: … in N s" and the "N ACTIVE" count are gone. Everything on the paper is a message someone sent. `getStatusLines` and `GameEvent.message` were removed.
 - **Every message comes from a named person** (`LogEntry.from` is now required; the `system` source is gone):
 
@@ -786,9 +787,9 @@ Source: the owner's Easy-mode playtest (test two in `ai/manual-test-results.MD`)
 - **Safety Test keeps "KIEV GRID CONTROLLER".** Bible §14 names the role, and phase 2 is "Kiev's delay". Easy and Hard use "GRID CONTROLLER".
 - **The new senders:** PUMP OPERATOR, TURBINE OPERATOR and TEST SUPERVISOR. PUMP HALL and TURBINE HALL were places, and the test procedure is a document, not a person.
 - **The low-performance and turbine over-pressure warnings moved to the alarm monitor**, since they are computer-generated. Before, they were in the events box (§11.1), so hiding the warnings kept them visible. Now hiding the alarm monitor hides them too.
-- **Safety Test phase and standing orders** stay visible on a typed card above the paper (on the housing, not printed on it), because bible §14 asks for the current phase and next instruction to be shown.
+- ~~**Safety Test phase and standing orders** stay visible on a typed card above the paper.~~ Reversed by the owner (test five): the card is removed and the Safety Test log looks and behaves like Easy and Hard. Instructions that were only on the card are now in the messages (the 3,500 MW step, "Keep the reactor under control" at the test, and "keep the reactor safe until 01:30" after it). Bible §14 no longer asks for the phase to be shown (changelog v2.8).
 - "a adjustment" was corrected to "an adjustment".
-- **Typing speeds:** the monitor types 90 characters a second and the teleprinter 70. The teleprinter's lamp flashes for 1.2 s before each message, then the paper feeds in 0.45 s.
+- **Typing speeds:** the monitor types 90 characters a second. The teleprinter prints each message in 2 s (lamp flashing 1.2 s, then steady 0.8 s), then the paper feeds in 0.45 s.
 
 ### 18.3 Target changes no longer give the number in advance. Answered 2026-10-12: keep it
 

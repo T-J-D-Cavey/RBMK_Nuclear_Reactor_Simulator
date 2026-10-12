@@ -356,7 +356,7 @@ Each ending gets its own game-over presentation.
 
 A scripted scenario of 30 minutes that recreates the show's night: the player spends most of the game getting the reactor into an unfavourable state under pressure, then the test exposes it. Same reactor physics as every other mode (Section 11).
 
-**Communication:** a distinct **test procedure / log** style in the existing message area. It shows the current phase, the next instruction, and messages from named roles. Messages come from roles, not real people's names: Deputy Chief Engineer, Kiev Grid Controller, Shift Foreman, Senior Reactor Control Engineer.
+**Communication:** the same shift log as Easy and Hard, with no separate procedure display. Every instruction is a message in the log, from a named role. Messages come from roles, not real people's names: Deputy Chief Engineer, Kiev Grid Controller, Shift Foreman, Senior Reactor Control Engineer.
 
 **No random events.** All disruptions are scripted. Targets are scripted and still show in the same Power Target display to help the player. Same rules apply for being within / outside of range for targret, impacting performance. 
 
@@ -393,7 +393,7 @@ A scripted scenario of 30 minutes that recreates the show's night: the player sp
 - **A chart recorder** (paper strip chart) showing the last few minutes of radioactivity, and perhaps steam and reactor temperature. With exponential behaviour, seeing the *trend and acceleration* is essential, and it fits the control-room aesthetic.
 - On narrow screens these collapse below or hide; no horizontal scrolling.
 
-**Message area:** distinguish message sources visually (Grid Controller, Head Engineer, Test Procedure, automatic alarms) and give it a teletype/log feel with timestamps. Keep it compact.
+**Message area:** distinguish message sources visually (Grid Controller, Head Engineer, Test Supervisor, automatic alarms) and give it a teletype/log feel with timestamps. Keep it compact.
 
 **Homepage and menus:** stronger atmosphere (CRT title treatment, subtle flicker). The mode selection includes Safety Test as a visually distinct "historical scenario" card. The Easy and Hard cards describe workload (shift length, targets, emergencies), not different reactor mechanics (Section 11).
 

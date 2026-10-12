@@ -152,12 +152,12 @@ const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; tex
   "power-cut": {
     source: "grid",
     from: GRID_CONTROLLER,
-    text: "Grid instability reported across the region. Unit 4 may lose station power.",
+    text: "Reports of power cable damage nearby. Advise that you prepare for emergency backup generation in the event of a powercut.",
   },
   "rod-stuck": {
     source: "engineer",
     from: SHIFT_FOREMAN,
-    text: "Pressure fluctuations in the fuel channels. Control rod channels may deform and jam.",
+    text: "Detected pressure fluctuations in the fuel channels. Control rod movement may be impacted.",
   },
 }
 
@@ -196,7 +196,7 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
       s = addLog(
         s,
         "grid",
-        `Grid frequency is unstable. Hold output at ${formatMW(s.powerTarget)}, within ±${formatMW(getPowerTolerance(s.powerTarget, true))}, for about ${minutes} minute${minutes > 1 ? "s" : ""}.`,
+        `We need you to hold power at ${formatMW(s.powerTarget)}, within ±${formatMW(getPowerTolerance(s.powerTarget, true))}, for about ${minutes} minute${minutes > 1 ? "s" : ""}.`,
         GRID_CONTROLLER,
       )
       return begin(s, { ...base, duration })
@@ -286,7 +286,7 @@ function announceTargetChange(state: GameState, tuning: ShiftEventTuning, now: n
   return addLog(
     s,
     "grid",
-    "Grid demand has changed. We may require an adjustment in your power output. Confirmation to follow shortly.",
+    "We may soon require an adjustment in your power output.",
     GRID_CONTROLLER,
   )
 }
@@ -298,7 +298,7 @@ export function applyPendingTarget(state: GameState): GameState {
   return addLog(
     { ...state, powerTarget: pending.target, pendingTarget: null },
     pending.source,
-    `Confirmed that a change is required: new power output requested to be ${formatMW(pending.target)}.`,
+    `New power output requested to be ${formatMW(pending.target)}.`,
     pending.from,
   )
 }
@@ -314,7 +314,7 @@ export function checkTurbineTrip(state: GameState): GameState {
   return addLog(
     s,
     "alarm",
-    `Turbine tripped on over-pressure and is off the grid. Reconnect it from the turbine panel once steam is below ${THRESHOLDS.steamVolume.highWarning}.`,
+    `Turbine disconnection implemented as per protocol. We can only reconnect turbine to grid once steam drops below ${THRESHOLDS.steamVolume.highWarning}.`,
     TURBINE_OPERATOR,
   )
 }
