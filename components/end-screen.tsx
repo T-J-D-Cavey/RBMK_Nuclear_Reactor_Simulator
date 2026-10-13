@@ -1,6 +1,6 @@
 "use client"
 
-import type { CSSProperties, ReactNode } from "react"
+import { useEffect, type CSSProperties, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import type { GameState } from "@/lib/types"
 import { useTypewriter } from "@/hooks/use-typewriter"
@@ -162,6 +162,12 @@ function EndCamera({ kind, timestamp, reduced }: { kind: EndingKind; timestamp: 
 // message and the paper report.
 export default function EndScreen({ kind, gameState, title, message, lead, report }: EndScreenProps) {
   const router = useRouter()
+
+  // The end screen replaces the game page in place, so the browser keeps the player's scroll position (usually
+  // well down the page on a phone). Start at the top, with the camera in view.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" })
+  }, [])
   const reduced = usePrefersReducedMotion()
   const look = LOOK[kind]
   const disaster = kind === "explosion" || kind === "meltdown"
