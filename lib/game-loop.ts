@@ -1,8 +1,8 @@
 // One second of the whole game: reactor physics, the clock, events (or the Safety Test script), warnings
 // and endings. Pure, so the React hook and the scenario harness (scripts/sim) run exactly the same loop.
-import { type GameMode, type GameState, GAME_MODE_CONFIGS, INITIAL_GAME_STATE } from "./types"
+import { type GameMode, type GameState, GAME_MODE_CONFIGS, INITIAL_GAME_STATE, getShiftTime } from "./types"
 import { calculateGameTick } from "./game-mechanics"
-import { checkEventWarnings, checkGameOver, checkWarnings } from "./game-utils"
+import { addLog, checkEventWarnings, checkGameOver, checkWarnings } from "./game-utils"
 import { applyPendingTarget, checkTurbineTrip, expireEvents, runShiftEvents } from "./game-events"
 import { runSafetyTest } from "./safety-test"
 import type { Rng } from "./sim/rng"
@@ -18,6 +18,14 @@ export function createNewGame(mode: GameMode): GameState {
     gameTime: config.hasTimer ? (config.timeLimit ?? 900) : 0,
     powerTarget: config.defaultPowerTarget,
   }
+}
+
+// Free mode has no events, so without this its shift log would stay blank (owner). Logged a few seconds in,
+// not in createNewGame, so the player sees the teleprinter print it.
+const FREE_MODE_WELCOME_AT = 10 // s
+function welcomeToFreeMode(s: GameState): GameState {
+  if (s.mode !== "free" || s.log.length > 0 || getShiftTime(s) < FREE_MODE_WELCOME_AT) return s
+  return addLog(s, "engineer", "Welcome to your induction. It's the late shift and we're expecting a nice quiet night. Keep things stable.", "PLANT DIRECTOR")
 }
 
 export function advanceGame(prev: GameState, rng: Rng = Math.random): GameState {
@@ -40,6 +48,7 @@ export function advanceGame(prev: GameState, rng: Rng = Math.random): GameState 
   s = checkTurbineTrip(s)
   s = applyPendingTarget(s)
   s = s.mode === "safety_test" ? runSafetyTest(s) : runShiftEvents(s, rng)
+  s = welcomeToFreeMode(s)
 
   // Both kinds of warning, so the general alarm sounds for either
   s = { ...s, warnings: [...checkWarnings(s), ...checkEventWarnings(s)] }

@@ -2,6 +2,10 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.10 – 2026-10-13 (after the Easy, Free and Hard playtests of the events build)
+
+- **Pumps change how readily water boils only between no flow and one pump** (Sections 5, 7, 8, 16). Every extra pump used to make less steam per degree the moment its flow arrived, so switching pumps moved radioactivity within seconds. In play the owner steered with pumps alone: 1 pump to make radioactivity spike, 2 to hold it, 3 to make it plummet, with rods left alone. The owner's fix: flow matters to boiling only between none and some. From one pump upwards, extra pumps act only by cooling the reactor, so their effect builds over minutes. Kept: boiling escalation as flow falls to zero (the all-pumps-off escalation and the explosion ending), more pumps still meaning lower radioactivity, and the Section 7 acceptance checks.
+
 ## v2.9 – 2026-10-12 (after the second Safety Test playtest)
 
 - **Xenon creeps up below normal radioactivity** (Section 9 build-up and burn-off, acceptance checks, Section 16 table). Xenon used to build only below about 50 and burn off above 70, so a reactor hovering just above 50 never saw any. The owner wants it to creep up very slowly anywhere below 100, faster the lower radioactivity goes, so staying below 100 lets it accumulate. Burn-off now starts above 100, so getting back above normal soon clears it. There is no longer a band where xenon holds steady. The "normal radioactivity clears a full load in tens of seconds" check now refers to well above normal, because at 100 itself xenon neither builds nor burns.

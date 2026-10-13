@@ -1,6 +1,6 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Waiting on the owner's next manual tests: Free mode (physics, iteration 6) and Checkpoints B and C (§17.6).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built. Waiting on the owner's manual test of 7a before step 7b (half-strength rods).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
 
 ---
 
@@ -10,9 +10,9 @@ Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the own
    1. bible §0–§2 (how to use the plan, pillars, guardrails);
    2. this file's §7 (done / left to do) and §8 (open questions);
    3. **the owner's playtest results**: `ai/manual-test-results.MD`;
-   4. **§10 (the next step):** iteration 1 changes worked out from those results.
+   4. **§20 (the next step):** iteration 7, planned in three steps. Do the next step that isn't marked done, and only after the owner has playtested the one before.
 2. **Check the baseline** before changing anything (commands in §9). All 53 acceptance checks should pass (36 physics in `acceptance.test.ts`, 17 events/targets/Safety Test in `events.test.ts`), and `tsc` should be clean.
-3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after iteration 6, §16, and the WS4–WS6 build, §17), then plan and make the next iteration the same way.** Physics candidates are listed in §15.4; events, targets and Safety Test questions in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
+3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after step 7a, §20.3), then carry on with §20: step 7b if the owner is happy with 7a, otherwise re-plan from the results.** Events, targets and Safety Test questions are in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
    - a tuning change in `lib/sim/tuning.ts`;
    - a model change in `lib/sim/reactor.ts`;
    - a UI fix.
@@ -151,6 +151,11 @@ See §8 for the full list of open questions.
   - Every log message now comes from a named person. New target-change wording, which no longer gives the number in advance. The owner kept it: bible §13 updated (changelog v2.7), and the bot no longer chases a grid target before it is confirmed (§18.3).
   - Owner follow-up: the two machines always stack, the alarm monitor's "All clear" label is gone, and the shift log has the chart recorder's housing.
   - 53/53 checks pass, `tsc` is clean, and the UI was checked in headless Chrome at 1400 px and 390 px.
+- 2026-10-13: **Iteration 7 planned (§20) from the owner's tests 2–4, and step 7a built.**
+  - Pumps change steam per degree only below one pump (C1, owner's idea; bible changelog v2.10).
+  - The turbine powers a pump per 25 steam, was 35 (C4). The owner picked 25 over 20 to keep the Safety Test's climax (§20.3).
+  - Free mode opens with a welcome from the Plant Director (C5).
+  - 53/53 checks pass; `tsc` is clean. Waiting on the owner's playtest before step 7b (half-strength rods).
 
 ---
 
@@ -162,9 +167,9 @@ See §8 for the full list of open questions.
 |---|---|---|---|
 | 5 | Reactivity balance, exponential radioactivity, source term, proportional noise | ✅ | `lib/sim/reactor.ts`, `lib/sim/tuning.ts`. **Feel unconfirmed** (Checkpoint A). |
 | 6 | Radioactivity → fuel → reactor chain; continuous fuel-temperature curve | ✅ | |
-| 7 | Pump cooling scales with flow/temperature/heat; flow ramps ~4 s; dry-out; boiling escalation at zero flow | ✅ | Timing: see §8 Q2. |
+| 7 | Pump cooling scales with flow/temperature/heat; flow ramps ~4 s; dry-out; boiling escalation at zero flow | ✅ | Timing: see §8 Q2. Since §20 (7a), flow changes steam per degree only below one pump. |
 | 8 | Steam follows reactor temperature only | ✅ | |
-| 8 | Turbine "Supply station pumps" (steam-based capacity, ON pumps first, no flicker, PUMPS lamp, output 0) | ✅ | `components/turbine-modal.tsx`, `control-panel.tsx`. Only matters during a power cut until WS6. |
+| 8 | Turbine "Supply station pumps" (steam-based capacity, ON pumps first, no flicker, PUMPS lamp, output 0) | ✅ | `components/turbine-modal.tsx`, `control-panel.tsx`. One pump per 25 steam since §20 (7a). |
 | 9 | Xenon build/burn, 0% in normal running, restart route | ✅ | |
 | 10 | Linear boron, graphite tips (+10 while insertion > 0), rod travel ~18 s, jams freeze mid-travel | ✅ | |
 | 10 | One-press AZ-5 (closes modal); live rod travel on panel; no text selection; touch grab area | ✅ | `components/control-rods-modal.tsx`. **Not yet tested on a real phone.** |
@@ -858,3 +863,114 @@ From the owner's "Test five: safety test" notes in `ai/manual-test-results.MD`.
 ### 19.3 Open
 
 - Nothing. (The owner's cut-off note about the power target at the 8-minutes-left mark can be ignored, per the owner.)
+
+---
+
+## 20. Mechanics iteration 7: planned 2026-10-13, in three steps
+
+Source: the owner's tests 2 (Easy), 3 (Free, extremes) and 4 (Hard) in `ai/manual-test-results.MD`. Test five (Safety Test) was done in §19. Each observation was replayed on a scratch copy of the engine (the repo was not touched), and each candidate was trialled there with all 53 checks.
+
+**Order (owner, 2026-10-13):** one physics step per playtest.
+- **7a:** pumps (C1), plus two changes that don't touch the reactor's feel: the turbine's pump supply (C4) and a Free-mode welcome (C5).
+- **Then the owner tests.**
+- **7b:** consider half-strength rods (C2).
+- **Then more testing.**
+- **7c:** a cap on the hot-fuel brake (C3), re-tuned after 7b.
+
+### 20.1 What the tests showed
+
+| # | Owner observation | What the sim shows | Action |
+|---|---|---|---|
+| 1 | Pumps are overpowered (tests 2, 4). They work as a throttle: 1 pump to make radioactivity spike, 2 to hold it, 3 to make it plummet. Owner's idea: pumps change steam only between no pumps and at least one; above that they only cool, and more slowly. | Confirmed. From the balanced state, 2→3 pumps is −33% at 10 s, −48% at 30 s and 0 by 2 min. 2→4 is −53% / −87%. 2→1 is +52% / +79%, then meltdown at 170 s. The fast part is the direct steam change per pump (`steamFlowK`): steam per degree changes the moment flow changes, before the reactor cools. Since iterations 5–6 the loop amplifies every push, so that instant step snowballs. The §19 xenon creep adds to the slide. | C1 (7a) |
+| 2 | During a power cut, the turbine powered only 3 pumps with steam around 85; 4,500 MW should run 4 pumps (test 2). | At 35 steam per pump, plus the no-flicker margin, the turbine powers 1 pump from steam 45, 2 from 80, 3 from 115 and 4 from 150 (7,500 MW). At 85 it powers 2. | C4 (7a) |
+| 3 | Free mode shows no shift log, so a Free-mode player never learns it exists. The owner wants a welcome message from the Plant Director (test 3). | The log appears only once it has a message, and Free mode has none. | C5 (7a) |
+| 4 | Rods are too powerful: moving one rod is more than enough, and radioactivity either plummets or shoots up (test 4). | One rod 10% out is +48% at 10 s and +110% at 2 min; 10% in is −41% / −100%. On the lever, 1% of travel is about 2 px (192 px track on desktop, 144 px on phones), so a "small" nudge is easily 10%. | C2 (7b) |
+| 5 | With rads very high, AZ-5 brings it straight back down (test 4). | From radioactivity 400 in a runaway, AZ-5 halves it in 2 s and takes it under 100 in 3 s. Half-strength rods make that 3 s / 4 s; adding slower rods (25 s stroke) makes it 4 s / 5 s. That is the safe case: the rods are mid-core and their tips are already in. The deadly case, rods parked at 0%, is unchanged. | No change; revisit after 7b if the owner still wants it |
+| 6 | No cap on the hot-fuel brake: all rods out with 4 pumps gave radioactivity and fuel over 3,500, then radioactivity plummeted and the pumps cooled the fuel. The reactor should heat faster from such hot fuel. It took 3 big swings before temperature built up (test 3). | Reproduced: 4 pumps, then all rods out from the cooled reactor. Radioactivity 3,493 and fuel 4,028°, down to 185, then swings of 2,695 / 627 / 1,799 / 925, and meltdown ~54 s after the rods came out. With every rod out, the brake must cover ~370 points, which takes fuel at ~3,300°. | C3 (7c) |
+
+### 20.2 The changes
+
+**C1. Pumps act on steam only between no flow and one pump (step 7a; owner's idea; bible §5, §7, §16, changelog v2.10).**
+- Steam per degree above boiling no longer depends on flow once at least one pump's worth of water is moving.
+  - Below that it rises toward ×1.35 at zero flow, as before.
+  - Boiling escalation as flow → 0 is unchanged.
+  - Extra pumps act only through cooling, so steam follows the reactor down over minutes.
+- In `lib/sim/reactor.ts` the steam flow factor is `exp(k·(1 − min(flow, 1)))`. In `tuning.ts`, `steamFlowK` (0.15) is replaced by `steamZeroFlowK` **0.3** (zero flow ×1.35, the same as before).
+- Trial: pump switch from the balanced state, radioactivity at +10 / +30 / +60 / +120 s:
+
+  | Switch | Before | After (trial) |
+  |---|---|---|
+  | 2→1 | +52% / +79% / +149% / +318%, meltdown at 170 s | +3% / +15% / +37% / +99%, meltdown at ~4.6 min |
+  | 2→3 | −33% / −48% / −85% / −100% | −2% / −8% / −21% / −62% |
+  | 2→4 | −53% / −87% / −100% / −100% | −3% / −14% / −32% / −98% |
+
+- Unchanged in the trial:
+  - losing every pump (explodes after ~48 s hot, ~56 s from normal);
+  - the hands-off start (meltdown ~7.5 min);
+  - rods;
+  - the fragile AZ-5 case.
+- All 53 checks passed. 3 pumps left alone still slides to 0, but over 3–5 min rather than 2, slow enough to correct with rods.
+
+**C4. The turbine powers a pump per 20 steam instead of 35 (step 7a; `turbineSteamPerPump`, bible §8 unchanged).** *Built as 25, not 20: see §20.3.*
+- With the no-flicker margin, the turbine now powers 1 pump from steam 25 (1,250 MW), 2 from 45, 3 from 65 and 4 from 85 (4,250 MW).
+- All 53 checks passed in trial.
+- The Safety Test's test output (~1,000 MW, steam 20) still powers no pumps, but a runaway in the test gets pumps back sooner.
+
+**C5. Free-mode welcome (step 7a; no physics).**
+- On the first tick of a Free-mode game, the PLANT DIRECTOR logs: "Welcome to your induction. It's the late shift and we're expecting a nice quiet night. Keep things stable."
+- The shift log appears as soon as it has a message, so it now shows in Free mode too.
+- It's logged on the first tick (`lib/game-loop.ts`) rather than in `createNewGame`, so the teleprinter prints it like any other message.
+
+**C2. Half-strength rods (step 7b; consider after the 7a playtest).**
+- Each rod's boron and tip count half as much against the other cards.
+  - Equivalent: every other card ×2 and `generationTime` ×2, which keeps bible §10.4's points table as written. Choose whichever reads better when built.
+  - Base excess and xenon worth are derived, so they follow.
+- Starting offsets double to [12, 6, 4], which keeps the game start exactly as it is.
+- Trial: one rod 10% out is +23% at 10 s (was +48%); 10% in is −22% (was −41%). The restart spike from the xenon pit falls from ~4,400 to ~1,300, which also helps the old D1.
+- Costs, checked in trial:
+  - The AZ-5 trap needs 8 or more rods parked at 0% with one pump; 6 is enough today. That's nearer the real night, but harder to trigger.
+  - The fragile AZ-5 check needs a new set-up; don't loosen it.
+  - Two checks hard-code "1 point per %" and need updating.
+  - Re-check the bot's rod rule of thumb (§14 checks).
+- Keeping the tip at 10 points (20% of travel) was also trialled. It broke two §14 checks and the §8 spike check, so it's not recommended.
+- A cheaper, complementary option, if the owner wants it: finer lever control (e.g. arrow keys nudge a lever 1%). It doesn't change the look, but the lever modal is a bible §2 guardrail, so the owner decides.
+
+**C3. Cap the hot-fuel brake (step 7c; re-pick the number after 7b).**
+- The brake stops growing above a cap temperature (a smooth knee, ~100° wide).
+- Trial at today's rod strength, cap 2,000°:
+  - all rods out (both versions of test 3) melts down ~9–11 s after the order, with no swings;
+  - the hands-off start melts down at ~7 min (was ~7.5);
+  - catching a xenon-pit restart is unaffected (only the case that was already fatal gets faster).
+- Downside: in the last seconds radioactivity pins at its 50,000 ceiling and fuel reads tens of thousands of degrees.
+- Two checks need set-up fixes because they assume the run survives: the rod-travel check, which starts with every rod out, and the §8 spike check, which reads 6 s past the spike.
+- A 1,600° cap was too low. The hands-off start melted down at ~5 min, and it broke "very hot fuel slows the rise".
+- After C2, an all-rods-out reactor balances at fuel ~1,900° rather than ~3,300°, so the cap must be re-picked then.
+- It needs a bible §6 / §16 wording change ("firms a little once very hot, and stops growing above ~X°").
+
+**Trialled and dropped:**
+- **Pumps strip less of the heat arriving from the fuel** (`pumpHeatInShare` 0.5 → 0.2), the owner's "reactor heats faster with a large gap". Test 3 melted down at 42 s instead of 53, the swings stayed, and normal play got twitchier. C3 does this job better.
+
+### 20.3 Step 7a: results (built 2026-10-13)
+
+- **C1** as planned: `steamZeroFlowK` 0.3 in `tuning.ts`, `steamFlowFactor` in `reactor.ts`. Measured on the real engine, pump kicks match the §20.2 trial exactly. Rods, the AZ-5 cases, the hands-off start (meltdown at 459 s) and pump loss (explosion after 48 s hot, 56 s from normal) are unchanged.
+- **C4 changed from plan: 25 steam per pump, not 20 (owner decision).**
+  - **Why.** C1 and C4 passed every check separately, but at 20 together an ignored Safety Test survived. The first pump came back at steam 25 (it was 45), before boiling escalation could build. Radioactivity then sat around 90, below the xenon burn-off level of 100 (§19), so the full xenon load never burned off and nothing ran away. The edge is between 22 (survives) and 23 (melts down).
+  - **The owner chose 25:** 1 pump from steam ≈31, 2 from ≈56, 3 from ≈81 (≈4,050 MW) and 4 from ≈106 (≈5,300 MW).
+  - **The alternative** was 20 everywhere plus a real Safety Test rundown, in which the turbine's supply coasts down once the test begins (§17.5 option (a)). It's still open if 25 doesn't feel right.
+  - **Watch:** 25 is only a little above the edge, so re-check the "ignoring the test ends in disaster" check after 7b and 7c.
+- **C5.** The welcome is logged at 00:00:10, from PLANT DIRECTOR. The owner wanted to see it print, not appear at once.
+  - The shift log now shows in every mode from the start (`components/message-area.tsx`).
+  - Before, Free mode's log only mounted once it had a message, and a message already there on mount counts as printed, so it appeared without the print animation.
+- **Text.** How to Play's pump card and the README's pump line now say pumps work over minutes by cooling, and that losing every pump makes water boil far more readily. Bible §5, §7, §8 and §16 were updated (changelog v2.10).
+- **Checks.** 53/53 pass with no test changed, and `tsc` is clean.
+  - Safety Test bot: survives with rods or AZ-5 as the test begins; ignoring the test melts down.
+  - `sim:shift` hands-off games all melt down, as designed: Easy at 7:05, Hard at 24:48, Safety Test at 01:17:29.
+- **Unchanged and still open:** test 3's swings (C3), rod strength (C2), AZ-5 at high radioactivity (§20.1 #5).
+
+### 20.4 Step 7a: what to test
+
+- **Pumps:** do rods now feel like the main control, with pumps a slow, secondary lever? Does switching 2↔3 still let you steer radioactivity without rods? Does 1 pump still feel dangerous (it should run away, just more slowly)? Does 0 pumps still feel as violent?
+- **Power cut:** with the turbine supplying the pumps, do 3 run from about 4,050 MW and all 4 from about 5,300 MW? Does nursing the pumps still feel like a decision?
+- **Safety Test:** does the test still bite if you don't respond?
+- **Free mode:** does the Plant Director's welcome print at the start?
+- Then decide whether to go ahead with step 7b (half-strength rods).

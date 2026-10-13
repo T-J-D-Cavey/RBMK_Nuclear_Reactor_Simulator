@@ -110,7 +110,7 @@ In this real-world history, "power" means the reactor's thermal power, which the
 
 Two rules keep the cards readable:
 - **Removing a blue card raises radioactivity just as surely as playing a red one.** Pulling rods out, or xenon burning off, is not a new push upwards: a brake has gone.
-- **Pumps act on the steam card rather than being a card of their own.** Flow keeps water liquid, and cooling the reactor (and with it the fuel) leaves less heat to turn into steam. More pumps → less steam → lower radioactivity. Cooler fuel also weakens the hot-fuel brake, but in the normal range the steam effect is the bigger of the two. Fuel only becomes a strong red card when very cold (Section 9).
+- **Pumps act on the steam card rather than being a card of their own.** Cooling the reactor (and with it the fuel) leaves less heat to turn into steam, and with no flow at all the water boils far more readily (Section 7). More pumps → a cooler reactor → less steam → lower radioactivity, building over minutes rather than seconds. Cooler fuel also weakens the hot-fuel brake, but in the normal range the steam effect is the bigger of the two. Fuel only becomes a strong red card when very cold (Section 9).
 
 The net balance sets the **rate** at which radioactivity grows or shrinks **in proportion to its current level**. A positive balance compounds; a negative one decays. A small, constant **source term** keeps radioactivity from ever being exactly zero, so a dead reactor can always be restarted.
 
@@ -168,7 +168,7 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 **Change:**
 - Pumps act on the **reactor temperature (coolant) and on steam formation**, never directly on the fuel. Cooling the reactor widens the fuel-to-reactor gap, so the fuel cools too and less heat is left to turn into steam. The one direct effect on fuel: with **no** flow, heat transfer out of the fuel degrades (dry-out), so fuel overheats faster.
 - Pump cooling scales with **how many pumps run** *and* **how hot the reactor is and how high radioactivity is**. Each pump removes more heat when there is more heat to remove, with diminishing returns per extra pump.
-- Pumps determine **how much of the reactor's heat turns into steam inside the core**. More flow keeps water liquid (less steam, a smaller red card). Less flow lets water boil (more steam, a bigger red card).
+- **Flow changes how readily water boils only between no flow and one pump** (owner). Below one pump's worth of flow, water boils more readily (more steam per degree, a bigger red card), rising to boiling escalation at zero flow. From one pump upwards, steam per degree is the same: extra pumps lower steam only by cooling the reactor, so their effect on radioactivity builds slowly and they are not a quick throttle.
 - **Flow takes a few seconds to change.** The player can switch pumps on or off whenever they like, as now. Water takes a few seconds to start flowing after a pump starts (switched on, or regains power) and a few seconds to stop after it stops, whatever is powering the pump.
 - **Zero pumps (or unpowered pumps) triggers boiling escalation:** steam generation accelerates sharply as the reactor heats, which drives radioactivity up, which drives heat up. This is the deliberate nonlinear loop that replaces today's special-case rule. The outcome must feel the same or stronger.
 
@@ -190,7 +190,7 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 
 ## 8. Steam, turbine and turbine-powered pumps
 
-**Change (steam):** Steam is made by the reactor, never directly by the fuel: hot fuel heats the reactor, and the hot reactor boils the water in its channels. Below boiling there is none. Above boiling, the hotter the reactor and the less flow carrying water through, the more steam (Section 7). So steam only changes once reactor temperature has: if fuel temperature jumps but reactor temperature hasn't moved yet, steam doesn't move either. Steam remains the single variable that both feeds the turbine and adds reactivity, and it is the variable behind the explosion ending (Section 11).
+**Change (steam):** Steam is made by the reactor, never directly by the fuel: hot fuel heats the reactor, and the hot reactor boils the water in its channels. Below boiling there is none. Above boiling, the hotter the reactor, the more steam, and with less than one pump's worth of flow, far more (Section 7). So steam only changes once reactor temperature has: if fuel temperature jumps but reactor temperature hasn't moved yet, steam doesn't move either. Steam remains the single variable that both feeds the turbine and adds reactivity, and it is the variable behind the explosion ending (Section 11).
 
 For surges to stay dangerous, heat must flow from fuel to reactor in proportion to the gap between them (Section 6). A violent radioactivity spike then makes fuel temperature soar, and that huge gap drives reactor temperature, and steam with it, up within seconds. In normal running the gap is small and everything moves gently.
 
@@ -416,7 +416,7 @@ A one-page summary of Sections 5–10.
 |---|---|---|
 | Radioactivity growth/decay | **Exponential** (rate ∝ current level × net red-minus-blue balance) | This is how reactors behave. It's the source of runaways and collapses. |
 | Steam's push (void) | **Proportional** to the amount of steam in the core; no hidden amplifiers | Readable. The danger comes from the loop (radioactivity → heat → steam → radioactivity), not from a secret multiplier. |
-| Steam formation | Driven by reactor temperature above boiling, never directly by fuel; **sharply nonlinear** as flow falls toward zero (boiling escalation) | Preserves the all-pumps-off escalation; low flow is what turns a runaway into an explosion rather than a meltdown. |
+| Steam formation | Driven by reactor temperature above boiling, never directly by fuel; flow changes it directly only below one pump, and **sharply nonlinearly** as flow falls toward zero (boiling escalation) | Preserves the all-pumps-off escalation; low flow is what turns a runaway into an explosion rather than a meltdown. |
 | Rod (boron) effect | **Linear** in insertion, the same at every depth | It's the amount of boron that matters; the display reads honestly. |
 | Graphite tip | **Fixed push** per rod while its tip is in the core, equal to the boron in the first 10% of travel | Spike only from 0%, lasting about 2 s; grows with rods entering together; lethal only in a fragile state. |
 | Rod movement | **Constant travel speed** (~18 s full stroke), the same in every mode | Rods are not instant brakes. |

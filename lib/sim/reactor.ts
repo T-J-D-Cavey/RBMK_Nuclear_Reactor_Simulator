@@ -46,9 +46,9 @@ export function totalFlow(pumps: WaterPump[]): number {
   return pumps.reduce((sum, pump) => sum + pump.flow, 0)
 }
 
-// Steam per degree above boiling for a given flow, normalised to 1 at two pumps (bible §7, §8).
+// Steam per degree above boiling for a given flow: 1 from one pump upwards, more below that (bible §7, §8).
 function steamFlowFactor(flow: number): number {
-  return Math.exp(-T.steamFlowK * (flow - 2))
+  return Math.exp(T.steamZeroFlowK * (1 - Math.min(flow, 1)))
 }
 
 export function steamTarget(reactorTemp: number, flow: number): number {

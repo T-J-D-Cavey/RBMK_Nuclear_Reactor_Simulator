@@ -72,16 +72,18 @@ const TUNING_BASE = {
   // --- §8 Steam (follows reactor temperature only) ---
   boilingTemp: 90,
   steamChaseRate: 1.0, // 1/s
-  // Steam per degree above boiling × exp(−k·(flow − 2)): 1 at two pumps
-  // (zero flow alone ≈ ×1.35, one pump ≈ ×1.16, three ≈ ×0.86, four ≈ ×0.74).
-  steamFlowK: 0.15,
+  // Flow changes steam per degree only between no flow and one pump (owner, §7): × exp(k·(1 − min(flow, 1))),
+  // so 1 from one pump upwards and ≈ ×1.35 at zero flow. Extra pumps lower steam only by cooling the reactor.
+  steamZeroFlowK: 0.3,
   // Boiling escalation as flow → 0 (§7): × (1 + esc·(1 − flow)²·((T − boil)/scale)³).
   // Sharp in temperature, so with no flow the danger arrives as the reactor heats, not instantly.
   boilingEscalation: 0.25,
   boilingEscalationScale: 500,
 
   // --- §8 Turbine-powered pumps ---
-  turbineSteamPerPump: 35, // steam needed per pump the turbine can power
+  // Steam needed per pump the turbine can power: all four from steam ≈106 (owner chose 25 over 20, because at
+  // 20 or 22 an ignored Safety Test gets its pumps back too soon to run away; plan §20.3).
+  turbineSteamPerPump: 25,
   turbineHysteresis: 0.25, // in pumps: supply holds until steam has clearly moved
 
   // --- §9 Xenon ---

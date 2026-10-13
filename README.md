@@ -36,7 +36,7 @@ Power output is steam × 50 MW while the turbine is on the grid, so it follows r
 
 **AZ-5.** One press drives every rod that isn't jammed to 100% at rod speed. Safe from a normal state; deadly with many rods at 0%, high steam and little flow.
 
-**Water pumps (×4).** A pump moves water when it is ON and powered, and flow takes a few seconds to change. More pumps mean more cooling and less steam (lower radioactivity). One pump left alone runs away; no pumps at all ends in a steam explosion.
+**Water pumps (×4).** A pump moves water when it is ON and powered, and flow takes a few seconds to change. More pumps cool the reactor, slowly lowering steam and radioactivity over minutes; with no flow at all the water boils far more readily. One pump left alone runs away; no pumps at all ends in a steam explosion.
 
 **Turbine.** On the grid it turns steam into power output. Disconnected, it can supply the station pumps during a power cut: more steam powers more pumps, and output is 0 meanwhile. Sustained over-pressure trips the turbine off the grid.
 

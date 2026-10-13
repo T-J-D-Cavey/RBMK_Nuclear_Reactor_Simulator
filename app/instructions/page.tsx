@@ -134,8 +134,9 @@ export default function InstructionsPage() {
               <Card title="Water Pumps (×4)">
                 <p>
                   A pump moves water only when it is switched ON (green lamp) and receives power (PWR lamp). Flow takes a few seconds
-                  to build up or die away. More pumps mean more cooling and less steam in the core, so lower radioactivity; fewer
-                  pumps mean a hotter, steamier core.
+                  to build up or die away. More pumps cool the reactor, which slowly means less steam in the core and so lower
+                  radioactivity; fewer pumps mean a hotter, steamier core. Pumps work over minutes, not seconds: steer with the rods.
+                  The exception is losing every pump, because with no flow at all the water boils far more readily.
                 </p>
                 <ul className="mt-2 list-disc list-inside space-y-1">
                   <li>4 pumps at low radioactivity can collapse it towards the xenon pit.</li>

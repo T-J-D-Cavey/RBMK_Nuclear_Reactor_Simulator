@@ -22,21 +22,4 @@ Objective: test the events and the mechanics
 
 Results: The water pumps seem to be overpowered, their affects on rad is too affecting, I can leave 1 on when I want rad to spike and turn another on when I want rad to stabalise, likewise i can turn 3 on when I want rad to plumit. I like the affect of no pumps on, but I feel we should consider weaking the impact of the pumps on reducing rad. I can see the affect when I add 3 pumps is so strong, it really wipes out the steam, which is of course why rad tumbles when 3 pumps is on, let alone 4. I wonder if the impact of pumps on steam should be limited to when there is no pumps on vs when there is at least 1 pump on. After that, when there is at least 1 pump on, pumps affect temperature only and they do so slower than the do currently. Perhaps that change will mean the player doesn't use them as I use them now, toggle off and on to manage power and rad. I am also finding that the control rods are too powerful. I don't really need to use them, but when I do, moving one is more than enough to have the desired affect on rad: it either plummits or it shoots up depending on how much I've moved that one rod. With rad very high, AZ-5 is able to bring it right back down again very quickly. 
 
-Test five: safety test
 
-Objective: survive, view the UI and mechanics
-
-Result: This event should be removed:   {
-    at: 330,
-    role: "srce",
-    text: "At this level xenon builds up in the core. Radioactivity will sag: we will have to draw rods to hold output.",
-  }, and this event should be removed:
-    {
-    at: 480,
-    role: "foreman",
-    text: "Xenon is still climbing. Keep drawing rods to hold 1,000 MW, and watch the rod margin.",
-  }, Replace them with messages from the deputy head engineer at the same time: "Bunch of amateurs. Get it done!" and "I want this done already!" I notice that Xenon doesn't build up at all when rad is hovering just above 50. I think it should creep up from <=100 rad, but only very slowly till rad gets even lower. That way, getting below 100 rad may see some xenon, but getting above it will soon burn it off. But if you stay below 100 rad, that slow xenon starts to take affect. It all feels very long. I think we should look into reducing this safety test length to 15 or 20 minutes. Whenever there is a power target change in the safety test, the message is from the deputy chief engineer. We should swap these messages to be from the TEST SUPERVISOR, remove this event:  {
-    at: 870,
-    role: "srce",
-    text: "Xenon is near its peak. Radioactivity will keep falling unless rods come out.",
-  },

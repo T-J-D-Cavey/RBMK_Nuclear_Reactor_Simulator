@@ -1,6 +1,6 @@
 "use client"
 
-import { GAME_MODE_CONFIGS, type GameState } from "@/lib/types"
+import type { GameState } from "@/lib/types"
 import { getEventWarnings, getReactorWarnings } from "@/lib/game-utils"
 import AlarmScreen from "@/components/alarm-screen"
 import ShiftLogPrinter from "@/components/shift-log-printer"
@@ -17,13 +17,12 @@ interface MessageAreaProps {
 // Each collapses on its own, so an experienced player can hide the warnings and keep the log (plan §11.1).
 export default function MessageArea({ gameState }: MessageAreaProps) {
   const warnings = [...getReactorWarnings(gameState), ...getEventWarnings(gameState)]
-  const showLog = gameState.log.length > 0 || gameState.mode === "safety_test" || GAME_MODE_CONFIGS[gameState.mode]?.hasRandomEvents
 
   return (
     <div className="border-y-4 border-primary bg-card p-3 md:p-4">
       <div className="max-w-6xl mx-auto space-y-3">
         <AlarmScreen warnings={warnings} />
-        {showLog && <ShiftLogPrinter gameState={gameState} />}
+        <ShiftLogPrinter gameState={gameState} />
       </div>
     </div>
   )
