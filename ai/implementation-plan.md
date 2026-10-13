@@ -1,6 +1,6 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built and was playtested. Step 7b (half-strength rods, plus a coasting turbine in the Safety Test) is built. Waiting on the owner's manual test of 7b before step 7c (the hot-fuel brake cap).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built and was playtested. Step 7b (half-strength rods, plus a coasting turbine in the Safety Test) is built and was playtested. Step 7c (the hot-fuel brake levels off above 2,000°) is built. Iteration 7 is complete; waiting on the owner's manual test of 7c.** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
 
 ---
 
@@ -12,7 +12,7 @@ Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the own
    3. **the owner's playtest results**: `ai/manual-test-results.MD`;
    4. **§20 (the next step):** iteration 7, planned in three steps. Do the next step that isn't marked done, and only after the owner has playtested the one before.
 2. **Check the baseline** before changing anything (commands in §9). All 53 acceptance checks should pass (36 physics in `acceptance.test.ts`, 17 events/targets/Safety Test in `events.test.ts`), and `tsc` should be clean.
-3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after step 7b, §20.5), then carry on with §20: step 7c if the owner is happy with 7b, otherwise re-plan from the results.** Events, targets and Safety Test questions are in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
+3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after step 7c, §20.7), then plan the next iteration from them the same way.** Leftovers from iteration 7 are listed in §20.8. Events, targets and Safety Test questions are in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
    - a tuning change in `lib/sim/tuning.ts`;
    - a model change in `lib/sim/reactor.ts`;
    - a UI fix.
@@ -161,6 +161,8 @@ See §8 for the full list of open questions.
   - Rods are half strength (`rodWorth` 0.5), and the starting offsets are doubled so the start is unchanged.
   - Two owner decisions came out of it. The Safety Test's turbine now coasts down once the test begins (§17.5 Q1, option (a)). The weaker AZ-5 trap is accepted (check ×1.4 → ×1.25).
   - Bible changelog v2.11. 53/53 checks pass; `tsc` is clean.
+- 2026-10-13: Owner playtested 7b ("that works great").
+- 2026-10-13: **Step 7c built (§20.7).** The hot-fuel brake levels off above 2,000° (`fuelBrakeCapAt`). All rods out now melts down ~27 s after the order with no swings. Bible changelog v2.12. 53/53 checks pass, with no test changed; `tsc` is clean. **Iteration 7 is complete.**
 
 ---
 
@@ -171,7 +173,7 @@ See §8 for the full list of open questions.
 | Bible § | Item | Status | Notes / where |
 |---|---|---|---|
 | 5 | Reactivity balance, exponential radioactivity, source term, proportional noise | ✅ | `lib/sim/reactor.ts`, `lib/sim/tuning.ts`. **Feel unconfirmed** (Checkpoint A). |
-| 6 | Radioactivity → fuel → reactor chain; continuous fuel-temperature curve | ✅ | |
+| 6 | Radioactivity → fuel → reactor chain; continuous fuel-temperature curve | ✅ | Since §20 (7c), the brake levels off above 2,000° (`fuelBrakeCapAt`). |
 | 7 | Pump cooling scales with flow/temperature/heat; flow ramps ~4 s; dry-out; boiling escalation at zero flow | ✅ | Timing: see §8 Q2. Since §20 (7a), flow changes steam per degree only below one pump. |
 | 8 | Steam follows reactor temperature only | ✅ | |
 | 8 | Turbine "Supply station pumps" (steam-based capacity, ON pumps first, no flicker, PUMPS lamp, output 0) | ✅ | `components/turbine-modal.tsx`, `control-panel.tsx`. One pump per 25 steam since §20 (7a). |
@@ -910,7 +912,7 @@ Source: the owner's tests 2 (Easy), 3 (Free, extremes) and 4 (Hard) in `ai/manua
   | 2→4 | −53% / −87% / −100% / −100% | −3% / −14% / −32% / −98% |
 
 - Unchanged in the trial:
-  - losing every pump (explodes after ~48 s hot, ~56 s from normal);
+  - losing every pump (explodes ~18 s after the loss from a hot state, ~46 s from normal);
   - the hands-off start (meltdown ~7.5 min);
   - rods;
   - the fragile AZ-5 case.
@@ -957,7 +959,7 @@ Source: the owner's tests 2 (Easy), 3 (Free, extremes) and 4 (Hard) in `ai/manua
 
 ### 20.3 Step 7a: results (built 2026-10-13)
 
-- **C1** as planned: `steamZeroFlowK` 0.3 in `tuning.ts`, `steamFlowFactor` in `reactor.ts`. Measured on the real engine, pump kicks match the §20.2 trial exactly. Rods, the AZ-5 cases, the hands-off start (meltdown at 459 s) and pump loss (explosion after 48 s hot, 56 s from normal) are unchanged.
+- **C1** as planned: `steamZeroFlowK` 0.3 in `tuning.ts`, `steamFlowFactor` in `reactor.ts`. Measured on the real engine, pump kicks match the §20.2 trial exactly. Rods, the AZ-5 cases, the hands-off start (meltdown at 459 s) and pump loss (explosion ~18 s after the loss from a hot state, ~46 s from normal) are unchanged.
 - **C4 changed from plan: 25 steam per pump, not 20 (owner decision).**
   - **Why.** C1 and C4 passed every check separately, but at 20 together an ignored Safety Test survived. The first pump came back at steam 25 (it was 45), before boiling escalation could build. Radioactivity then sat around 90, below the xenon burn-off level of 100 (§19), so the full xenon load never burned off and nothing ran away. The edge is between 22 (survives) and 23 (melts down).
   - **The owner chose 25:** 1 pump from steam ≈31, 2 from ≈56, 3 from ≈81 (≈4,050 MW) and 4 from ≈106 (≈5,300 MW).
@@ -999,7 +1001,7 @@ Source: the owner's tests 2 (Easy), 3 (Free, extremes) and 4 (Hard) in `ai/manua
 
 - Unchanged:
   - the game start (177 / 277 / 360 at 1 / 3 / 5 min, meltdown at 459 s);
-  - pump kicks and pump loss (explosion after 49 s hot).
+  - pump kicks and pump loss (explosion ~19 s after the loss from a hot state).
 - Gentler:
   - The restart from the xenon pit (owner test 2 replay) peaks at ~1,270, was ~4,380.
   - Test 3 (4 pumps, then all rods out) peaks at radioactivity ~1,260 and fuel ~3,030°, was ~2,360 / ~4,080. It still swings, and melts down at 226 s (C3 is still to come).
@@ -1046,3 +1048,53 @@ Source: the owner's tests 2 (Easy), 3 (Free, extremes) and 4 (Hard) in `ai/manua
 - **Safety Test:** as the test begins, watch the PWR lamps go out as the turbine coasts down. It starts with what its steam was powering, so at the usual low test output (steam ~11–16) that's one pump for a few seconds; with a lot of steam it can be up to 45 s. Ignoring it should now end in an explosion; inserting rods or AZ-5 promptly should save it.
 - **Pumps (7a), still:** a slow lever.
 - Then decide on step 7c: the hot-fuel brake cap, with its number re-picked for half-strength rods (an all-rods-out reactor now balances at fuel ~1,900° rather than ~3,300°).
+
+**Owner, 2026-10-13: "that works great."** Go ahead with 7c. (The owner also asked for a before-and-after of the Safety Test's turbine and pumps. In short: before, the turbine kept running on the reactor's live steam, so the pumps went dark as the test began but came back as steam rose. Now its steam is shut off and the pumps stay dark until 15:00.)
+
+### 20.7 Step 7c: results (built 2026-10-13)
+
+**C3. The hot-fuel brake levels off above 2,000°** (bible §6, §16; changelog v2.12).
+- New `fuelBrakeCapAt` **2,000°** and `fuelBrakeCapWidth` **100°** in `tuning.ts`. `fuelBrake` limits the fuel temperature smoothly to about the cap before applying its curve.
+- Blue points at 1,000 / 1,500 / 2,000 / 3,000°: 61 / 134 / 207 / 219 (was 61 / 135 / 219 / 389).
+- Base excess and xenon worth are unchanged: the cap is far above normal running.
+
+**Picking the number** (scratch trials on the 7b engine):
+
+| Cap | All rods out + 4 pumps → meltdown | Peaks over 300 first | Hands-off start melts down at | Checks |
+|---|---|---|---|---|
+| none (7b) | 76 s after the order | 5 | 459 s | 53/53 |
+| 1,500° | — | — | before 5 min | the start runs away early |
+| 1,700° | 15 s | 1 | 326 s | fails "very hot fuel slows the rise" |
+| 1,900° | 22 s | 1 | 388 s | 53/53 |
+| **2,000°** | **27 s** | **1** | **419 s** | **53/53** |
+| 2,200° | 37 s | 3 | 452 s | 53/53 |
+| 2,500° | 53 s | 4 | 459 s | 53/53 |
+
+2,000° (the plan's starting point) gives the owner's ask: no swings and a fast meltdown. It moves normal play the least of the caps that do.
+
+**Measured on the real engine** (matches the trial):
+- **Owner test 3** (all rods out + 4 pumps from the game start): meltdown 27 s after the order, one surge. Was 76 s with 5 big swings.
+- **Test 3b** (4 pumps first, then rods out from a cooled reactor): meltdown 27 s after the order. Was 76 s.
+- **Rods to 5%:** with 2 pumps, meltdown at 19 s; with 4 pumps, at 21 s (were 51 s and 68 s).
+- **Unchanged:**
+  - catching a xenon-pit restart (rods to 30% at radioactivity 50 or 100 survives; peaks 113 / 170);
+  - AZ-5 during the start runaway (under 100 in 4 s);
+  - the game start for its first 5 minutes (177 / 277 / 361);
+  - 1 pump (meltdown at 283 s, was 286 s);
+  - Safety Test bot (rods, AZ-5 and late AZ-5 survive; ignoring it explodes);
+  - bot shifts (Easy lost 0/20, on target 82%; Hard lost 1/20, on target 60%).
+- **A little sooner:** the hands-off start melts down at 419 s (was 459 s), once the fuel passes ~2,000°.
+- **Cosmetic, as expected:** in the last seconds of a capped runaway, radioactivity pins at its 50,000 ceiling and fuel reads tens of thousands of degrees. The end-screen report then shows peak radioactivity 50,000. This is the downside noted in §20.2. Left for the owner to judge in play.
+- 53/53 checks pass, with no test changed. `tsc` is clean.
+- `sim:shift` hands-off games: Easy melts down at 7:45, Hard at 24:53, the Safety Test at 01:16:48 (within 40 s of before).
+
+### 20.8 Step 7c: what to test, and iteration 7's leftovers
+
+- **Free mode, test 3 again:** pull every rod out with 4 pumps on. It should now run straight to meltdown within half a minute, with one surge and no swings.
+- **Normal play:** does anything feel different short of fuel past ~2,000°? A runaway left alone ends a little sooner.
+- **The numbers in the last seconds** (radioactivity 50,000, fuel in the tens of thousands): acceptable drama, or should the readouts or the report be limited?
+- **Still open from iteration 7:**
+  - AZ-5 at high radioactivity is still a reliable rescue (§20.1 #5);
+  - finer lever control (§20.2 C2);
+  - Safety Test margin: re-check "ignoring the test ends in disaster" after any further physics change;
+  - §8 Q2: pump-loss timing is still short: from a hot state (radioactivity ~185) it explodes ~19 s after the loss (bible: roughly 30–60 s); from normal, ~46 s.

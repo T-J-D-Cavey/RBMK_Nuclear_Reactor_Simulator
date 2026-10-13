@@ -94,8 +94,9 @@ export default function InstructionsPage() {
               <li>
                 <strong>The loop:</strong> radioactivity heats the fuel, the fuel heats the reactor, the hot reactor boils water
                 into steam, and steam pushes radioactivity up. Left alone, a rise feeds itself all the way to disaster, and a fall
-                feeds itself down into the xenon pit. Very hot fuel slows a rise but never stops it. Only control rods and water
-                pumps stop it.
+                feeds itself down into the xenon pit. Very hot fuel slows a rise but never stops it, and beyond about{" "}
+                {TUNING.fuelBrakeCapAt.toLocaleString("en-US")}° it stops slowing it at all. Only control rods and water pumps
+                stop it.
               </li>
               <li>
                 <strong>Power output only follows through heat and steam.</strong> Output is steam × 50 MW while the turbine is on

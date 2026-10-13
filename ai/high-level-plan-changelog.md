@@ -2,6 +2,10 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.12 – 2026-10-13 (step 7c, after the playtest of step 7b)
+
+- **The hot-fuel brake levels off** (Sections 6 and 16). In a Free-mode test with every rod pulled out and four pumps on, the owner drove radioactivity and fuel temperature past 3,500. The brake, which kept growing with temperature, then threw radioactivity back down, and the reactor took several big swings before it finally overheated. The owner asked for a cap. The brake now stops growing beyond about 2,000°: fuel hotter than that brakes no harder, so an all-rods-out reactor runs straight away to meltdown in seconds, with one surge and no swings. Kept: the brake still firms up between about 1,300° and 2,000°, so very hot fuel still slows an ordinary rise (Section 6 check). It never stops one (v2.5). The cap barely touches normal play: the hands-off start melts down about 40 s sooner, once the fuel is past ~2,000°.
+
 ## v2.11 – 2026-10-13 (step 7b, after the playtest of step 7a)
 
 - **Rods are gentle** (Section 10 item 1, tip table units, AZ-5 acceptance check). In play, moving one rod was more than enough: radioactivity either plummeted or shot up. Each rod now counts half as much against the other cards, so a 10% move shifts radioactivity by about a fifth at first (was about half). The tip is still the boron in the first 10% of travel, so it is gentler too, and the AZ-5 trap is weaker. It now needs eight or more rods at 0%, with a spike of about a quarter to a third. Keeping full-strength tips was offered (a much stronger trap, but pulling a rod from below 20% to 0% would then lower radioactivity). The owner chose the weaker trap.

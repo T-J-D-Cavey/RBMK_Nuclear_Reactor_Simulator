@@ -54,6 +54,10 @@ const TUNING_BASE = {
   fuelBrakeHotSlope: 0.17, // points per degree once fuel is very hot
   fuelBrakeFirmsAt: 1300, // °
   fuelBrakeFirmWidth: 100, // °
+  // Above about capAt the brake stops growing (owner, plan §20 step 7c): fuel hotter than this gives no extra
+  // brake, so with rods pulled right out nothing slows the runaway and it ends in seconds, not in big swings.
+  fuelBrakeCapAt: 2000, // °
+  fuelBrakeCapWidth: 100, // °: the brake levels off smoothly over about this range
   // Extra red card when very cold (restart lever, §9): coldCoeff·(coldBelow − F)².
   fuelColdBelow: 120,
   fuelColdCoeff: 0.0045,
@@ -108,10 +112,13 @@ const TUNING_BASE = {
   xenonBurnRate: 0.06, // %/s per unit of radioactivity above the burn level
 } as const
 
-// The brake's shape, measured from 0°: the integral of the per-degree slope above (a smooth step).
+// The brake's shape, measured from 0°: the integral of the per-degree slope above (a smooth step), levelling off
+// at the cap (fuel temperature is smoothly limited to about capAt before the curve is applied).
 const softplus = (x: number) => (x > 30 ? x : Math.log1p(Math.exp(x)))
-const fuelBrake = (F: number) => {
+const fuelBrake = (fuelTemp: number) => {
   const { fuelBrakeMildSlope: mild, fuelBrakeHotSlope: hot, fuelBrakeFirmsAt: at, fuelBrakeFirmWidth: w } = TUNING_BASE
+  const { fuelBrakeCapAt: cap, fuelBrakeCapWidth: capWidth } = TUNING_BASE
+  const F = cap - capWidth * softplus((cap - fuelTemp) / capWidth)
   return mild * F + (hot - mild) * w * (softplus((F - at) / w) - softplus(-at / w))
 }
 

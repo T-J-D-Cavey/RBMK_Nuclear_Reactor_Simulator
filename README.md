@@ -24,7 +24,7 @@ Radioactivity (the fission level) changes in proportion to itself. Every second,
 
 Removing a blue card raises radioactivity as surely as playing a red one: pulling rods out, or xenon burning off.
 
-The core loop: radioactivity heats the fuel, the fuel heats the reactor, the hot reactor boils water into steam, and steam pushes radioactivity up. Left alone, a rise feeds itself to disaster and a fall feeds itself into the xenon pit. Hot fuel slows a rise but never stops it; only rods and pumps do.
+The core loop: radioactivity heats the fuel, the fuel heats the reactor, the hot reactor boils water into steam, and steam pushes radioactivity up. Left alone, a rise feeds itself to disaster and a fall feeds itself into the xenon pit. Hot fuel slows a rise but never stops it, and beyond about 2,000° it stops slowing it at all; only rods and pumps stop it.
 
 Power output is steam × 50 MW while the turbine is on the grid, so it follows radioactivity only through heat and steam, with a delay.
 
