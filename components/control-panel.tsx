@@ -1,10 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { DoorOpen, ArrowLeft, Cctv  } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, type ReactNode } from "react"
+import { ArrowLeft, Cctv, Home, Volume2, VolumeX } from "lucide-react"
 
-import type { GameState } from "@/lib/types"
+import { type GameState, GAME_MODE_CONFIGS } from "@/lib/types"
 import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
@@ -16,15 +15,28 @@ interface ControlPanelProps {
   gameState: GameState
   onTogglePause: () => void
   updateGameState: (updates: Partial<GameState>) => void
+  onHomeClick: () => void
+  onSoundClick: () => void
 }
 
-export default function ControlPanel({ gameState, onTogglePause, updateGameState }: ControlPanelProps) {
+// A readout bay: engraved plate above, instrument below. Flashes red while its value is in a warning band.
+function Bay({ label, warn = false, className = "", children }: { label: string; warn?: boolean; className?: string; children: ReactNode }) {
+  return (
+    <div className={`cr-module p-2 md:p-2.5 space-y-2 transition-all ${warn ? "!border-red-600 animate-border-flash" : ""} ${className}`}>
+      <div className="cr-plate">{label}</div>
+      {children}
+    </div>
+  )
+}
+
+export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick }: ControlPanelProps) {
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
   const [showReactorView, setShowReactorView] = useState(false)
 
   const isOnTarget = isPowerOnTarget(gameState)
+  const modeLabel = (GAME_MODE_CONFIGS[gameState.mode] ?? GAME_MODE_CONFIGS.easy).badgeText
 
   const hasWarnings = checkWarnings(gameState).length > 0 || checkEventWarnings(gameState).length > 0
   const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck" || event.type === "pump-trip")
@@ -38,6 +50,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const lowSteamWarning = flags.lowSteam
   const highXenonWarning = flags.highXenon
   const lowFuelTempWarning = flags.lowFuelTemp
+  const highFuelTempWarning = flags.highFuelTemp
 
   const handlePauseClick = () => {
     if (gameState.isPaused) {
@@ -51,169 +64,158 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
     onTogglePause()
   }
 
+  const alarmLamp = `retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`
+
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="bg-card border-4 border-primary p-4 md:p-6 space-y-4">
-        {/* Title with Warning Lights */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-4">
-            <div
-              className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}
-            />
-            <h1 className="text-lg md:text-3xl font-bold font-mono uppercase tracking-wider">Reactor Control System</h1>
-            <div
-              className={`retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`}
-            />
+      <div className="cr-panel cr-screws p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
+        {/* Header: menu keys, nameplate between the master alarm lamps, mode */}
+        <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-3">
+          <div className="flex items-center gap-2 order-1">
+            <span className="cr-bezel">
+              <button className="cr-key cr-key-black size-9" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
+                <Home className="h-[18px] w-[18px]" />
+              </button>
+            </span>
+            <span className="cr-bezel">
+              <button className="cr-key cr-key-black size-9" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
+                {gameState.soundEnabled ? <Volume2 className="h-[18px] w-[18px]" /> : <VolumeX className="h-[18px] w-[18px]" />}
+              </button>
+            </span>
+          </div>
+
+          <div className="col-span-2 sm:col-span-1 order-3 sm:order-2 flex items-center justify-center gap-3 md:gap-4">
+            <span className="cr-lamp-bezel">
+              <span className={alarmLamp} />
+            </span>
+            <h1 className="cr-nameplate px-3 py-2 md:px-6 md:py-2.5 text-base sm:text-xl md:text-3xl whitespace-nowrap">Reactor Control System</h1>
+            <span className="cr-lamp-bezel">
+              <span className={alarmLamp} />
+            </span>
+          </div>
+
+          <div className="order-2 sm:order-3 flex justify-end">
+            <span className="cr-plate !tracking-[0.2em]">{modeLabel}</span>
           </div>
         </div>
 
         {/* Main Readouts */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {/* Current Power Output */}
-          <div className="bg-background border-3 border-border p-3 space-y-1">
-            <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Power Output</div>
-            <div
-              className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${isOnTarget ? "led-green" : "text-red-500"}`}
-            >
-              {Math.round(gameState.powerOutput)} MW
+          <Bay label="Power Output">
+            <div className="cr-screen-bezel">
+              <div
+                className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${isOnTarget ? "led-green" : "text-red-500"}`}
+              >
+                {Math.round(gameState.powerOutput)} MW
+              </div>
             </div>
-          </div>
+          </Bay>
 
           {/* Power Target */}
-          <div className="bg-background border-3 border-border p-3 space-y-1">
-            <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Power Target</div>
-            <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">
-              {gameState.powerTarget !== null ? `${gameState.powerTarget} MW` : "N/A"}
+          <Bay label="Power Target">
+            <div className="cr-screen-bezel">
+              <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">
+                {gameState.powerTarget !== null ? `${gameState.powerTarget} MW` : "N/A"}
+              </div>
             </div>
-          </div>
+          </Bay>
 
-          <div className={"bg-background p-3 space-y-1 transition-all border-3 border-border"}>
-            <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Performance</div>
+          <Bay label="Performance">
             {/* With no target, performance holds its value (Free mode stays at 100%; the Safety Test freezes it) */}
-            <div
-              className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${
-                gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
-              }`}
-            >
-              {`${Math.round(gameState.performance)}%`}
+            <div className="cr-screen-bezel">
+              <div
+                className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${
+                  gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
+                }`}
+              >
+                {`${Math.round(gameState.performance)}%`}
+              </div>
             </div>
-          </div>
+          </Bay>
 
           {/* Time */}
-          <div className="bg-background border-3 border-border p-3 space-y-1">
-            <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Time</div>
-            <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">
-              {formatTime(gameState.gameTime)}
+          <Bay label="Time">
+            <div className="cr-screen-bezel">
+              <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">
+                {formatTime(gameState.gameTime)}
+              </div>
             </div>
-          </div>
+          </Bay>
         </div>
 
         {/* Secondary Readouts */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-3 text-sm">
-          <div
-            className={`bg-background p-2 space-y-1 transition-all ${
-              lowRadioactivityWarning || highRadioactivityWarning
-                ? "border-3 border-red-600 animate-border-flash"
-                : "border-3 border-border"
-            }`}
-          >
-            <div className="text-xs text-muted-foreground font-mono uppercase">Radioactivity</div>
+          <Bay label="Radioactivity" warn={lowRadioactivityWarning || highRadioactivityWarning}>
             <div className="font-mono vfd-display">{Math.round(gameState.radioactivity)}</div>
-          </div>
+          </Bay>
 
-          <div
-            className={`bg-background p-2 space-y-1 transition-all ${
-              highReactorTempWarning ? "border-3 border-red-600 animate-border-flash" : "border-3 border-border"
-            }`}
-          >
-            <div className="text-xs text-muted-foreground font-mono uppercase">Reactor Temp</div>
+          <Bay label="Reactor Temp" warn={highReactorTempWarning}>
             <div className="font-mono font-bold vfd-display">{Math.round(gameState.reactorTemp)}°</div>
-          </div>
+          </Bay>
 
-          <div
-            className={`bg-background p-2 space-y-1 transition-all ${
-              lowFuelTempWarning ? "border-3 border-red-600 animate-border-flash" : "border-3 border-border"
-            }`}
-          >
-            <div className="text-xs text-muted-foreground font-mono uppercase">Fuel Temp</div>
+          <Bay label="Fuel Temp" warn={lowFuelTempWarning || highFuelTempWarning}>
             <div className="font-mono font-bold vfd-display">{Math.round(gameState.fuelTemp)}°</div>
-          </div>
+          </Bay>
 
-          <div
-            className={`bg-background p-2 space-y-1 transition-all ${
-              highSteamWarning || lowSteamWarning
-                ? "border-3 border-red-600 animate-border-flash"
-                : "border-3 border-border"
-            }`}
-          >
-            <div className="text-xs text-muted-foreground font-mono uppercase">Steam</div>
+          <Bay label="Steam" warn={highSteamWarning || lowSteamWarning}>
             <div className="font-mono font-bold vfd-display">{Math.round(gameState.steamVolume)}</div>
-          </div>
+          </Bay>
 
-          <div
-            className={`bg-background p-2 space-y-1 transition-all ${
-              highXenonWarning ? "border-3 border-red-600 animate-border-flash" : "border-3 border-border"
-            }`}
-          >
-            <div className="text-xs text-muted-foreground font-mono uppercase">Xenon</div>
+          <Bay label="Xenon" warn={highXenonWarning}>
             <div className="font-mono font-bold vfd-display">{Math.round(gameState.xenon)}%</div>
-          </div>
+          </Bay>
 
-          {/* Reactor view button */}
-          <button
-            onClick={() => setShowReactorView(true)}
-            className="bg-background p-2 space-y-1 transition-all border-3 border-border hover:border-primary cursor-pointer flex flex-col items-center justify-center"
-          >
-            <Cctv  className="w-6 h-6 text-muted-foreground" />
-            {/*/<DoorOpen className="w-6 h-6 text-muted-foreground" />*/}
-            <div className="text-xs text-muted-foreground font-mono uppercase">View Reactor</div>
-          </button>
+          {/* Reactor view key */}
+          <Bay label="CCTV" className="flex flex-col">
+            <span className="cr-bezel w-full flex-1">
+              <button onClick={() => setShowReactorView(true)} className="cr-key cr-key-black w-full min-h-8 !text-[0.78rem] !tracking-[0.12em]">
+                <Cctv className="w-4 h-4" />
+                View Reactor
+              </button>
+            </span>
+          </Bay>
         </div>
 
         {/* Control panel buttons */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 text-sm">
           {/* PAUSE BUTTON  -  LED SCREEN */}
 
-          <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
+          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
             {/* Top Section: Label & Status Text */}
             <div className="space-y-2">
-              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">PAUSE SIMULATION</div>
+              <div className="cr-plate">Simulation</div>
               {/* A small "screen" showing current status */}
-              <div className="led-display text-center h-16 flex items-center justify-center">
-                <span
-                  className={`!pl-0 !pr-0 text-center text-sm md:text-lg ${gameState.isPaused ? "text-red-500" : "led-green"}`}
-                >
-                  {gameState.isPaused ? "• PAUSED •" : "RUNNING..."}
-                </span>
+              <div className="cr-screen-bezel">
+                <div className="led-display !px-2 md:!px-4 text-center h-16 flex items-center justify-center">
+                  <span
+                    className={`!pl-0 !pr-0 text-center text-sm md:text-lg whitespace-nowrap ${gameState.isPaused ? "text-red-500" : "led-green"}`}
+                  >
+                    {gameState.isPaused ? "• PAUSED •" : "RUNNING..."}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* PAUSE BUTTON  -  The Physical Button */}
             <div className="w-full flex-1 flex items-center justify-center">
-              <button
-                onClick={handlePauseClick}
-                className={`
-                    w-32 h-12 mx-auto font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
-                    border-t border-white/20 flex items-center justify-center
-                    active:translate-y-[4px] active:shadow-none
-                    ${
-                      gameState.isPaused
-                        ? "bg-red-600 text-white shadow-[0_4px_0_#7f1d1d] shadow-red-500/40"
-                        : "bg-[#5a1a1a] text-red-200/30 shadow-[0_4px_0_#360f0f]"
-                    }
-                  `}
-              >
-                {gameState.isPaused ? "RESUME" : "PAUSE"}
-              </button>
+              <span className="cr-bezel">
+                <button
+                  onClick={handlePauseClick}
+                  className={`cr-key w-32 h-12 ${gameState.isPaused ? "cr-key-red-lit" : "cr-key-red"}`}
+                >
+                  {gameState.isPaused ? "RESUME" : "PAUSE"}
+                </button>
+              </span>
             </div>
           </div>
 
           {/* WATER PUMPS (Lights Above, Button Below)*/}
 
-          <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
+          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
             {/* Top Section: Label & Lights Grid */}
             <div className="space-y-2">
-              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">WATER PUMPS</div>
+              <div className="cr-plate">Water Pumps</div>
 
               {/* The Lamp Grid Container */}
               <div className="bg-black/80 border-2 border-neutral-800 rounded-md p-2 shadow-inner h-16 flex items-center justify-center">
@@ -256,30 +258,25 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
             {/* Bottom Section: The Physical Button */}
             <div className="w-full flex-1 flex items-center justify-center">
-              <button
-                onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
-                disabled={gameState.isPaused}
-                className={`
-                   w-32 h-12 mx-auto font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
-                   border-t border-white/20 flex flex-col items-center justify-center leading-none
-                   active:translate-y-[4px] active:shadow-none
-                   disabled:opacity-50 disabled:cursor-not-allowed
-                   bg-slate-700 text-slate-200 shadow-[0_4px_0_#1e293b]
-                 `}
-              >
-                MANAGE
-              </button>
+              <span className="cr-bezel">
+                <button
+                  data-manage
+                  onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
+                  disabled={gameState.isPaused}
+                  className="cr-key w-32 h-12"
+                >
+                  MANAGE
+                </button>
+              </span>
             </div>
           </div>
 
           {/* CONTROL RODS (Display Top, Button/Light Bottom) */}
 
-          <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
+          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
             {/* Top Section: Label & VFD Display Screen */}
             <div className="space-y-2 w-full">
-              <div>
-                <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">CONTROL RODS</div>
-              </div>
+              <div className="cr-plate">Control Rods</div>
 
               {/* VFD Green Screen */}
               <div className="vfd-display h-16 w-full relative flex flex-col justify-between py-1">
@@ -313,19 +310,16 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             {/* Bottom Section: Button (Left) & Warning Light (Right) */}
             <div className="w-full flex-1 flex items-center justify-between gap-3">
               {/* The Button */}
-              <button
-                onClick={() => !gameState.isPaused && setRodsModalOpen(true)}
-                disabled={gameState.isPaused}
-                className={`
-                  w-32 h-12 font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
-                  border-t border-white/20 flex flex-col items-center justify-center leading-none
-                  active:translate-y-[4px] active:shadow-none
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  bg-slate-700 text-slate-200 shadow-[0_4px_0_#292524]
-                `}
-              >
-                <span className="font-mono font-bold text-sm">MANAGE</span>
-              </button>
+              <span className="cr-bezel flex-1 min-w-0 max-w-[8.5rem]">
+                <button
+                  data-manage
+                  onClick={() => !gameState.isPaused && setRodsModalOpen(true)}
+                  disabled={gameState.isPaused}
+                  className="cr-key w-full h-12"
+                >
+                  MANAGE
+                </button>
+              </span>
 
               {/* The Status Light */}
               <div className="flex flex-col items-center justify-center gap-1 pr-2">
@@ -348,10 +342,10 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
           {/* 4. TURBINE (2 Lights Top, Toggle Bottom)   */}
 
-          <div className="bg-background border-3 border-border p-3 flex flex-col h-48">
+          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
             {/* Top Section: Label & Status Lights */}
             <div className="space-y-2 w-full">
-              <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Turbine</div>
+              <div className="cr-plate">Turbine</div>
 
               {/* The Lamp Display Container */}
               <div className="bg-black/80 border-2 border-neutral-800 rounded-md p-2 shadow-inner h-16 flex items-center justify-center">
@@ -407,20 +401,16 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
             {/* Bottom Section: The Physical Button */}
             <div className="w-full flex-1 flex items-center justify-center">
-              <button
-                // Assuming you have a function like toggleTurbine in your updates
-                onClick={() => !gameState.isPaused && setTurbineModalOpen(true)}
-                disabled={gameState.isPaused}
-                className={`
-                          w-32 h-12 mx-auto font-mono font-bold text-sm tracking-wider rounded transition-all duration-100
-                          border-t border-white/20 flex flex-col items-center justify-center leading-none
-                          active:translate-y-[4px] active:shadow-none
-                          disabled:opacity-50 disabled:cursor-not-allowed
-                          bg-slate-700 text-slate-200 shadow-[0_4px_0_#27272a]
-                        `}
-              >
-                <span>MANAGE</span>
-              </button>
+              <span className="cr-bezel">
+                <button
+                  data-manage
+                  onClick={() => !gameState.isPaused && setTurbineModalOpen(true)}
+                  disabled={gameState.isPaused}
+                  className="cr-key w-32 h-12"
+                >
+                  MANAGE
+                </button>
+              </span>
             </div>
           </div>
         </div>
@@ -452,14 +442,12 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         <div className="fixed inset-0 z-50 bg-black flex flex-col">
           {/* Back button */}
           <div className="absolute top-4 left-4 z-10">
-            <Button
-              onClick={() => setShowReactorView(false)}
-              variant="outline"
-              size="icon"
-              className="border-2 border-primary bg-card hover:bg-card/80"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+            <span className="cr-bezel">
+              <button onClick={() => setShowReactorView(false)} className="cr-key cr-key-black h-10 px-3" aria-label="Back to the control panel">
+                <ArrowLeft className="h-5 w-5" />
+                Back
+              </button>
+            </span>
           </div>
 
           {/* Reactor view (security camera) */}

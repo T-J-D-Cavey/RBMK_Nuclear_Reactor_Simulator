@@ -1,6 +1,5 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
-import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { THRESHOLDS } from "@/lib/types"
 import { EVENT_TUNING, TUNING } from "@/lib/sim/tuning"
@@ -11,17 +10,22 @@ export default function InstructionsPage() {
   const t = THRESHOLDS
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${controlRoomBackground})` }}>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="bg-card border-4 border-primary p-6 md:p-8 space-y-8">
+    <div className="relative min-h-screen px-3 py-5 sm:p-4 md:p-8 bg-black">
+      {/* The control room stays put behind the long manual (a fixed layer, which iOS honours; bg-fixed it does not) */}
+      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${controlRoomBackground})` }} aria-hidden="true" />
+      {/* Same atmosphere as the home page: dark vignette + faint scanlines over the control room */}
+      <div className="ws3-home-vignette fixed inset-0 pointer-events-none" aria-hidden="true" />
+
+      <div className="relative max-w-4xl mx-auto space-y-6">
+        <div className="cr-panel cr-screws p-4 sm:p-6 md:p-8 space-y-8">
           {/* Header */}
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="outline" size="icon" className="border-2 border-primary bg-transparent">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <span className="cr-bezel shrink-0">
+              <Link href="/" className="cr-key cr-key-black size-10" aria-label="Back to the main menu">
                 <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <h1 className="text-4xl md:text-5xl font-bold font-mono uppercase text-accent">Operating Manual</h1>
+              </Link>
+            </span>
+            <h1 className="cr-nameplate flex-1 text-center px-3 py-2.5 text-xl sm:text-3xl md:text-4xl">Operating Manual</h1>
           </div>
 
           <Section title="Objective">
@@ -64,16 +68,16 @@ export default function InstructionsPage() {
               each card in play pushes radioactivity up or down.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="bg-background p-4 border-2 border-destructive">
-                <h3 className="font-bold font-mono mb-2 text-destructive">Red cards: push radioactivity up</h3>
+              <div className="cr-module p-4 !border-l-[6px] !border-l-red-700">
+                <h3 className="font-[family-name:var(--font-plate)] font-bold uppercase tracking-[0.12em] mb-2 text-red-800">Red cards: push radioactivity up</h3>
                 <ul className="text-sm leading-relaxed list-disc list-inside space-y-1">
                   <li>Steam in the core (the positive void coefficient)</li>
                   <li>Graphite rod tips in the core</li>
                   <li>Fuel cooler than normal, strongly when very cold</li>
                 </ul>
               </div>
-              <div className="bg-background p-4 border-2 border-event">
-                <h3 className="font-bold font-mono mb-2 text-event">Blue cards: push radioactivity down</h3>
+              <div className="cr-module p-4 !border-l-[6px] !border-l-[var(--event)]">
+                <h3 className="font-[family-name:var(--font-plate)] font-bold uppercase tracking-[0.12em] mb-2 text-event">Blue cards: push radioactivity down</h3>
                 <ul className="text-sm leading-relaxed list-disc list-inside space-y-1">
                   <li>Boron in the control rods, in proportion to how far they are inserted</li>
                   <li>Xenon</li>
@@ -255,12 +259,12 @@ export default function InstructionsPage() {
         </div>
 
         {/* Back Button */}
-        <div className="flex justify-center pt-4">
-          <Link href="/">
-            <Button size="lg" className="uppercase font-mono tracking-wider px-8">
-              Return to Main Menu
-            </Button>
-          </Link>
+        <div className="flex justify-center pt-2 pb-2">
+          <span className="cr-bezel w-full sm:w-auto">
+            <Link href="/" className="cr-key cr-key-cream w-full sm:w-56 h-12">
+              Main Menu
+            </Link>
+          </span>
         </div>
       </div>
     </div>
@@ -274,8 +278,10 @@ function minutes([from, to]: readonly [number, number]): string {
 
 function Section({ title, danger = false, children }: { title: string; danger?: boolean; children: ReactNode }) {
   return (
-    <section className="space-y-3">
-      <h2 className={`text-2xl font-bold font-mono uppercase ${danger ? "text-destructive" : "text-accent"}`}>{title}</h2>
+    <section className="space-y-3 text-neutral-900">
+      <h2 className={`cr-plate !justify-start !whitespace-normal !leading-snug !text-sm md:!text-base !py-2 !px-3 ${danger ? "!bg-[linear-gradient(180deg,#8f1d1d,#5f1010)] !text-red-50" : ""}`}>
+        {title}
+      </h2>
       {children}
     </section>
   )
@@ -283,9 +289,9 @@ function Section({ title, danger = false, children }: { title: string; danger?: 
 
 function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
-    <div className="bg-background p-4 border-2 border-border">
-      <h3 className="font-bold font-mono mb-1 text-accent">{title}</h3>
-      {subtitle && <p className="text-xs leading-relaxed text-muted-foreground mb-2">{subtitle}</p>}
+    <div className="cr-module p-4">
+      <h3 className="font-[family-name:var(--font-plate)] font-bold uppercase tracking-[0.12em] text-[0.95rem] text-[#0f4c4a] mb-1">{title}</h3>
+      {subtitle && <p className="font-mono text-[11px] uppercase tracking-wide text-neutral-600 mb-2">{subtitle}</p>}
       <div className="text-sm leading-relaxed">{children}</div>
     </div>
   )

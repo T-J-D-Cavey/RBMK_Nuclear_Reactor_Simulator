@@ -1,7 +1,6 @@
 "use client"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import type { GameMode } from "@/lib/types"
 
 interface DifficultyModalProps {
@@ -10,100 +9,73 @@ interface DifficultyModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+// What to expect, not what will happen (owner, 2026-10-13): no event counts or target sizes.
+const MODES: { mode: GameMode; name: string; specs: string[]; lamp: string; key: string; action: string }[] = [
+  {
+    mode: "easy",
+    name: "Easy Mode",
+    specs: ["Shorter shift", "Steady demands", "Fewer surprises"],
+    lamp: "bg-green-400 text-green-400",
+    key: "cr-key-green",
+    action: "Start Easy",
+  },
+  {
+    mode: "hard",
+    name: "Hard Mode",
+    specs: ["Longer shift", "Tougher demands", "More to deal with"],
+    lamp: "bg-red-500 text-red-500",
+    key: "cr-key-red-lit",
+    action: "Start Hard",
+  },
+  {
+    mode: "free",
+    name: "Free Mode",
+    specs: ["No time limit", "No demands", "Learn the reactor"],
+    lamp: "bg-sky-400 text-sky-400",
+    key: "cr-key-blue",
+    action: "Start Free",
+  },
+  {
+    mode: "safety_test",
+    name: "Safety Test",
+    specs: ["The night of 26 April 1986", "Follow the test team's orders", "Can you save Unit 4?"],
+    lamp: "bg-amber-400 text-amber-400",
+    key: "cr-key-amber-lit",
+    action: "Begin Test",
+  },
+]
+
 export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: DifficultyModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="bg-card border-4 border-primary max-w-md max-h-[90dvh] overflow-y-auto"
-        showCloseButton={true}
-      >
+      <DialogContent className="cr-dialog sm:max-w-2xl max-h-[90dvh] overflow-y-auto" showCloseButton={true}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-mono uppercase text-center">Select Mode</DialogTitle>
-          <DialogDescription className="text-center font-mono text-sm pt-2">
-            The reactor obeys the same physics in every mode. Modes differ only in your workload: shift length, grid
-            demands and emergencies.
+          <DialogTitle className="cr-dialog-title">Select Mode</DialogTitle>
+          <DialogDescription className="text-center font-mono text-xs sm:text-sm text-neutral-700 pt-1">
+            Same reactor in every mode. Only the workload changes.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
-          {/* Easy Mode */}
-          <div className="bg-background border-2 border-border p-4 space-y-2">
-            <h3 className="font-mono font-bold text-lg uppercase text-accent">Easy Mode</h3>
-            <ul className="text-sm font-mono space-y-1 text-muted-foreground">
-              <li>• 15 minute shift</li>
-              <li>• About 1 major emergency per shift</li>
-              <li>• Smaller, less frequent power target changes</li>
-            </ul>
-            <Button
-              onClick={() => onSelectDifficulty("easy")}
-              className="w-full uppercase font-mono tracking-wider border-2 border-primary mt-2 cursor-pointer"
-              size="lg"
-            >
-              Start Easy
-            </Button>
-          </div>
-
-          {/* Hard Mode */}
-          <div className="bg-background border-2 border-destructive p-4 space-y-2">
-            <h3 className="font-mono font-bold text-lg uppercase text-destructive">Hard Mode</h3>
-            <ul className="text-sm font-mono space-y-1 text-muted-foreground">
-              <li>• 30 minute shift</li>
-              <li>• About 3 major emergencies per shift</li>
-              <li>• Larger, more frequent power target changes</li>
-            </ul>
-            <Button
-              onClick={() => onSelectDifficulty("hard")}
-              variant="destructive"
-              className="w-full uppercase font-mono tracking-wider border-2 border-destructive mt-2 cursor-pointer"
-              size="lg"
-            >
-              Start Hard
-            </Button>
-          </div>
-
-          {/* Free Mode */}
-          <div className="bg-background border-2 border-sky-500 p-4 space-y-2">
-            <h3 className="font-mono font-bold text-lg uppercase text-sky-600 dark:text-sky-400">Free Mode (Sandbox)</h3>
-            <ul className="text-sm font-mono space-y-1 text-muted-foreground">
-              <li>• Unlimited time (counts up from 00:00:00)</li>
-              <li>• No grid power targets or random events</li>
-              <li>• Unlimited practice with active reactor physics</li>
-            </ul>
-            <Button
-              onClick={() => onSelectDifficulty("free")}
-              className="w-full uppercase font-mono tracking-wider border-2 border-sky-600 bg-sky-600 hover:bg-sky-700 text-white font-bold mt-2 cursor-pointer shadow-sm"
-              size="lg"
-            >
-              Start Free Mode
-            </Button>
-          </div>
-
-          {/* Historical scenario: Safety Test */}
-          <div className="ws3-historical-card relative p-4 space-y-2 text-amber-950">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-amber-800">
-                Historical scenario · 25–26 April 1986
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {MODES.map(({ mode, name, specs, lamp, key, action }) => (
+            <div key={mode} className="cr-module p-3 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className={`retro-lamp on inline-block w-3 h-3 shrink-0 ${lamp}`} aria-hidden="true" />
+                <h3 className="cr-plate flex-1 !justify-start !text-sm">{name}</h3>
+              </div>
+              <ul className="cr-note px-3 py-2 space-y-0.5 uppercase flex-1">
+                {specs.map((spec) => (
+                  <li key={spec}>{spec}</li>
+                ))}
+              </ul>
+              <span className="cr-bezel w-full">
+                <button data-mode={mode} onClick={() => onSelectDifficulty(mode)} className={`cr-key ${key} w-full h-11`}>
+                  {action}
+                </button>
               </span>
             </div>
-            <h3 className="font-mono font-bold text-lg uppercase text-amber-900">Safety Test</h3>
-            <ul className="text-sm font-mono space-y-1 text-amber-900/80">
-              <li>• 20 minute scripted recreation of the night of the Unit 4 turbine rundown test</li>
-              <li>• Orders from the test supervisor, the Deputy Chief Engineer and the Kiev grid controller</li>
-              <li>• No random emergencies: every disruption is scripted</li>
-            </ul>
-            <Button
-              onClick={() => onSelectDifficulty("safety_test")}
-              className="w-full uppercase font-mono tracking-wider border-2 border-amber-900 bg-amber-800 hover:bg-amber-900 text-amber-50 font-bold mt-2 cursor-pointer shadow-sm"
-              size="lg"
-            >
-              Begin Safety Test
-            </Button>
-          </div>
+          ))}
         </div>
-
-        <p className="text-xs text-center text-muted-foreground font-mono pt-2">
-          Survive until the shift ends, or test the physics indefinitely in Free Mode
-        </p>
       </DialogContent>
     </Dialog>
   )

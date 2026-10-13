@@ -19,11 +19,9 @@ export default function MessageArea({ gameState }: MessageAreaProps) {
   const warnings = [...getReactorWarnings(gameState), ...getEventWarnings(gameState)]
 
   return (
-    <div className="border-y-4 border-primary bg-card p-3 md:p-4">
-      <div className="max-w-6xl mx-auto space-y-3">
-        <AlarmScreen warnings={warnings} />
-        <ShiftLogPrinter gameState={gameState} />
-      </div>
+    <div className="max-w-6xl mx-auto cr-panel cr-screws p-3 sm:p-4 md:px-6 space-y-3">
+      <AlarmScreen warnings={warnings} />
+      <ShiftLogPrinter gameState={gameState} />
     </div>
   )
 }

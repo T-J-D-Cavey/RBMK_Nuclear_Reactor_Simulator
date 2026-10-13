@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { DifficultyModal } from "@/components/difficulty-modal"
 import type { GameMode } from "@/lib/types"
 import { createNewGame } from "@/lib/game-loop"
@@ -44,35 +43,31 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Control Panel Style Box */}
-        <div className="bg-card border-4 border-primary p-8 md:p-12 space-y-6 shadow-2xl">
-          <div className="space-y-4">
-            <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
-              {
-                "Manage a flawed RBMK nuclear reactor in real-time. Maintain balance and deliver the required power output whilst avoiding catastrophic failure."
-              }
-            </p>
+        {/* Start console */}
+        <div className="cr-panel cr-screws mx-auto max-w-xl px-5 py-6 sm:px-10 sm:py-8 space-y-6">
+          <div className="cr-note px-4 py-3 !text-[0.8rem] sm:!text-[0.9rem] uppercase tracking-wide text-center space-y-1">
+            <p>Run a flawed reactor through the night shift.</p>
+            <p>Meet the grid&apos;s demand. Keep the core intact.</p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button
-              onClick={handleStartGame}
-              size="lg"
-              className="w-full sm:w-auto uppercase font-mono tracking-wider text-lg px-8 py-6 bg-primary hover:bg-primary/90 border-2 border-primary"
-            >
-              Start Game
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-stretch sm:items-end">
+            <div className="flex flex-col items-center gap-2">
+              <span className="cr-plate w-full sm:w-auto">
+                <span className="retro-lamp on cr-blink inline-block w-2 h-2 bg-green-400 text-green-400" aria-hidden="true" />
+                Ready
+              </span>
+              <span className="cr-bezel w-full sm:w-auto">
+                <button onClick={handleStartGame} className="cr-key cr-key-green-lit w-full sm:w-52 h-14 !text-lg">
+                  Start Shift
+                </button>
+              </span>
+            </div>
 
-            <Link href="/instructions">
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto uppercase font-mono tracking-wider text-lg px-8 py-6 border-2 border-primary hover:bg-primary/10 bg-transparent"
-              >
+            <span className="cr-bezel w-full sm:w-auto">
+              <Link href="/instructions" className="cr-key cr-key-cream w-full sm:w-44 h-14 !text-base">
                 How to Play
-              </Button>
-            </Link>
+              </Link>
+            </span>
           </div>
         </div>
       </div>

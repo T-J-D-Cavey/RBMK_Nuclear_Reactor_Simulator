@@ -79,22 +79,24 @@ function migrateSavedState(state: GameState): GameState {
 }
 
 export function useGameState() {
-  const [gameState, setGameState] = useState<GameState>(loadSavedGameState)
-  const isInitializedRef = useRef(false)
+  // The saved game lives in localStorage, which the server cannot see. Start from the same state on the server and
+  // in the browser, then load the save after mount, so the first render matches and React does not report a
+  // hydration mismatch. Callers render a placeholder until isLoaded.
+  const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE)
+  const [isLoaded, setIsLoaded] = useState(false)
   const tickIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    const loaded = loadSavedGameState()
-    setGameState(loaded)
-    isInitializedRef.current = true
+    setGameState(loadSavedGameState())
+    setIsLoaded(true)
   }, [])
 
-  // Save game state to local storage whenever it changes (only after client mount)
+  // Save game state to local storage whenever it changes (only once the save has been loaded)
   useEffect(() => {
-    if (isInitializedRef.current) {
+    if (isLoaded) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState))
     }
-  }, [gameState])
+  }, [gameState, isLoaded])
 
   // Update a specific field in game state. Rods only change their ordered position here;
   // the engine moves them at rod speed (bible §10).
@@ -118,7 +120,7 @@ export function useGameState() {
 
   // One second of game time: physics, clock, events or the Safety Test script, warnings, endings (lib/game-loop)
   useEffect(() => {
-    if (!gameState.isPaused && !gameState.isGameOver && !gameState.hasWon) {
+    if (isLoaded && !gameState.isPaused && !gameState.isGameOver && !gameState.hasWon) {
       tickIntervalRef.current = setInterval(() => {
         setGameState((prev) => advanceGame(prev))
       }, TICK_INTERVAL)
@@ -129,7 +131,7 @@ export function useGameState() {
         clearInterval(tickIntervalRef.current)
       }
     }
-  }, [gameState.isPaused, gameState.isGameOver, gameState.hasWon])
+  }, [isLoaded, gameState.isPaused, gameState.isGameOver, gameState.hasWon])
 
   useEffect(() => {
     if(gameState.isGameOver || gameState.hasWon) {
@@ -139,6 +141,7 @@ export function useGameState() {
 
   return {
     gameState,
+    isLoaded,
     updateGameState,
     resetGame,
     togglePause,

@@ -174,9 +174,9 @@ export default function ChartRecorder({
   const current = samples[samples.length - 1]
 
   return (
-    <div className={`bg-card border-4 border-primary p-3 space-y-2 ${className}`}>
+    <div className={`cr-panel cr-screws p-3 sm:p-4 space-y-2 ${className}`}>
       <div className="flex items-center justify-between gap-2">
-        <div className="text-xs font-mono font-bold uppercase tracking-wider">Chart Recorder</div>
+        <div className="cr-plate">Chart Recorder</div>
         <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase text-muted-foreground">
           <span
             className={`retro-lamp inline-block w-2.5 h-2.5 ${

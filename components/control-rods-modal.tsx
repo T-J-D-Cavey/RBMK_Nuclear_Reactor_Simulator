@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import type { ControlRod } from "@/lib/types"
 import { AlertCircle } from "lucide-react"
@@ -100,58 +99,55 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-4 border-primary max-w-2xl w-full max-h-[90vh] overflow-y-auto p-2 sm:p-6 select-none">
+      <DialogContent className="cr-dialog sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem] select-none">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl font-mono uppercase text-center">Control Rods</DialogTitle>
+          <DialogTitle className="cr-dialog-title">Control Rods</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-background border-2 border-border p-2 text-[10px] sm:text-xs leading-relaxed text-center">
-            <p>
-              Drag the LEVERS to adjust rod insertion (0-100%). A higher insertion percentage for any rod will reduce
-              radioactivity.
-            </p>
-            <p className="mt-1 font-bold">Use AZ5 button for emergency full insertion.</p>
-          </div>
+          <div className="flex items-stretch gap-3">
+            <div className="cr-note flex-1 px-3 py-2 !text-[11px] sm:!text-xs uppercase flex flex-col justify-center gap-1">
+              <p>Drag a lever to set insertion. Deeper rods, less radioactivity.</p>
+              <p className="font-bold">AZ-5: emergency insertion of every rod.</p>
+            </div>
 
-          <div className="flex justify-center">
-            <Button
-              onClick={handleAZ5}
-              size="sm"
-              variant="destructive"
-              className="uppercase font-mono tracking-wider px-8 py-2 text-sm sm:text-base border-2"
-            >
-              AZ-5
-            </Button>
+            {/* AZ-5: a red button inside a hazard-striped guard */}
+            <div className="cr-hazard shrink-0 rounded-[3px] p-2 flex flex-col items-center justify-center gap-1.5">
+              <span className="cr-round-bezel">
+                <button onClick={handleAZ5} className="cr-round-key cr-az5 w-14 h-14 sm:w-16 sm:h-16" aria-label="AZ-5 emergency insertion">
+                  AZ-5
+                </button>
+              </span>
+            </div>
           </div>
 
           {/* GRID LAYOUT */}
-          <div className="grid grid-cols-5 gap-x-1 gap-y-4 p-2 justify-items-center">
+          <div className="cr-module grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 p-2 sm:p-3 justify-items-center">
             {controlRods.map((rod, idx) => {
               const currentInsertion = tempValues[idx] ?? rod.insertion
               return (
                 <div key={rod.id} className="flex flex-col items-center gap-1 w-full">
-                  
+
                   {/* Header Label */}
                   <div className="flex items-center gap-1 h-5">
-                    <Label className="font-mono text-xs sm:text-sm font-bold">R{rod.id}</Label>
+                    <Label className={`cr-plate !px-1.5 !py-1 !text-[0.7rem] !tracking-[0.1em] ${rod.stuck ? "!text-red-300" : ""}`}>R{rod.id}</Label>
                     {rod.stuck && <AlertCircle className="h-3 w-3 text-destructive" />}
                   </div>
 
-                  {/* Top Cap */}
-                  <div className="w-8 sm:w-6 h-2 sm:h-3 bg-accent border border-primary rounded-t" />
+                  {/* Top Cap: the drive housing */}
+                  <div className="w-8 sm:w-6 h-2 sm:h-3 rounded-t-sm bg-gradient-to-b from-neutral-500 to-neutral-800 border border-black/70" />
 
                   {/* Rod Track */}
                   <div
                     id={`rod-container-${idx}`}
-                    className={`relative w-8 sm:w-6 h-36 sm:h-48 bg-muted border-2 border-border rounded-b touch-none ${
+                    className={`cr-rod-slot relative w-8 sm:w-6 h-36 sm:h-48 rounded-b-sm touch-none ${
                       rod.stuck ? "cursor-not-allowed" : "cursor-grab"
                     }`}
                     onMouseDown={(e) => handleStart(idx, e)}
                     onTouchStart={(e) => handleStart(idx, e)}
                   >
                     <div
-                      className={`absolute top-0 left-0 w-full ${rod.stuck ? "bg-destructive" : "bg-primary"}`}
+                      className={`absolute top-0 left-0 w-full ${rod.stuck ? "cr-rod-body-stuck" : "cr-rod-body"}`}
                       style={{
                         height: `${currentInsertion}%`,
                       }}
@@ -168,29 +164,27 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                       onMouseDown={(e) => handleStart(idx, e)}
                       onTouchStart={(e) => handleStart(idx, e)}
                     >
-                      <div
-                        className={`w-12 sm:w-10 h-4 sm:h-5 rounded-sm shadow-sm ${rod.stuck ? "bg-destructive" : "bg-foreground"}`}
-                      />
+                      <div className={`w-12 sm:w-10 h-4 sm:h-5 ${rod.stuck ? "cr-lever-stuck" : "cr-lever"}`} />
                     </div>
                   </div>
 
-                  <span className="font-mono text-[10px] sm:text-xs font-bold mt-1">{currentInsertion}%</span>
+                  <span className="font-mono text-[10px] sm:text-xs font-bold mt-1 tabular-nums">{currentInsertion}%</span>
                 </div>
               )
             })}
           </div>
 
-          <div className="flex gap-4 pt-4">
-            <Button onClick={handleApply} className="flex-1 uppercase font-mono h-10 sm:h-11">
-              Apply Changes
-            </Button>
-            <Button
-              onClick={() => onOpenChange(false)}
-              variant="outline"
-              className="flex-1 uppercase font-mono border-2 h-10 sm:h-11"
-            >
-              Cancel
-            </Button>
+          <div className="flex gap-3 pt-1">
+            <span className="cr-bezel flex-1">
+              <button onClick={handleApply} className="cr-key cr-key-green w-full h-11">
+                Apply
+              </button>
+            </span>
+            <span className="cr-bezel flex-1">
+              <button onClick={() => onOpenChange(false)} className="cr-key cr-key-cream w-full h-11">
+                Cancel
+              </button>
+            </span>
           </div>
         </div>
       </DialogContent>

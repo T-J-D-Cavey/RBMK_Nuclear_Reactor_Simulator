@@ -11,13 +11,11 @@ import { useAudioManager } from "@/hooks/use-audio-manager"
 import { THRESHOLDS } from "@/lib/types" 
 import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Home, Volume2, VolumeX } from "lucide-react"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
 import ChartRecorder from "@/components/chart-recorder"
 
 export default function GamePage() {
-  const { gameState, updateGameState, resetGame, togglePause } = useGameState()
+  const { gameState, isLoaded, updateGameState, resetGame, togglePause } = useGameState()
   // Local state:
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSoundModal, setShowSoundModal] = useState(false)
@@ -63,6 +61,12 @@ export default function GamePage() {
     // needs testing in case unpausing is needed: updateGameState({soundsoundEnabled: false})
   }
 
+  // Until the saved game is loaded (browser only), show the empty control room: the server renders the same, so
+  // there is no hydration mismatch and no flash of a fresh game before the saved one appears.
+  if (!isLoaded) {
+    return <div className="min-h-screen bg-black bg-cover bg-center" style={{ backgroundImage: `url(${controlRoomBackground})` }} />
+  }
+
   if (gameState.hasWon) {
     return <SuccessScreen gameState={gameState} onReset={resetGame} />
   }
@@ -77,30 +81,6 @@ export default function GamePage() {
       onClick={handleInteraction}
       onTouchStart={handleInteraction}
     >
-        {/* Home Button and Volume Toggle Top Left */}
-        <div className="flex flex-col absolute top-4 left-4 z-50 space-y-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="border-2 border-primary bg-card hover:bg-card/80"
-              title="Return to Menu"
-              onClick={handleHomeClick}
-            >
-              <Home className="h-5 w-5" />
-            </Button>
-
-            {/* Volume toggle */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="border-2 border-primary bg-card hover:bg-card/80"
-              title="Sound Settings"
-              onClick={handleSoundModalToggle}
-            >
-              {gameState.soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-            </Button>
-        </div>
-
       {/* MODALS */}
       <LeaveGameModal open={showLeaveModal} onOpenChange={setShowLeaveModal} onConfirm={handleConfirmLeave} />
 
@@ -113,18 +93,26 @@ export default function GamePage() {
        onVolumeUpdate={(soundVolume) => updateGameState({ soundVolume })}
       />
       
-      {/* Top Half - Control Panel */}
-      <div className="flex-1 p-4 md:p-6 border-b-4 border-primary bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
-        <ControlPanel gameState={gameState} onTogglePause={togglePause} updateGameState={updateGameState} />
+      {/* Top Half - the control desk: control panel, then the alarm monitor and shift log, in the control room */}
+      <div className="flex-1 px-3 py-4 sm:p-4 md:p-6 space-y-5 md:space-y-6 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
+        <ControlPanel
+          gameState={gameState}
+          onTogglePause={togglePause}
+          updateGameState={updateGameState}
+          onHomeClick={handleHomeClick}
+          onSoundClick={handleSoundModalToggle}
+        />
+
+        {/* Message Area */}
+        <MessageArea gameState={gameState} />
       </div>
 
-      {/* Message Area */}
-      <MessageArea gameState={gameState} />
+      <div className="cr-rail" aria-hidden="true" />
 
       {/* Reactor camera + side panels (WS3 presentation).
           Wide screens: three columns, so the camera sits on the control panel's centre line (same max width)
           with the chart recorder to its right; the empty left column balances it. Narrower: stacked. */}
-      <div className="w-full bg-black px-2 py-3 sm:px-4 md:py-6">
+      <div className="w-full cr-monitor-wall px-3 py-5 sm:px-4 md:py-8">
         <div className="mx-auto w-full flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(18rem,1fr)_minmax(0,72rem)_minmax(18rem,1fr)] xl:items-start">
           <div className="w-full min-w-0 max-w-6xl mx-auto xl:col-start-2">
             <ReactorCamera

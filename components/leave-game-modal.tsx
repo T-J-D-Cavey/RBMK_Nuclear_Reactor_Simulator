@@ -1,14 +1,6 @@
 "use client"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertTriangle } from "lucide-react"
 
 interface LeaveGameModalProps {
@@ -20,32 +12,35 @@ interface LeaveGameModalProps {
 export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-4 border-destructive bg-card">
+      <DialogContent className="cr-dialog sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-destructive text-xl font-bold">
-            <AlertTriangle className="h-6 w-6" />
-            END SIMULATION?
+          <DialogTitle className="cr-dialog-title cr-dialog-title-danger">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            End Simulation?
           </DialogTitle>
-          <DialogDescription className="text-base font-mono pt-4">
-            You'll lose your progress if you quit the simulation. You can pause the game and close the tab and the following will be stored:
+          <DialogDescription asChild>
+            <div className="cr-note px-3 py-2.5 uppercase text-center !text-[0.8rem] mt-2">
+              Quitting ends this shift for good.
+              <br />
+              To keep it, pause and close the tab instead.
+            </div>
           </DialogDescription>
         </DialogHeader>
-        <div className="px-6">
-          <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground font-mono">
-            <li>Current performance score</li>
-            <li>Game time and statistics</li>
-            <li>Control rod, turbine and pump configurations</li>
-            <li>Active events and event history</li>
-          </ul>
+
+        <div className="cr-hazard h-2.5 rounded-[2px]" aria-hidden="true" />
+
+        <div className="flex gap-3">
+          <span className="cr-bezel flex-1">
+            <button onClick={() => onOpenChange(false)} className="cr-key cr-key-cream w-full h-11">
+              Cancel
+            </button>
+          </span>
+          <span className="cr-bezel flex-1">
+            <button onClick={onConfirm} className="cr-key cr-key-red-lit w-full h-11">
+              Quit
+            </button>
+          </span>
         </div>
-        <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono">
-            CANCEL
-          </Button>
-          <Button variant="destructive" onClick={onConfirm} className="font-mono font-bold">
-            QUIT
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
