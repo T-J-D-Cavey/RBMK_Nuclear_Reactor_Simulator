@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react"
 import { ArrowLeft, Cctv, Home, Volume2, VolumeX } from "lucide-react"
 
-import { type GameState, GAME_MODE_CONFIGS } from "@/lib/types"
+import type { GameState } from "@/lib/types"
 import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
@@ -17,6 +17,31 @@ interface ControlPanelProps {
   updateGameState: (updates: Partial<GameState>) => void
   onHomeClick: () => void
   onSoundClick: () => void
+  logLampLit: boolean // a new shift-log message hasn't been seen yet
+  onSeeWarnings: () => void
+  onSeeLog: () => void
+}
+
+// A header lamp with the key beside it that brings its machine into view (plan §21.5). The red lamp flashes while
+// any warning is active or a major event runs; the amber one while a new shift-log message is unseen.
+function Annunciator({ lit, colour, label, ariaLabel, onClick }: { lit: boolean; colour: "red" | "amber"; label: string; ariaLabel: string; onClick: () => void }) {
+  const on = colour === "red" ? "bg-red-500 text-red-500" : "bg-amber-400 text-amber-400"
+  const off = colour === "red" ? "bg-red-950/30" : "bg-amber-950/30"
+  return (
+    <div className="flex items-center justify-center gap-2 min-w-0">
+      <span className="cr-lamp-bezel">
+        <span
+          aria-hidden="true"
+          className={`retro-lamp block w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-all ${lit ? `${on} on animate-[pulse_0.8s_ease-in-out_infinite] motion-reduce:animate-none shadow-[0_0_15px_currentColor]` : off}`}
+        />
+      </span>
+      <span className="cr-bezel">
+        <button className={`cr-key ${colour === "red" ? "cr-key-maroon" : "cr-key-mustard"} h-9 px-2.5 sm:px-3 !text-[0.72rem] sm:!text-[0.8rem] !tracking-[0.1em]`} aria-label={ariaLabel} onClick={onClick}>
+          {label}
+        </button>
+      </span>
+    </div>
+  )
 }
 
 // A readout bay: engraved plate above, instrument below. Flashes red while its value is in a warning band.
@@ -29,14 +54,13 @@ function Bay({ label, warn = false, className = "", children }: { label: string;
   )
 }
 
-export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick }: ControlPanelProps) {
+export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick, logLampLit, onSeeWarnings, onSeeLog }: ControlPanelProps) {
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
   const [showReactorView, setShowReactorView] = useState(false)
 
   const isOnTarget = isPowerOnTarget(gameState)
-  const modeLabel = (GAME_MODE_CONFIGS[gameState.mode] ?? GAME_MODE_CONFIGS.easy).badgeText
 
   const hasWarnings = checkWarnings(gameState).length > 0 || checkEventWarnings(gameState).length > 0
   const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck" || event.type === "pump-trip")
@@ -64,38 +88,36 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
     onTogglePause()
   }
 
-  const alarmLamp = `retro-lamp w-5 h-5 rounded-full transition-all flex-shrink-0 ${hasWarnings || majorEvent ? "bg-red-500 text-red-500 on animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/30"}`
-
   return (
     <div className="max-w-6xl mx-auto">
       <div className="cr-panel cr-screws p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
-        {/* Header: menu keys, nameplate between the master alarm lamps, mode */}
-        <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-3">
-          <div className="flex items-center gap-2 order-1">
-            <span className="cr-bezel">
-              <button className="cr-key cr-key-black size-9" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
+        {/* Header: menu keys, nameplate, then the warning and shift-log lamps with the keys that bring each machine
+            into view (plan §21.5). Wide screens: one row, both keys on the left. Narrower: home, nameplate and sound
+            (so the nameplate stays centred), then the two lamps. The key group is `contents` below lg so each key is
+            placed in the grid on its own. */}
+        <div className="grid grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-3">
+          <div className="contents lg:flex lg:col-start-1 lg:row-start-1 items-center gap-2">
+            <span className="cr-bezel col-start-1 row-start-1">
+              <button className="cr-key cr-key-cream size-9" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
                 <Home className="h-[18px] w-[18px]" />
               </button>
             </span>
-            <span className="cr-bezel">
-              <button className="cr-key cr-key-black size-9" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
+            <span className="cr-bezel col-start-3 row-start-1 justify-self-end">
+              <button className="cr-key cr-key-grey size-9" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
                 {gameState.soundEnabled ? <Volume2 className="h-[18px] w-[18px]" /> : <VolumeX className="h-[18px] w-[18px]" />}
               </button>
             </span>
           </div>
 
-          <div className="col-span-2 sm:col-span-1 order-3 sm:order-2 flex items-center justify-center gap-3 md:gap-4">
-            <span className="cr-lamp-bezel">
-              <span className={alarmLamp} />
-            </span>
-            <h1 className="cr-nameplate px-3 py-2 md:px-6 md:py-2.5 text-base sm:text-xl md:text-3xl whitespace-nowrap">Reactor Control System</h1>
-            <span className="cr-lamp-bezel">
-              <span className={alarmLamp} />
-            </span>
+          <div className="col-start-2 row-start-1 flex justify-center min-w-0">
+            <h1 className="cr-nameplate px-3 py-2 md:px-6 md:py-2.5 text-[13px] !tracking-[0.12em] min-[400px]:text-sm sm:text-lg sm:!tracking-[0.2em] md:text-2xl xl:text-3xl whitespace-nowrap">
+              Reactor Control System
+            </h1>
           </div>
 
-          <div className="order-2 sm:order-3 flex justify-end">
-            <span className="cr-plate !tracking-[0.2em]">{modeLabel}</span>
+          <div className="col-span-3 row-start-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 grid grid-cols-2 lg:flex lg:justify-end items-center gap-2 lg:gap-4">
+            <Annunciator lit={hasWarnings || majorEvent} colour="red" label="See Warning" ariaLabel="Show the alarm monitor" onClick={onSeeWarnings} />
+            <Annunciator lit={logLampLit} colour="amber" label="See Message" ariaLabel="Show the shift log" onClick={onSeeLog} />
           </div>
         </div>
 
@@ -145,7 +167,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         </div>
 
         {/* Secondary Readouts */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-3 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 text-sm">
           <Bay label="Radioactivity" warn={lowRadioactivityWarning || highRadioactivityWarning}>
             <div className="font-mono vfd-display">{Math.round(gameState.radioactivity)}</div>
           </Bay>
@@ -169,7 +191,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           {/* Reactor view key */}
           <Bay label="CCTV" className="flex flex-col">
             <span className="cr-bezel w-full flex-1">
-              <button onClick={() => setShowReactorView(true)} className="cr-key cr-key-black w-full min-h-8 !text-[0.78rem] !tracking-[0.12em]">
+              <button onClick={() => setShowReactorView(true)} className="cr-key cr-key-teal w-full min-h-8 !text-[0.78rem] !tracking-[0.12em]">
                 <Cctv className="w-4 h-4" />
                 View Reactor
               </button>

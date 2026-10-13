@@ -43,26 +43,14 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Start console */}
-        <div className="cr-panel cr-screws mx-auto max-w-xl px-5 py-6 sm:px-10 sm:py-8 space-y-6">
-          <div className="cr-note px-4 py-3 !text-[0.8rem] sm:!text-[0.9rem] uppercase tracking-wide text-center space-y-1">
-            <p>Run a flawed reactor through the night shift.</p>
-            <p>Meet the grid&apos;s demand. Keep the core intact.</p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-stretch sm:items-end">
-            <div className="flex flex-col items-center gap-2">
-              <span className="cr-plate w-full sm:w-auto">
-                <span className="retro-lamp on cr-blink inline-block w-2 h-2 bg-green-400 text-green-400" aria-hidden="true" />
-                Ready
-              </span>
-              <span className="cr-bezel w-full sm:w-auto">
-                <button onClick={handleStartGame} className="cr-key cr-key-green-lit w-full sm:w-52 h-14 !text-lg">
-                  Start Shift
-                </button>
-              </span>
-            </div>
-
+        {/* Start console: just big enough for its two keys (plan §21.4) */}
+        <div className="cr-panel cr-screws mx-auto w-full max-w-xs sm:max-w-none sm:w-fit px-5 py-5 sm:px-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-stretch sm:items-center">
+            <span className="cr-bezel w-full sm:w-auto">
+              <button onClick={handleStartGame} className="cr-key cr-key-green-lit w-full sm:w-52 h-14 !text-lg">
+                Start Shift
+              </button>
+            </span>
             <span className="cr-bezel w-full sm:w-auto">
               <Link href="/instructions" className="cr-key cr-key-cream w-full sm:w-44 h-14 !text-base">
                 How to Play

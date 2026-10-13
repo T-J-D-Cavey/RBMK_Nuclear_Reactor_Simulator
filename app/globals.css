@@ -930,6 +930,11 @@
 .cr-key-blue { --cap: #24456e; --cap-hi: #39679e; --cap-side: #0f1f33; --cap-ink: #eaf2ff; }
 .cr-key-green { --cap: #20573d; --cap-hi: #2f7d58; --cap-side: #0c2619; --cap-ink: #e9fff3; }
 .cr-key-cream { --cap: #cfcab9; --cap-hi: #ebe7da; --cap-side: #7b7668; --cap-ink: #23221f; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); }
+/* Mixed caps for the panel's utility keys (owner: old control rooms are full of buttons of every kind) */
+.cr-key-grey { --cap: #8e908a; --cap-hi: #b6b8b1; --cap-side: #4a4b46; --cap-ink: #1c1c1a; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); }
+.cr-key-teal { --cap: #1e5e59; --cap-hi: #2f8a83; --cap-side: #0a2725; --cap-ink: #e4fbf7; }
+.cr-key-maroon { --cap: #8a1d1d; --cap-hi: #b13232; --cap-side: #430c0c; --cap-ink: #ffe8e3; }
+.cr-key-mustard { --cap: #c69a1e; --cap-hi: #e4bd43; --cap-side: #66500d; --cap-ink: #241c04; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); }
 
 /* Round illuminated push button (pumps, turbine, sound); lit with .on */
 .cr-round-key {
@@ -1113,10 +1118,94 @@
   outline-offset: 6px;
 }
 
-/* Blinking "ready" lamp on the home page */
-.cr-blink {
-  animation: ws3-rec-blink 1.4s steps(1, end) infinite;
+/* ---- Legasov's red and blue cards (components/reactivity-cards.tsx) ----
+   A galvanised shelving rack like the one in the show's courtroom, with a card leaning on each shelf. */
+.cr-card-rack {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    linear-gradient(180deg, #d9dbd7 0%, #bfc2bd 100%);
+  border: 4px solid #a9aca7;
+  border-top-width: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), inset 0 6px 10px rgba(0, 0, 0, 0.12);
 }
+
+.cr-card-shelf {
+  padding: 0.4rem 0.15rem 0.3rem;
+  border-bottom: 4px solid #a3a6a1;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.cr-card {
+  display: flex;
+  flex-direction: column;
+  height: 4.25rem;
+  padding: 0.4rem 0.45rem 0.45rem;
+  border-radius: 2px;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: opacity 0.4s ease;
+}
+
+.cr-card-red { background: linear-gradient(180deg, #d63b30 0%, #b52b23 100%); }
+.cr-card-blue { background: linear-gradient(180deg, #2f66c6 0%, #1f4c9d 100%); }
+
+.cr-card-empty {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px dashed rgba(0, 0, 0, 0.22);
+  box-shadow: none;
+}
+
+.cr-card-title {
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 0.74rem;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.cr-card-trend {
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cr-card-meter {
+  display: flex;
+  gap: 2px;
+  margin-top: auto;
+}
+
+.cr-card-meter > span {
+  flex: 1;
+  max-width: 0.7rem;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.cr-card-meter > span.on {
+  background: #fff;
+}
+
+/* Which stack outweighs the other, under the rack */
+.cr-card-verdict {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2b2a27;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.cr-card-verdict.is-red { color: #fff; background: #b52b23; border-color: #7d1a14; }
+.cr-card-verdict.is-blue { color: #fff; background: #1f4c9d; border-color: #13336b; }
 
 /* ---- End screens ---- */
 
@@ -1326,7 +1415,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cr-blink,
   .cr-beacon,
   .cr-shake,
   .cr-ember,

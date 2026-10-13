@@ -1,9 +1,10 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import type { Warning } from "@/lib/game-utils"
 import { type Line, useTypewriter } from "@/hooks/use-typewriter"
+import { useReveal } from "@/hooks/use-reveal"
 import { usePrefersReducedMotion } from "@/components/presentation-use-reduced-motion"
 import { type Segment, TypedSegments } from "@/components/typed-text"
 
@@ -20,10 +21,12 @@ function segmentsFor(text: string): Segment[] {
 // The plant computer's alarm monitor (owner, 2026-10-12): an 80s green-phosphor screen the controller glances
 // at. The warnings are computer-generated, so each types itself out like a command line. A warning keeps its
 // line while it lasts and new ones are added at the bottom. The header counts the warnings, so a hidden screen
-// still shows how many there are.
-export default function AlarmScreen({ warnings }: { warnings: Warning[] }) {
+// still shows how many there are. The header's "See Warning" key (revealSignal) opens it and scrolls it into view.
+export default function AlarmScreen({ warnings, revealSignal = 0 }: { warnings: Warning[]; revealSignal?: number }) {
   const [visible, setVisible] = useState(true)
   const reduced = usePrefersReducedMotion()
+  const section = useRef<HTMLElement>(null)
+  useReveal(revealSignal, visible, useCallback(() => setVisible(true), []), section)
 
   const order = useRef<string[]>([])
   const present = new Set(warnings.map((warning) => warning.key))
@@ -42,7 +45,7 @@ export default function AlarmScreen({ warnings }: { warnings: Warning[] }) {
   const Chevron = visible ? ChevronUp : ChevronDown
 
   return (
-    <section className="ws3-cam-bezel rounded-md p-2 sm:p-2.5">
+    <section ref={section} id="alarm-monitor" className="ws3-cam-bezel rounded-md p-2 sm:p-2.5">
       <button
         onClick={() => setVisible(!visible)}
         aria-expanded={visible}

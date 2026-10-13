@@ -102,14 +102,14 @@ const TUNING_BASE = {
   // Blue card. Its worth is derived: full xenon sits this many points below everything pushing up in a
   // cold reactor with rods out, so a poisoned reactor can always restart with rods (nearly) all out (§9).
   xenonCapBelowExcess: 33,
-  // Below normal radioactivity xenon creeps up slowly (owner), reaching this rate at the build level and
-  // keeping it below. So a dip under 100 sees a little xenon, and staying under lets it accumulate.
-  xenonCreepBelow: 100,
-  xenonCreepRate: 0.03, // %/s at the build level and below, scaled by how far below the creep level
-  xenonBuildBelow: 50,
-  xenonBuildRate: 0.42, // %/s at radioactivity 0 on top of the creep, scaled by how far below the build level
-  xenonBurnAbove: 100,
-  xenonBurnRate: 0.06, // %/s per unit of radioactivity above the burn level
+  // One threshold (owner, plan §21 step 8b): at or below it xenon builds, faster the closer radioactivity is to
+  // 0; above it xenon burns off, slowly just above, at a medium rate by 100 and fast from 120.
+  xenonTurnover: 80,
+  xenonBuildRate: 0.3, // %/s at radioactivity 0, falling linearly to 0 at the turnover
+  xenonBurnRate: 0.06, // %/s per unit of radioactivity above the turnover (1.2 %/s at 100)
+  // Burn-off never runs faster than its rate at 120 (a full load clears in ~40 s at best), so a restart surge
+  // leaves the player a little longer to re-insert rods (meltdown ~10 s later if ignored).
+  xenonBurnMax: 2.4,
 } as const
 
 // The brake's shape, measured from 0°: the integral of the per-degree slope above (a smooth step), levelling off

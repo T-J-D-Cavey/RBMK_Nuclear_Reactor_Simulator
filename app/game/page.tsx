@@ -8,11 +8,13 @@ import GameOverScreen from "@/components/game-over-screen"
 import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
 import { useAudioManager } from "@/hooks/use-audio-manager"
+import { useShiftLogLamp } from "@/hooks/use-shift-log-lamp"
 import { THRESHOLDS } from "@/lib/types" 
 import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
 import ChartRecorder from "@/components/chart-recorder"
+import ReactivityCards from "@/components/reactivity-cards"
 
 export default function GamePage() {
   const { gameState, isLoaded, updateGameState, resetGame, togglePause } = useGameState()
@@ -20,6 +22,16 @@ export default function GamePage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSoundModal, setShowSoundModal] = useState(false)
   const router = useRouter()
+
+  // Header keys that bring the alarm monitor or the shift log into view, and the shift log's lamp (plan §21.5)
+  const [alarmRevealSignal, setAlarmRevealSignal] = useState(0)
+  const [logRevealSignal, setLogRevealSignal] = useState(0)
+  const logLamp = useShiftLogLamp(gameState.log[gameState.log.length - 1]?.id, isLoaded)
+  const handleSeeWarnings = () => setAlarmRevealSignal((n) => n + 1)
+  const handleSeeLog = () => {
+    logLamp.dismiss()
+    setLogRevealSignal((n) => n + 1)
+  }
 
   // BACKGROUND IMAGE LOGIC:
   const controlRoomBackground = "control_room_background.jpg" 
@@ -101,20 +113,29 @@ export default function GamePage() {
           updateGameState={updateGameState}
           onHomeClick={handleHomeClick}
           onSoundClick={handleSoundModalToggle}
+          logLampLit={logLamp.lit}
+          onSeeWarnings={handleSeeWarnings}
+          onSeeLog={handleSeeLog}
         />
 
         {/* Message Area */}
-        <MessageArea gameState={gameState} />
+        <MessageArea
+          gameState={gameState}
+          alarmRevealSignal={alarmRevealSignal}
+          logRevealSignal={logRevealSignal}
+          onLogInView={logLamp.setInView}
+        />
       </div>
 
       <div className="cr-rail" aria-hidden="true" />
 
       {/* Reactor camera + side panels (WS3 presentation).
-          Wide screens: three columns, so the camera sits on the control panel's centre line (same max width)
-          with the chart recorder to its right; the empty left column balances it. Narrower: stacked. */}
+          Wide screens (xl): three columns, so the camera sits on the control panel's centre line (same max width),
+          with the red and blue cards to its left and the chart recorder to its right. Medium (md): the camera on
+          top, then the cards and the chart recorder side by side. Phones: stacked, the cards below the chart. */}
       <div className="w-full cr-monitor-wall px-3 py-5 sm:px-4 md:py-8">
-        <div className="mx-auto w-full flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(18rem,1fr)_minmax(0,72rem)_minmax(18rem,1fr)] xl:items-start">
-          <div className="w-full min-w-0 max-w-6xl mx-auto xl:col-start-2">
+        <div className="mx-auto w-full max-w-6xl xl:max-w-none grid grid-cols-1 md:grid-cols-2 gap-4 items-start xl:grid-cols-[minmax(18rem,1fr)_minmax(0,72rem)_minmax(18rem,1fr)]">
+          <div className="w-full min-w-0 max-w-6xl mx-auto md:col-span-2 md:row-start-1 xl:col-span-1 xl:col-start-2 xl:row-start-1">
             <ReactorCamera
               variant="inline"
               radioactivity={gameState.radioactivity}
@@ -123,7 +144,7 @@ export default function GamePage() {
               clockStartMs={getCameraClockStartMs(gameState.mode)}
             />
           </div>
-          <aside className="w-full min-w-0 max-w-xl mx-auto xl:col-start-3 xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">
+          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2 xl:col-start-3 xl:row-start-1 xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">
             <ChartRecorder
               radioactivity={gameState.radioactivity}
               reactorTemp={gameState.reactorTemp}
@@ -131,6 +152,10 @@ export default function GamePage() {
               gameTime={gameState.gameTime}
               isPaused={gameState.isPaused}
             />
+          </aside>
+          {/* Legasov's red and blue cards (owner, 2026-10-13) */}
+          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2 xl:col-start-1 xl:row-start-1 xl:justify-self-end xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">
+            <ReactivityCards gameState={gameState} />
           </aside>
         </div>
       </div>

@@ -40,6 +40,7 @@ This document is the source of truth for *what* we are changing and *what the pl
 2. In the control rods modal, text can no longer be highlighted while dragging, and the levers become easier to grab on touch screens. Same look (Section 10).
 3. The panel's rod display shows each rod's real position as it travels (Section 10).
 4. AZ-5 takes effect with a single press; no Apply step (Section 10). The modal closes when AZ-5 is selected. 
+5. Legasov's red and blue cards are shown on a board beside the reactor camera (Section 15, owner). They show the engine's own cards; no new gauge or control.
 
 ---
 
@@ -219,8 +220,8 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 
 **Change:**
 - **Xenon reads 0% during normal running.** It builds only when radioactivity is low, and burns away as radioactivity rises until none remains. Xenon remains capped at 100%. (*Deliberate:* the gauge shows xenon beyond what a reactor in normal running always holds, so 0% means "normal".)
-- **Build-up:** anywhere below normal radioactivity (100), xenon creeps up very slowly, so a brief dip sees a little xenon but staying below lets it accumulate. Below a low radioactivity level it builds steadily toward the cap over several minutes; the lower the radioactivity, the faster.
-- **Burn-off speeds up with radioactivity.** It starts just above normal radioactivity, so getting back above 100 soon clears what a dip built up. Just above that level it is slow and steady. As radioactivity rises it speeds up: well above normal a full load clears in tens of seconds, and during a sudden spike it clears in seconds.
+- **One turnover point, at radioactivity 80** (owner). At or below it xenon builds: slowly just under 80, faster the closer radioactivity is to 0 (from zero to the cap in under 6 minutes).
+- **Burn-off speeds up with radioactivity.** Above 80 xenon burns off: slowly just above 80, at a medium rate by normal running (a full load in under 2 minutes at 100), and fast from 120 (about 40 seconds). It never gets faster than that, even in a surge, so a restart surge leaves the player a few seconds to re-insert rods.
 - **Xenon is a blue card, and burn-off takes it away.** Burn-off does not push radioactivity up by itself; it rises because a brake is going. Because burn-off speeds up as radioactivity rises, the two feed each other: when radioactivity suddenly spikes, xenon burns off quickly and the spike grows further. A player who pulled every rod to escape the pit must re-insert rods as xenon clears, or overshoot.
 - **The restart route stays:** sufficiently cold fuel provides a strong red card, and the source term (Section 5) keeps a spark alive. With rods fully or almost fully withdrawn and fuel cold, a fully poisoned, collapsed reactor will always restart.
 
@@ -228,8 +229,8 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 
 **Acceptance checks (invariants, test these explicitly):**
 - From radioactivity ≈ 0 and xenon at cap, with rods (nearly) fully withdrawn and pumps used to cool the fuel, radioactivity begins climbing within roughly 1–3 minutes.
-- Xenon creeps up just below normal radioactivity.
-- Burn-off speed depends on radioactivity: just above the burn-off level a full load takes a minute or more to clear; well above normal, tens of seconds; during a spike, a few seconds.
+- Xenon builds at or below radioactivity 80, faster the lower radioactivity is.
+- Burn-off speed depends on radioactivity: just above 80 a full load takes several minutes to clear; at 100 a minute or two; from 120, under a minute.
 - After sustained normal running, xenon reads 0%.
 - If the player does nothing during burn-off with rods fully withdrawn, radioactivity overshoots dangerously.
 - Collapse → full xenon takes several minutes, giving the player time to notice and react.
@@ -392,10 +393,11 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 - **State-driven interference:** at high radioactivity the image picks up white speckles and static, like the radiation-fogged footage of the real event. This turns the camera into a danger gauge rather than decoration. No changes to the dynamic reactor picture shown through the camera (e.g. its existing high-radioactivity and high-temperature overlays).
 
 **Use wide screens:** instead of empty space beside the square reactor view, add side panels in the same industrial style:
+- **Legasov's red and blue cards** to the left of the camera, styled on the show's courtroom rack: each card is on the board while it is in play, with an arrow when it is getting stronger or weaker. The white blocks show the balance: equal stacks while it holds; the losing side loses blocks as the imbalance grows, and a line under the rack says which side is winning.
 - **A chart recorder** (paper strip chart) showing the last few minutes of radioactivity, and perhaps steam and reactor temperature. With exponential behaviour, seeing the *trend and acceleration* is essential, and it fits the control-room aesthetic.
 - On narrow screens these collapse below or hide; no horizontal scrolling.
 
-**Message area:** distinguish message sources visually (Grid Controller, Head Engineer, Test Supervisor, automatic alarms) and give it a teletype/log feel with timestamps. Keep it compact.
+**Message area:** distinguish message sources visually (Grid Controller, Head Engineer, Test Supervisor, automatic alarms) and give it a teletype/log feel with timestamps. Keep it compact. The control panel's header has a red warning lamp (lit while any warning is active) and an amber shift-log lamp (lit when a new message arrives), each with a button that brings its machine into view, so a player on a phone knows to look below the dials.
 
 **Homepage and menus:** stronger atmosphere (CRT title treatment, subtle flicker). The mode selection includes Safety Test as a visually distinct "historical scenario" card. The Easy and Hard cards describe workload (shift length, targets, emergencies), not different reactor mechanics (Section 11).
 
@@ -423,8 +425,8 @@ A one-page summary of Sections 5–10.
 | Rod movement | **Constant travel speed** (~18 s full stroke), the same in every mode | Rods are not instant brakes. |
 | Rod margin | **Not a physics rule**: a warning threshold on total insertion | Names the dangerous state without hidden effects. |
 | Xenon effect | **Proportional** to the xenon level (a blue card) | Simple and readable. |
-| Xenon build-up | **Gradual**: a slow creep anywhere below normal radioactivity, minutes to the cap at low radioactivity, faster the lower it is; 0% in normal running | Slow, ominous, readable. |
-| Xenon burn-off | **Accelerates with radioactivity**: slow just above the burn-off level, seconds during a surge | Removing a brake as radioactivity rises feeds the rise; the escape must be caught. |
+| Xenon build-up | **Gradual**: at or below radioactivity 80, minutes to the cap, faster the lower it is; 0% in normal running | Slow, ominous, readable. |
+| Xenon burn-off | **Accelerates with radioactivity** from 80 up to 120, then levels off (a full load in ~40 s at best) | Removing a brake as radioactivity rises feeds the rise; the escape must be caught, and can be. |
 | Fuel temperature effect | **Continuous curve, 0 at normal running temperature**: a mild brake when hotter than normal, firming a little when very hot but always weaker than the steam that comes with it, and levelling off beyond ~2,000°; a push when cooler, strongest when very cold | Slows a runaway without ever stopping it (only rods and pumps do); restart lever; a healthy reactor reads 0. |
 | Fuel / reactor temperature | **Lagged heat balance** (not exponential) | Fast only because radioactivity is fast. |
 | Pump cooling | **Proportional** to flow and temperature, diminishing per extra pump; flow ramps over a few seconds | Physical, readable. |

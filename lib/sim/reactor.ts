@@ -158,12 +158,9 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
 
 // Xenon %/s: builds at low radioactivity (faster the lower), burns off faster the higher it is (bible §9).
 export function xenonRate(radioactivity: number): number {
-  let rate = 0
-  if (radioactivity < T.xenonCreepBelow)
-    rate += T.xenonCreepRate * Math.min(1, (T.xenonCreepBelow - radioactivity) / (T.xenonCreepBelow - T.xenonBuildBelow))
-  if (radioactivity < T.xenonBuildBelow) rate += T.xenonBuildRate * ((T.xenonBuildBelow - radioactivity) / T.xenonBuildBelow)
-  if (radioactivity > T.xenonBurnAbove) rate -= T.xenonBurnRate * (radioactivity - T.xenonBurnAbove)
-  return rate
+  const R = Math.max(0, radioactivity)
+  if (R <= T.xenonTurnover) return T.xenonBuildRate * ((T.xenonTurnover - R) / T.xenonTurnover)
+  return -Math.min(T.xenonBurnMax, T.xenonBurnRate * (R - T.xenonTurnover))
 }
 
 export function checkEnding(s: GameState): GameOverCause | null {

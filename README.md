@@ -42,7 +42,7 @@ Power output is steam × 50 MW while the turbine is on the grid, so it follows r
 
 ## Xenon
 
-Xenon reads 0% in normal running and builds over minutes when radioactivity is low. It burns off faster the higher radioactivity goes. To climb out of the xenon pit, pull rods (nearly) all out and let the fuel cool, then catch the rise by re-inserting rods as the xenon clears.
+Xenon reads 0% in normal running. At radioactivity 80 or lower it builds, faster the lower radioactivity goes; above 80 it burns off, slowly at first, faster by 100 and fastest from 120. To climb out of the xenon pit, pull rods (nearly) all out and let the fuel cool, then catch the rise by re-inserting rods as the xenon clears.
 
 ## Performance
 

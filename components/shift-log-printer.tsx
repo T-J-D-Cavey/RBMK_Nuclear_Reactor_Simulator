@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import type { GameState, LogEntry } from "@/lib/types"
 import { formatLogTime } from "@/lib/game-utils"
 import { usePrefersReducedMotion } from "@/components/presentation-use-reduced-motion"
+import { useReveal } from "@/hooks/use-reveal"
 
 const FULL_MESSAGES = 2 // messages wholly in view (owner); older ones are on the roll below
 const PEEK_LINES = 0.5 // the top half of the next line down shows at the roller, so the roll looks like it goes on
@@ -23,10 +24,32 @@ type Stage = "idle" | "flash" | "print" | "feed"
 // message that was on top drops to about halfway. Two messages are in view, with half a line of the next showing
 // at the roller and the rest of the roll below it. The player can drag the paper (or use the mouse wheel or arrow
 // keys) to read back. The housing matches the alarm monitor's. The Safety Test uses the same log: its orders are
-// messages on the paper (owner).
-export default function ShiftLogPrinter({ gameState }: { gameState: GameState }) {
+// messages on the paper (owner). The header's "See Message" key (revealSignal) opens it and scrolls it into view, and
+// onInView tells the header's shift-log lamp whether the open paper is on screen (plan §21.5).
+export default function ShiftLogPrinter({
+  gameState,
+  revealSignal = 0,
+  onInView,
+}: {
+  gameState: GameState
+  revealSignal?: number
+  onInView?: (inView: boolean) => void
+}) {
   const [visible, setVisible] = useState(true)
   const [lamp, setLamp] = useState<Lamp>("off")
+  const section = useRef<HTMLElement>(null)
+  useReveal(revealSignal, visible, useCallback(() => setVisible(true), []), section)
+
+  useEffect(() => {
+    const el = section.current
+    if (!onInView || !el || !visible || typeof IntersectionObserver === "undefined") return
+    const observer = new IntersectionObserver(([entry]) => onInView(entry.isIntersecting), { threshold: 0.5 })
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      onInView(false)
+    }
+  }, [onInView, visible])
 
   // Unread marker while the log is collapsed
   const log = gameState.log
@@ -41,7 +64,7 @@ export default function ShiftLogPrinter({ gameState }: { gameState: GameState })
   const lit = visible ? lamp : "off"
 
   return (
-    <section className="ws3-cam-bezel rounded-md p-2 sm:p-2.5">
+    <section ref={section} id="shift-log" className="ws3-cam-bezel rounded-md p-2 sm:p-2.5">
       <button
         onClick={() => setVisible(!visible)}
         aria-expanded={visible}

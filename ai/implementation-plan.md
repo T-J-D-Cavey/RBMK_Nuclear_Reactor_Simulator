@@ -1,6 +1,6 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built and was playtested. Step 7b (half-strength rods, plus a coasting turbine in the Safety Test) is built and was playtested. Step 7c (the hot-fuel brake levels off above 2,000°) is built. Iteration 7 is complete; waiting on the owner's manual test of 7c.** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built and was playtested. Step 7b (half-strength rods, plus a coasting turbine in the Safety Test) is built and was playtested. Step 7c (the hot-fuel brake levels off above 2,000°) is built. Iteration 7 is complete. Iteration 8 (§21, from the owner's Hard-mode feedback): the UI items of 8a (homepage, header lamps, How to Play) are built and waiting on the owner's local test; the event mix and Hard targets are not built yet. A fuel-effect physics change (8b) has been trialled and is waiting on the owner's pick (§21.9).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
 
 ---
 
@@ -10,9 +10,18 @@ Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the own
    1. bible §0–§2 (how to use the plan, pillars, guardrails);
    2. this file's §7 (done / left to do) and §8 (open questions);
    3. **the owner's playtest results**: `ai/manual-test-results.MD`;
-   4. **§20 (the next step):** iteration 7, planned in three steps. Do the next step that isn't marked done, and only after the owner has playtested the one before.
+   4. **§21 (the next step):** iteration 8, planned from the owner's Hard-mode feedback. Build step 8a. Only consider 8b (physics) after the owner has playtested 8a.
 2. **Check the baseline** before changing anything (commands in §9). All 53 acceptance checks should pass (36 physics in `acceptance.test.ts`, 17 events/targets/Safety Test in `events.test.ts`), and `tsc` should be clean.
-3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after step 7c, §20.7), then plan the next iteration from them the same way.** Leftovers from iteration 7 are listed in §20.8. Events, targets and Safety Test questions are in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
+3. **Next job: iteration 8 (§21), from the owner's Hard-mode feedback of 2026-10-13. To do, in order (top of the list):**
+   1. ✅ **Homepage:** remove the intro box and the "Ready" lamp; one compact box for the two buttons (§21.4). *UI only. Built 2026-10-13.*
+   2. ✅ **Game header:** replace the mode label and the two flanking alarm lamps with a warning lamp + "See Warning" button and a shift-log lamp + "See Message" button that scroll to the alarm monitor and the shift log (§21.5). *UI only. Built 2026-10-13.*
+   3. ✅ **How to Play:** cut it by about half into a quick-start (§21.6). *Text only. Built 2026-10-13 (~570 words, was ~1,400).*
+   4. **Event mix:** balanced power cuts and rod jams, and never the same kind twice in a row (§21.3). *Events, not physics.* Approved by the owner; no new event kinds for now (§21.7 Q2, Q3).
+   5. **Hard targets:** bigger steps again (up to ±4,750 MW, never under 1,500 MW), every 3–5 min (§21.2). *Events, not physics.* Needs the owner's pick (§21.7 Q1).
+   6. ✅ **Mechanics (8b, physics):** owner chose review recommendations 1 and 2 ([mechanics-review-2026-10-13.md](mechanics-review-2026-10-13.md)): keep the fuel effect; xenon gets one turnover at 80 (`xenonTurnover`, build 0.3 %/s at 0, burn 0.06 %/s per unit above 80, capped at 2.4 %/s). *Built 2026-10-13; waiting on the owner's playtest.* The balance needle is deferred and the prompt-critical threshold is not taken up for now.
+   7. ✅ **Red and blue cards board** (`components/reactivity-cards.tsx`) and a medium-width layout. *UI only. Built 2026-10-13.*
+
+   Items 1–5 are step **8a** and can be built together: none of them touches `TUNING`. Leftovers from iteration 7 are in §20.8. Events, targets and Safety Test questions are in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
    - a tuning change in `lib/sim/tuning.ts`;
    - a model change in `lib/sim/reactor.ts`;
    - a UI fix.
@@ -163,6 +172,46 @@ See §8 for the full list of open questions.
   - Bible changelog v2.11. 53/53 checks pass; `tsc` is clean.
 - 2026-10-13: Owner playtested 7b ("that works great").
 - 2026-10-13: **Step 7c built (§20.7).** The hot-fuel brake levels off above 2,000° (`fuelBrakeCapAt`). All rods out now melts down ~27 s after the order with no swings. Bible changelog v2.12. 53/53 checks pass, with no test changed; `tsc` is clean. **Iteration 7 is complete.**
+- 2026-10-13: Owner revamped the UI (commit 8e11fdc), then gave Hard-mode feedback. **Iteration 8 planned (§21); nothing built yet.** Each point was measured headlessly first: rod insertion traces, 200 bot-played Hard shifts for the event mix, and 40-seed bot trials of five target settings. Nothing in the repo was changed except this file.
+- 2026-10-13: **8a UI items built (§21.10):** homepage box, header lamps with "See Warning" / "See Message", How to Play halved. Bible §15 and changelog v2.13. 53/53 checks pass; `tsc` is clean; checked in headless Chrome at 360, 390 and 1400 px. **No physics or event numbers changed.**
+- 2026-10-13: Owner asked for proposals to weaken the fuel effect in the mid range. **Trialled on a scratch copy only (§21.9)**; nothing in `TUNING` changed.
+- 2026-10-13: Owner follow-ups.
+  - **UI:** the header utility keys now have mixed cap colours. Home is cream, sound is grey, View Reactor is teal, See Warning is maroon and See Message is mustard (new `.cr-key-*` caps in `app/globals.css`).
+  - **How to Play:** the mode cards now use the mode menu's wording, from a shared `lib/mode-menu.ts`.
+  - **Mechanics:** the owner rejected trading fuel against steam and asked for a clean-slate mechanics review: [mechanics-review-2026-10-13.md](mechanics-review-2026-10-13.md), scratch trials only.
+- 2026-10-13: **Header on phones:** home on the left and sound on the right of the nameplate, so the nameplate is exactly centred below `lg`; wide screens are unchanged. Checked at 360, 390, 800 and 1400 px.
+  - **Mechanics, round 2** (same review file, scratch only): a card-by-card trace of rod insertions; the owner's "fuel acts only when very cold or very hot" idea; the owner's cold-restart experiment; and the owner's xenon curve (builds ≤80, burns from 80). Recommendation: keep the fuel effect, and trial the owner's xenon curve at a build rate of ~0.3 %/s with a ~1 %/s burn cap. No physics changed.
+- 2026-10-13: **Step 8b built: the xenon turnover at 80** (owner chose review recommendations 1 and 2).
+  - In `tuning.ts`, `xenonCreepBelow`/`xenonCreepRate`/`xenonBuildBelow`/`xenonBurnAbove` are replaced by `xenonTurnover` 80, `xenonBuildRate` 0.3 and `xenonBurnMax` 2.4. `xenonBurnRate` stays 0.06. The cap is the rate at 120, not 1 %/s: at 1 %/s, burn-off at 100 and at 120 would have been the same, losing the owner's "medium at 100, fast at 120".
+  - The §9 burn-off check is rewritten for the new rule. 53/53 checks pass; `tsc` is clean.
+  - Scratch trial before building, against the old rules:
+    - bot shifts lost (20 each), Hard, acting every 3 / 10 / 20 s: 0 / 3 / 12, was 1 / 2 / 8;
+    - Safety Test xenon at 6:15 / 9:00 / 12:00: 46 / 74 / 100%, was 39 / 67 / 90%; lowest rod margin 124; the Safety Test outcomes are unchanged;
+    - the 12%-rods cold restart escapes at 30 s instead of stalling for 11 min;
+    - a surge left alone melts down ~10 s later than with no cap.
+  - **Watch in play:** Hard is harder for a slow player (low targets poison faster).
+  - Bible §9 and §16, and changelog v2.14.
+- 2026-10-13: **Red and blue cards board and medium layout** (UI).
+  - `components/reactivity-cards.tsx` is Legasov's rack, with styles `.cr-card*` in `app/globals.css`.
+    - It is left of the camera from `xl`, beside the chart recorder at `md`, and below it on phones.
+    - Each card reads the engine's own cards (`getReactivityCards`), leaves the board when out of play, and has a 5-step meter (its own scale) and a ▲/▼ trend over 10 s of game time.
+    - "Water" mirrors the steam card.
+  - The control panel's second readout row is three across at `md` (was six, which clipped "Radioactivity" and "Reactor temp" and spilled "View Reactor" around 768 px).
+  - Checked in headless Chrome at 360–1400 px with no clipped labels or keys. The board was also checked with a cold, poisoned state: the steam and hot-fuel cards leave; cold fuel and xenon appear with ▲.
+  - Bible §2 exception 5 and §15.
+- 2026-10-13: **Card board reworked (owner).**
+  - The Russian lettering and the "Water" card are gone. Water wasn't a separate card in the engine, so it stayed put when the pumps went off.
+  - **The white blocks now show the balance.** The logic is in `lib/reactivity-board.ts` (pure, checkable in the harness):
+    - each side has 8 blocks while the net balance is within ±0.3 points;
+    - the losing side loses 1–8 blocks at an imbalance of 0.3 / 1 / 2 / 4 / 8 / 16 / 40 / 100 points;
+    - each side's blocks are shared among its cards by strength, with at least one block per card in play;
+    - a line under the rack says "Balanced", "Red outweighs blue" or "Blue outweighs red".
+  - Checked against engine states:
+    - balanced: 8 v 8;
+    - rod 1 in 5%: red drops to 6 at 3 s, then evens up by 10 s as "Cold fuel" appears;
+    - all rods in: red 0 v blue 8;
+    - pumps off: void grows and blue drops to 2–3;
+    - the climbing start leans red by one block.
 
 ---
 
@@ -170,8 +219,13 @@ See §8 for the full list of open questions.
 
 ✅ built and checked · 🟡 partly done · ⬜ not started
 
+**To do first: iteration 8 (§21).** The ordered list is in §0, step 3. The rows below marked "§21" change when it's built.
+
 | Bible § | Item | Status | Notes / where |
 |---|---|---|---|
+| 12 | **§21.3** Event mix: balanced major kinds, no kind twice in a row | ⬜ | `planShiftEvents` in `lib/game-events.ts`. |
+| 13 | **§21.2** Hard targets: bigger steps again | ⬜ | `HARD_EVENTS` in `lib/sim/tuning.ts`; owner picks the numbers. |
+| 15 | **§21.4–§21.6** Homepage box, game header lamps and scroll buttons, How to Play halved | ✅ | `app/page.tsx`, `components/control-panel.tsx`, `app/game/page.tsx`, `components/message-area.tsx`, `app/instructions/page.tsx`. |
 | 5 | Reactivity balance, exponential radioactivity, source term, proportional noise | ✅ | `lib/sim/reactor.ts`, `lib/sim/tuning.ts`. **Feel unconfirmed** (Checkpoint A). |
 | 6 | Radioactivity → fuel → reactor chain; continuous fuel-temperature curve | ✅ | Since §20 (7c), the brake levels off above 2,000° (`fuelBrakeCapAt`). |
 | 7 | Pump cooling scales with flow/temperature/heat; flow ramps ~4 s; dry-out; boiling escalation at zero flow | ✅ | Timing: see §8 Q2. Since §20 (7a), flow changes steam per degree only below one pump. |
@@ -1098,3 +1152,283 @@ Source: the owner's tests 2 (Easy), 3 (Free, extremes) and 4 (Hard) in `ai/manua
   - finer lever control (§20.2 C2);
   - Safety Test margin: re-check "ignoring the test ends in disaster" after any further physics change;
   - §8 Q2: pump-loss timing is still short: from a hot state (radioactivity ~185) it explodes ~19 s after the loss (bible: roughly 30–60 s); from normal, ~46 s.
+
+---
+
+## 21. Iteration 8: Hard-mode feedback (planned 2026-10-13; UI items built, the rest open)
+
+Source: the owner's Hard-mode feedback after the UI revamp (commit 8e11fdc), pasted in chat as six points. Each point was checked on the real engine and game loop before planning. Nothing was changed in the repo: the trials overrode `EVENT_TUNING.hard` in memory from scratch scripts.
+
+**Order.**
+- **8a:** the homepage (§21.4), the game header (§21.5), How to Play (§21.6), the event mix (§21.3) and Hard targets (§21.2). None of them touches `TUNING`, so the reactor still feels exactly as in iteration 7. The owner can tell them apart in one playtest: the UI changes are visible, the event mix shows in the log, and the targets show in the Power Target display.
+- **Then the owner playtests Hard.**
+- **8b (only if still wanted):** a physics change to how quickly a rod insertion levels off (§21.1).
+
+### 21.1 Rod insertion levels off instead of falling to zero (physics: no change in 8a)
+
+**Owner observation.** Inserting rods lowers radioactivity, but the fall slows and it settles at a lower level instead of continuing down.
+
+**The pasted explanation is half right for this game.** It says that as power falls, the fuel and the coolant cool and both push radioactivity back up. That is true of most reactors, but not of an RBMK, and not of this model:
+- **Fuel (the Doppler effect)** does push back. Cooler fuel is a red card (bible §5, §6), and it acts within seconds.
+- **Steam does the opposite.** The RBMK's positive void coefficient means less steam is a *blue* change: as the reactor cools, steam falls and pushes radioactivity further down. That is bible §5's rule that a fall feeds itself.
+
+**What the sim shows** (balanced state, two pumps, no noise; radioactivity, with the card that moved most):
+
+| Time after the move | Rod 1 in 5% | Rod 1 in 10% | What is happening |
+|---|---|---|---|
+| 0 s | 100 | 100 | |
+| 10 s | 89 | 79 | Prompt drop. The fuel cools ~20–40° and its red card (+2.6 / +5.0) cancels almost all of the boron added (−2.5 / −5.0). |
+| 30 s | 87 | 73 | **This is the plateau the owner saw.** Net balance is close to zero. |
+| 60 s | 80 | 61 | The reactor temperature and steam start to fall, slowly. |
+| 120 s | 61 | 18 | The steam loop takes over, and xenon starts creeping in below 100 (§19). |
+| 300 s | 0 | 0 | In the xenon pit. |
+
+So the behaviour has two speeds:
+- the fuel answers in seconds and nearly cancels a rod move, so radioactivity looks settled for 30–60 s;
+- the steam answers over minutes and keeps the fall going.
+
+**By starting level** (rod 1 in 5%, which is −2.5 points of boron; "untouched" is the same state with no move):
+
+| Start | Fuel temperature | Fuel cooling after 10 s | Fuel push back after 10 s | Radioactivity at 10 / 30 / 60 / 120 s (untouched) |
+|---|---|---|---|---|
+| 50 | 331° | 13° | +1.7 (cancels 70%) | 39 / 19 / 1 / 0 (47 / 34 / 6 / 0) |
+| 100 | 529° | 21° | +2.7 (cancels all) | 89 / 86 / 80 / 60 (100 / 100 / 100 / 99) |
+| 150 | 729° | 24° | +3.1 (more than all) | 141 / 145 / 149 / 159 (153 / 158 / 166 / 187) |
+| 200 | 926° | 25° | +3.2 (more than all) | 194 / 202 / 214 / 242 (205 / 215 / 231 / 266) |
+
+The fuel card is worth a steady 0.13 points per degree from ~200° to ~1,000°. The higher the radioactivity, the more the fuel cools after a given move, so the more of the move it cancels. At 150 and above, a 5% move just knocks the climb back by ~5–8% for a while.
+
+A player who sees the plateau and moves on never sees the slow slide. **From the climbing game start**, which is the usual Hard situation, inserting rod 1 by 5 / 10 / 15% at 2 min only slows the climb (meltdown at 336 / 382 / 443 s after the move instead of continuing up quickly). That also reads as "it levelled off".
+
+**Options (owner's call, after the 8a playtest):**
+- **(a) No physics change (recommended for now).** The model already does what bible §5 asks over minutes. The passivity the owner felt is mostly targets that are easy to settle on (§21.2). Bigger target steps make the player fight both speeds. Re-judge after 8a.
+- **(b) A weaker fuel card near normal temperature** (`fuelBrakeMildSlope` 0.13 → ~0.10–0.11). The plateau gets shorter and shallower and the slow slide shows sooner. Cost: the whole loop gets stronger in both directions. In iteration 5, 0.12 made the hands-off start run away too fast and broke the bible §5 start check, so `STARTING_OFFSETS` would need re-picking. The xenon worth is derived from the cold side of the same curve, so it follows automatically.
+- **(c) A faster steam response** (the reactor following the fuel faster, `reactorShare`). Trialled in iteration 2 (§12.1 #3): it shortened pump-loss timing to 9–12 s and broke checks. Not recommended.
+- **Not recommended: changing rod speed**, as the paste suggests. Rod travel (~18 s full stroke) only sets how fast the step arrives. It doesn't change where radioactivity levels off.
+
+If (b) is chosen, it is step 8b on its own, trialled on a scratch copy first, with all 53 checks and the owner scenarios (`ownerPumpSwitch`, `ownerCooldownRestart`) re-run.
+
+### 21.2 Hard targets: bigger steps again (events, not physics)
+
+**Owner feedback.** Hard targets are too close together, so the game is passive and easy to settle. Reverse the earlier change, and bring back larger differences between targets so players have to manage the reactor's thermal inertia.
+
+**The earlier change.** Before WS4, a Hard target could move by up to half its range (±4,750 MW) at a time, with no smallest step. WS4 (§17.1, bible §13) capped it at ±2,500 MW, with a smallest step of 500 MW, every 2–3 min. The average Hard step today is ~1,500 MW, about 30 steam: one small rod move. Measured over 40 bot-played shifts per mode:
+
+| | Changes per shift | Median step | 1 in 10 steps is under | 1 in 10 steps is over | Steps under 1,000 MW |
+|---|---|---|---|---|---|
+| Easy (15 min) | 2.8 | 900 MW | 600 MW | 1,400 MW | 50% |
+| Hard (30 min) | 8.8 | 1,500 MW | 700 MW | 2,300 MW | 21% |
+
+**Trials** (40 bot-played Hard shifts per setting, seeds 1–40; the bot only uses a target once it's confirmed):
+
+| `HARD_EVENTS` setting | Average step | Bot on target | Final performance | Bot shifts lost (all removed from post) |
+|---|---|---|---|---|
+| Today: steps 500–2,500 MW, every 2–3 min | 1,486 MW | 59% | 74% | 4 / 40 |
+| Steps up to 4,750, every 2–3 min | 2,391 MW | 50% | 50% | 8 / 40 |
+| Steps 1,500–4,750, every 2–3 min | 2,882 MW | 41% | 20% | 20 / 40 |
+| Steps 1,500–4,000, every 3–4 min | 2,634 MW | 55% | 61% | 5 / 40 |
+| Steps 1,500–4,750, every 3–4 min | 2,961 MW | 53% | 54% | 9 / 40 |
+| **Steps 1,500–4,750, every 3–5 min** | **2,912 MW** | **57%** | **70%** | **3 / 40** |
+
+- A step of 3,000 MW or more takes the bot ~140 s to reach. That's the thermal inertia the owner wants players to manage.
+- Bigger steps at today's frequency mean the player is always chasing, and performance (±0.2% a second) runs out.
+
+**Recommended:** `targetMaxStep` 2,500 → **4,750** (the pre-WS4 maximum, i.e. "reversed"), `targetMinStep` 500 → **1,500** (so no change is trivial), `targetInterval` [120, 180] → **[180, 300]**. Everything else in `HARD_EVENTS` stays, including `lowTargetChance`. **Easy is unchanged.**
+
+**What this needs:**
+- **Owner pick (§21.7 Q1).** With this setting, Hard changes are bigger but no more frequent than Easy's (every 3–5 min against 4–5). Bible §11's table says Hard has "larger, more frequent" changes, and §13 gives ±2,500 MW every 2–3 min. Both need updating (changelog entry).
+- **The alternative** that keeps Hard "more frequent": bigger steps every 2–3 min, plus a grace period after each confirmed change in which performance doesn't fall (e.g. 60–90 s). That's a rule change in `calculatePerformance` (`lib/game-mechanics.ts`), and it hasn't been trialled.
+- **Tests in `scripts/sim/events.test.ts`:**
+  - "§13 target changes": `mean(gaps.hard) < mean(gaps.easy)` would no longer hold (measured: 275 s vs 277 s). It changes with the bible wording, and only with the owner's approval.
+  - "§13 a competent player meets the targets": with the recommended setting, the bot loses seed 10 of the 10 test seeds (removed from post). Look at that run before deciding whether the bot or the setting needs adjusting. Don't loosen the check.
+  - The size check (`hard > easy`) still holds.
+- How to Play's mode card reads the new numbers from `EVENT_TUNING` automatically.
+
+### 21.3 Event mix: variety, and no kind twice in a row (events, not physics)
+
+**Owner observation.** One Hard run had three power cuts and no other kind of event, e.g. no stuck rods.
+
+**Why it happens.** `planShiftEvents` picks each major emergency's kind with a coin flip (`rng() < 0.5`). Bible §12 asked to retire the old rigid power-cut/rod-jam alternation. Measured over 200 bot-played Hard shifts:
+- In **24%** of shifts every major emergency is the same kind (48 / 200). **25%** have three or more of one kind (three power cuts is one of these).
+- **Smaller events did run** in 198 of the 200 shifts (593 pump trips and grid holds). But 98 of the 691 planned ones were pushed past the end of the shift and dropped. They also only show as a log line (a pump trip also lights the panel lamp), so they're easy to miss. §21.5's shift-log lamp helps.
+- 10% of consecutive events were the same kind (101 of 994 pairs).
+
+**Change** (`planShiftEvents` in `lib/game-events.ts`; times are planned as now, only the choice of kinds changes):
+1. **Balanced majors.** Deal major kinds from a bag rather than flipping a coin: with n majors, ⌈n/2⌉ of one kind and ⌊n/2⌋ of the other, with the extra one chosen at random. Hard's 2 / 3 / 4 majors become 1+1 / 2+1 / 2+2. Easy's 2 become 1+1. Easy's single major stays a coin flip.
+2. **Balanced smaller events,** the same way: Hard's 3–4 become 2+1 or 2+2 pump trips and grid holds.
+3. **Never the same kind twice in a row.** Sort the planned events by time, then give each slot a kind from its bag, choosing at random among the kinds left that differ from the previous event's. If only the same kind is left, use it, since the counts win.
+   - This is not the old fixed alternation: the order still varies (e.g. power cut, pump trip, rod jam, hold, power cut).
+4. **At runtime**, an event that gets delayed (one at a time, or a hold waiting for a target to settle) can occasionally swap places with the next one. Accept that; don't add runtime rules.
+
+**Check:** a new test in `events.test.ts` over many seeds:
+- no two consecutive planned events share a kind;
+- every Hard shift with 2+ majors has both power cuts and rod jams;
+- the counts still match the budget (the existing §12 plan test).
+
+Re-run the 200-shift study: "all majors the same kind" should be 0% when there are 2 or more.
+
+**Bible §12:** add "a mix of kinds: never the same kind twice in a row, and both kinds of major emergency when there are two or more" (changelog entry).
+
+**New kinds of event (owner decision, §21.7 Q3).** The paste suggests operational challenges such as valve failures and sensor glitches. The controls are fixed (bible §2: no new controls and no new reactor variables), so any new kind has to work through what exists. Candidates, both "smaller" events:
+- **Instrument fault (sensor glitch).** One readout (fuel temperature or steam) freezes or flickers for 60–90 s. The Senior Reactor Control Engineer announces it, and its panel display shows it's unreliable, e.g. dimmed. The physics is untouched. It keeps bible pillar 5 (readable cause and effect), because the player is told and has to read the other gauges instead.
+- **Feedwater valve fault.** One running pump delivers only half its flow for 60–120 s. The Pump Operator announces it. This is a lighter cousin of the pump trip. It needs a small engine hook (a per-pump flow limit, like `tripped`).
+
+Recommended: build the mix fix (1–4) in 8a, and add new kinds only if the owner wants them, one at a time. Each is a bible §12 addition. **Owner, 2026-10-13: build the mix fix; no new kinds for now.**
+
+### 21.4 Homepage: less clutter (UI only, `app/page.tsx`)
+
+- **Remove the intro box:** the `cr-note` div with "Run a flawed reactor through the night shift. Meet the grid's demand. Keep the core intact."
+- **Remove the status plate:** the "Ready" `cr-plate` with its blinking green lamp (`retro-lamp … cr-blink`).
+- **The buttons' box:** keep the panel look (`cr-panel cr-screws`) but size it to its contents. Drop `max-w-xl` and `space-y-6`, and use `w-fit mx-auto` with even padding (e.g. `px-5 py-5 sm:px-6`).
+  - Inside: Start Shift and How to Play side by side from `sm`, the same height (`h-14`), centred. On phones, stacked at full width.
+  - The `sm:items-end` alignment that lined Start Shift up under the plate goes, now that the plate has gone.
+- **Keep** the CRT title box with "R B M K" (H1) and "Nuclear Reactor Control Simulation" (the second heading), positioned above the buttons as now. Their spacing stays as it is (`space-y-8`), and can come down to `space-y-6` if the page looks loose.
+- **Clean-up:** `.cr-blink` in `app/globals.css` is only used here, so remove its rule. `.cr-note` and `.cr-plate` are used elsewhere, so keep them.
+- **Check:** at 390 px and 1400 px, nothing scrolls sideways, the box hugs the two buttons, and the difficulty modal still opens from Start Shift.
+
+### 21.5 Game header: warning and shift-log lamps that take you there (UI only)
+
+**Problem.** On phones the control panel fills the screen, so the alarm monitor and the shift log below it are out of sight. The player doesn't know a warning or a message has arrived.
+
+**Remove** (`components/control-panel.tsx`, header block, ~lines 72–100):
+- the mode plate (`modeLabel`, e.g. "HARD MODE"). The mode still shows on the difficulty card and in the incident report (`badgeText` stays in `lib/types.ts`);
+- the two master alarm lamps flanking the "Reactor Control System" nameplate (`alarmLamp`). The new warning lamp below takes over their job, with the same condition.
+
+**Add two lamp + button pairs** in the header, built from the existing `cr-lamp-bezel`, `retro-lamp`, `cr-bezel` and small `cr-key` styles so they match:
+
+| Pair | Lamp | Lit when | Button | Does |
+|---|---|---|---|---|
+| Warnings | red | Flashes while any warning is active or a major event is running: today's `hasWarnings \|\| majorEvent`, unchanged. Off otherwise. | **See Warning** | Scrolls the alarm monitor to the middle of the screen, and opens it if collapsed. |
+| Shift log | amber (the yellow of the log's "Printing" lamp) | Flashes when a new log message arrives, for 15 s, or until the shift log has been on screen (at least half in view), whichever comes first. Restarts on each new message. Off otherwise. | **See Message** | Scrolls the shift log to the middle of the screen, opens it if collapsed, and turns the lamp off. |
+
+- **Wiring:**
+  - Give the alarm monitor and shift log sections stable ids (e.g. `alarm-monitor`, `shift-log`).
+  - Collapsing is local state in `alarm-screen.tsx` and `shift-log-printer.tsx` today. Add a way to open each from outside: an `openSignal` counter prop passed down through `MessageArea`, or lift the `visible` state into `MessageArea`.
+  - `app/game/page.tsx` owns the two scroll actions and passes them to `ControlPanel` as `onSeeWarnings` / `onSeeLog`. Scrolling uses `scrollIntoView({ block: "center", behavior })`. `behavior` is "auto" under reduced motion (`components/presentation-use-reduced-motion.ts`), otherwise "smooth".
+  - The "new message" detection keys on the last log entry's id, as the shift log's unread marker already does. Seen-ness uses an `IntersectionObserver` on the shift log. Messages already in a saved game when it loads don't count as new.
+- **Layout:**
+  - **From `sm` up:** keep the three-column header: menu keys on the left, the nameplate in the centre, and the two pairs on the right where the mode plate was.
+  - **Phones:** row 1 is the menu keys and the nameplate. Row 2 is the two pairs side by side, half the width each. The header must be no taller than today's two rows, so the dials don't move down. Check at 360 and 390 px, with no sideways scrolling.
+- **Accessibility:** the buttons have `aria-label`s ("Show the alarm monitor", "Show the shift log"). The lamps are `aria-hidden`. Under reduced motion the lamps shine steadily instead of flashing.
+- **Not changing:** the panel's own indicator lamps, the alarm monitor and shift log themselves, and the sounds.
+- **Bible §15:** add one line under "Message area": the header has a warning lamp and a shift-log lamp, each with a button that brings its machine into view (changelog entry). Bible §2's guardrails cover the reactor controls, not the header, so no exception is needed.
+- **No sticky header on phones** (owner, 2026-10-13). The header scrolls away with the page as it does today.
+
+### 21.6 How to Play: about half the length (text only, `app/instructions/page.tsx`)
+
+**Today:** ~1,400 words in nine sections. **Target:** ~700 words, as a quick-start. Numbers stay live (read from `THRESHOLDS`, `TUNING` and `EVENT_TUNING`) so they keep tracking tuning.
+
+**New outline:**
+1. **Your job** (2 sentences): meet the grid's target; avoid meltdown and explosion; the same physics in every mode.
+2. **Modes:** the four cards, one line each (shift length, emergencies, target size and frequency).
+3. **Core concepts:**
+   - The red and blue cards as two short lists (kept: they're the game's model).
+   - Then one-line takeaways:
+     - Rods in → radioactivity down; rods out → up. Removing a blue card raises radioactivity as surely as playing a red one.
+     - Power output follows steam, so it arrives a minute or two after radioactivity changes.
+     - A rise or a fall feeds itself: correct early and in small steps. Only rods and pumps stop it.
+     - Radioactivity changes in proportion to itself, so the same push acts faster when it's high.
+4. **Controls, quick reference** (one short card each):
+   - **Rods:** take seconds to travel; never park at 0% (the graphite tips spike); keep the rod margin above {minimum}.
+   - **AZ-5:** one press inserts everything.
+   - **Pumps:** a slow lever over minutes; zero pumps means boiling and an explosion risk.
+   - **Turbine:** supplies the pumps in a power cut; sustained OVR-P trips it.
+5. **Warning signs, by severity** (replaces the Readouts section and the event catalogue):
+   - **Act now:** high reactor temperature, high steam, high radioactivity. Meltdown or explosion is coming.
+   - **Watch:** high or low fuel temperature, low radioactivity, xenon, rod margin.
+   - **Shift log:** major emergencies (power cut, rod jam), which are warned ahead; smaller events (pump trip, grid hold); and target changes, which are warned 60 s ahead and confirmed when they take effect.
+6. **The xenon pit** (2 sentences): low radioactivity builds xenon; climbing out is the riskiest moment, so re-insert rods as it clears.
+7. **Safety Test** (2 sentences). This also fixes the stale "procedure log" wording, which should be "shift log".
+8. **Game over:** three one-line bullets.
+
+**Cut:**
+- UI instructions: "drag the levers, then apply", ordered vs actual rod positions, what each turbine and pump lamp means.
+- Physics detail: the steam × 50 MW formula, the boiling temperature, the 2,000° brake cap, xenon creep thresholds, per-readout essays.
+- The per-pump-count list.
+
+**Must keep** (bible §15's list, one line each is enough, so no bible change is needed): red and blue cards; removing a blue card raises radioactivity; output only follows through heat and steam; rods take time to move; the graphite tips and why not to park at 0%; xenon burn-off speeding up as radioactivity rises; the ±10% tolerance; the same physics in every mode.
+
+**Check:** count the words (~700). The page reads on a phone without sideways scrolling. Every number still comes from code.
+
+### 21.7 Questions for the owner (answer before building the item)
+
+1. **Hard targets (§21.2):** (a) steps 1,500–4,750 MW every 3–5 min (recommended; Hard is no longer more frequent than Easy, so bible §11 and §13 and one test change), or (b) the same steps every 2–3 min plus a 60–90 s performance grace period after each change (keeps "more frequent", not yet trialled), or another setting from the table.
+2. ~~**Event mix (§21.3)**~~ **Answered 2026-10-13: build it as recommended** (balanced kinds, never the same kind twice in a row, random order), then judge it in future testing.
+3. ~~**New event kinds (§21.3)**~~ **Answered 2026-10-13: not for now** (the owner backed the recommendation). Revisit after testing the new mix.
+4. **Rod insertion plateau (§21.1):** wait for the 8a playtest (recommended), or plan step 8b (a weaker fuel card near normal) now? *Explained to the owner on 2026-10-13 with a table by radioactivity level; still open.*
+5. ~~**Header (§21.5)**~~ **Answered 2026-10-13: no sticky header on phones.** The shift-log lamp's flash time stays at the planned 15 s unless the owner says otherwise in the playtest.
+
+### 21.8 How to check 8a
+
+- `node --run sim:test`: all checks pass, plus the new event-mix test. The §13 gap check changes only if the owner approves Q1 (a). `npx tsc --noEmit -p .` is clean.
+- Re-run the event-mix study (200 Hard shifts) and the 40-seed target trial, and note the numbers here.
+- `node --run sim:shift`: read the Hard log for a varied mix and bigger target steps.
+- UI: headless Chrome at 360, 390 and 1400 px (as in §18.4):
+  - the homepage box hugs its buttons;
+  - the header fits two rows on phones;
+  - both scroll buttons bring their machine to the middle and open it if collapsed;
+  - the log lamp flashes on a new message and stops once the log is seen.
+- Update §6 and §7, and the bible changelog for the §11, §12, §13 and §15 changes.
+- **Owner playtest (Hard):** does the shift feel active now? Are events varied? Are the lamps and buttons enough on a phone? Is the manual quick enough? Then decide on §21.1 (8b).
+
+### 21.9 Fuel effect in the mid range: trial (2026-10-13, scratch copy only)
+
+*Superseded: the owner didn't want fuel and steam weakened together. See [mechanics-review-2026-10-13.md](mechanics-review-2026-10-13.md).*
+
+**Owner request.** Make the fuel card weaker across a large middle range of fuel temperature, without removing it. Leave very cold fuel as it is, and don't weaken hot fuel again. The varying fuel effect in the normal range is confusing, and the show never names it as a red or blue card.
+
+**What the trials showed:**
+1. **The fuel card and the steam card are a matched pair.** In normal running, one more unit of steady radioactivity adds about +0.50 points of steam push and about −0.52 points of fuel brake. The loop the player feels is the small difference between them.
+   - Halving only the mid-range fuel card (200–1,300°) leaves steam unopposed. The hands-off start melts down at 131 s instead of 419 s, the balanced state runs away on 5 of 6 noise seeds, and 11 checks fail. A quarter of today's strength: meltdown at 87 s, 12 checks fail.
+   - **So the steam card must come down in the same proportion.**
+2. **The hot end has to follow the steam card.** With steam reduced but the hot slope left at 0.17, hot fuel stops a runaway (a hands-off start never reaches radioactivity 400). That breaks the owner's rule that hot fuel never stops the loop (bible §5/§6, v2.5). So the hot slope is scaled with steam. Hot fuel stays exactly as strong *relative to the steam it comes with*, and the 2,000° cap is unchanged.
+3. **"Very cold unchanged" has to mean the whole cold end, not just 0°.** Keeping the total push at 0° by steepening the curve below 200° weakened it at 100–200°, where a real restart happens, and the xenon pit stopped being escapable (owner restart replay: no restart in 700 s). So the curve is left exactly as it is below 250°, including the extra push below 120°. Xenon worth is derived and follows (≈1.62 / 1.68 per %, was 1.56).
+4. **Starting offsets have to be re-picked** so the hands-off start keeps its pace: [9, 4.5, 3] for ×0.75 and [6, 3, 2] for ×0.5 (today [12, 6, 4]).
+
+**The two proposals** (each scales fuel and steam together and keeps the cold end):
+
+| | AS IS | **A: three-quarter strength** | **B: half strength** |
+|---|---|---|---|
+| Fuel card per degree, 250–1,300° / above 1,300° | 0.13 / 0.17 | 0.0975 / 0.1275 | 0.065 / 0.085 |
+| Steam card (`voidPerSteam`) | 0.6 | 0.45 | 0.30 |
+| Fuel card at 0 / 300 / 700 / 1,300 / 2,000° | +134 / +30 / −22 / −103 / −207 | +125 / +23 / −17 / −77 / −156 | +116 / +16 / −11 / −51 / −104 |
+| **Rod 1 in 5% from 100**: radioactivity at 10 / 30 / 60 / 120 s | 89 / 86 / 80 / 60 | 86 / 82 / 73 / 44 | 84 / 74 / 60 / 8 |
+| **Rod 1 in 5% from 150** (untouched 153 / 158 / 166 / 187) | 141 / 145 / 149 / 159 | 138 / 141 / 144 / 151 | **131 / 131 / 131 / 131** |
+| **Rod 1 in 5% from 200** (untouched 205 / 215 / 231 / 266) | 194 / 202 / 214 / 242 | 188 / 196 / 207 / 231 | 182 / 189 / 197 / 216 |
+| Rod 1 out 10% from 100: 10 / 30 / 60 / 120 s | 124 / 126 / 134 / 155 | 129 / 134 / 145 / 172 | 137 / 149 / 165 / 204 |
+| Rod 1 in 10% from 100: 10 / 30 / 60 / 120 s | 79 / 73 / 61 / 18 | 75 / 66 / 50 / 1 | 72 / 54 / 26 / 0 |
+| Hands-off start: 1 / 3 / 5 min, meltdown | 177 / 277 / 361, 419 s | 175 / 274 / 359, 423 s | 172 / 269 / 356, 430 s |
+| 1 pump (from balanced): meltdown | 283 s | 285 s | 289 s |
+| 3 pumps: 30 / 60 / 120 / 300 s | 92 / 82 / 55 / 0 | 93 / 82 / 54 / 0 | 94 / 83 / 53 / 0 |
+| All pumps lost, from normal / from hot | explodes 45 s / 21 s | 46 s / 22 s | 48 s / 22 s |
+| AZ-5 from a 400 runaway: 2 / 3 / 5 s | 242 / 147 / 43 | 238 / 138 / 32 | 235 / 129 / 24 |
+| All rods out + 4 pumps: meltdown | 28 s | 14 s | 11 s |
+| Xenon-pit restart (owner test 2 replay) | restarts, meltdown 443 s | restarts, 422 s | restarts, 407 s |
+| Hands-off drift, 6 noise seeds, 15 min | similar | a little wider | a little wider |
+| Bot shifts (20 each): Easy / Hard lost, Hard on target | 0 / 1, 60% | 0 / 1, 60% | 0 / 2, 59% |
+| Safety Test bot: rods / AZ-5 / late AZ-5 / ignored | survive ×3 / explodes | survive ×3 / explodes | survive ×3 / **melts down** |
+| Checks | 53 / 53 | **53 / 53** | 51 / 53 |
+
+**Reading it:**
+- **A** is a gentle step. Every check passes and the game's pace is unchanged. The plateau is only a little shorter: from 150, a rod still only dents the climb.
+- **B** is the change the owner described. From 100 a 5% insertion keeps falling rather than settling for a minute. From 150 it gives a clean, lasting step down (131 flat, where today it climbs back above where it started within two minutes).
+  - The cost is that rods punch harder before the reactor answers: one rod 10% out is +37% at 10 s, against +24% today and +48% before rods were halved (7b).
+  - Two checks fail:
+    - **§10 rod travel:** a set-up issue. The test starts with every rod out, and that reactor now melts down before the rods finish travelling. Fix the set-up, not the check.
+    - **§11/§14 Safety Test with the pumps unpowered** ends in meltdown, not explosion. It's a one-second race at the very end: radioactivity is pinned at 50,000, and today steam reaches 600 one second before the reactor reaches 1,200°; under B it's the other way round. It needs a small fix before B can ship, e.g. letting the explosion check win when both limits are crossed within the same few seconds, or a slightly faster steam response at extreme temperatures. Not trialled yet.
+- **Not recommended:** fuel only (runs away about 3× faster), changing rod speed (moves no equilibrium), steepening the cold end to keep the 0° total (breaks the xenon-pit escape).
+
+**Recommendation.** B, if the owner wants the levelling off clearly gone, built as one physics step with the two follow-ups (fix the rod-travel set-up; settle the explosion-vs-meltdown race). A, if the owner prefers a small measured step first. Both need bible §5, §6 and §16 wording ("fuel is a mild card in normal running") and a changelog entry.
+
+### 21.10 8a UI items: built (2026-10-13)
+
+- **Homepage** (`app/page.tsx`): the intro box and "Ready" plate are gone, and the start console hugs its two keys (stacked and capped at `max-w-xs` on phones). `.cr-blink` was removed from `app/globals.css`.
+- **Header** (`components/control-panel.tsx`): the mode plate and the two flanking alarm lamps are gone. Two `Annunciator`s (lamp + key) sit to the right of the nameplate from `lg`; below `lg` they make a second row, with the keys and nameplate above. The nameplate's type is smaller on phones so it fits beside the keys.
+  - The red lamp uses the old master-alarm condition. The amber lamp comes from `hooks/use-shift-log-lamp.ts`: it flashes on a new message for 15 s, or until the open shift log has been at least half in view for 3 s, and goes out when "See Message" is pressed. Messages in a loaded save don't count.
+  - The keys bump counters in `app/game/page.tsx`. `hooks/use-reveal.ts` opens the machine if collapsed, then centres it (instant under reduced motion). The sections have ids `alarm-monitor` and `shift-log`.
+- **How to Play** (`app/instructions/page.tsx`): about 570 words (was ~1,400), in the §21.6 outline. It fixes the stale "procedure log" wording, and every number still comes from code.
+- **Checked:** `tsc` clean; 53/53 checks. In headless Chrome at 360, 390 and 1400 px:
+  - no sideways scroll; the header is 108 px on phones (two rows) and 56 px wide (one row);
+  - "See Warning" centres the alarm monitor;
+  - "See Message" opens a collapsed log, centres it and turns the amber lamp off;
+  - the amber lamp lights at the shift's first message.
