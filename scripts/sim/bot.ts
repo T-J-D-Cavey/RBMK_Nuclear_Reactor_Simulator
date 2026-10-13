@@ -5,6 +5,7 @@ import { type ControlRod, type GameState, getShiftTime } from "../../lib/types"
 import { advanceGame } from "../../lib/game-loop"
 import { SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
 import { seededRng, type Rng } from "../../lib/sim/rng"
+import { TUNING } from "../../lib/sim/tuning"
 
 // Safety Test: from the first test step (all pumps on) a careful operator stops chasing output.
 const TEST_PREP_AT = SAFETY_TEST_SCRIPT.find((step) => step.action === "pumps-on")?.at ?? Infinity
@@ -105,7 +106,8 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
     const growth = back > 0 ? Math.log(history[history.length - 1] / history[history.length - 1 - back]) / back : 0
     const wanted = Math.max(-0.04, Math.min(0.04, Math.log(goal / R) / 10))
     const inFlight = s.controlRods.reduce((sum, r) => sum + (r.target - r.insertion), 0)
-    const change = 100 * (growth - wanted) - inFlight // points of boron to add (negative: withdraw)
+    // % of boron to add (negative: withdraw): the balance change needed, in points, over what 1% is worth
+    const change = (TUNING.generationTime * (growth - wanted)) / TUNING.rodWorth - inFlight
     if (Math.abs(change) < 0.5) return s
     return { ...s, controlRods: moveRods(s.controlRods, change, o) }
   }
@@ -137,7 +139,7 @@ function keepPumps(s: GameState, wanted: number): GameState {
   }
 }
 
-// Add `change` points of boron (whole percent per rod, like the lever modal).
+// Add `change` % of boron (whole percent per rod, like the lever modal).
 function moveRods(rods: ControlRod[], change: number, o: BotOptions): ControlRod[] {
   const next = rods.map((r) => ({ ...r }))
   const free = next.filter((r) => !r.stuck)

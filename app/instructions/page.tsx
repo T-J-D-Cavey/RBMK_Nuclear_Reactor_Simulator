@@ -229,7 +229,8 @@ export default function InstructionsPage() {
             <p className="text-sm leading-relaxed">
               The night of 25–26 April 1986, compressed into 20 minutes. You will be ordered to reduce power, hold it low while
               xenon builds, and then raise it again for the test, which takes the rod margin below its minimum. Then the test
-              begins: the turbine is switched to the pumps and the pumps&apos; normal supply is cut. Some controls change by
+              begins: the turbine is switched to the pumps, the pumps&apos; normal supply is cut and the turbine&apos;s steam is shut
+              off, so it coasts down and within about {TUNING.turbineCoastSeconds} seconds can power no pumps at all. Some controls change by
               themselves; each change is announced in the procedure log, and you can reverse it. Decide in advance what you will do
               when the test begins, and remember what a rod parked at 0% does.
             </p>

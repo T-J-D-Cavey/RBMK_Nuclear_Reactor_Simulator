@@ -6,6 +6,7 @@
 import { type GameState, type LogSource, getShiftTime } from "./types"
 import { addLog } from "./game-utils"
 import { EVENT_TUNING } from "./sim/tuning"
+import { turbineCoastStart } from "./sim/reactor"
 
 // Every message comes from a person (owner, 2026-10-12), so the procedure is read out by a test supervisor and
 // the automated changes are reported by the crew who make them. Kiev keeps its name here: it is the night of the
@@ -169,9 +170,10 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
         ROLES.turbine.from,
       )
     case "mains-off":
-      return { ...s, mainsPower: false }
+      // The test itself: steam to the turbine is shut off, so it coasts down while it powers the pumps.
+      return { ...s, mainsPower: false, turbineCoast: turbineCoastStart(s.steamVolume) }
     case "mains-on":
-      return { ...s, mainsPower: true }
+      return { ...s, mainsPower: true, turbineCoast: null }
     default:
       return s
   }

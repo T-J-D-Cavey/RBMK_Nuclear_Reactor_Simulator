@@ -168,6 +168,9 @@ export interface GameState {
   turbineConnected: boolean // derived: turbineMode === "grid" (kept for existing UI/saves)
   mainsPower: boolean // the pumps' normal (station) supply is available
   turbinePumpCapacity: number // internal: pumps the turbine can currently power (held steady near thresholds)
+  // internal: null while steam drives the turbine. Once its steam is shut off (the Safety Test), the pumps' worth
+  // of spin it has left, running down to 0 whatever the steam (bible §8, §14).
+  turbineCoast: number | null
   overpressureSeconds: number // internal: consecutive seconds of high steam while connected to the grid
   reactivityNoise: number // internal: slow random drift in the reactivity balance
 
@@ -235,6 +238,7 @@ export const INITIAL_GAME_STATE: GameState = {
   turbineConnected: true,
   mainsPower: true,
   turbinePumpCapacity: 0,
+  turbineCoast: null,
   overpressureSeconds: 0,
   reactivityNoise: 0,
 

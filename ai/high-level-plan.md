@@ -198,6 +198,7 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 - When supplying pumps, **power output to the grid is 0** (performance falls if a target is set).
 - The number of pumps it can power depends on **steam volume**: no steam → none; some steam → 1–2; plenty → all 4. Turbine power goes to pumps the player has switched ON first.
 - It only matters when the pumps' normal supply is lost (a power cut, or the Safety Test). With normal supply available the pumps run from it, so this mode is pointless (and costs output). 
+- **A coasting turbine runs down.** If the turbine's steam is shut off (only in the Safety Test, Section 14), it keeps powering the pumps on its momentum alone: at first as many as its steam was powering, then fewer, until none after about 45 s, whatever the reactor's steam does (owner).
 - Pumps stay fully under the player's control: they can be switched on/off at any time, and flow builds and dies away over a few seconds as with any supply (Section 7).
 - **No flicker:** when steam hovers right at the level where the turbine could supply one pump more or one fewer, the supply holds steady until steam has clearly moved, rather than cutting a pump's power on and off every second. (This concerns the turbine's supply, never the player's switches.)
 - The existing PWR lamps on the pump panel show which pumps are receiving power, whatever the source. The turbine panel may gain one small indicator lamp for "supplying pumps", matching the existing lamp style. No other control changes.
@@ -240,10 +241,10 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, plus one-press AZ-5 (item 3) and small interface improvements (item 5), as allowed in Section 2.
 
 **Change:**
-1. **A rod's effect depends only on how much boron is in the core.** Moving a rod 5% changes its boron effect by the same amount whether it goes 10%→5% or 50%→45%. 
+1. **A rod's effect depends only on how much boron is in the core.** Moving a rod 5% changes its boron effect by the same amount whether it goes 10%→5% or 50%→45%. Rods are deliberately gentle against the other cards (owner): moving one rod 10% shifts radioactivity by about a fifth at first, so a single small move is never decisive.
 2. **Rod margin.** The total insertion across all ten rods is the rod margin: how much boron is holding the reactor down. It is not an extra physics rule; it names a dangerous state. Below a minimum (the game's version of the "15-rod minimum"), a warning in the existing message area says so. Low margin is dangerous because of what it implies: radioactivity is being held by something less reliable than boron (often xenon, which can vanish).
 3. **Rods travel over time, at the same speed in every mode.** Applying a new setting moves each rod toward it at a steady speed (full stroke about 18 s, as in the real reactor; tune to taste). AZ-5 takes effect the moment it is pressed, with no Apply step (closing the lever modal when AZ-5 button is selected), and drives every rod that isn't jammed toward 100% at the same speed, so it takes seconds to complete. The lever modal shows where each rod has been ordered to go; the panel's rod display shows where each rod actually is, so after closing the modal the player watches the indicators travel. A jammed rod stops wherever it is, including mid-travel.
-4. **Graphite tips.** Each rod has a graphite tip at its bottom. Graphite is a red card worth +10, the same as 10% of boron. The tip is in the core at 1% insertion or more, and out only at 0%. One rod's net effect, counting 1% of boron as 1 point (+ pushes radioactivity up, − pushes it down):
+4. **Graphite tips.** Each rod has a graphite tip at its bottom. Graphite is a red card worth +10, the same as 10% of boron. The tip is in the core at 1% insertion or more, and out only at 0%. One rod's net effect, counted in % of one rod's boron (+ pushes radioactivity up, − pushes it down):
 
    | Rod position | Tip | Boron | Net |
    |---|---|---|---|
@@ -271,7 +272,7 @@ Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, p
 - Pulling a rod from 1% to 0% lowers radioactivity; every other step of withdrawal raises it.
 - AZ-5 starts moving the rods the moment it is pressed, with no Apply step.
 - AZ-5 from a normal state always shuts the reactor down safely.
-- AZ-5 with most rods at 0%, high steam and cold fuel causes a dangerous spike and can be fatal.
+- AZ-5 with most rods at 0%, high steam and cold fuel causes a dangerous spike and can be fatal. With gentle rods the tips are gentle too, so this needs eight or more rods at 0% and the spike is modest, about a quarter to a third (owner).
 - After the modal closes, the panel's rod indicators visibly travel to their new positions at rod speed.
 - Rod speed and rod effect are identical in every mode.
 - Dragging a lever with a mouse highlights no text; levers are easy to grab and slide on a phone.
@@ -368,7 +369,7 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 2. **Kiev's delay** (≈2–6 min). The grid controller orders the station to hold a power output low enough that the radioactivity needed for it causes slow but steady xenon build-up (the show's 10-hour delay, compressed to a few minutes).
 3. **Shift change & reduction to test output** (≈6–9 min). Targets step down toward the test band. Xenon peaks. Either radioactivity tanks or the player removes control rods.
 4. **"Raise the power."** (≈9–12 min). The Deputy Chief Engineer demands the test power output. To get there the player must withdraw more rods, dropping below minimum rod margin (warnings fire). Performance pressure applies: failing to reach and hold the test output drains performance, and at zero the player is removed from their post. Safe play is not free. Fuel temperature is likely starting to get low.
-5. **Test** (≈12–15 min, with 8 minutes left). Procedure orders **all four pumps on**, and the game switches them on automatically. Fuel temperature drops further as a result. Then a "Switch turbine to power pumps" message appears, and the game automatically disconnects the turbine from the grid and sets it to supply the pumps. As the test begins, the pumps' normal supply is cut (the loss of station power the test exists to simulate), so the turbine is their only power: high steam powers all 4 pumps; low steam powers fewer. The player is able to intervene at any point.
+5. **Test** (≈12–15 min, with 8 minutes left). Procedure orders **all four pumps on**, and the game switches them on automatically. Fuel temperature drops further as a result. Then a "Switch turbine to power pumps" message appears, and the game automatically disconnects the turbine from the grid and sets it to supply the pumps. As the test begins, the pumps' normal supply is cut (the loss of station power the test exists to simulate), and steam to the turbine is shut off. So the coasting turbine is their only power, and it runs down to nothing within about 45 s (Section 8): flow collapses unless the player acts. The player is able to intervene at any point.
 6. **End of test** (≈15–20 min). After the test time has elapsed a message reads "Test complete" and the pumps' normal supply returns. There are no more automated changes. It's up to the player to avoid a catastrophe until the shift ends.
 
 **Targets during and after the test:** from the turbine switch in phase 5 onwards there is no grid target (the script itself has disconnected the turbine), so performance neither rises nor falls, and the Power Target display shows N/A as in Free mode. After "Test complete" the only goal left is survival.

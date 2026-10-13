@@ -33,8 +33,8 @@ export function getReactivityCards(state: GameState): ReactivityCards {
   const cards = {
     base: T.baseExcess,
     void: T.voidPerSteam * state.steamVolume,
-    tips: T.tipWorth * tipsInCore(state.controlRods),
-    boron: -rodBoron(state.controlRods),
+    tips: T.rodWorth * T.tipWorth * tipsInCore(state.controlRods),
+    boron: -T.rodWorth * rodBoron(state.controlRods),
     xenon: -T.xenonWorthPerPercent * state.xenon,
     fuel: fuelEffect(state.fuelTemp),
     noise: state.reactivityNoise,
@@ -67,6 +67,11 @@ export function nextTurbineCapacity(current: number, steam: number): number {
   return cap
 }
 
+// The spin a turbine has left, in pumps' worth, the moment its steam is shut off: what that steam could power.
+export function turbineCoastStart(steam: number): number {
+  return Math.min(4, steam / T.turbineSteamPerPump)
+}
+
 // Decide which pumps receive power this second (PWR lamps).
 export function supplyPumps(state: GameState): { pumps: WaterPump[]; capacity: number } {
   if (state.mainsPower) {
@@ -75,7 +80,9 @@ export function supplyPumps(state: GameState): { pumps: WaterPump[]; capacity: n
   if (state.turbineMode !== "pumps") {
     return { pumps: state.waterPumps.map((p) => ({ ...p, powered: false })), capacity: 0 }
   }
-  const capacity = nextTurbineCapacity(state.turbinePumpCapacity, state.steamVolume)
+  // A coasting turbine powers what its remaining spin allows; otherwise steam decides (bible §8).
+  const capacity =
+    state.turbineCoast !== null ? Math.ceil(state.turbineCoast - 1e-9) : nextTurbineCapacity(state.turbinePumpCapacity, state.steamVolume)
   // Turbine power goes to pumps the player has switched ON first.
   const order = [...state.waterPumps].filter((p) => !p.tripped).sort((a, b) => Number(b.on) - Number(a.on) || a.id - b.id)
   const suppliedIds = new Set(order.slice(0, capacity).map((p) => p.id))
@@ -95,6 +102,7 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
     controlRods: input.controlRods.map((r) => ({ ...r })),
     waterPumps: supply.pumps,
     turbinePumpCapacity: supply.capacity,
+    turbineCoast: input.turbineCoast === null ? null : Math.max(0, input.turbineCoast - 4 / T.turbineCoastSeconds),
   }
 
   // Slow correlated drift in the balance (Ornstein–Uhlenbeck), updated once per second.

@@ -5,6 +5,7 @@ import assert from "node:assert/strict"
 import { scenarios, poisonedState } from "./scenarios"
 import { az5, baseState, gameStart, run, runQuiet, setPumps, setRods, settle, steadyAt } from "./harness"
 import { getReactivityCards, nextTurbineCapacity, steamTarget, supplyPumps, xenonRate } from "../../lib/sim/reactor"
+import { TUNING } from "../../lib/sim/tuning"
 import type { GameState } from "../../lib/types"
 
 const withRod = (s: GameState, idx: number, pos: number, instant = true) =>
@@ -46,7 +47,7 @@ test("§5/§10 the same rod step has the same boron effect at any depth", () => 
   const shallow = rho(withRod(s, 0, 5)) - rho(withRod(s, 0, 10))
   const deep = rho(withRod(s, 0, 45)) - rho(withRod(s, 0, 50))
   assert.ok(Math.abs(shallow - deep) < 1e-9, `${shallow} vs ${deep}`)
-  assert.ok(Math.abs(shallow - 5) < 1e-9)
+  assert.ok(Math.abs(shallow - 5 * TUNING.rodWorth) < 1e-9) // 5% of boron
 })
 
 test("§5 the same push moves radioactivity further and faster when radioactivity is high", () => {
@@ -262,7 +263,7 @@ test("§10 pulling a rod 1%→0% lowers radioactivity; every other withdrawal st
   for (const [from, to] of [[2, 1], [10, 8], [50, 45], [100, 90]]) {
     assert.ok(rho(withRod(s, 0, to)) > rho(withRod(s, 0, from)), `${from}→${to}`)
   }
-  assert.ok(Math.abs(rho(withRod(s, 0, 1)) - rho(withRod(s, 0, 0)) - 9) < 1e-9)
+  assert.ok(Math.abs(rho(withRod(s, 0, 1)) - rho(withRod(s, 0, 0)) - 9 * TUNING.rodWorth) < 1e-9) // tip 10 − 1% boron
 })
 
 test("§10 AZ-5 from a normal state always shuts the reactor down safely", () => {
@@ -291,12 +292,14 @@ test("§10 a jammed rod stops where it is, including mid-travel", () => {
 })
 
 test("§10 AZ-5 with most rods at 0%, high steam and low flow can be fatal", () => {
-  // Rods 1–6 parked at 0%, held by fully inserted rods 7–10, one pump: a runaway (no state like this is
+  // Rods 1–8 parked at 0%, held by fully inserted rods 9–10, one pump: a runaway (no state like this is
   // steady). AZ-5 is pressed once it is hot and steamy.
-  const climb = runQuiet(setPumps(setRods(baseState(), [0, 0, 0, 0, 0, 0, 100, 100, 100, 100], { instant: true }), 1, { instant: true }), 400)
+  // Since rods were halved in strength (plan §20 step 7b), so were their tips. The owner accepted a weaker trap:
+  // the spike needed is ×1.25 (was ×1.4), and it takes eight rods at 0% rather than six.
+  const climb = runQuiet(setPumps(setRods(baseState(), [0, 0, 0, 0, 0, 0, 0, 0, 100, 100], { instant: true }), 1, { instant: true }), 600)
   const fragile = climb.samples.find((x) => x.S > 250)!.state
   const r = runQuiet(fragile, 30, { 0: az5 })
-  assert.ok(r.ending === "explosion" || maxR(r) > fragile.radioactivity * 1.4)
+  assert.ok(r.ending === "explosion" || maxR(r) > fragile.radioactivity * 1.25)
 })
 
 // ---------- §11 Endings ----------

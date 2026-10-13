@@ -1,6 +1,7 @@
 // Every reactor-physics number lives here, plus (at the end, separately) the shift's events and power
 // targets. Section numbers refer to ai/high-level-plan.md.
-// Reactivity is counted in "points": 1 point = 1% of one rod's boron (bible §10.4).
+// Reactivity is counted in "points". Rods are measured in % of one rod's boron (bible §10.4), and each 1% is
+// worth `rodWorth` points against the other cards.
 // This file must not import anything (lib/types.ts imports it).
 
 // The balanced reference state: exactly steady with these rods and two pumps. The engine is calibrated here.
@@ -17,9 +18,10 @@ export const REFERENCE_STATE = {
   flow: 2, // two pumps running
 } as const
 
-// The game starts off balance (owner request, bible §5): rods 1–3 sit 6%, 3% and 2% further out than the
-// reference, so radioactivity climbs from the start and the player soon feels they need to act.
-const STARTING_OFFSETS = [6, 3, 2]
+// The game starts off balance (owner request, bible §5): rods 1–3 sit 12%, 6% and 4% further out than the
+// reference, so radioactivity climbs from the start and the player soon feels they need to act. (Doubled
+// from 6/3/2 when rods were halved in strength, plan §20, so the start is unchanged.)
+const STARTING_OFFSETS = [12, 6, 4]
 export const STARTING_RODS = REFERENCE_RODS.map((v, i) => v - (STARTING_OFFSETS[i] ?? 0))
 
 const TUNING_BASE = {
@@ -38,7 +40,10 @@ const TUNING_BASE = {
 
   // --- §10 Control rods ---
   rodFullStrokeSeconds: 18,
-  tipWorth: 10, // red card per rod whose tip is in the core (= boron in the first 10% of travel)
+  // Points per 1% of one rod's boron. Half the other cards' scale (owner, plan §20 step 7b): one rod moved 10%
+  // shifts radioactivity by about a fifth at first, so a single small move is no longer decisive.
+  rodWorth: 0.5,
+  tipWorth: 10, // red card per rod whose tip is in the core, in % of boron (= the boron in the first 10% of travel)
 
   // --- §6 Fuel effect on reactivity (continuous curve) ---
   // Counted from normal running: 0 at the reference fuel temperature (a healthy reactor), blue when
@@ -85,6 +90,9 @@ const TUNING_BASE = {
   // 20 or 22 an ignored Safety Test gets its pumps back too soon to run away; plan §20.3).
   turbineSteamPerPump: 25,
   turbineHysteresis: 0.25, // in pumps: supply holds until steam has clearly moved
+  // With its steam shut off (the Safety Test), the turbine coasts: it starts with what its steam was powering
+  // and runs down at four pumps' worth per this many seconds, whatever the steam (owner, plan §20 step 7b).
+  turbineCoastSeconds: 45,
 
   // --- §9 Xenon ---
   // Blue card. Its worth is derived: full xenon sits this many points below everything pushing up in a
@@ -120,7 +128,7 @@ function derive() {
   const r = REFERENCE_STATE
   const t = TUNING_BASE
   // Base excess reactivity of the fuel: makes the reference balance exactly zero (the fuel card is 0 there).
-  const baseExcess = r.rodBoron - r.tipsIn * t.tipWorth - t.voidPerSteam * r.steam
+  const baseExcess = t.rodWorth * (r.rodBoron - r.tipsIn * t.tipWorth) - t.voidPerSteam * r.steam
   // Fuel heating is set so the reference fuel/reactor gap holds.
   const gap = r.fuelTemp - r.reactorTemp
   const fuelHeat = (t.fuelToReactorRate * gap) / r.radioactivity

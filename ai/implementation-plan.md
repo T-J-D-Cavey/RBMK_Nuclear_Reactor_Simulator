@@ -1,6 +1,6 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built. Waiting on the owner's manual test of 7a before step 7b (half-strength rods).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built and was playtested. Step 7b (half-strength rods, plus a coasting turbine in the Safety Test) is built. Waiting on the owner's manual test of 7b before step 7c (the hot-fuel brake cap).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
 
 ---
 
@@ -12,7 +12,7 @@ Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the own
    3. **the owner's playtest results**: `ai/manual-test-results.MD`;
    4. **§20 (the next step):** iteration 7, planned in three steps. Do the next step that isn't marked done, and only after the owner has playtested the one before.
 2. **Check the baseline** before changing anything (commands in §9). All 53 acceptance checks should pass (36 physics in `acceptance.test.ts`, 17 events/targets/Safety Test in `events.test.ts`), and `tsc` should be clean.
-3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after step 7a, §20.3), then carry on with §20: step 7b if the owner is happy with 7a, otherwise re-plan from the results.** Events, targets and Safety Test questions are in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
+3. **Next job: read the owner's newest results in `ai/manual-test-results.MD` (written after step 7b, §20.5), then carry on with §20: step 7c if the owner is happy with 7b, otherwise re-plan from the results.** Events, targets and Safety Test questions are in §17.5. Iterating in small steps is deliberate: the owner wants to measure each change's effect, so don't add extra tuning while you're there. In general, turn each item of playtest feedback into one of:
    - a tuning change in `lib/sim/tuning.ts`;
    - a model change in `lib/sim/reactor.ts`;
    - a UI fix.
@@ -156,6 +156,11 @@ See §8 for the full list of open questions.
   - The turbine powers a pump per 25 steam, was 35 (C4). The owner picked 25 over 20 to keep the Safety Test's climax (§20.3).
   - Free mode opens with a welcome from the Plant Director (C5).
   - 53/53 checks pass; `tsc` is clean. Waiting on the owner's playtest before step 7b (half-strength rods).
+- 2026-10-13: Owner playtested 7a ("it worked well") after a small fix: the Free-mode welcome now prints at 10 s.
+- 2026-10-13: **Step 7b built (§20.5).**
+  - Rods are half strength (`rodWorth` 0.5), and the starting offsets are doubled so the start is unchanged.
+  - Two owner decisions came out of it. The Safety Test's turbine now coasts down once the test begins (§17.5 Q1, option (a)). The weaker AZ-5 trap is accepted (check ×1.4 → ×1.25).
+  - Bible changelog v2.11. 53/53 checks pass; `tsc` is clean.
 
 ---
 
@@ -171,7 +176,7 @@ See §8 for the full list of open questions.
 | 8 | Steam follows reactor temperature only | ✅ | |
 | 8 | Turbine "Supply station pumps" (steam-based capacity, ON pumps first, no flicker, PUMPS lamp, output 0) | ✅ | `components/turbine-modal.tsx`, `control-panel.tsx`. One pump per 25 steam since §20 (7a). |
 | 9 | Xenon build/burn, 0% in normal running, restart route | ✅ | |
-| 10 | Linear boron, graphite tips (+10 while insertion > 0), rod travel ~18 s, jams freeze mid-travel | ✅ | |
+| 10 | Linear boron, graphite tips (+10 while insertion > 0), rod travel ~18 s, jams freeze mid-travel | ✅ | Since §20 (7b), each 1% of boron is worth 0.5 points (`rodWorth`). |
 | 10 | One-press AZ-5 (closes modal); live rod travel on panel; no text selection; touch grab area | ✅ | `components/control-rods-modal.tsx`. **Not yet tested on a real phone.** |
 | 10 | Rod-margin warning (minimum 200 of 1000) | ✅ | `THRESHOLDS.rodMargin` in `lib/types.ts`. |
 | 11 | Identical physics in every mode | ✅ | The engine has no mode branches. |
@@ -185,7 +190,7 @@ See §8 for the full list of open questions.
 | 12 | Grid "hold" request (halves tolerance) | ✅ | `getPowerTolerance(target, hold)`; no new target is announced during a hold. |
 | 13 | ±10% tolerance (min ±200 MW), shared by panel and performance | ✅ | `getPowerTolerance` in `lib/types.ts`, `isPowerOnTarget` in `lib/game-mechanics.ts`. |
 | 13 | Smaller, less frequent, warned target changes | ✅ | 60 s warning via `pendingTarget`; the number comes with the confirmation (bible v2.7, §18.3). Low targets kept rarely (§17.1). |
-| 14 | Safety Test mode | ✅ | `lib/safety-test.ts` (§17.3). The test's rundown is kept as built (owner, §17.5). |
+| 14 | Safety Test mode | ✅ | `lib/safety-test.ts` (§17.3). Since §20 (7b), the turbine coasts down once the test begins (§17.5 Q1, option (a)). |
 | 15 | CCTV reactor camera (inline + fullscreen), radiation interference | ✅ | `components/reactor-camera.tsx`. The Safety Test's clock starts at 01:10:00. |
 | 15 | Chart recorder side panel, wide-screen layout | ✅ | `components/chart-recorder.tsx`, `app/game/page.tsx`. Narrow-screen layout checked by reading classes only. |
 | 15 | Homepage CRT treatment; Safety Test "historical scenario" card | ✅ | `app/page.tsx`, `difficulty-modal.tsx` (no longer "In development"). |
@@ -722,7 +727,7 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
 
 ### 17.5 Open questions for the owner
 
-1. **Answered 2026-10-12: keep it as built (option c) for now.** The owner may revisit after the physics playtests. Bible §11's example ("the Safety Test rundown") is knowingly not met by the scripted rundown. Its physics still holds: a Safety Test runaway with the pumps unpowered explodes (checked in `events.test.ts`).
+1. **Superseded 2026-10-13: option (a) built in §20 step 7b** (the turbine coasts down once the test begins), because half-strength rods made an ignored test survivable. *Earlier answer, 2026-10-12: keep it as built (option c) for now.* The owner may revisit after the physics playtests. Bible §11's example ("the Safety Test rundown") is knowingly not met by the scripted rundown. Its physics still holds: a Safety Test runaway with the pumps unpowered explodes (checked in `events.test.ts`).
 
    **The Safety Test's rundown doesn't reach the show's ending.**
    - **What happens now.** Bible §8 and §14 say the turbine powers pumps in proportion to steam. So once the test begins, steam is low, flow collapses and the runaway starts, but the steam it makes powers the pumps again within about 40 s.
@@ -974,3 +979,70 @@ Source: the owner's tests 2 (Easy), 3 (Free, extremes) and 4 (Hard) in `ai/manua
 - **Safety Test:** does the test still bite if you don't respond?
 - **Free mode:** does the Plant Director's welcome print at the start?
 - Then decide whether to go ahead with step 7b (half-strength rods).
+
+**Owner, 2026-10-13: "it worked well."** Go ahead with 7b.
+
+### 20.5 Step 7b: results (built 2026-10-13)
+
+**C2 as planned.**
+- `rodWorth` **0.5** in `tuning.ts` (points per 1% of boron; tips scale with it). `reactor.ts` multiplies the boron and tip cards by it, and base excess is derived with it.
+- `STARTING_OFFSETS` [6, 3, 2] → **[12, 6, 4]**.
+- The bot (`scripts/sim/bot.ts`) now divides its wanted balance change by `rodWorth`, as a player would learn to.
+- The two "1 point per %" checks now read `TUNING.rodWorth`.
+- Measured on the real engine (from the balanced state, radioactivity at +10 / +30 / +60 / +120 s):
+
+  | Move | Before | After |
+  |---|---|---|
+  | Rod 1 out 5% | +23% / +26% / +34% / +55% | +11% / +13% / +17% / +27% |
+  | Rod 1 out 10% | +48% / +52% / +69% / +110% | +23% / +26% / +34% / +55% |
+  | Rod 1 in 10% | −41% / −56% / −97% / −100% | −22% / −27% / −39% / −82% |
+
+- Unchanged:
+  - the game start (177 / 277 / 360 at 1 / 3 / 5 min, meltdown at 459 s);
+  - pump kicks and pump loss (explosion after 49 s hot).
+- Gentler:
+  - The restart from the xenon pit (owner test 2 replay) peaks at ~1,270, was ~4,380.
+  - Test 3 (4 pumps, then all rods out) peaks at radioactivity ~1,260 and fuel ~3,030°, was ~2,360 / ~4,080. It still swings, and melts down at 226 s (C3 is still to come).
+- AZ-5 from radioactivity 400 halves it in 3 s (was 2 s).
+
+**Owner decision 1: the Safety Test's turbine coasts down** (bible §8, §14; changelog v2.11; §17.5 Q1 option (a)).
+- **Why.** With half-strength rods an ignored test survived again, even at the old 35 steam per pump. Once a pump came back, radioactivity crept to ~95 before mains returned at 15:00, never reached the xenon burn-off level of 100, and nothing ran away. A knife edge.
+- **How it works.**
+  - New internal state `turbineCoast` (null in normal running; old saves default to null).
+  - As the test begins, the script shuts off the turbine's steam: `turbineCoast` = what its steam could power at that moment (`turbineCoastStart`).
+  - It runs down at four pumps' worth per `turbineCoastSeconds` **45**, whatever the steam.
+  - "Test complete" clears it. Easy/Hard power cuts are untouched.
+- **Results (bot, seed 1):**
+  - ignoring the test explodes ~85 s after it begins (radioactivity 40 → 1,122 as the xenon burns off);
+  - rods or AZ-5 as the test begins survive;
+  - a late AZ-5 (at radioactivity > 400) also survives.
+- **Trials:**
+  - Coast times of 30–60 s all gave an explosion.
+  - Restoring mains later instead was a knife edge: 16:00 survived, 17:00 melted down.
+
+**Owner decision 2: a weaker AZ-5 trap is accepted.**
+- Half-strength tips gave at most ×1.30 from a hot, steamy state with most rods at 0%. The fragile check now needs ×1.25 (was ×1.4), set up with rods 1–8 at 0% and AZ-5 at steam 250 (×1.29).
+- Bible §10's check notes it.
+- Options the owner turned down:
+  - rod strength 0.65 (one rod 10% → +31%, trap ×1.55 with 9 rods at 0%);
+  - half-strength rods with full-strength tips (trap ×2.35, but 3 checks to rework, and pulling a rod from below 20% to 0% would lower radioactivity).
+
+**Checks:**
+- 53/53 pass; `tsc` is clean.
+- Bot over 20 shifts:
+
+  | | Before 7b | After 7b |
+  |---|---|---|
+  | Easy | lost 0, on target 83%, final performance 97% | lost 0, on target 83%, final performance 96% |
+  | Hard | lost 1, on target 61%, final performance 80% | lost 1, on target 60%, final performance 76% |
+
+- Safety Test bot: lowest rod margin 132.
+- `sim:shift` hands-off games are unchanged: meltdowns at 7:05 / 24:48 / 01:17:29.
+
+### 20.6 Step 7b: what to test
+
+- **Rods:** does one rod now give a measured response rather than plummeting or shooting up? Do you now use several rods, or bigger moves, for a big change? Is it too sluggish anywhere, e.g. catching a runaway or climbing out of the xenon pit?
+- **AZ-5:** from a high radioactivity it still brings things down within a few seconds (the safe case). Parking rods at 0% is less of a trap than before.
+- **Safety Test:** as the test begins, watch the PWR lamps go out as the turbine coasts down. It starts with what its steam was powering, so at the usual low test output (steam ~11–16) that's one pump for a few seconds; with a lot of steam it can be up to 45 s. Ignoring it should now end in an explosion; inserting rods or AZ-5 promptly should save it.
+- **Pumps (7a), still:** a slow lever.
+- Then decide on step 7c: the hot-fuel brake cap, with its number re-picked for half-strength rods (an all-rods-out reactor now balances at fuel ~1,900° rather than ~3,300°).
