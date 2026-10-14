@@ -388,7 +388,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                   </div>
 
                   {/* Light 2: High Steam Warning (Red Flashing) */}
-                  {/* Logic: Flashes if steam is 'High' (e.g. > 250) */}
+                  {/* Logic: Flashes if steam is 'High' (at or above 300) */}
                   <div className="flex flex-col gap-1.5 items-center">
                     <div
                       className={`

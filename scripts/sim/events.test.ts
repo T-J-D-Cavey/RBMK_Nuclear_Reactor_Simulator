@@ -2,14 +2,14 @@
 // §12–§14), run through the real game loop (lib/game-loop). Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { type GameMode, type GameState, GAME_MODE_CONFIGS, MAJOR_EVENT_KINDS, getPowerTolerance } from "../../lib/types"
+import { type GameMode, type GameState, GAME_MODE_CONFIGS, MAJOR_EVENT_KINDS, THRESHOLDS, getPowerTolerance } from "../../lib/types"
 import { EVENT_TUNING } from "../../lib/sim/tuning"
 import { seededRng } from "../../lib/sim/rng"
 import { getRodMargin } from "../../lib/sim/reactor"
 import { advanceGame, createNewGame } from "../../lib/game-loop"
 import { isPowerOnTarget } from "../../lib/game-mechanics"
-import { checkEventWarnings, getWarningFlags } from "../../lib/game-utils"
-import { checkTurbineTrip, planShiftEvents, runShiftEvents, startEvent } from "../../lib/game-events"
+import { checkEventWarnings, getAlarms, getWarningFlags } from "../../lib/game-utils"
+import { applyPendingTarget, checkTurbineTrip, planShiftEvents, runShiftEvents, startEvent } from "../../lib/game-events"
 import { SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
 import { REFERENCE_STATE } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
@@ -126,6 +126,43 @@ test("§12 a turbine trip only happens after a visible over-pressure warning", (
   let free: GameState = { ...quietGame("free"), steamVolume: 350 }
   for (let i = 0; i < 60; i++) free = checkTurbineTrip(free)
   assert.equal(free.turbineMode, "grid")
+})
+
+test("alarms: a warning with its own alarm doesn't also sound the general alarm; events sound the event alarm", () => {
+  const calm = quietGame("easy")
+  assert.deepEqual(getAlarms(calm), { general: false, event: false, highRadioactivity: false, highReactorTemp: false, highSteamOrXenon: false })
+  // Own alarms start exactly at the warning, and only they sound
+  const hot = { ...calm, radioactivity: THRESHOLDS.radioactivity.highWarning, reactorTemp: THRESHOLDS.reactorTemp.warning, xenon: THRESHOLDS.xenon.highWarning }
+  assert.deepEqual(getAlarms(hot), { general: false, event: false, highRadioactivity: true, highReactorTemp: true, highSteamOrXenon: true })
+  let overpressure: GameState = { ...calm, steamVolume: THRESHOLDS.steamVolume.highWarning }
+  overpressure = checkTurbineTrip(overpressure)
+  assert.ok(checkEventWarnings(overpressure).length > 0, "countdown shown")
+  assert.equal(getAlarms(overpressure).general, false, "the countdown shares the steam alarm")
+  assert.equal(getAlarms(overpressure).highSteamOrXenon, true)
+  // Warnings without one sound the general alarm
+  for (const other of [{ fuelTemp: THRESHOLDS.fuelTemp.lowWarning }, { fuelTemp: THRESHOLDS.fuelTemp.highWarning }, { radioactivity: THRESHOLDS.radioactivity.lowWarning }]) {
+    assert.equal(getAlarms({ ...calm, ...other }).general, true, JSON.stringify(other))
+  }
+  assert.equal(getAlarms({ ...calm, controlRods: calm.controlRods.map((r) => ({ ...r, insertion: 10, target: 10 })) }).general, true, "low rod margin")
+  // Power cuts, rod jams and pump trips sound the event alarm while they last; grid holds and target changes don't
+  const rng = seededRng(1)
+  for (const kind of ["power-cut", "rod-stuck", "pump-trip", "grid-hold"] as const) {
+    let s = startEvent(calm, kind, EVENT_TUNING.easy, rng)
+    assert.equal(getAlarms(s).event, kind !== "grid-hold", kind)
+    s = step(s, s.activeEvents[0].duration + 1, rng)
+    assert.equal(getAlarms(s).event, false, `${kind} over`)
+  }
+  const announced = applyPendingTarget({ ...calm, pendingTarget: { target: 6000, at: 0, source: "grid", from: "GRID CONTROLLER" } })
+  assert.equal(announced.powerTarget, 6000)
+  assert.equal(getAlarms(announced).event, false, "target change")
+  // A turbine trip sounds it until the player sets the turbine again
+  let trip: GameState = { ...calm, steamVolume: 350 }
+  for (let i = 0; i < EVENT_TUNING.turbineTripSeconds; i++) trip = checkTurbineTrip(trip)
+  assert.equal(trip.turbineMode, "idle")
+  trip = checkTurbineTrip({ ...trip, steamVolume: 250 })
+  assert.equal(getAlarms(trip).event, true, "still tripped while left idle")
+  trip = checkTurbineTrip({ ...trip, turbineMode: "pumps" })
+  assert.equal(getAlarms(trip).event, false, "reset by the player")
 })
 
 test("§12 a rod jammed mid-travel stays where it stopped until the jam clears, and after", () => {

@@ -9,7 +9,7 @@ import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
 import { useAudioManager } from "@/hooks/use-audio-manager"
 import { useShiftLogLamp } from "@/hooks/use-shift-log-lamp"
-import { THRESHOLDS } from "@/lib/types" 
+import { getAlarms } from "@/lib/game-utils"
 import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
@@ -51,19 +51,15 @@ export default function GamePage() {
   }
 
   // --- AUDIO LOGIC ---
-  const generalAlarmIsNeeded = gameState.warnings.length > 0
-  const powerCutOrRodStuckAlarm = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck");
-  const highRadAlarm = gameState.radioactivity > THRESHOLDS.radioactivity.highWarning
-  const highReactorTempAlarm = gameState.reactorTemp > THRESHOLDS.reactorTemp.warning
-  const highSteamOrXenon = gameState.steamVolume > THRESHOLDS.steamVolume.highWarning || gameState.xenon > THRESHOLDS.xenon.highWarning
+  const alarms = getAlarms(gameState)
   const { initializeAudio } = useAudioManager({
     soundEnabled: gameState.soundEnabled,
     soundVolume: gameState.soundVolume,
-    generalAlarmIsNeeded: generalAlarmIsNeeded,
-    powerCutOrRodStuckAlarm: powerCutOrRodStuckAlarm,
-    highRadAlarm: highRadAlarm,
-    highReactorTempAlarm: highReactorTempAlarm,
-    highSteamOrXenon: highSteamOrXenon,
+    generalAlarmIsNeeded: alarms.general,
+    eventAlarm: alarms.event,
+    highRadAlarm: alarms.highRadioactivity,
+    highReactorTempAlarm: alarms.highReactorTemp,
+    highSteamOrXenon: alarms.highSteamOrXenon,
   })
   const handleInteraction = () => {
     initializeAudio();

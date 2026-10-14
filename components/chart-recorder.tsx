@@ -70,7 +70,7 @@ const BANDS: Band[] = [
     ticks: [
       { v: 0, label: "0" },
       { v: 50, label: "50", warn: true },
-      { v: 250, label: "250", warn: true },
+      { v: 350, label: "350", warn: true },
       { v: 500, label: "500" },
       { v: 1000, label: "1k" },
       { v: 5000, label: "5k" },

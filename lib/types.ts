@@ -1,4 +1,4 @@
-import { REFERENCE_STATE, STARTING_RODS } from "./sim/tuning"
+import { REFERENCE_STATE, STARTING_RODS, TUNING } from "./sim/tuning"
 
 export interface ControlRod {
   id: number
@@ -172,6 +172,7 @@ export interface GameState {
   // of spin it has left, running down to 0 whatever the steam (bible §8, §14).
   turbineCoast: number | null
   overpressureSeconds: number // internal: consecutive seconds of high steam while connected to the grid
+  turbineTripped: boolean // the turbine tripped off the grid and the player hasn't set it since (sounds the event alarm)
   reactivityNoise: number // internal: slow random drift in the reactivity balance
 
   // Game state
@@ -240,6 +241,7 @@ export const INITIAL_GAME_STATE: GameState = {
   turbinePumpCapacity: 0,
   turbineCoast: null,
   overpressureSeconds: 0,
+  turbineTripped: false,
   reactivityNoise: 0,
 
   mode: "easy",
@@ -277,9 +279,11 @@ export const INITIAL_GAME_STATE: GameState = {
   soundEnabledWhenPaused: false,
 }
 
+// Warning levels, set from harness runs (owner, 2026-10-14; plan §6). The high ones sit above anything a competent
+// player needs, even Hard's largest target on four pumps (radioactivity ≈285, fuel ≈1,140°).
 export const THRESHOLDS = {
   radioactivity: {
-    highWarning: 250,
+    highWarning: 350,
     lowWarning: 50,
   },
   reactorTemp: {
@@ -287,8 +291,8 @@ export const THRESHOLDS = {
     meltdown: 1200,
   },
   fuelTemp: {
-    highWarning: 900,
-    lowWarning: 49,
+    highWarning: 1200,
+    lowWarning: TUNING.fuelColdBelow, // where very cold fuel starts to push radioactivity up (§9)
   },
   steamVolume: {
     highWarning: 300,

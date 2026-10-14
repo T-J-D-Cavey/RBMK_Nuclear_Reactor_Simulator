@@ -1,4 +1,5 @@
 import {
+  type EventKind,
   type GameState,
   type GameOverCause,
   type LogEntry,
@@ -128,6 +129,25 @@ export function getEventWarnings(state: GameState): Warning[] {
 
 export function checkEventWarnings(state: GameState): string[] {
   return getEventWarnings(state).map((warning) => warning.text)
+}
+
+// Warnings with an alarm sound of their own (owner, 2026-10-14). Every other warning sounds the general alarm
+// instead. The turbine over-pressure countdown only runs while steam is high, so it shares the steam alarm.
+const OWN_ALARM_WARNINGS = new Set(["highRadioactivity", "highReactorTemp", "highSteam", "highXenon", "turbineOverpressure"])
+// Events that sound the event alarm while they last. A grid hold doesn't, and target changes aren't events (owner, 2026-10-14).
+const EVENT_ALARM_KINDS: readonly EventKind[] = ["power-cut", "rod-stuck", "pump-trip"]
+
+// Which alarm sounds are on: one per alarm, read straight from the warnings so a sound starts and stops with its warning.
+export function getAlarms(state: GameState) {
+  const flags = getWarningFlags(state)
+  const warnings = [...getReactorWarnings(state), ...getEventWarnings(state)]
+  return {
+    general: warnings.some((warning) => !OWN_ALARM_WARNINGS.has(warning.key)),
+    event: state.turbineTripped || state.activeEvents.some((event) => EVENT_ALARM_KINDS.includes(event.type)),
+    highRadioactivity: flags.highRadioactivity,
+    highReactorTemp: flags.highReactorTemp,
+    highSteamOrXenon: flags.highSteam || flags.highXenon,
+  }
 }
 
 export const GAME_OVER_REASONS: Record<GameOverCause, string> = {

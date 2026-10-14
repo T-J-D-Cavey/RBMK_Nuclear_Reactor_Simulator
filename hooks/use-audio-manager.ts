@@ -4,7 +4,7 @@ interface AudioManagerProps {
   soundEnabled: boolean;
   soundVolume: number;
   generalAlarmIsNeeded: boolean;
-  powerCutOrRodStuckAlarm: boolean;
+  eventAlarm: boolean;
   highRadAlarm: boolean;
   highReactorTempAlarm: boolean;
   highSteamOrXenon: boolean;
@@ -14,7 +14,7 @@ export function useAudioManager({
   soundEnabled,
   soundVolume,
   generalAlarmIsNeeded,
-  powerCutOrRodStuckAlarm,
+  eventAlarm,
   highRadAlarm,
   highReactorTempAlarm,
   highSteamOrXenon,
@@ -25,7 +25,7 @@ export function useAudioManager({
   const humTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const generalAlarmAudioRef = useRef<HTMLAudioElement | null>(null);
-  const powerCutOrRodStuckAlarmRef = useRef<HTMLAudioElement | null>(null);
+  const eventAlarmRef = useRef<HTMLAudioElement | null>(null);
   
   // FIX: Renamed these to include 'Ref' to avoid clashing with the boolean props
   const highRadAlarmRef = useRef<HTMLAudioElement | null>(null);
@@ -52,10 +52,10 @@ export function useAudioManager({
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
 
-    // Added leading slash for consistency
-    powerCutOrRodStuckAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/56DSNdysYjjBozGYYRqcym/public/alarm_rod_stuck_full.mp3");
-    powerCutOrRodStuckAlarmRef.current.loop = true;
-    powerCutOrRodStuckAlarmRef.current.preload = "auto";
+    // Event alarm (rod jams, pump trips, turbine trips)
+    eventAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/56DSNdysYjjBozGYYRqcym/public/alarm_rod_stuck_full.mp3");
+    eventAlarmRef.current.loop = true;
+    eventAlarmRef.current.preload = "auto";
 
     highRadAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/w11O2GBJNi4hmwrAnLDkDo/public/alarm_high_rad_full.mp3");
     highRadAlarmRef.current.loop = true;
@@ -79,7 +79,7 @@ export function useAudioManager({
     if (humAudioRef2.current) humAudioRef2.current.volume = soundVolume;
     
     if (generalAlarmAudioRef.current) generalAlarmAudioRef.current.volume = soundVolume;
-    if (powerCutOrRodStuckAlarmRef.current) powerCutOrRodStuckAlarmRef.current.volume = soundVolume;
+    if (eventAlarmRef.current) eventAlarmRef.current.volume = soundVolume;
     if (highRadAlarmRef.current) highRadAlarmRef.current.volume = soundVolume;
     if (highReactorTempAlarmRef.current) highReactorTempAlarmRef.current.volume = soundVolume;
     if (highSteamOrXenonRef.current) highSteamOrXenonRef.current.volume = soundVolume;
@@ -120,17 +120,17 @@ export function useAudioManager({
     }
   }, [soundEnabled, generalAlarmIsNeeded]);
 
-  // Rod stuck power cut logic
+  // Event alarm: rod jams, pump trips and turbine trips
   useEffect(() => {
-    if (!powerCutOrRodStuckAlarmRef.current) return;
+    if (!eventAlarmRef.current) return;
 
-    if (soundEnabled && powerCutOrRodStuckAlarm) {
-      powerCutOrRodStuckAlarmRef.current.play().catch((e) => console.warn("Alarm play blocked:", e));
+    if (soundEnabled && eventAlarm) {
+      eventAlarmRef.current.play().catch((e) => console.warn("Alarm play blocked:", e));
     } else {
-      powerCutOrRodStuckAlarmRef.current.pause();
-      powerCutOrRodStuckAlarmRef.current.currentTime = 0;
+      eventAlarmRef.current.pause();
+      eventAlarmRef.current.currentTime = 0;
     }
-  }, [soundEnabled, powerCutOrRodStuckAlarm]);
+  }, [soundEnabled, eventAlarm]);
 
     // Radioactivity logic
   useEffect(() => {
@@ -156,7 +156,7 @@ export function useAudioManager({
     }
   }, [soundEnabled, highReactorTempAlarm]);
 
-      // High steam or low xenon temp logic
+      // High steam or high xenon logic
     useEffect(() => {
     if (!highSteamOrXenonRef.current) return;
 
@@ -177,7 +177,7 @@ export function useAudioManager({
       if (humAudioRef2.current) { humAudioRef2.current.pause(); humAudioRef2.current = null; }
       
       if (generalAlarmAudioRef.current) { generalAlarmAudioRef.current.pause(); generalAlarmAudioRef.current = null; }
-      if (powerCutOrRodStuckAlarmRef.current) { powerCutOrRodStuckAlarmRef.current.pause(); powerCutOrRodStuckAlarmRef.current = null; }
+      if (eventAlarmRef.current) { eventAlarmRef.current.pause(); eventAlarmRef.current = null; }
       
       if (highRadAlarmRef.current) { highRadAlarmRef.current.pause(); highRadAlarmRef.current = null; }
       if (highReactorTempAlarmRef.current) { highReactorTempAlarmRef.current.pause(); highReactorTempAlarmRef.current = null; }

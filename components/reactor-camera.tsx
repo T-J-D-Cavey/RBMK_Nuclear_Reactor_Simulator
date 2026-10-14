@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { GAME_MODE_CONFIGS, type GameMode } from "@/lib/types"
+import { GAME_MODE_CONFIGS, THRESHOLDS, type GameMode } from "@/lib/types"
 import { getClockStartSeconds } from "@/lib/game-utils"
 import { usePrefersReducedMotion } from "./presentation-use-reduced-motion"
 
@@ -22,8 +22,8 @@ export function getTemperatureOpacity(value: number): number {
   return (value - 600) / 200
 }
 
-/** Interference starts at the existing high-radioactivity warning and is at full strength by this level. */
-const INTERFERENCE_START = 250
+/** Interference starts at the high-radioactivity warning and is at full strength by this level. */
+const INTERFERENCE_START = THRESHOLDS.radioactivity.highWarning
 const INTERFERENCE_FULL = 600
 
 export function getInterferenceIntensity(radioactivity: number): number {

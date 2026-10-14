@@ -212,6 +212,19 @@ See §8 for the full list of open questions.
     - all rods in: red 0 v blue 8;
     - pumps off: void grows and blue drops to 2–3;
     - the climbing start leans red by one block.
+- 2026-10-14: **Alarm sounds and warning thresholds (owner).**
+  - **Which alarm sounds** (`getAlarms` in `lib/game-utils.ts`, read by `app/game/page.tsx`):
+    - high radioactivity, high reactor temperature and high steam or xenon each keep their own sound, and no longer also sound the general alarm. The turbine over-pressure countdown shares the steam alarm;
+    - every other warning sounds the general alarm;
+    - the old power-cut/rod-stuck sound is now the event alarm: power cuts, rod jams and pump trips while they last, and a turbine trip until the player next sets the turbine (new `turbineTripped` state). Grid holds and target changes have no event alarm;
+    - the alarms now start exactly at the warning (`>=`), not just above it.
+  - **Thresholds** (`THRESHOLDS` in `lib/types.ts`), from 30 bot shifts per mode and runaway scenarios (meltdown or explosion left alone):
+    - high radioactivity 250 → **350**. Hard's largest target needs ≈285 on four pumps; the bot reached 250 in 3 of 30 Hard shifts and 300 in 1, and 350 in none. Lead time before an ending: 13–14 s in fast runaways (same as 250), 43–140 s in slow ones;
+    - high fuel 900 → **1,200°**. Steady fuel at Hard's largest target is ≈1,140° on four pumps; at 900 the warning sounded in 4 of 30 Hard bot shifts. It still fires before the radioactivity warning in a slow surge (107–229 s before an ending);
+    - low fuel 49 → **120°** (`TUNING.fuelColdBelow`), where very cold fuel starts to push radioactivity up. At 49 the push is already ≈23 points (≈+23 %/s). Never reached by the bot in Easy or Hard;
+    - unchanged: reactor temperature 800, and steam 300. At steam 300 the turbine trips. The largest target is steam 200 (220 at the edge of the tolerance), and 300 matches reactor 800 on two pumps.
+  - The camera's interference starts at the high-radioactivity warning, as its comment says (was a fixed 250), and the chart recorder's red warning tick moves from 250 to 350. Time in danger in the incident report follows the new radioactivity level. How to Play and the warning texts read `THRESHOLDS` directly, so they need no edits.
+  - New check in `events.test.ts`: 54/54 pass; `tsc` is clean.
 
 ---
 

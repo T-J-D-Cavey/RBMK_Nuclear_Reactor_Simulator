@@ -305,12 +305,14 @@ export function applyPendingTarget(state: GameState): GameState {
 
 // --- Turbine trip (bible §12): a consequence of sustained over-pressure, never random ---
 
-export function checkTurbineTrip(state: GameState): GameState {
+export function checkTurbineTrip(prev: GameState): GameState {
+  // The trip's alarm sounds until the player next sets the turbine (back to the grid, or to the pumps)
+  const state = prev.turbineTripped && prev.turbineMode !== "idle" ? { ...prev, turbineTripped: false } : prev
   if (!GAME_MODE_CONFIGS[state.mode]?.turbineTrips) return state.overpressureSeconds ? { ...state, overpressureSeconds: 0 } : state
   const over = state.turbineMode === "grid" && state.steamVolume >= THRESHOLDS.steamVolume.highWarning
   const seconds = over ? state.overpressureSeconds + 1 : 0
   if (seconds < EVENT_TUNING.turbineTripSeconds) return seconds === state.overpressureSeconds ? state : { ...state, overpressureSeconds: seconds }
-  const s: GameState = { ...state, overpressureSeconds: 0, turbineMode: "idle", turbineConnected: false }
+  const s: GameState = { ...state, overpressureSeconds: 0, turbineMode: "idle", turbineConnected: false, turbineTripped: true }
   return addLog(
     s,
     "alarm",
