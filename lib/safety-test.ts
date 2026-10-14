@@ -33,7 +33,7 @@ interface ScriptStep {
 }
 
 // If the reactor has collapsed by the time the test begins, the deputy orders every rod out to save the test.
-export const RODS_OUT_BELOW = 20
+export const RODS_OUT_BELOW = 35
 
 // Targets follow the physics: with two pumps, xenon creeps up below radioactivity 80 (output below ~3,700 MW)
 // and builds faster the lower it is. Output takes a minute or two to follow radioactivity, so each target is in
