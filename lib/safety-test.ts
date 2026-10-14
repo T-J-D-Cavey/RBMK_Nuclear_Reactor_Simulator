@@ -21,7 +21,7 @@ const ROLES = {
   turbine: { source: "engineer", from: "TURBINE OPERATOR" },
 } satisfies Record<string, { source: LogSource; from: string }>
 
-type Action = "pumps-on" | "turbine-to-pumps" | "mains-off" | "mains-on"
+type Action = "pumps-on" | "turbine-to-pumps" | "mains-off" | "rods-out" | "mains-on"
 
 interface ScriptStep {
   at: number // shift time (s). The night clock reads 01:07:00 + at.
@@ -29,7 +29,11 @@ interface ScriptStep {
   text: string
   target?: number | null // announce a target change (usual notice), or null: no grid target from now on
   action?: Action
+  onlyIf?: (s: GameState) => boolean // a conditional step: checked when it is due, and skipped for good if false
 }
+
+// If the reactor has collapsed by the time the test begins, the deputy orders every rod out to save the test.
+export const RODS_OUT_BELOW = 20
 
 // Targets follow the physics: with two pumps, xenon creeps up below radioactivity 80 (output below ~3,700 MW)
 // and builds faster the lower it is. Output takes a minute or two to follow radioactivity, so each target is in
@@ -127,6 +131,13 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     text: "Test begins. Station power to the pumps is cut: the coasting turbine is now their only supply. Keep the reactor under control.",
     action: "mains-off",
   },
+  {
+    at: 964,
+    role: "deputy",
+    text: "Radioactivity's collapsed! Pull out every rod that's left, all of them, now! We are finishing this test.",
+    action: "rods-out",
+    onlyIf: (s) => s.radioactivity < RODS_OUT_BELOW,
+  },
   // Phase 6: after the test (18–20 min)
   {
     at: 1080,
@@ -149,6 +160,7 @@ export function runSafetyTest(state: GameState): GameState {
 }
 
 function runStep(state: GameState, step: ScriptStep, now: number): GameState {
+  if (step.onlyIf && !step.onlyIf(state)) return state
   const role = ROLES[step.role]
   let s = addLog(state, role.source, step.text, role.from)
   if (step.target === null) {
@@ -173,6 +185,10 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
     case "mains-off":
       // The test itself: steam to the turbine is shut off, so it coasts down while it powers the pumps.
       return { ...s, mainsPower: false, turbineCoast: turbineCoastStart(s.steamVolume) }
+    case "rods-out":
+      // Jammed rods stay where they are (bible §10.3); the rest travel out at the usual drive speed.
+      s = { ...s, controlRods: s.controlRods.map((r) => (r.stuck ? r : { ...r, target: 0 })) }
+      return addLog(s, ROLES.srce.source, "Withdrawing all control rods to 0%, on the Deputy Chief Engineer's order.", ROLES.srce.from)
     case "mains-on":
       return { ...s, mainsPower: true, turbineCoast: null }
     default:

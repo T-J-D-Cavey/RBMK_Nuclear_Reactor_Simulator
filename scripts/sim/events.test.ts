@@ -2,7 +2,7 @@
 // §12–§14), run through the real game loop (lib/game-loop). Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { type GameMode, type GameState, GAME_MODE_CONFIGS, MAJOR_EVENT_KINDS, THRESHOLDS, getPowerTolerance } from "../../lib/types"
+import { type GameMode, type GameState, GAME_MODE_CONFIGS, MAJOR_EVENT_KINDS, THRESHOLDS, getPowerTolerance, getShiftTime } from "../../lib/types"
 import { EVENT_TUNING } from "../../lib/sim/tuning"
 import { seededRng } from "../../lib/sim/rng"
 import { getRodMargin } from "../../lib/sim/reactor"
@@ -10,9 +10,10 @@ import { advanceGame, createNewGame } from "../../lib/game-loop"
 import { isPowerOnTarget } from "../../lib/game-mechanics"
 import { checkEventWarnings, getAlarms, getWarningFlags } from "../../lib/game-utils"
 import { applyPendingTarget, checkTurbineTrip, planShiftEvents, runShiftEvents, startEvent } from "../../lib/game-events"
-import { SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
+import { RODS_OUT_BELOW, SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
 import { REFERENCE_STATE } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
+import { az5 } from "./harness"
 
 const isMajor = (kind: string) => (MAJOR_EVENT_KINDS as readonly string[]).includes(kind)
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
@@ -308,9 +309,11 @@ const RAISE = SAFETY_TEST_SCRIPT.findLast((step) => step.target != null && step.
 
 test("§14 every phase is triggered in order; each automated change happens once, as it is announced", () => {
   const run = safety()
+  // A conditional step runs only if its condition held when it was due (the script runs after that second's physics).
+  const due = SAFETY_TEST_SCRIPT.filter((step) => !step.onlyIf || step.onlyIf(run.states[step.at - 1]))
   const scripted = run.final.log.filter((l) => SAFETY_TEST_SCRIPT.some((step) => step.text === l.text))
-  assert.equal(scripted.length, SAFETY_TEST_SCRIPT.length, "every script step logged exactly once")
-  SAFETY_TEST_SCRIPT.forEach((step, i) => assert.ok(Math.abs(scripted[i].time - step.at) <= 1, `step at ${step.at}s logged at ${scripted[i].time}s`))
+  assert.equal(scripted.length, due.length, "every due script step logged exactly once")
+  due.forEach((step, i) => assert.ok(Math.abs(scripted[i].time - step.at) <= 1, `step at ${step.at}s logged at ${scripted[i].time}s`))
   const at = (t: number) => run.states[t - 1]
   assert.ok(at(PUMPS_ON).waterPumps.every((p) => p.on), "pumps switched on with the announcement")
   assert.equal(at(TURBINE_SWITCH).turbineMode, "pumps")
@@ -354,6 +357,25 @@ test("§14 surviving to the end is possible with skilful play; ignoring the test
   assert.ok(safety().final.hasWon, "rods inserted as the test begins")
   assert.ok(safety({ testResponse: "az5" }).final.hasWon, "AZ-5 as the test begins (no rod parked at 0%)")
   assert.ok(safety({ testResponse: "none" }).final.isGameOver, "doing nothing")
+})
+
+test("§14 a reactor collapsed when the test begins: every rod is ordered out, and only AZ-5 saves it", () => {
+  // Player error: rods driven in at 700 s and left there, so radioactivity falls to 0 and xenon fills the core.
+  const collapsed = (respond: (s: GameState) => GameState) => {
+    const rng = seededRng(1)
+    const bot = makeBot()
+    let s = createNewGame("safety_test")
+    for (let t = 0; t < 700; t++) s = advanceGame(bot.act(s), rng)
+    s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: 40 })) }
+    while (getShiftTime(s) < MAINS_OFF) s = advanceGame(s, rng)
+    assert.ok(s.radioactivity < RODS_OUT_BELOW && s.xenon > 99, `R ${s.radioactivity.toFixed(1)}, xenon ${s.xenon.toFixed(0)}%`)
+    assert.ok(s.controlRods.every((r) => r.target === 0), "every rod ordered out with the announcement")
+    while (!s.isGameOver && !s.hasWon) s = advanceGame(respond(s), rng)
+    return s
+  }
+  assert.equal(collapsed((s) => s).gameOverCause, "explosion", "doing nothing")
+  const az5Late = (s: GameState) => (s.radioactivity > 400 && !s.controlRods.every((r) => r.target === 100) ? az5(s) : s)
+  assert.ok(collapsed(az5Late).hasWon, "AZ-5 once radioactivity runs away")
 })
 
 test("§11/§14 a Safety Test runaway with the pumps unpowered ends in an explosion", () => {
