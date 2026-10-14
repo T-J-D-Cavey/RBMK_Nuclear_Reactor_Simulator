@@ -140,7 +140,7 @@ test("alarms: a warning with its own alarm doesn't also sound the general alarm;
   assert.equal(getAlarms(overpressure).general, false, "the countdown shares the steam alarm")
   assert.equal(getAlarms(overpressure).highSteamOrXenon, true)
   // Warnings without one sound the general alarm
-  for (const other of [{ fuelTemp: THRESHOLDS.fuelTemp.lowWarning }, { fuelTemp: THRESHOLDS.fuelTemp.highWarning }, { radioactivity: THRESHOLDS.radioactivity.lowWarning }]) {
+  for (const other of [{ fuelTemp: THRESHOLDS.fuelTemp.lowWarning }, { radioactivity: THRESHOLDS.radioactivity.lowWarning }]) {
     assert.equal(getAlarms({ ...calm, ...other }).general, true, JSON.stringify(other))
   }
   assert.equal(getAlarms({ ...calm, controlRods: calm.controlRods.map((r) => ({ ...r, insertion: 10, target: 10 })) }).general, true, "low rod margin")

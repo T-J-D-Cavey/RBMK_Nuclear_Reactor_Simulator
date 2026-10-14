@@ -9,11 +9,14 @@ import { usePrefersReducedMotion } from "./presentation-use-reduced-motion"
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-// Existing overlay rules (must stay exactly as before).
+// The radiation picture fades in from just below the high-radioactivity warning (owner, 2026-10-14).
+const RADIATION_GLOW_START = 320
+const RADIATION_GLOW_FULL = 520
+
 export function getRadioactivityOpacity(value: number): number {
-  if (value <= 150) return 0
-  if (value >= 350) return 1
-  return (value - 150) / 200
+  if (value <= RADIATION_GLOW_START) return 0
+  if (value >= RADIATION_GLOW_FULL) return 1
+  return (value - RADIATION_GLOW_START) / (RADIATION_GLOW_FULL - RADIATION_GLOW_START)
 }
 
 export function getTemperatureOpacity(value: number): number {

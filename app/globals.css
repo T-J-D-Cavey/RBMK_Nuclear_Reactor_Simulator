@@ -1119,7 +1119,8 @@
 }
 
 /* ---- Legasov's red and blue cards (components/reactivity-cards.tsx) ----
-   A galvanised shelving rack like the one in the show's courtroom, with a card leaning on each shelf. */
+   A galvanised rack like the one in the show's courtroom, with the cards stacked in two columns on its shelf.
+   Every card is the same height, with a gap between cards; each contributor's cards carry a printed tag beside them. */
 .cr-card-rack {
   background:
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
@@ -1129,83 +1130,111 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), inset 0 6px 10px rgba(0, 0, 0, 0.12);
 }
 
-.cr-card-shelf {
-  padding: 0.4rem 0.15rem 0.3rem;
-  border-bottom: 4px solid #a3a6a1;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+/* One side: the stack sits next to the middle of the rack, its tags on the outside */
+.cr-card-column {
+  position: relative;
+  box-shadow: 0 4px 0 #a3a6a1, 0 5px 0 rgba(255, 255, 255, 0.6); /* the shelf */
+}
+
+/* Across each side from the middle: the stack (40px), the brackets (16px, BRACKET_PX in the component), the tags */
+.cr-card-column > ul {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+}
+
+.cr-card-column.is-red > ul { right: 3px; }
+.cr-card-column.is-blue > ul { left: 3px; }
+
+.cr-card-brackets {
+  position: absolute;
+  top: 0;
+  width: 16px;
+  height: 100%;
+  overflow: visible;
+}
+
+.cr-card-column.is-red .cr-card-brackets { right: 44px; }
+.cr-card-column.is-blue .cr-card-brackets { left: 44px; }
+
+/* Which cards a tag belongs to */
+.cr-card-bracket {
+  fill: none;
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: d 0.4s ease;
+}
+
+.cr-card-bracket.is-red { stroke: #7d1a14; }
+.cr-card-bracket.is-blue { stroke: #13336b; }
+
+/* A contributor's cards */
+.cr-card-group {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  transition: bottom 0.4s ease;
 }
 
 .cr-card {
+  display: block;
+  flex-shrink: 0;
+  background: var(--card);
+  border-radius: 1px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.cr-card-red { --card: linear-gradient(90deg, #b52b23 0%, #d63b30 50%, #b52b23 100%); }
+.cr-card-red.is-alt { --card: linear-gradient(90deg, #c7463a 0%, #e5594c 50%, #c7463a 100%); }
+.cr-card-blue { --card: linear-gradient(90deg, #1f4c9d 0%, #2f66c6 50%, #1f4c9d 100%); }
+.cr-card-blue.is-alt { --card: linear-gradient(90deg, #3460ad 0%, #4a80d8 50%, #3460ad 100%); }
+
+.cr-card-label {
+  position: absolute;
   display: flex;
-  flex-direction: column;
-  height: 4.25rem;
-  padding: 0.4rem 0.45rem 0.45rem;
+  align-items: center;
+  transition: bottom 0.4s ease;
+}
+
+.cr-card-column.is-red .cr-card-label { left: 0; right: 60px; justify-content: flex-end; }
+.cr-card-column.is-blue .cr-card-label { right: 0; left: 60px; justify-content: flex-start; }
+
+/* The tag: a small printed card in the group's colour */
+.cr-card-tag {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 5px;
   border-radius: 2px;
+  background: var(--card);
   color: #fff;
-  overflow: hidden;
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transition: opacity 0.4s ease;
-}
-
-.cr-card-red { background: linear-gradient(180deg, #d63b30 0%, #b52b23 100%); }
-.cr-card-blue { background: linear-gradient(180deg, #2f66c6 0%, #1f4c9d 100%); }
-
-.cr-card-empty {
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px dashed rgba(0, 0, 0, 0.22);
-  box-shadow: none;
-}
-
-.cr-card-title {
   font-family: var(--font-plate), "Arial Narrow", sans-serif;
   font-weight: 700;
-  font-size: 0.74rem;
-  line-height: 1.05;
+  font-size: 0.6rem;
+  line-height: 1.1;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cr-card-column.is-red .cr-card-tag { text-align: right; }
+
+.cr-card-count {
+  white-space: nowrap;
+  opacity: 0.9;
 }
 
 .cr-card-trend {
-  font-size: 10px;
-  line-height: 1;
-  flex-shrink: 0;
+  font-size: 8px;
 }
-
-.cr-card-meter {
-  display: flex;
-  gap: 2px;
-  margin-top: auto;
-}
-
-.cr-card-meter > span {
-  flex: 1;
-  max-width: 0.7rem;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.cr-card-meter > span.on {
-  background: #fff;
-}
-
-/* Which stack outweighs the other, under the rack */
-.cr-card-verdict {
-  margin-top: 0.5rem;
-  padding: 0.3rem 0.4rem;
-  text-align: center;
-  font-family: var(--font-plate), "Arial Narrow", sans-serif;
-  font-weight: 700;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #2b2a27;
-  background: rgba(255, 255, 255, 0.35);
-  border: 1px solid rgba(0, 0, 0, 0.18);
-}
-
-.cr-card-verdict.is-red { color: #fff; background: #b52b23; border-color: #7d1a14; }
-.cr-card-verdict.is-blue { color: #fff; background: #1f4c9d; border-color: #13336b; }
 
 /* ---- End screens ---- */
 

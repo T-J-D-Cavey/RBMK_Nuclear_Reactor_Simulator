@@ -59,13 +59,14 @@ export default function InstructionsPage() {
           <Section title="Core Concepts">
             <p className="text-sm leading-relaxed">
               Think of Legasov&apos;s red and blue cards: every second, each card in play pushes radioactivity up or down.
+              On the board every card is the same push, so level columns mean a steady reactor.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="cr-module p-4 !border-l-[6px] !border-l-red-700">
                 <h3 className="font-[family-name:var(--font-plate)] font-bold uppercase tracking-[0.12em] mb-2 text-red-800">Red cards: push it up</h3>
                 <ul className="text-sm leading-relaxed list-disc list-inside space-y-1">
+                  <li>Nuclear fission in the fuel and graphite, including each rod&apos;s graphite tip in the core</li>
                   <li>Steam in the core</li>
-                  <li>Graphite rod tips entering the core</li>
                   <li>Fuel cooler than normal (strongly when very cold)</li>
                 </ul>
               </div>
@@ -125,7 +126,7 @@ export default function InstructionsPage() {
                 or radioactivity over {t.radioactivity.highWarning}. A meltdown or explosion is on its way.
               </li>
               <li>
-                <strong>Watch:</strong> low radioactivity, xenon building, fuel too hot or too cold, a low rod margin or low
+                <strong>Watch:</strong> low radioactivity, xenon building, very cold fuel, a low rod margin or low
                 performance. Trouble is building.
               </li>
               <li>

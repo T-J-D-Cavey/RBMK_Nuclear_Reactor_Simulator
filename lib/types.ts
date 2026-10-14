@@ -280,7 +280,8 @@ export const INITIAL_GAME_STATE: GameState = {
 }
 
 // Warning levels, set from harness runs (owner, 2026-10-14; plan §6). The high ones sit above anything a competent
-// player needs, even Hard's largest target on four pumps (radioactivity ≈285, fuel ≈1,140°).
+// player needs, even Hard's largest target on four pumps (radioactivity ≈285). Hot fuel has no warning: it only
+// slows a rise, so it isn't a risk worth an alarm (owner, 2026-10-14).
 export const THRESHOLDS = {
   radioactivity: {
     highWarning: 350,
@@ -291,7 +292,6 @@ export const THRESHOLDS = {
     meltdown: 1200,
   },
   fuelTemp: {
-    highWarning: 1200,
     lowWarning: TUNING.fuelColdBelow, // where very cold fuel starts to push radioactivity up (§9)
   },
   steamVolume: {

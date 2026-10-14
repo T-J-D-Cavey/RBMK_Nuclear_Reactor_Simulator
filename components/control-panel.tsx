@@ -74,7 +74,6 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const lowSteamWarning = flags.lowSteam
   const highXenonWarning = flags.highXenon
   const lowFuelTempWarning = flags.lowFuelTemp
-  const highFuelTempWarning = flags.highFuelTemp
 
   const handlePauseClick = () => {
     if (gameState.isPaused) {
@@ -176,7 +175,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             <div className="font-mono font-bold vfd-display">{Math.round(gameState.reactorTemp)}°</div>
           </Bay>
 
-          <Bay label="Fuel Temp" warn={lowFuelTempWarning || highFuelTempWarning}>
+          <Bay label="Fuel Temp" warn={lowFuelTempWarning}>
             <div className="font-mono font-bold vfd-display">{Math.round(gameState.fuelTemp)}°</div>
           </Bay>
 

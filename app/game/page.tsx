@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
 import ChartRecorder from "@/components/chart-recorder"
 import ReactivityCards from "@/components/reactivity-cards"
+import { useElementHeight } from "@/hooks/use-element-height"
 
 export default function GamePage() {
   const { gameState, isLoaded, updateGameState, resetGame, togglePause } = useGameState()
@@ -22,6 +23,8 @@ export default function GamePage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSoundModal, setShowSoundModal] = useState(false)
   const router = useRouter()
+  // The board of balance is as tall as the chart recorder (owner, 2026-10-14)
+  const [chartRef, chartHeight] = useElementHeight<HTMLElement>()
 
   // Header keys that bring the alarm monitor or the shift log into view, and the shift log's lamp (plan §21.5)
   const [alarmRevealSignal, setAlarmRevealSignal] = useState(0)
@@ -140,7 +143,7 @@ export default function GamePage() {
               clockStartMs={getCameraClockStartMs(gameState.mode)}
             />
           </div>
-          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2 xl:col-start-3 xl:row-start-1 xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">
+          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2 xl:col-start-3 xl:row-start-1 xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4" ref={chartRef}>
             <ChartRecorder
               radioactivity={gameState.radioactivity}
               reactorTemp={gameState.reactorTemp}
@@ -151,7 +154,7 @@ export default function GamePage() {
           </aside>
           {/* Legasov's red and blue cards (owner, 2026-10-13) */}
           <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2 xl:col-start-1 xl:row-start-1 xl:justify-self-end xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">
-            <ReactivityCards gameState={gameState} />
+            <ReactivityCards gameState={gameState} height={chartHeight} />
           </aside>
         </div>
       </div>

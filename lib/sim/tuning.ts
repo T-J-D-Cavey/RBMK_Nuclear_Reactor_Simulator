@@ -29,7 +29,15 @@ const TUNING_BASE = {
   substeps: 20, // per 1 s tick
 
   // --- §5 Reactivity and radioactivity ---
-  generationTime: 100, // Λ: dR/dt = R·ρ/Λ. A balance of +10 points grows radioactivity ~10%/s
+  // Λ: dR/dt = R·ρ/Λ for a small balance: +10 points grows radioactivity ~3%/s. Slow like a real reactor's delayed
+  // neutrons (owner, 2026-10-14; was 100), so a creep needs a balance big enough to show on Legasov's board, and the
+  // random drift jitters half as much.
+  generationTime: 300,
+  // Beyond this balance (either way) the reactor goes "prompt": each point over it acts as if Λ were
+  // promptGenerationTime, so big pushes (the graphite tips under AZ-5, rods yanked out) still act within seconds.
+  // Ten points is one card on the board. A threshold of 5 or 8 points made the bot's shifts oscillate.
+  promptAbove: 10,
+  promptGenerationTime: 60,
   source: 0.05, // radioactivity/s that is always present, so it never sticks at zero
   maxRadioactivity: 50000,
   voidPerSteam: 0.6, // red card: points per unit of steam in the core (§16: proportional)

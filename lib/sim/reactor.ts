@@ -131,7 +131,7 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
     // Radioactivity: exponential in the net balance, plus a source term (bible §5).
     const rho = getReactivityCards(s).total
     const R = s.radioactivity
-    s.radioactivity = Math.min(T.maxRadioactivity, R * Math.exp((rho / T.generationTime) * dt) + T.source * dt)
+    s.radioactivity = Math.min(T.maxRadioactivity, R * Math.exp(growthRate(rho) * dt) + T.source * dt)
 
     // Fuel heated by radioactivity; heat flows to the reactor in proportion to the gap (bible §6).
     const transfer = T.fuelToReactorRate * (flow > 0.5 ? 1 : T.dryOutTransfer + (1 - T.dryOutTransfer) * (flow / 0.5))
@@ -154,6 +154,14 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
   }
 
   return { state: s, ending }
+}
+
+// Radioactivity's growth rate (1/s) for a balance in points: slow for a small balance, and every point beyond
+// promptAbove acts fast (bible §5).
+export function growthRate(rho: number): number {
+  const slow = 1 / T.generationTime
+  const beyond = Math.max(0, Math.abs(rho) - T.promptAbove)
+  return rho * slow + Math.sign(rho) * beyond * (1 / T.promptGenerationTime - slow)
 }
 
 // Xenon %/s: builds at low radioactivity (faster the lower), burns off faster the higher it is (bible §9).

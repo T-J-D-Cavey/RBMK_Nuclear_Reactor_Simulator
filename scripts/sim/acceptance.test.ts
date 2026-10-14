@@ -245,7 +245,10 @@ test("§9 doing nothing during burn-off with rods fully out overshoots dangerous
 
 test("§10 a rod moving off 0% causes a short spike; an inserted rod causes none", () => {
   const r = scenarios.tipFromZero.run()
-  assert.ok(r.samples[31].R > r.samples[30].R * 1.03, "spike when the tip enters")
+  // One rod's tip (5 points) is under the prompt threshold, so it acts at the slow rate: since the slower
+  // generation time (owner, 2026-10-14) the spike is about 2% over 2 s (was 4% in 1 s). AZ-5 with many rods at 0%
+  // goes prompt and is unchanged or stronger (checks below).
+  assert.ok(Math.max(r.samples[31].R, r.samples[32].R) > r.samples[30].R * 1.015, "spike when the tip enters")
   assert.ok(r.samples[40].R < r.samples[30].R, "then the boron takes over")
   const inserted = runQuiet(baseState(), 20, { 5: (s) => withRod(s, 0, 70, false) })
   assert.ok(inserted.samples.slice(6).every((x) => x.R <= inserted.samples[5].R + 0.5))

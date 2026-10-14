@@ -3,76 +3,139 @@
 import { useRef } from "react"
 import type { GameState } from "@/lib/types"
 import { getReactivityCards } from "@/lib/sim/reactor"
-import { BOARD_BUDGET, BOARD_CARDS, readBoard } from "@/lib/reactivity-board"
+import { BOARD_CARDS, type Board, type BoardSide, readBoard } from "@/lib/reactivity-board"
+import { useElementHeight } from "@/hooks/use-element-height"
 
-// Legasov's board from the show (owner, 2026-10-13): red cards push radioactivity up, blue cards push it down,
-// and the reactor is steady while the two stacks balance. Which cards are in play and how the white blocks show
-// the balance: lib/reactivity-board.ts. The arrows show whether a card is getting stronger or weaker.
+// Legasov's board from the show (owner, 2026-10-13): red cards push radioactivity up, blue cards push it down, and
+// the reactor is steady while the two columns are level. Every card is the same push, so a contributor's cards are
+// its size (lib/reactivity-board.ts). The arrows show whether a contributor is getting stronger or weaker.
 
 const TREND = 0.5 // points of change over the window that earn an arrow
 const WINDOW = 10 // seconds of game time
+const FULL_CARDS = 32 // a column this tall fills the rack; a taller one makes every card thinner so it still fits
+const MIN_PITCH = 3 // px per card at the thinnest
+const FALLBACK_STACK_PX = 192 // before the rack has been measured
+const LABEL_PX = 30 // room for one tag (two lines of title and the count)
+const BRACKET_PX = 16 // the strip between a stack and its tags (globals.css: .cr-card-brackets)
 
-export default function ReactivityCards({ gameState, className = "" }: { gameState: GameState; className?: string }) {
-  const board = readBoard(getReactivityCards(gameState))
+interface Group {
+  key: string
+  title: string
+  tag: string
+  note: string
+  count: number
+  trend: number
+  from: number // px from the bottom of the column
+  height: number
+  label: number // px from the bottom to the tag's centre
+}
+
+// Bottom to top, each tag as close to its group's middle as the tags below and above allow.
+function placeLabels(groups: Group[], stackPx: number) {
+  let floor = LABEL_PX / 2
+  for (const g of groups) {
+    g.label = Math.max(g.from + g.height / 2, floor)
+    floor = g.label + LABEL_PX
+  }
+  let ceiling = stackPx - LABEL_PX / 2
+  for (let i = groups.length - 1; i >= 0; i--) {
+    groups[i].label = Math.min(groups[i].label, ceiling)
+    ceiling = groups[i].label - LABEL_PX
+  }
+}
+
+export default function ReactivityCards({ gameState, height, className = "" }: { gameState: GameState; height?: number | null; className?: string }) {
+  const [stackRef, measured] = useElementHeight<HTMLDivElement>()
+  const stackPx = measured ?? FALLBACK_STACK_PX
+
+  // Counts hold steady near a rounding point, so the board needs the one from the previous game second.
+  const last = useRef<{ time: number; board: Board; before?: Board } | null>(null)
+  const before = last.current && last.current.time !== gameState.gameTime ? last.current.board : last.current?.before
+  const board = readBoard(getReactivityCards(gameState), before)
+  last.current = { time: gameState.gameTime, board, before }
 
   // One sample per game second, so the arrows compare against about ten seconds ago.
   const history = useRef<{ time: number; strengths: Record<string, number> }[]>([])
-  const last = history.current[history.current.length - 1]
-  if (!last || last.time !== gameState.gameTime) {
+  const newest = history.current[history.current.length - 1]
+  if (!newest || newest.time !== gameState.gameTime) {
     history.current = [...history.current, { time: gameState.gameTime, strengths: board.strengths }].slice(-(WINDOW + 1))
   }
-  const before = history.current[0]?.strengths ?? board.strengths
+  const then = history.current[0]?.strengths ?? board.strengths
+
+  // Whole pixels, so every card is exactly the same height.
+  const columnCards = (side: BoardSide) => BOARD_CARDS.filter((card) => card.side === side).reduce((sum, card) => sum + board.cards[card.key], 0)
+  const pitch = Math.max(MIN_PITCH, Math.floor(stackPx / Math.max(FULL_CARDS, columnCards("red"), columnCards("blue"))))
+  const gap = pitch >= 6 ? 2 : 1
+
+  const column = (side: BoardSide) => {
+    let from = 0
+    const groups: Group[] = []
+    for (const card of BOARD_CARDS.filter((c) => c.side === side)) {
+      const count = board.cards[card.key]
+      if (count === 0) continue
+      const change = board.strengths[card.key] - (then[card.key] ?? board.strengths[card.key])
+      groups.push({ ...card, count, trend: change >= TREND ? 1 : change <= -TREND ? -1 : 0, from, height: count * pitch, label: 0 })
+      from += count * pitch
+    }
+    placeLabels(groups, stackPx)
+    return (
+      <div className={`cr-card-column is-${side}`}>
+        <ul aria-label={side === "red" ? "Red cards: push radioactivity up" : "Blue cards: push radioactivity down"}>
+          {groups.map((g, i) => (
+            <li key={g.key} className={`cr-card-group cr-card-${side} ${i % 2 ? "is-alt" : ""}`} style={{ bottom: g.from, height: g.height }} title={`${g.title}: ${g.note}`}>
+              {Array.from({ length: g.count }, (_, n) => (
+                <span key={n} className="cr-card" style={{ height: pitch - gap, marginTop: gap }} />
+              ))}
+              <span className="sr-only">
+                {g.title}: {g.count} {g.count === 1 ? "card" : "cards"}
+                {g.trend > 0 ? ", getting stronger" : g.trend < 0 ? ", getting weaker" : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {/* A bracket along each group's cards, joined to its tag */}
+        <svg className="cr-card-brackets" viewBox={`0 0 ${BRACKET_PX} ${stackPx}`} preserveAspectRatio="none" aria-hidden="true">
+          {groups.map((g) => {
+            const x = (v: number) => (side === "red" ? v : BRACKET_PX - v) // red: the stack is on the right
+            // Pulled in a little at each end, so neighbouring brackets don't run together.
+            const top = stackPx - (g.from + g.height) + gap + 1.5
+            const bottom = Math.max(top + 1, stackPx - g.from - 1.5)
+            const middle = (top + bottom) / 2
+            const tag = stackPx - g.label
+            return (
+              <path
+                key={g.key}
+                d={`M${x(15)} ${top} H${x(11)} V${bottom} H${x(15)} M${x(11)} ${middle} H${x(6)} L${x(0)} ${tag}`}
+                className={`cr-card-bracket is-${side}`}
+              />
+            )
+          })}
+        </svg>
+        {groups.map((g, i) => (
+          <div key={g.key} className="cr-card-label" style={{ bottom: g.label - LABEL_PX / 2, height: LABEL_PX }} aria-hidden="true" title={`${g.title}: ${g.note}`}>
+            <span className={`cr-card-tag cr-card-${side} ${i % 2 ? "is-alt" : ""}`}>
+              {g.tag} <span className="cr-card-count">
+                ×{g.count}
+                {g.trend !== 0 && <span className="cr-card-trend">{g.trend > 0 ? " ▲" : " ▼"}</span>}
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
-    <div className={`cr-panel cr-screws p-3 sm:p-4 space-y-2 ${className}`}>
+    <div className={`cr-panel cr-screws p-3 sm:p-4 flex flex-col gap-2 ${className}`} style={height ? { height } : undefined}>
       <div className="flex items-center justify-between gap-2">
         <div className="cr-plate">Legasov&apos;s Board of Balance</div>
       </div>
 
-      <div className="cr-card-rack p-2 sm:p-2.5" role="group" aria-label="Red and blue cards">
-        <div className="grid grid-cols-2 gap-x-2 sm:gap-x-3">
-          {(["red", "blue"] as const).map((side) => (
-            <ul key={side} className="flex flex-col" aria-label={side === "red" ? "Red cards: push radioactivity up" : "Blue cards: push radioactivity down"}>
-              {BOARD_CARDS.filter((card) => card.side === side).map((card) => {
-                if (!board.inPlay[card.key]) {
-                  return (
-                    <li key={card.key} className="cr-card-shelf">
-                      <div className="cr-card cr-card-empty" title={`${card.title}: not in play`}>
-                        <span className="sr-only">{card.title}: not in play</span>
-                      </div>
-                    </li>
-                  )
-                }
-                const now = board.strengths[card.key]
-                const change = now - (before[card.key] ?? now)
-                const trend = card.steady ? 0 : change >= TREND ? 1 : change <= -TREND ? -1 : 0
-                const lit = board.blocks[card.key] ?? 0
-                return (
-                  <li key={card.key} className="cr-card-shelf">
-                    <div className={`cr-card ${side === "red" ? "cr-card-red" : "cr-card-blue"}`} title={card.note}>
-                      <div className="flex items-start justify-between gap-1">
-                        <span className="cr-card-title">{card.title}</span>
-                        {trend !== 0 && (
-                          <span className="cr-card-trend" aria-label={trend > 0 ? "getting stronger" : "getting weaker"}>
-                            {trend > 0 ? "▲" : "▼"}
-                          </span>
-                        )}
-                      </div>
-                      <span className="cr-card-meter" aria-label={`${lit} of ${BOARD_BUDGET} blocks`}>
-                        {Array.from({ length: BOARD_BUDGET }, (_, i) => (
-                          <span key={i} className={i < lit ? "on" : ""} />
-                        ))}
-                      </span>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          ))}
+      <div className="cr-card-rack p-2 sm:p-2.5 flex-1 min-h-0 flex flex-col" role="group" aria-label="Red and blue cards. Every card is the same push.">
+        <div ref={stackRef} className="grid grid-cols-2 flex-1 min-h-[12rem]">
+          {column("red")}
+          {column("blue")}
         </div>
-        <p className={`cr-card-verdict ${board.lean === "red" ? "is-red" : board.lean === "blue" ? "is-blue" : ""}`} aria-live="polite">
-          {board.verdict}
-        </p>
       </div>
     </div>
   )
