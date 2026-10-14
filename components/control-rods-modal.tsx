@@ -11,7 +11,7 @@ interface ControlRodsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   controlRods: ControlRod[]
-  onUpdate: (rods: ControlRod[]) => void
+  onUpdate: (rods: ControlRod[], az5: boolean) => void
 }
 
 export default function ControlRodsModal({ open, onOpenChange, controlRods, onUpdate }: ControlRodsModalProps) {
@@ -31,13 +31,13 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
     const updatedRods = controlRods.map((rod, idx) =>
       rod.stuck ? rod : { ...rod, target: Math.max(0, Math.min(100, tempValues[idx] ?? rod.target)) },
     )
-    onUpdate(updatedRods)
+    onUpdate(updatedRods, false)
     onOpenChange(false)
   }
 
   // AZ-5 takes effect with a single press: every rod that isn't jammed is driven toward 100% (bible §10).
   const handleAZ5 = () => {
-    onUpdate(controlRods.map((rod) => (rod.stuck ? rod : { ...rod, target: 100 })))
+    onUpdate(controlRods.map((rod) => (rod.stuck ? rod : { ...rod, target: 100 })), true)
     onOpenChange(false)
   }
 

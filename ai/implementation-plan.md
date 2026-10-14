@@ -1,6 +1,6 @@
 # RBMK Simulator – Implementation Plan
 
-Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the owner's clip picks) is left. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built and was playtested. Step 7b (half-strength rods, plus a coasting turbine in the Safety Test) is built and was playtested. Step 7c (the hot-fuel brake levels off above 2,000°) is built. Iteration 7 is complete. Iteration 8 (§21, from the owner's Hard-mode feedback): the UI items of 8a (homepage, header lamps, How to Play) are built and waiting on the owner's local test; the event mix and Hard targets are not built yet. A fuel-effect physics change (8b) has been trialled and is waiting on the owner's pick (§21.9).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
+Status: **IN PROGRESS. WS1–WS6 are built; WS7 (sounds) is wired in and waiting on the owner's listen. Mechanics iterations 1 (§10), 2 (§12), 3 (§13), 4 (§14), 5 (§15) and 6 (§16) are done, along with the message-area split (§11.1). WS4 (events and targets), WS5 (log, end screens, How to Play, README) and WS6 (Safety Test) were built on 2026-10-12 (§17) without touching the reactor physics. Iteration 7 (§20) is planned in three steps from the owner's playtests 2–4. Step 7a (pumps act on steam only below one pump, the turbine powering more pumps per unit of steam, and a Free-mode welcome message) is built and was playtested. Step 7b (half-strength rods, plus a coasting turbine in the Safety Test) is built and was playtested. Step 7c (the hot-fuel brake levels off above 2,000°) is built. Iteration 7 is complete. Iteration 8 (§21, from the owner's Hard-mode feedback): the UI items of 8a (homepage, header lamps, How to Play) are built and waiting on the owner's local test; the event mix and Hard targets are not built yet. A fuel-effect physics change (8b) has been trialled and is waiting on the owner's pick (§21.9).** This file maps [high-level-plan.md](high-level-plan.md) (the "bible") onto code. If this file and the high-level plan disagree, the high-level plan wins. Fix this file, not the bible.
 
 ---
 
@@ -28,7 +28,7 @@ Status: **IN PROGRESS. WS1–WS6 are built; only WS7 (sounds, waiting on the own
 
    Re-run the checks after each change. If feedback conflicts with an acceptance check in the bible, **stop and ask the owner**; don't quietly change the check. If the fix is purely numeric, edit `tuning.ts` and use `sim:trace` to confirm the scenario feels as described.
    - Event and target numbers live in `EVENT_TUNING` (end of `lib/sim/tuning.ts`); the Safety Test script is `lib/safety-test.ts`. A physics change can move what the Safety Test's targets demand, so re-run `sim:test` (its §14 checks play the whole test with a bot).
-4. WS4, WS5 and WS6 are built (§17). WS7 (sounds) waits on the owner's Pixabay picks (§8 Q5).
+4. WS4, WS5 and WS6 are built (§17). WS7 (sounds) is wired in with the owner's clips and waits on the owner's listen (§6, 2026-10-14; §8 Q5).
 5. **House rules:**
    - Never commit. The owner commits.
    - No new npm dependencies (see §2).
@@ -105,7 +105,7 @@ The scenarios are the bible's acceptance checks for §5–§11. Examples: steady
 | WS5 | Message log styling, end screens, incident report, How to Play, README | 15 | Lead or sub-agent | `components/message-area.tsx`, `game-over-screen.tsx`, `success-screen.tsx`, `app/instructions/page.tsx`, `README.md` | WS1 (stats, log) |
 | — | **Checkpoint B: owner playtests full Easy and Hard shifts** | | Owner | | WS4 |
 | WS6 | Safety Test mode | 14 | Lead | new `lib/safety-test.ts`; mode config | WS4 |
-| WS7 | Sounds | 15 | Owner picks Pixabay clips → lead wires them in | `hooks/use-audio-manager.ts`, `public/sounds/` | owner's clips |
+| WS7 | Sounds | 15 | Owner provides the clips → lead wires them in | `hooks/use-audio-manager.ts`, `public/sounds/` | owner's clips |
 | — | **Checkpoint C: owner plays Safety Test end to end** | | Owner | | WS6 |
 
 Rules for parallel work: a file belongs to one workstream at a time. Shared types (`lib/types.ts`) are changed only by the lead. Nothing is committed by agents; the owner commits.
@@ -225,6 +225,20 @@ See §8 for the full list of open questions.
     - unchanged: reactor temperature 800, and steam 300. At steam 300 the turbine trips. The largest target is steam 200 (220 at the edge of the tolerance), and 300 matches reactor 800 on two pumps.
   - The camera's interference starts at the high-radioactivity warning, as its comment says (was a fixed 250), and the chart recorder's red warning tick moves from 250 to 350. Time in danger in the incident report follows the new radioactivity level. How to Play and the warning texts read `THRESHOLDS` directly, so they need no edits.
   - New check in `events.test.ts`: 54/54 pass; `tsc` is clean.
+- 2026-10-14: **Sound modal split into Alarms and Sound Effects (owner; bible v2.18).** The UI is ready for WS7; no new sounds yet.
+  - **State** (`lib/types.ts`): `soundEnabled` and `soundEnabledWhenPaused` are replaced by `alarmsEnabled` and `effectsEnabled` (both off in a new game, as before). Old saves take both from the old single switch (`loadSavedGameState`).
+  - **Pause and game over** no longer flip the switches. `app/game/page.tsx` silences everything while paused or once the shift is over and passes `alarmsOn` / `effectsOn` to `useAudioManager`. The pause key no longer saves and restores the sound setting, and the game-over effect that turned sound off is gone.
+  - **Audio** (`hooks/use-audio-manager.ts`): the five alarms follow `alarmsOn`; the reactor hum follows `effectsOn`.
+  - **Modal** (`components/sound-modal.tsx`): two switches, each with a round key, nameplate, ON/OFF readout and a note with its hint ("Recommended for new operators" / "Recommended") and what it covers. The shared volume fader is unchanged. The header's sound key shows the speaker while either switch is on.
+  - 58/58 checks pass; `tsc` is clean. Not yet seen in a browser.
+- 2026-10-14: **WS7 sound effects wired in (owner's clips).**
+  - **Clips** in `public/sounds/`: `switch-confirm.mp3` (rods and turbine, 1.9 s), `pump-confirm.mp3` (2.7 s), `az5.mp3` (4.0 s), `warning-bleep.mp3` (1.1 s), `shift-log-printer.mp3` (3.2 s), `rod-drive.mp3` (104 s, the owner's "rod drive 2"). The owner's shorter `rod-drive-short.mp3` (7.7 s) is there but unused.
+  - **Triggers** (`lib/sound-cues.ts`, pure): the confirmations and AZ-5 come from the modals' Apply / AZ-5 presses (`onSoundEffect` from `control-panel.tsx`; the rods modal's `onUpdate` now says whether it was AZ-5, which plays instead of the rod click). The bleep plays when a warning key appears that wasn't there last tick, but not for one that cleared under 10 s before (`WARNING_REBLEEP_MS`), so a reading hovering at its level doesn't bleep every other second. The printer plays when the last shift-log message's id changes. Neither fires for what a loaded save already holds.
+  - **Rod drive** (`lib/rod-drive-voices.ts`): one voice per moving rod (insertion ≠ order, not jammed), at most three; voices starting together are 300 ms apart, and each starts at a different point in the clip (0, 35, 70 s) so they don't sound like one clip doubled. A voice whose rod has arrived fades out over 600 ms; a rod ordered again mid-fade picks its voice back up. Pausing or turning the effects off fades them all.
+  - **Checks** (`scripts/sim/sounds.test.ts`, 7 new, in `sim:test`): the voices against fake audio and a manual clock, the drive against the engine's rods (rods arriving, a jam, AZ-5), the re-bleep rule, and how often the bleep and printer sound in bot shifts (Hard: 0 bleeps and 33 printer sounds in 30 min; Safety Test: 5 and 21 in 20 min). 65/65 pass; `tsc` is clean. **Not yet heard in a browser.**
+- 2026-10-14: **After the owner's first listen ("the sounds work great"), and the homepage beacon (owner; bible v2.19).**
+  - **Rod drive** starts `DRIVE_START_DELAY_MS` (1,250 ms) after the order, then 300 ms apart, so it follows the confirmation clip's own lead-in (`lib/rod-drive-voices.ts`). A rod that arrives within that time never starts its voice. The checks now expect the delay, plus one for a short move staying silent: 65/65 pass.
+  - **Homepage** (`app/page.tsx`): the end screen's particles moved to `components/rising-particles.tsx` (shared; the end screen is unchanged: explosion embers burst, meltdown fallout drifts). The homepage has embers already drifting, the beacon as `.cr-beacon.cr-beacon-ceiling` (pivot 3 rem above the top edge, same speed and beams) and a pulsing red `.cr-beacon-glow` at the top edge, in `app/globals.css`. Both are hidden under reduced motion. Checked with headless Chrome screenshots at 1280 px; the phone shot was cropped by the headless window's minimum width (an unchanged page crops the same).
 
 ---
 
@@ -267,7 +281,8 @@ See §8 for the full list of open questions.
 | 15 | End screens per ending + incident report | ✅ | `components/incident-report.tsx`, `game-over-screen.tsx`, `success-screen.tsx`. |
 | 15 | How to Play rewrite (red/blue cards, tips, rod travel, ±10%, same physics) | ✅ | `app/instructions/page.tsx`; numbers read from `THRESHOLDS`, `TUNING` and `EVENT_TUNING`. |
 | 15 | README update | ✅ | Describes the current game; "Still to come" lists the sounds. |
-| 15 | Sounds | ⬜ | WS7. Waiting on the owner's Pixabay picks. |
+| 15 | Sound modal: Alarms and Sound Effects switches | ✅ | `components/sound-modal.tsx`, `hooks/use-audio-manager.ts` (§6, 2026-10-14). |
+| 15 | Sound effects: rods, rod drive, AZ-5, pumps, turbine, warning bleep, shift log printer | ✅ | WS7: `lib/sound-cues.ts`, `lib/rod-drive-voices.ts`, `hooks/use-audio-manager.ts` (§6, 2026-10-14). **Not yet heard in a browser.** |
 
 ---
 
@@ -282,7 +297,20 @@ From the engine tuning (raised at Checkpoint A; the owner's playtest file may an
    - Levers: `generationTime`, fuel brake.
 4. **Oscillation.** In some hot, low-flow states radioactivity swings up and down every few seconds before settling. *Seen in test 2 ("another huge swing"). Deferred to §10.5 D1, together with spike size and fuel speed.*
    - Lever: `fuelToReactorRate`.
-5. **Sounds (WS7).** Pick clips on Pixabay (searches: "relay click", "heavy switch", "electric motor loop", "emergency button") and put them in `public/sounds/`.
+5. **Sounds (WS7).** **Built 2026-10-14 (§6), waiting on the owner's listen.** The owner provided the clips (bible §15, v2.18). Wiring, all under the Sound Effects switch:
+
+   | Sound | Plays when | Notes |
+   |---|---|---|
+   | Rod confirmation | The player confirms new rod orders in `control-rods-modal.tsx` | One-off. |
+   | Rod drive | While any rod is travelling (insertion ≠ target and not jammed) | One voice per moving rod, up to three, 300 ms apart; each fades out as its rod arrives. |
+   | AZ-5 | The AZ-5 button is pressed | One-off. Takes the place of the rod confirmation for that press. |
+   | Pump confirmation | A pump change is applied in `water-pumps-modal.tsx` | One-off. |
+   | Turbine | The turbine setting is changed in `turbine-modal.tsx` | One-off. |
+   | Warning bleep | A warning appears that wasn't there last tick (`getReactorWarnings` + `getEventWarnings` keys) | One bleep per tick, however many arrive; not again for a warning that cleared under 10 s before. Alongside the alarm, which is under the Alarms switch. |
+   | Shift log printer | A new shift-log message arrives (the same trigger as the header's shift-log lamp, `use-shift-log-lamp.ts`) | The clip is 3.2 s. One sound for messages that arrive together. |
+   | Reactor hum | Always, while playing | Exists today. |
+
+   Neither new trigger fires for warnings or messages already in a save being loaded.
 
 Decisions made without the owner that they may want to revisit:
 

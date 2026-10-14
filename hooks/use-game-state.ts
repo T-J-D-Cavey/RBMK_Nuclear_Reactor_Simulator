@@ -25,9 +25,16 @@ function loadSavedGameState(): GameState {
             ? parsed.powerTarget
             : config.defaultPowerTarget
 
+          // Saves from before the sound modal split alarms from sound effects have one switch for both; a paused
+          // save held it in soundEnabledWhenPaused.
+          const { soundEnabled, soundEnabledWhenPaused, ...rest } = parsed
+          const oldSound = Boolean(parsed.isPaused ? soundEnabledWhenPaused : soundEnabled)
+
           return migrateSavedState({
             ...INITIAL_GAME_STATE,
-            ...parsed,
+            ...rest,
+            alarmsEnabled: rest.alarmsEnabled ?? oldSound,
+            effectsEnabled: rest.effectsEnabled ?? oldSound,
             mode,
             gameTime,
             powerTarget,
@@ -132,12 +139,6 @@ export function useGameState() {
       }
     }
   }, [isLoaded, gameState.isPaused, gameState.isGameOver, gameState.hasWon])
-
-  useEffect(() => {
-    if(gameState.isGameOver || gameState.hasWon) {
-      setGameState((prev) => ({ ...prev, soundEnabled: false }))
-    }
-  }, [gameState.isGameOver, gameState.hasWon])
 
   return {
     gameState,

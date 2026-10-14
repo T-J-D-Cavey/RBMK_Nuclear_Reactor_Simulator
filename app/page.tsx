@@ -6,6 +6,7 @@ import Link from "next/link"
 import { DifficultyModal } from "@/components/difficulty-modal"
 import type { GameMode } from "@/lib/types"
 import { createNewGame } from "@/lib/game-loop"
+import RisingParticles from "@/components/rising-particles"
 
 export default function HomePage() {
   const [showDifficultyModal, setShowDifficultyModal] = useState(false)
@@ -30,6 +31,10 @@ export default function HomePage() {
     <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
       {/* Atmosphere: dark vignette + faint scanlines over the control room */}
       <div className="ws3-home-vignette absolute inset-0 pointer-events-none" aria-hidden="true" />
+      {/* The end screen's emergency beacon, mounted on the ceiling, and embers drifting up the room (owner, 2026-10-14) */}
+      <div className="cr-beacon cr-beacon-ceiling" aria-hidden="true" />
+      <div className="cr-beacon-glow" aria-hidden="true" />
+      <RisingParticles kind="embers" start="drifting" />
 
       <div className="relative max-w-2xl w-full space-y-8 text-center">
         {/* Title on a CRT monitor */}

@@ -73,9 +73,14 @@ The reactor physics live in `lib/sim/` and run headlessly for testing (Node 24, 
 
 Design documents are in `ai/`.
 
-## Still to come
+## Sound
 
-- One-off sounds when rod, pump and turbine changes are applied, a rod-drive sound while rods travel, and a distinct AZ-5 sound.
+The sound key in the header has two switches, sharing one volume:
+
+- **Alarms** (recommended for new operators): an alarm sounds while a warning or emergency event lasts.
+- **Sound effects** (recommended): the reactor hum, a click when rod, pump or turbine changes are applied, a rod-drive sound while rods travel (one per moving rod, up to three), AZ-5, a bleep when a new warning appears, and a teleprinter when a new message arrives in the shift log.
+
+Nothing plays while the game is paused.
 
 ## Acceditations
 

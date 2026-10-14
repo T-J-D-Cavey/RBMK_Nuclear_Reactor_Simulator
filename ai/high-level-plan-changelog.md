@@ -2,6 +2,18 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.19 – 2026-10-14 (after the owner's first listen)
+
+- **The rod drive waits for the confirmation** (Section 15, owner). The confirmation clip starts a moment after the press, so the drive came in first. It now starts 1.25 s after the order. A move that finishes within the first second (about 5% of travel) plays only the confirmation.
+- **The homepage gets the end screen's beacon and embers** (Section 15, owner). The red beacon turns just above the top of the screen, as if mounted on the ceiling, so its beams sweep down through the room; the orange embers of the explosion ending drift up. Both are hidden under reduced motion.
+
+## v2.18 – 2026-10-14 (sound split into alarms and sound effects)
+
+- **Two sound switches instead of one** (Section 15, owner). The alarms help a new player notice trouble, while the sound effects are atmosphere and feedback, so a player may want one without the other. The sound modal now has an Alarms switch ("Recommended for new operators") and a Sound Effects switch ("Recommended"), with one volume shared by both. Alarms are the alarms for warnings and emergency events; everything else, the reactor hum included, is a sound effect.
+- **Two new sound effects** (owner): a short teleprinter sound for a new shift-log message, and a computer bleep for a new warning, alongside its alarm. They join the rod, pump, turbine, rod-drive and AZ-5 sounds already planned.
+- **The owner provides the clips** rather than picking them from searches the agent suggests.
+- **The rod drive follows the rods** (owner): one drive sound per moving rod, up to three, a split second apart so they don't sound like one clip doubled. Each fades out as its rod arrives instead of stopping dead.
+
 ## v2.17 – 2026-10-14 (Safety Test pacing; xenon gone almost at once from 130)
 
 - **Safety Test targets are reachable** (Section 14, owner, after a playtest). Output takes a minute or two to follow radioactivity, but each order came 60 s after the last, and with the 60 s notice a target was in force for only about a minute. The bot was on target for only 178 s of the whole run. Orders now come about 2 minutes apart: 3,500 → 2,500 → Kiev's hold at 1,500 (was 1,000) → 1,000 → 700 (was 500) → raise to 1,000. The bot now reaches every one (427 s on target). Xenon still reaches 100% before the test, and holding 1,000 MW still takes the rod margin below its minimum (131).

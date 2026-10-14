@@ -6,6 +6,7 @@ import type { GameState } from "@/lib/types"
 import { useTypewriter } from "@/hooks/use-typewriter"
 import { usePrefersReducedMotion } from "@/components/presentation-use-reduced-motion"
 import { formatCameraTimestamp, getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
+import RisingParticles from "@/components/rising-particles"
 
 export type EndingKind = "explosion" | "meltdown" | "performance" | "success"
 
@@ -27,28 +28,6 @@ interface EndScreenProps {
   lead?: string
   /** The paper report (IncidentReport) */
   report: ReactNode
-}
-
-// Deterministic particle field: embers after an explosion, glowing fallout after a meltdown.
-function Particles({ kind }: { kind: "explosion" | "meltdown" }) {
-  const count = kind === "explosion" ? 34 : 24
-  return (
-    <div aria-hidden="true">
-      {Array.from({ length: count }, (_, i) => {
-        const size = 2 + ((i * 7) % 5)
-        const duration = 5 + ((i * 13) % 7)
-        const style = {
-          left: `${(i * 37 + 11) % 100}%`,
-          width: size,
-          height: size,
-          animationDuration: `${duration}s`,
-          animationDelay: kind === "explosion" ? `${0.4 + ((i * 0.23) % 3)}s` : `${-((i * 0.9) % duration)}s`,
-          "--drift": `${((i * 29) % 90) - 45}px`,
-        } as CSSProperties
-        return <span key={i} className={`cr-ember ${kind === "meltdown" ? "cr-ember-fallout" : ""}`} style={style} />
-      })}
-    </div>
-  )
 }
 
 // The reactor hall camera, playing out how the shift ended.
@@ -196,7 +175,8 @@ export default function EndScreen({ kind, gameState, title, message, lead, repor
       style={{ backgroundImage: "url(control_room_background.jpg)", "--end-tint": look.tint } as CSSProperties}
     >
       {disaster && <div className="cr-beacon" aria-hidden="true" />}
-      {disaster && <Particles kind={kind} />}
+      {/* Embers burst up after an explosion; glowing fallout drifts after a meltdown */}
+      {disaster && <RisingParticles kind={kind === "explosion" ? "embers" : "fallout"} start={kind === "explosion" ? "burst" : "drifting"} />}
       {kind === "explosion" && <div className="ws5-flash pointer-events-none fixed inset-0 z-50 bg-white" aria-hidden="true" />}
 
       <div className={`relative z-10 max-w-2xl mx-auto px-4 py-8 sm:py-12 space-y-6 ${kind === "explosion" ? "cr-shake" : ""}`}>

@@ -203,10 +203,10 @@ export interface GameState {
   // Incident report
   stats: GameStats
 
-  // Audio
-  soundEnabled: boolean
+  // Audio: the sound modal's two switches (bible §15). Nothing plays while paused or once the shift is over.
+  alarmsEnabled: boolean // the alarms for warnings and emergency events
+  effectsEnabled: boolean // every other sound: the reactor hum, and the WS7 sound effects
   soundVolume: number
-  soundEnabledWhenPaused: boolean
 }
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -274,9 +274,9 @@ export const INITIAL_GAME_STATE: GameState = {
     secondsInDanger: 0,
   },
 
-  soundEnabled: false,
+  alarmsEnabled: false,
+  effectsEnabled: false,
   soundVolume: 1,
-  soundEnabledWhenPaused: false,
 }
 
 // Warning levels, set from harness runs (owner, 2026-10-14; plan §6). The high ones sit above anything a competent

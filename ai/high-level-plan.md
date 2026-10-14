@@ -399,14 +399,23 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 
 **Message area:** distinguish message sources visually (Grid Controller, Head Engineer, Test Supervisor, automatic alarms) and give it a teletype/log feel with timestamps. Keep it compact. The control panel's header has a red warning lamp (lit while any warning is active) and an amber shift-log lamp (lit when a new message arrives), each with a button that brings its machine into view, so a player on a phone knows to look below the dials.
 
-**Homepage and menus:** stronger atmosphere (CRT title treatment, subtle flicker). The mode selection includes Safety Test as a visually distinct "historical scenario" card. The Easy and Hard cards describe workload (shift length, targets, emergencies), not different reactor mechanics (Section 11).
+**Homepage and menus:** stronger atmosphere (CRT title treatment, subtle flicker, and the disaster end screens' red emergency beacon, mounted on the ceiling and sweeping down through the room, with embers drifting up). The mode selection includes Safety Test as a visually distinct "historical scenario" card. The Easy and Hard cards describe workload (shift length, targets, emergencies), not different reactor mechanics (Section 11).
 
 **End screens:** separate presentations for meltdown, core explosion, removed from post and success. Add a short "incident report" with peak values, lowest rod margin, emergencies handled and time in danger.
 
 **How to Play:** rewrite the physics section around the red-card / blue-card explanation so the manual teaches the same model the game uses. Include: removing a blue card raises radioactivity; power output only follows through heat and steam; rods take time to move; the graphite tips, and why rods shouldn't be parked at 0%; xenon burn-off speeding up as radioactivity rises; the ±10% tolerance; identical physics in every mode.
 
-**Sound:** one-off sounds when rod, pump and turbine changes are applied, a rod-drive sound while rods travel, and a distinct AZ-5 sound.
-- Clips come from Pixabay, like the existing sounds (credited in the README); useful searches: "relay click", "heavy switch", "electric motor loop", "emergency button". The owner auditions and picks them, since an AI agent can't listen to audio, and the agent wires them in. Sounds generated in code (Web Audio API) only where Pixabay has nothing suitable.
+**Sound:** two groups, each with its own on/off switch in the sound modal, and one shared volume:
+- **Alarms**, labelled "Recommended for new operators": the alarms that sound while a warning or an emergency event lasts. These exist today.
+- **Sound effects**, labelled "Recommended": every other sound:
+  - the reactor hum (exists today);
+  - one-off confirmation sounds when rod, pump and turbine changes are applied;
+  - a rod-drive sound while rods travel: one per moving rod, up to three, started a split second apart, once the confirmation sound has played. Each fades out as its rod arrives;
+  - a distinct AZ-5 sound;
+  - a short computer bleep when a new warning appears on the alarm monitor. It plays alongside that warning's alarm, not instead of it;
+  - a teleprinter printing sound when a new message arrives in the shift log, lasting only a few seconds.
+- Nothing plays while the game is paused or after the shift has ended. The switches keep their setting for when play resumes.
+- The owner provides the clips, since an AI agent can't listen to audio, and the agent wires them in. Pixabay is a good source, like the existing sounds (credited in the README); useful searches: "relay click", "heavy switch", "electric motor loop", "emergency button", "teleprinter", "computer beep". Sounds generated in code (Web Audio API) only where no clip is suitable.
 - Every sound must work on the Vercel deployment. New clips go in the repo's `public/` folder; the existing sounds can keep loading from the Vercel storage URLs they use today (their originals are in git history at commit 210215f).
 
 ---

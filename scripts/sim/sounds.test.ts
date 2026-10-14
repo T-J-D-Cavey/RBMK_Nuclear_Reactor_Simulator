@@ -1,0 +1,222 @@
+// Checks for the sound effect triggers (lib/sound-cues.ts) and the rod drive's voices (lib/rod-drive-voices.ts),
+// against the real engine where it matters. No browser: audio elements and timers are fakes on a manual clock.
+// Run: node --run sim:test
+import { test } from "node:test"
+import assert from "node:assert/strict"
+import { DRIVE_FADE_MS, DRIVE_STAGGER_MS, DRIVE_START_DELAY_MS, type DriveAudio, type DriveTimers, RodDriveVoices } from "../../lib/rod-drive-voices"
+import { newWarningAppeared, ROD_DRIVE_OFFSETS, rodsMoving, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
+import { advanceReactor } from "../../lib/sim/reactor"
+import { seededRng } from "../../lib/sim/rng"
+import { createNewGame } from "../../lib/game-loop"
+import { getEventWarnings, getReactorWarnings } from "../../lib/game-utils"
+import type { GameState } from "../../lib/types"
+import { az5, baseState } from "./harness"
+import { makeBot, playGame } from "./bot"
+
+// A manual clock: timers fire only when the test moves time on
+class Clock implements DriveTimers {
+  now = 0
+  private next = 1
+  private queue = new Map<number, { at: number; fn: () => void }>()
+  setTimeout(fn: () => void, ms: number) {
+    const id = this.next++
+    this.queue.set(id, { at: this.now + ms, fn })
+    return id
+  }
+  clearTimeout(id: unknown) {
+    this.queue.delete(id as number)
+  }
+  advance(ms: number) {
+    const end = this.now + ms
+    for (;;) {
+      let first: [number, { at: number; fn: () => void }] | null = null
+      for (const entry of this.queue) if (entry[1].at <= end && (!first || entry[1].at < first[1].at)) first = entry
+      if (!first) break
+      this.queue.delete(first[0])
+      this.now = first[1].at
+      first[1].fn()
+    }
+    this.now = end
+  }
+}
+
+class FakeAudio implements DriveAudio {
+  volume = 1
+  currentTime = 0
+  playing = false
+  startedAt: number[] = []
+  stoppedAt: number[] = []
+  private clock: Clock
+  constructor(clock: Clock) {
+    this.clock = clock
+  }
+  play() {
+    this.playing = true
+    this.startedAt.push(this.clock.now)
+  }
+  pause() {
+    if (this.playing) this.stoppedAt.push(this.clock.now)
+    this.playing = false
+  }
+}
+
+function voices() {
+  const clock = new Clock()
+  const audios = ROD_DRIVE_OFFSETS.map(() => new FakeAudio(clock))
+  const drive = new RodDriveVoices(audios, ROD_DRIVE_OFFSETS, clock)
+  drive.setVolume(0.8)
+  return { clock, audios, drive, playing: () => audios.filter((a) => a.playing).length }
+}
+
+test("rod drive: one voice per moving rod, at most three, after the confirmation and a split second apart", () => {
+  const D = DRIVE_START_DELAY_MS
+  const one = voices()
+  one.drive.setCount(1)
+  assert.equal(one.playing(), 0, "silent while the confirmation clunk plays")
+  one.clock.advance(D)
+  assert.equal(one.playing(), 1)
+  assert.deepEqual(one.audios[0].startedAt, [D])
+  assert.equal(one.audios[0].volume, 0.8)
+
+  const two = voices()
+  two.drive.setCount(2)
+  two.clock.advance(2000)
+  assert.deepEqual(two.audios.map((a) => a.startedAt), [[D], [D + DRIVE_STAGGER_MS], []])
+
+  const many = voices()
+  many.drive.setCount(10)
+  many.clock.advance(2000)
+  assert.equal(many.playing(), 3)
+  assert.deepEqual(many.audios.map((a) => a.startedAt), [[D], [D + DRIVE_STAGGER_MS], [D + 2 * DRIVE_STAGGER_MS]])
+  // Each voice plays from a different point in the clip, so they never repeat each other
+  assert.deepEqual(many.audios.map((a) => a.currentTime), ROD_DRIVE_OFFSETS)
+})
+
+test("rod drive: a voice whose rod has arrived fades out, the others carry on", () => {
+  const { clock, audios, drive } = voices()
+  drive.setCount(3)
+  clock.advance(2000)
+  drive.setCount(1)
+  clock.advance(DRIVE_FADE_MS / 2)
+  assert.ok(audios[1].playing && audios[1].volume < 0.8 && audios[1].volume > 0, "half-way through the fade")
+  assert.equal(audios[0].volume, 0.8)
+  clock.advance(DRIVE_FADE_MS)
+  assert.deepEqual(audios.map((a) => a.playing), [true, false, false])
+  assert.deepEqual(audios[1].stoppedAt, [2000 + DRIVE_FADE_MS])
+  drive.setCount(0)
+  clock.advance(DRIVE_FADE_MS)
+  assert.equal(audios[0].playing, false)
+})
+
+test("rod drive: a rod ordered again mid-fade picks its voice back up; a voice not yet started is cancelled", () => {
+  const a = voices()
+  a.drive.setCount(2)
+  a.clock.advance(2000)
+  a.drive.setCount(1)
+  a.clock.advance(DRIVE_FADE_MS / 2)
+  a.drive.setCount(2)
+  a.clock.advance(5000)
+  assert.equal(a.audios[1].playing, true)
+  assert.equal(a.audios[1].volume, 0.8)
+  assert.equal(a.audios[1].startedAt.length, 1, "kept playing, not restarted")
+
+  const b = voices()
+  b.drive.setCount(3)
+  b.drive.setCount(1) // before the second and third voices' turn
+  b.clock.advance(2000)
+  assert.deepEqual(b.audios.map((x) => x.startedAt.length), [1, 0, 0])
+
+  // A move that ends before the drive's start delay stays silent (only the confirmation plays)
+  const c = voices()
+  c.drive.setCount(1)
+  c.clock.advance(1000)
+  c.drive.setCount(0)
+  c.clock.advance(2000)
+  assert.deepEqual(c.audios[0].startedAt, [])
+})
+
+// The engine's rods, one tick a second, fed to the drive as the game page does
+function driveThrough(start: GameState, seconds: number) {
+  const rng = seededRng(1)
+  const { clock, drive, playing } = voices()
+  let s = start
+  const counts: number[] = []
+  const heard: number[] = []
+  for (let t = 0; t < seconds; t++) {
+    counts.push(rodsMoving(s.controlRods))
+    drive.setCount(rodsMoving(s.controlRods))
+    clock.advance(900) // late in the second: after any fade, and after the start delay from the second before
+    heard.push(playing())
+    clock.advance(100)
+    s = advanceReactor(s, rng).state
+  }
+  return { counts, heard }
+}
+
+test("rod drive follows the engine: sound lasts as long as each rod moves", () => {
+  const s = baseState()
+  const rods = s.controlRods.map((r) => r.insertion)
+  // Rods 1 and 2 move 20% (~3.6 s at 18 s a stroke), rod 3 moves 50% (~9 s)
+  const ordered = { ...s, controlRods: s.controlRods.map((r, i) => ({ ...r, target: i < 2 ? rods[i] + 20 : i === 2 ? rods[i] + 50 : r.insertion })) }
+  const { counts, heard } = driveThrough(ordered, 14)
+  // Rods 1 and 2 arrive in the 4th second; rod 3 in the 9th or 10th (rounding in the engine's sub-steps)
+  assert.deepEqual(counts.slice(0, 9), [3, 3, 3, 3, 1, 1, 1, 1, 1])
+  assert.ok(counts.slice(10).every((c) => c === 0) && counts[9] <= 1)
+  assert.deepEqual(heard, [0, ...counts.slice(1)], "1.25 s after the order, one voice per moving rod, faded out within the second a rod arrives")
+})
+
+test("rod drive: a jammed rod falls silent; AZ-5 runs three voices until the last rod is in", () => {
+  const s = baseState()
+  const ordered = { ...s, controlRods: s.controlRods.map((r, i) => (i < 2 ? { ...r, target: r.insertion + 40 } : r)) }
+  // Jam rod 1 after 2 s, as the rod-jam event does (its order becomes where it stopped)
+  const rng = seededRng(1)
+  let t = advanceReactor(advanceReactor(ordered, rng).state, rng).state
+  assert.equal(rodsMoving(t.controlRods), 2)
+  t = { ...t, controlRods: t.controlRods.map((r, i) => (i === 0 ? { ...r, stuck: true, target: r.insertion } : r)) }
+  assert.equal(rodsMoving(t.controlRods), 1)
+
+  const shut = az5(baseState())
+  const furthest = Math.max(...baseState().controlRods.map((r) => 100 - r.insertion))
+  const { counts, heard } = driveThrough(shut, 25)
+  const lastMoving = counts.findLastIndex((c) => c > 0)
+  assert.equal(counts[0], 10)
+  assert.equal(lastMoving + 1, Math.ceil((furthest / 100) * 18), "the drive stops when the furthest rod arrives")
+  assert.equal(heard[0], 0)
+  assert.ok(heard.slice(1, lastMoving + 1).every((h, i) => h === Math.min(3, counts[i + 1])))
+  assert.equal(heard[lastMoving + 1], 0)
+})
+
+test("warning bleep: once per new warning, not again for one that flickers at its level", () => {
+  const goneAt = new Map<string, number>()
+  assert.equal(newWarningAppeared([], ["highSteam"], goneAt, 0), true)
+  assert.equal(newWarningAppeared(["highSteam"], ["highSteam"], goneAt, 1000), false)
+  assert.equal(newWarningAppeared(["highSteam"], ["highSteam", "lowPerformance"], goneAt, 2000), true)
+  assert.equal(newWarningAppeared(["highSteam", "lowPerformance"], ["lowPerformance"], goneAt, 3000), false, "a warning clearing is silent")
+  assert.equal(newWarningAppeared(["lowPerformance"], ["highSteam", "lowPerformance"], goneAt, 5000), false, "back within 10 s")
+  assert.equal(newWarningAppeared(["highSteam", "lowPerformance"], ["lowPerformance"], goneAt, 6000), false)
+  assert.equal(newWarningAppeared(["lowPerformance"], ["highSteam", "lowPerformance"], goneAt, 6000 + WARNING_REBLEEP_MS), true, "back after 10 s")
+})
+
+// How often the bleep and the printer would sound in real shifts (the bot playing Hard, and the Safety Test)
+test("bleeps and printer sounds in a bot shift are occasional, not constant", () => {
+  for (const mode of ["hard", "safety_test"] as const) {
+    const { states } = playGame(createNewGame(mode), makeBot(), 3)
+    const goneAt = new Map<string, number>()
+    let prev: string[] = []
+    let bleeps = 0
+    let prints = 0
+    let lastLog = states[0].log.at(-1)?.id
+    states.forEach((s, t) => {
+      const keys = [...getReactorWarnings(s), ...getEventWarnings(s)].map((w) => w.key)
+      if (newWarningAppeared(prev, keys, goneAt, t * 1000)) bleeps++
+      prev = keys
+      const id = s.log.at(-1)?.id
+      if (id !== lastLog && id !== undefined) prints++
+      lastLog = id
+    })
+    const minutes = states.length / 60
+    console.log(`  ${mode}: ${minutes.toFixed(1)} min, ${bleeps} warning bleeps, ${prints} printer sounds`)
+    assert.ok(bleeps / minutes < 2, `${mode}: under two bleeps a minute`)
+    assert.ok(prints / minutes < 3, `${mode}: under three printer sounds a minute`)
+  }
+})

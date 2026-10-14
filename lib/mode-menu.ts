@@ -2,7 +2,7 @@
 // What to expect, not what will happen (owner, 2026-10-13): no event counts or target sizes.
 import type { GameMode } from "./types"
 
-export const MODE_MENU_TAGLINE = "Same reactor in every mode. Only the workload changes."
+export const MODE_MENU_TAGLINE = "Same flawed reactor in every mode"
 
 export const MODE_MENU: { mode: GameMode; name: string; specs: string[]; lamp: string; key: string; action: string }[] = [
   {

@@ -1,19 +1,65 @@
 "use client"
 
+import type { ComponentType } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Volume2, VolumeX } from "lucide-react"
+import { BellOff, BellRing, Volume2, VolumeX } from "lucide-react"
 
 interface SoundModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  soundEnabled: boolean
+  alarmsEnabled: boolean
+  effectsEnabled: boolean
   soundVolume: number
-  onEnabledUpdate: (soundEnabled: boolean) => void
+  onAlarmsUpdate: (alarmsEnabled: boolean) => void
+  onEffectsUpdate: (effectsEnabled: boolean) => void
   onVolumeUpdate: (soundVolume: number) => void
 }
 
-export default function SoundModal({ open, onOpenChange, soundEnabled, soundVolume, onEnabledUpdate, onVolumeUpdate }: SoundModalProps) {
+// One switch: round key, nameplate, a hint, what it covers and an ON/OFF readout
+function SoundSwitch({ id, name, hint, covers, on, OnIcon, OffIcon, onToggle }: {
+  id: string
+  name: string
+  hint: string
+  covers: string
+  on: boolean
+  OnIcon: ComponentType<{ className?: string }>
+  OffIcon: ComponentType<{ className?: string }>
+  onToggle: () => void
+}) {
+  return (
+    <div className="cr-module p-3 space-y-3">
+      <div className="flex items-center gap-4">
+        <span className="cr-round-bezel shrink-0">
+          <button
+            id={id}
+            aria-pressed={on}
+            aria-label={name}
+            aria-describedby={`${id}-covers`}
+            onClick={onToggle}
+            className={`cr-round-key w-16 h-16 ${on ? "on" : ""}`}
+          >
+            {on ? <OnIcon className="w-8 h-8" /> : <OffIcon className="w-8 h-8" />}
+          </button>
+        </span>
+        <div className="flex-1 min-w-0 space-y-2">
+          <Label htmlFor={id} className="cr-plate">
+            {name}
+          </Label>
+          <div className="cr-screen-bezel">
+            <div className={`led-display text-center text-base ${on ? "led-green" : ""}`}>{on ? "ON" : "OFF"}</div>
+          </div>
+        </div>
+      </div>
+      <div id={`${id}-covers`} className="cr-note px-3 py-2 uppercase !text-[11px] space-y-0.5">
+        <p className="font-bold">{hint}</p>
+        <p>{covers}</p>
+      </div>
+    </div>
+  )
+}
+
+export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsEnabled, soundVolume, onAlarmsUpdate, onEffectsUpdate, onVolumeUpdate }: SoundModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="cr-dialog sm:max-w-sm">
@@ -22,27 +68,27 @@ export default function SoundModal({ open, onOpenChange, soundEnabled, soundVolu
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="cr-module p-3 flex items-center gap-4">
-            <span className="cr-round-bezel shrink-0">
-              <button
-                id="sound-toggle"
-                aria-pressed={soundEnabled}
-                aria-label="Sound effects"
-                onClick={() => onEnabledUpdate(!soundEnabled)}
-                className={`cr-round-key w-16 h-16 ${soundEnabled ? "on" : ""}`}
-              >
-                {soundEnabled ? <Volume2 className="w-8 h-8" /> : <VolumeX className="w-8 h-8" />}
-              </button>
-            </span>
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="sound-toggle" className="cr-plate">
-                Sound Effects
-              </Label>
-              <div className="cr-screen-bezel">
-                <div className={`led-display text-center text-base ${soundEnabled ? "led-green" : ""}`}>{soundEnabled ? "ON" : "OFF"}</div>
-              </div>
-            </div>
-          </div>
+          {/* Two switches (bible §15): alarms, recommended for new players, and every other sound */}
+          <SoundSwitch
+            id="alarms-toggle"
+            name="Alarms"
+            hint="Recommended for new operators"
+            covers="Warnings and emergency events."
+            on={alarmsEnabled}
+            OnIcon={BellRing}
+            OffIcon={BellOff}
+            onToggle={() => onAlarmsUpdate(!alarmsEnabled)}
+          />
+          <SoundSwitch
+            id="effects-toggle"
+            name="Sound Effects"
+            hint="Recommended"
+            covers="Reactor hum, rods, pumps, turbine, new warnings and the shift log printer."
+            on={effectsEnabled}
+            OnIcon={Volume2}
+            OffIcon={VolumeX}
+            onToggle={() => onEffectsUpdate(!effectsEnabled)}
+          />
 
           {/* VOLUME FADER */}
           <div className="cr-module p-3 space-y-4">

@@ -9,7 +9,8 @@ import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
 import { useAudioManager } from "@/hooks/use-audio-manager"
 import { useShiftLogLamp } from "@/hooks/use-shift-log-lamp"
-import { getAlarms } from "@/lib/game-utils"
+import { getAlarms, getEventWarnings, getReactorWarnings } from "@/lib/game-utils"
+import { rodsMoving } from "@/lib/sound-cues"
 import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
@@ -55,21 +56,24 @@ export default function GamePage() {
 
   // --- AUDIO LOGIC ---
   const alarms = getAlarms(gameState)
-  const { initializeAudio } = useAudioManager({
-    soundEnabled: gameState.soundEnabled,
+  // Silent while paused and once the shift is over; the player's two switches are kept for when play resumes
+  const audioLive = !gameState.isPaused && !gameState.isGameOver && !gameState.hasWon
+  const { initializeAudio, playEffect } = useAudioManager({
+    alarmsOn: gameState.alarmsEnabled && audioLive,
+    effectsOn: gameState.effectsEnabled && audioLive,
     soundVolume: gameState.soundVolume,
     generalAlarmIsNeeded: alarms.general,
     eventAlarm: alarms.event,
     highRadAlarm: alarms.highRadioactivity,
     highReactorTempAlarm: alarms.highReactorTemp,
     highSteamOrXenon: alarms.highSteamOrXenon,
+    loaded: isLoaded,
+    rodsMoving: rodsMoving(gameState.controlRods),
+    warningKeys: [...getReactorWarnings(gameState), ...getEventWarnings(gameState)].map((warning) => warning.key),
+    lastLogId: gameState.log[gameState.log.length - 1]?.id,
   })
   const handleInteraction = () => {
     initializeAudio();
-  }
-
-  if(gameState.isPaused) {
-    // needs testing in case unpausing is needed: updateGameState({soundsoundEnabled: false})
   }
 
   // Until the saved game is loaded (browser only), show the empty control room: the server renders the same, so
@@ -98,9 +102,11 @@ export default function GamePage() {
       <SoundModal
        open={showSoundModal}
        onOpenChange={setShowSoundModal}
-       soundEnabled={gameState.soundEnabled}
+       alarmsEnabled={gameState.alarmsEnabled}
+       effectsEnabled={gameState.effectsEnabled}
        soundVolume={gameState.soundVolume}
-       onEnabledUpdate={(soundEnabled) => updateGameState({ soundEnabled })}
+       onAlarmsUpdate={(alarmsEnabled) => updateGameState({ alarmsEnabled })}
+       onEffectsUpdate={(effectsEnabled) => updateGameState({ effectsEnabled })}
        onVolumeUpdate={(soundVolume) => updateGameState({ soundVolume })}
       />
       
@@ -112,6 +118,7 @@ export default function GamePage() {
           updateGameState={updateGameState}
           onHomeClick={handleHomeClick}
           onSoundClick={handleSoundModalToggle}
+          onSoundEffect={playEffect}
           logLampLit={logLamp.lit}
           onSeeWarnings={handleSeeWarnings}
           onSeeLog={handleSeeLog}
@@ -130,10 +137,13 @@ export default function GamePage() {
 
       {/* Reactor camera + side panels (WS3 presentation).
           Wide screens (xl): three columns, so the camera sits on the control panel's centre line (same max width),
-          with the red and blue cards to its left and the chart recorder to its right. Medium (md): the camera on
-          top, then the cards and the chart recorder side by side. Phones: stacked, the cards below the chart. */}
+          with the red and blue cards to its left and the chart recorder to its right. Each side column is a quarter
+          of the row (half the camera's width, so never wider or taller than the camera) between 18rem and 36rem;
+          the row stops growing at 36 + 72 + 36rem plus the gaps, for very wide screens (owner, 2026-10-14).
+          Medium (md): the camera on top, then the cards and the chart recorder side by side. Phones: stacked, the
+          cards below the chart. */}
       <div className="w-full cr-monitor-wall px-3 py-5 sm:px-4 md:py-8">
-        <div className="mx-auto w-full max-w-6xl xl:max-w-none grid grid-cols-1 md:grid-cols-2 gap-4 items-start xl:grid-cols-[minmax(18rem,1fr)_minmax(0,72rem)_minmax(18rem,1fr)]">
+        <div className="mx-auto w-full max-w-6xl xl:max-w-[146rem] grid grid-cols-1 md:grid-cols-2 gap-4 items-start xl:grid-cols-[clamp(18rem,calc((100%_-_2rem)/4),36rem)_minmax(0,72rem)_clamp(18rem,calc((100%_-_2rem)/4),36rem)]">
           <div className="w-full min-w-0 max-w-6xl mx-auto md:col-span-2 md:row-start-1 xl:col-span-1 xl:col-start-2 xl:row-start-1">
             <ReactorCamera
               variant="inline"
@@ -143,7 +153,7 @@ export default function GamePage() {
               clockStartMs={getCameraClockStartMs(gameState.mode)}
             />
           </div>
-          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2 xl:col-start-3 xl:row-start-1 xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4" ref={chartRef}>
+          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2 xl:col-start-3 xl:row-start-1 xl:mx-0 xl:sticky xl:top-4" ref={chartRef}>
             <ChartRecorder
               radioactivity={gameState.radioactivity}
               reactorTemp={gameState.reactorTemp}
@@ -153,7 +163,7 @@ export default function GamePage() {
             />
           </aside>
           {/* Legasov's red and blue cards (owner, 2026-10-13) */}
-          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2 xl:col-start-1 xl:row-start-1 xl:justify-self-end xl:mx-0 xl:max-w-[22rem] xl:sticky xl:top-4">
+          <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2 xl:col-start-1 xl:row-start-1 xl:justify-self-end xl:mx-0 xl:sticky xl:top-4">
             <ReactivityCards gameState={gameState} height={chartHeight} />
           </aside>
         </div>

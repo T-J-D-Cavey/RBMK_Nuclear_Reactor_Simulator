@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react"
 import { ArrowLeft, Cctv, Home, Volume2, VolumeX } from "lucide-react"
 
 import type { GameState } from "@/lib/types"
+import type { SoundEffect } from "@/lib/sound-cues"
 import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
@@ -17,6 +18,7 @@ interface ControlPanelProps {
   updateGameState: (updates: Partial<GameState>) => void
   onHomeClick: () => void
   onSoundClick: () => void
+  onSoundEffect: (effect: SoundEffect) => void // confirmations and AZ-5 (bible §15)
   logLampLit: boolean // a new shift-log message hasn't been seen yet
   onSeeWarnings: () => void
   onSeeLog: () => void
@@ -54,7 +56,7 @@ function Bay({ label, warn = false, className = "", children }: { label: string;
   )
 }
 
-export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick, logLampLit, onSeeWarnings, onSeeLog }: ControlPanelProps) {
+export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick, onSoundEffect, logLampLit, onSeeWarnings, onSeeLog }: ControlPanelProps) {
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
@@ -75,18 +77,6 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const highXenonWarning = flags.highXenon
   const lowFuelTempWarning = flags.lowFuelTemp
 
-  const handlePauseClick = () => {
-    if (gameState.isPaused) {
-      updateGameState({ soundEnabled: gameState.soundEnabledWhenPaused })
-    } else {
-      updateGameState({
-        soundEnabledWhenPaused: gameState.soundEnabled,
-        soundEnabled: false,
-      })
-    }
-    onTogglePause()
-  }
-
   return (
     <div className="max-w-6xl mx-auto">
       <div className="cr-panel cr-screws p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
@@ -103,7 +93,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             </span>
             <span className="cr-bezel col-start-3 row-start-1 justify-self-end">
               <button className="cr-key cr-key-grey size-9" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
-                {gameState.soundEnabled ? <Volume2 className="h-[18px] w-[18px]" /> : <VolumeX className="h-[18px] w-[18px]" />}
+                {gameState.alarmsEnabled || gameState.effectsEnabled ? <Volume2 className="h-[18px] w-[18px]" /> : <VolumeX className="h-[18px] w-[18px]" />}
               </button>
             </span>
           </div>
@@ -222,7 +212,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             <div className="w-full flex-1 flex items-center justify-center">
               <span className="cr-bezel">
                 <button
-                  onClick={handlePauseClick}
+                  onClick={onTogglePause}
                   className={`cr-key w-32 h-12 ${gameState.isPaused ? "cr-key-red-lit" : "cr-key-red"}`}
                 >
                   {gameState.isPaused ? "RESUME" : "PAUSE"}
@@ -441,21 +431,30 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         open={rodsModalOpen}
         onOpenChange={setRodsModalOpen}
         controlRods={gameState.controlRods}
-        onUpdate={(rods) => updateGameState({ controlRods: rods })}
+        onUpdate={(rods, az5) => {
+          updateGameState({ controlRods: rods })
+          onSoundEffect(az5 ? "az5" : "rodConfirm")
+        }}
       />
 
       <WaterPumpsModal
         open={pumpsModalOpen}
         onOpenChange={setPumpsModalOpen}
         waterPumps={gameState.waterPumps}
-        onUpdate={(pumps) => updateGameState({ waterPumps: pumps })}
+        onUpdate={(pumps) => {
+          updateGameState({ waterPumps: pumps })
+          onSoundEffect("pumpConfirm")
+        }}
       />
 
       <TurbineModal
         open={turbineModalOpen}
         onOpenChange={setTurbineModalOpen}
         turbineMode={gameState.turbineMode}
-        onUpdate={(mode) => updateGameState({ turbineMode: mode, turbineConnected: mode === "grid" })}
+        onUpdate={(mode) => {
+          updateGameState({ turbineMode: mode, turbineConnected: mode === "grid" })
+          onSoundEffect("turbineConfirm")
+        }}
       />
 
       {/* Fullscreen reactor view modal */}
