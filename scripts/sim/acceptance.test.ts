@@ -227,14 +227,15 @@ test("§9 a poisoned, collapsed reactor restarts within ~1–3 minutes with rods
 
 test("§9 burn-off speed depends on radioactivity", () => {
   // One turnover (owner, plan §21 step 8b): at or below 80 xenon builds, faster the lower radioactivity is;
-  // above it a full load (100%) clears slowly just above 80, at a medium rate by 100 and fast from 120.
+  // above it a full load (100%) clears slowly just above 80, at a medium rate by 100, fast by 120 and almost
+  // instantly from 130 (owner, 2026-10-14).
   const clearTime = (R: number) => 100 / -xenonRate(R)
   assert.ok(xenonRate(80) === 0 && xenonRate(70) > 0, "builds at or below 80")
   assert.ok(xenonRate(0) > 3 * xenonRate(60), "builds faster the closer radioactivity is to 0")
   assert.ok(clearTime(85) >= 240, `slow just above 80: ${clearTime(85)}s`)
   assert.ok(clearTime(100) >= 60 && clearTime(100) <= 120, `medium at 100: ${clearTime(100)}s`)
   assert.ok(clearTime(120) <= 60, `fast at 120: ${clearTime(120)}s`)
-  assert.ok(clearTime(500) === clearTime(120), "no faster than at 120, so a surge leaves time to react")
+  assert.ok(clearTime(130) <= 5 && clearTime(500) === clearTime(130), `almost instant from 130: ${clearTime(130)}s`)
 })
 
 test("§9 doing nothing during burn-off with rods fully out overshoots dangerously", () => {
@@ -257,7 +258,9 @@ test("§10 a rod moving off 0% causes a short spike; an inserted rod causes none
 test("§10 AZ-5 with every rod at 0% pushes radioactivity up for about 2 seconds", () => {
   const r = scenarios.az5AllOut.run()
   const peak = r.samples.reduce((a, b) => (b.R > a.R ? b : a))
-  assert.ok(peak.t >= 1 && peak.t <= 4, `peak at ${peak.t}s`)
+  // The tips alone peak at about 2 s. In this poisoned core their spike carries radioactivity past 120, where the
+  // xenon vanishes almost at once (owner, 2026-10-14), so the surge runs on to about 5 s (peak ~750, was ~140).
+  assert.ok(peak.t >= 1 && peak.t <= 6, `peak at ${peak.t}s`)
   assert.ok(peak.R > r.samples[0].R * 1.5)
 })
 

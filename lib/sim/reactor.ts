@@ -168,7 +168,9 @@ export function growthRate(rho: number): number {
 export function xenonRate(radioactivity: number): number {
   const R = Math.max(0, radioactivity)
   if (R <= T.xenonTurnover) return T.xenonBuildRate * ((T.xenonTurnover - R) / T.xenonTurnover)
-  return -Math.min(T.xenonBurnMax, T.xenonBurnRate * (R - T.xenonTurnover))
+  const burn = Math.min(T.xenonBurnMax, T.xenonBurnRate * (R - T.xenonTurnover))
+  const wipe = Math.min(1, Math.max(0, (R - T.xenonWipeFrom) / (T.xenonWipeAt - T.xenonWipeFrom)))
+  return -(burn + wipe * (T.xenonWipeRate - burn))
 }
 
 export function checkEnding(s: GameState): GameOverCause | null {

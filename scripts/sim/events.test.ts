@@ -299,6 +299,12 @@ test("§13 a low target visibly risks xenon build-up", () => {
 // ---------- §14 Safety Test ----------
 
 const safety = (opts = {}) => playGame(createNewGame("safety_test"), makeBot(opts), 1)
+const stepAt = (action: string) => SAFETY_TEST_SCRIPT.find((step) => step.action === action)!.at
+const PUMPS_ON = stepAt("pumps-on")
+const TURBINE_SWITCH = stepAt("turbine-to-pumps")
+const MAINS_OFF = stepAt("mains-off")
+const MAINS_ON = stepAt("mains-on")
+const RAISE = SAFETY_TEST_SCRIPT.findLast((step) => step.target != null && step.at < PUMPS_ON)!.at
 
 test("§14 every phase is triggered in order; each automated change happens once, as it is announced", () => {
   const run = safety()
@@ -306,10 +312,12 @@ test("§14 every phase is triggered in order; each automated change happens once
   assert.equal(scripted.length, SAFETY_TEST_SCRIPT.length, "every script step logged exactly once")
   SAFETY_TEST_SCRIPT.forEach((step, i) => assert.ok(Math.abs(scripted[i].time - step.at) <= 1, `step at ${step.at}s logged at ${scripted[i].time}s`))
   const at = (t: number) => run.states[t - 1]
-  assert.ok(at(720).waterPumps.every((p) => p.on), "pumps switched on with the announcement")
-  assert.equal(at(750).turbineMode, "pumps")
-  assert.equal(at(784).mainsPower, false)
-  assert.equal(at(900).mainsPower, true)
+  assert.ok(at(PUMPS_ON).waterPumps.every((p) => p.on), "pumps switched on with the announcement")
+  assert.equal(at(TURBINE_SWITCH).turbineMode, "pumps")
+  assert.equal(at(MAINS_OFF).mainsPower, false)
+  assert.equal(at(MAINS_ON).mainsPower, true)
+  assert.ok(Math.min(...SAFETY_TEST_SCRIPT.map((step) => step.target ?? Infinity)) >= 700, "no target below 700 MW")
+  assert.ok(run.final.timeLimit! - MAINS_ON <= 120, "at most 2 minutes from test complete to the end")
   assert.equal(run.final.eventHistory.length, 0, "no random events")
 })
 
@@ -317,7 +325,7 @@ test("§14 the player can reverse an automated change and the script never undoe
   const rng = seededRng(2)
   const bot = makeBot()
   let s = createNewGame("safety_test")
-  for (let t = 0; t < 725; t++) s = advanceGame(bot.act(s), rng)
+  for (let t = 0; t < PUMPS_ON + 5; t++) s = advanceGame(bot.act(s), rng)
   s = { ...s, waterPumps: s.waterPumps.map((p, i) => ({ ...p, on: i < 2 })) }
   for (let t = 0; t < 30; t++) s = advanceGame(s, rng)
   assert.equal(s.waterPumps.filter((p) => p.on).length, 2)
@@ -329,17 +337,17 @@ test("§14 the player can reverse an automated change and the script never undoe
 
 test("§14 no grid target from the turbine switch: the display shows N/A and performance is frozen", () => {
   const run = safety()
-  const after = run.states.slice(750)
+  const after = run.states.slice(TURBINE_SWITCH)
   assert.ok(after.every((s) => s.powerTarget === null))
   assert.ok(after.every((s) => s.performance === after[0].performance))
 })
 
 test("§14 with the xenon from phases 2–3, holding the test output takes the rod margin below its minimum", () => {
   const run = safety()
-  const phase4 = run.states.slice(540, 720)
+  const phase4 = run.states.slice(RAISE, PUMPS_ON)
   const lowest = Math.min(...phase4.map((s) => getRodMargin(s.controlRods)))
   assert.ok(lowest < 200, `lowest rod margin in phase 4: ${lowest}`)
-  assert.ok(run.states[719].xenon > 80, `xenon ${run.states[719].xenon.toFixed(0)}% when the test begins`)
+  assert.ok(run.states[PUMPS_ON - 1].xenon > 80, `xenon ${run.states[719].xenon.toFixed(0)}% when the test begins`)
 })
 
 test("§14 surviving to the end is possible with skilful play; ignoring the test ends in disaster", () => {
@@ -353,7 +361,7 @@ test("§11/§14 a Safety Test runaway with the pumps unpowered ends in an explos
   const rng = seededRng(1)
   const bot = makeBot({ testResponse: "none" })
   let s = createNewGame("safety_test")
-  for (let t = 0; t < 786; t++) s = advanceGame(bot.act(s), rng)
+  for (let t = 0; t < MAINS_OFF + 2; t++) s = advanceGame(bot.act(s), rng)
   s = { ...s, turbineMode: "grid", turbineConnected: true }
   while (!s.isGameOver && !s.hasWon) s = advanceGame(s, rng)
   assert.equal(s.gameOverCause, "explosion")

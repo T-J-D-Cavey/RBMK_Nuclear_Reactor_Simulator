@@ -97,6 +97,8 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
       goal = 100 // Free mode: hold normal running
     }
     if (s.reactorTemp > 750 || s.steamVolume > 270 || s.fuelTemp > 1100) goal = Math.min(goal, R * 0.8)
+    // Xenon vanishes almost at once above 120 (bible §9), so while the gauge shows any, hold normal running at most.
+    if (s.xenon > 0.5) goal = Math.min(goal, 90)
 
     // AZ-5 as a last resort (never needed if the loop works; safe because no rod is parked at 0%).
     if (o.allocation === "even" && (R > 900 || s.steamVolume > 500 || s.reactorTemp > 1100)) return az5(s)

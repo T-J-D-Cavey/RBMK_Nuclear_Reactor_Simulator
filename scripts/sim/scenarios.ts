@@ -92,8 +92,8 @@ export const scenarios: Record<string, Scenario> = {
     description: "[§10/§11] Fragile: rods at 0%, one pump, cold fuel and climbing; AZ-5 at t=0",
     run: () => {
       const start = runQuiet(poisonedState(), 2000, { 0: (s) => setPumps(setRods(s, 0), 4) })
-      // Find the moment radioactivity first passes 20 on the restart (still below xenon burn-off, so the
-      // spike comes from the tips alone), then cut flow and press AZ-5.
+      // Find the moment radioactivity first passes 20 on the restart (still below xenon burn-off), then cut flow
+      // and press AZ-5. The tips' spike passes 120, so the xenon goes too.
       const idx = start.samples.findIndex((x) => x.R > 20)
       const at = start.samples[Math.max(0, idx)].state
       return runQuiet(setPumps(at, 1, { instant: true }), 120, { 0: az5 })

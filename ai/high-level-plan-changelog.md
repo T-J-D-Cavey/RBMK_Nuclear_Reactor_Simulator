@@ -2,6 +2,15 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.17 – 2026-10-14 (Safety Test pacing; xenon gone almost at once from 130)
+
+- **Safety Test targets are reachable** (Section 14, owner, after a playtest). Output takes a minute or two to follow radioactivity, but each order came 60 s after the last, and with the 60 s notice a target was in force for only about a minute. The bot was on target for only 178 s of the whole run. Orders now come about 2 minutes apart: 3,500 → 2,500 → Kiev's hold at 1,500 (was 1,000) → 1,000 → 700 (was 500) → raise to 1,000. The bot now reaches every one (427 s on target). Xenon still reaches 100% before the test, and holding 1,000 MW still takes the rod margin below its minimum (131).
+- **Only 2 minutes after "Test complete"** (owner: 4–5 minutes of waiting was too long). The test moved 3 minutes later (pumps on at 15:00, test begins 16:04, complete 18:00); the time gained went to the target phases. The night clock now starts at 01:07:00, so the test still begins at 01:23:04 and the shift ends at 01:27.
+- **Xenon vanishes almost at once from 130** (Section 9, owner: burn-off felt too slow). Up to 120 nothing changed (a full load in ~40 s at 120); between 120 and 130 burn-off climbs steeply to about 3 s for a full load. This reverses v2.14's "never faster than at 120", and it has costs:
+  - **Climbing out of the xenon pit is now a cliff edge.** With rods fully out the burn speeds the climb; a reactor that passes 120 with xenon left loses the rest in a second or two and goes prompt. The bot's pit escape peaked at radioactivity ~1,100 (was 130) and only just survived. Slower wipes were tried: 15 and 8 %/s still spiked over 900; 4 %/s (a full load in ~25 s) kept it to ~145.
+  - **AZ-5 in a poisoned, rods-out reactor** now peaks at ~750 after 5 s (was ~140 after 2 s): the tips' spike passes 120 and takes the xenon with it. The §10 acceptance check allows a 6 s peak.
+  - **Hard:** the bot now keeps radioactivity at or below 90 while the xenon gauge shows anything (above that it lost seed 10 to an overshoot). It survives every Hard shift, with lower performance after low targets (e.g. 81% → 62%, 54% → 40%).
+
 ## v2.16 – 2026-10-14 (a small balance acts slowly, a big one fast)
 
 - **Radioactivity answers a small balance three times more slowly, and a big one fast** (Sections 5 and 16, owner). Playing with the new board, the owner noticed it nearly always looked level while radioactivity crept and temperatures kept climbing, and that radioactivity looked spiky. The hot-fuel brake answers within seconds, so a creep needed a balance of only a point or two, far less than one card.

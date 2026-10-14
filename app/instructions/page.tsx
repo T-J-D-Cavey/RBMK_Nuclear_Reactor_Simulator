@@ -140,8 +140,9 @@ export default function InstructionsPage() {
           <Section title="The Xenon Pit">
             <p className="text-sm leading-relaxed">
               At radioactivity {TUNING.xenonTurnover} or lower xenon builds, pushing it lower still. To climb out, pull rods well out.
-              Above {TUNING.xenonTurnover} the xenon burns off, faster and faster as radioactivity rises, so re-insert rods in time or it
-              overshoots.
+              Above {TUNING.xenonTurnover} the xenon burns off, faster and faster as radioactivity rises, and from{" "}
+              {TUNING.xenonWipeAt} it is gone in seconds. Re-insert rods early and stay below {TUNING.xenonWipeFrom} until it has
+              cleared, or it overshoots.
             </p>
           </Section>
 

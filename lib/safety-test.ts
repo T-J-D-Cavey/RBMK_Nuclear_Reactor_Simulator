@@ -24,19 +24,20 @@ const ROLES = {
 type Action = "pumps-on" | "turbine-to-pumps" | "mains-off" | "mains-on"
 
 interface ScriptStep {
-  at: number // shift time (s). The night clock reads 01:10:00 + at.
+  at: number // shift time (s). The night clock reads 01:07:00 + at.
   role: keyof typeof ROLES
   text: string
   target?: number | null // announce a target change (usual notice), or null: no grid target from now on
   action?: Action
 }
 
-// Targets follow the physics: with two pumps, xenon creeps up below radioactivity 100 (output below ~5,000 MW)
-// and builds fast below ~50. Kiev's hold (~1,000 MW) builds it steadily; the test band
-// (700 → 500 MW) builds it fast, so that raising output to 1,000 MW for the test takes the rod margin below
-// its minimum.
+// Targets follow the physics: with two pumps, xenon creeps up below radioactivity 80 (output below ~3,700 MW)
+// and builds faster the lower it is. Output takes a minute or two to follow radioactivity, so each target is in
+// force for about two minutes, in steps of about a third (owner, 2026-10-14: never below 700 MW). Kiev's hold
+// (1,500 MW) builds xenon steadily; the test band (1,000 → 700 MW) builds it faster, so that raising output
+// back to 1,000 MW for the test takes the rod margin below its minimum.
 export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
-  // Phase 1: briefing and power reduction (00–02 min)
+  // Phase 1: briefing and power reduction (00–04 min)
   {
     at: 0,
     role: "procedure",
@@ -49,88 +50,88 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     target: 3500,
   },
   {
-    at: 75,
+    at: 135,
     role: "deputy",
     text: "Get on with it! 2,500 MW next",
     target: 2500,
   },
-  // Phase 2: Kiev's delay (02–06 min)
+  // Phase 2: Kiev's delay (04–08 min)
   {
-    at: 135,
+    at: 255,
     role: "kiev",
-    text: "We have orders to delay your safety test until the evening peak has passed. Stay on the grid at 1,000 MW and hold it till we confirm.",
-    target: 1000,
+    text: "We have orders to delay your safety test until the evening peak has passed. Stay on the grid at 1,500 MW and hold it till we confirm.",
+    target: 1500,
   },
   {
-    at: 220,
+    at: 345,
     role: "deputy",
     text: "Bunch of amateurs. Get it done!",
   },
   {
-    at: 310,
+    at: 430,
     role: "deputy",
     text: "I want this done already!",
   },
-  // Phase 3: shift change and reduction to the test output (06–09 min)
+  // Phase 3: shift change and reduction to the test output (08–12 min)
   {
-    at: 375,
+    at: 480,
     role: "foreman",
     text: "Shift change: the night shift is on duty. Get them up to speed on the test's progress.",
   },
   {
-    at: 390,
+    at: 495,
     role: "deputy",
-    text: "Bring it down to 700 MW for the test.",
+    text: "Bring it down to 1,000 MW for the test.",
+    target: 1000,
+  },
+  {
+    at: 615,
+    role: "deputy",
+    text: "Lower. 700 MW.",
     target: 700,
   },
+  // Phase 4: "Raise the power." (12–15 min)
   {
-    at: 465,
-    role: "deputy",
-    text: "Lower. 500 MW.",
-    target: 500,
-  },
-  // Phase 4: "Raise the power." (09–12 min)
-  {
-    at: 540,
+    at: 720,
     role: "deputy",
     text: "This is taking too long. Raise the power to 1,000 MW: the test needs it. Pull rods if you have to.",
     target: 1000,
   },
   {
-    at: 660,
+    at: 840,
     role: "srce",
     text: "Watch the rod margin. Regulations say that below the minimum we must shut the reactor down.",
   },
   {
-    at: 675,
+    at: 855,
     role: "deputy",
     text: "No. Another three months waiting for this test? Hold 1,000 MW. We run the test tonight.",
   },
-  // Phase 5: the test (12–15 min), with 8 minutes left. The clock reads 01:23:04 as the test begins.
+  // Phase 5: the test (15–18 min), with 4 minutes left. The clock reads 01:23:04 as the test begins, as it did on the night.
   {
-    at: 720,
+    at: 900,
     role: "procedure",
     text: "Test step 1: start all four main circulation pumps.",
     action: "pumps-on",
   },
   {
-    at: 750,
+    at: 930,
     role: "procedure",
     text: "Test step 2: switch the turbine to power the pumps.",
     target: null,
     action: "turbine-to-pumps",
   },
   {
-    at: 784,
+    at: 964,
     role: "procedure",
     text: "Test begins. Station power to the pumps is cut: the coasting turbine is now their only supply. Keep the reactor under control.",
     action: "mains-off",
   },
-  // Phase 6: after the test (15–20 min)
+  // Phase 6: after the test (18–20 min)
   {
-    at: 900,
+    at: 1080,
     role: "procedure",
-    text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until the shift ends at 01:30.",
+    text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until the shift ends at 01:27.",
     action: "mains-on",
   },
 ]
@@ -166,7 +167,7 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
       return addLog(
         s,
         ROLES.turbine.source,
-        "Turbine disconnected from the grid and supplying the station pumps, as the procedure requires. No grid target from now on.",
+        "Turbine disconnected from the grid and supplying the station pumps, as the test requires.",
         ROLES.turbine.from,
       )
     case "mains-off":
