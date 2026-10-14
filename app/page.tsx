@@ -41,10 +41,10 @@ export default function HomePage() {
         <div className="ws3-crt-panel px-4 py-6 sm:px-8 sm:py-8">
           <div className="ws3-crt-sweep" aria-hidden="true" />
           <div className="relative space-y-3 sm:space-y-4">
-            <h1 className="ws3-crt-title text-6xl md:text-8xl font-bold tracking-tight text-reactor-blue uppercase font-mono">
+            <h1 className="ws3-crt-title text-6xl md:text-8xl font-bold tracking-tight text-reactor-green uppercase font-mono">
               R B M K
             </h1>
-            <p className="ws3-crt-subtitle text-lg sm:text-xl md:text-2xl text-reactor-blue font-mono">Nuclear Reactor Control Simulation</p>
+            <p className="ws3-crt-subtitle text-lg sm:text-xl md:text-2xl text-reactor-green font-mono">Nuclear Reactor Control Simulation</p>
           </div>
         </div>
 
@@ -53,7 +53,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-stretch sm:items-center">
             <span className="cr-bezel w-full sm:w-auto">
               <button onClick={handleStartGame} className="cr-key cr-key-green-lit w-full sm:w-52 h-14 !text-lg">
-                Start Shift
+                Start Game
               </button>
             </span>
             <span className="cr-bezel w-full sm:w-auto">

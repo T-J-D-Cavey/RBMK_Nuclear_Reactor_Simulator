@@ -7,6 +7,7 @@ import type { GameState } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
 import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
+import { useRodDisplay } from "@/hooks/use-rod-display"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
 import ControlRodsModal from "./control-rods-modal"
 import WaterPumpsModal from "./water-pumps-modal"
@@ -60,6 +61,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
+  const rodDisplay = useRodDisplay(gameState.controlRods)
   const [showReactorView, setShowReactorView] = useState(false)
 
   const isOnTarget = isPowerOnTarget(gameState)
@@ -294,7 +296,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                 <div className="w-full border-t-2 border-black/60 h-0"></div>
                 {/* Rod Indicators Container */}
                 <div className="absolute inset-y-0 left-3 right-3 top-1 bottom-1 flex justify-between">
-                  {gameState.controlRods.map((rod) => (
+                  {gameState.controlRods.map((rod, idx) => (
                     <div key={rod.id} className="relative w-full h-full border-r border-black/5 last:border-r-0">
                       <div
                         className={`
@@ -302,9 +304,9 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                           ${rod.stuck ? "animate-[pulse_0.5s_ease-in-out_infinite]" : ""}
                         `}
                         style={{
-                          // Position based on the rod's actual (travelling) insertion %.
+                          // Position based on the rod's actual (travelling) insertion %, held back until the drive sound starts.
                           // 0% is top, 100% is bottom. We clamp slightly to keep it inside the lines.
-                          top: `${rod.insertion}%`,
+                          top: `${rodDisplay[idx]}%`,
                           transform: "translateY(-50%)", // Centers the dash on the exact % point
                         }}
                       >

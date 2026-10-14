@@ -24,7 +24,7 @@ export default function GamePage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSoundModal, setShowSoundModal] = useState(false)
   const router = useRouter()
-  // The board of balance is as tall as the chart recorder (owner, 2026-10-14)
+  // The radioactivity balance is as tall as the chart recorder (owner, 2026-10-14)
   const [chartRef, chartHeight] = useElementHeight<HTMLElement>()
 
   // Header keys that bring the alarm monitor or the shift log into view, and the shift log's lamp (plan §21.5)

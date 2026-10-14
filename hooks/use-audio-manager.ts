@@ -1,6 +1,10 @@
 import { useEffect, useRef, useCallback } from "react";
 import { newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, SOUND_EFFECT_FILES, type SoundEffect } from "@/lib/sound-cues";
 import { RodDriveVoices } from "@/lib/rod-drive-voices";
+import { HumBed } from "@/lib/hum-bed";
+
+const HUM_FILE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/XVA0IQMpaTFFPj7AMJYm8k/public/hum_full.mp3";
+const HUM_VOICES = 3;
 
 interface AudioManagerProps {
   alarmsOn: boolean; // the sound modal's Alarms switch, off while paused
@@ -33,9 +37,7 @@ export function useAudioManager({
   lastLogId,
 }: AudioManagerProps) {
   // --- REFS ---
-  const humAudioRef1 = useRef<HTMLAudioElement | null>(null);
-  const humAudioRef2 = useRef<HTMLAudioElement | null>(null);
-  const humTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const humRef = useRef<HumBed | null>(null);
 
   const generalAlarmAudioRef = useRef<HTMLAudioElement | null>(null);
   const eventAlarmRef = useRef<HTMLAudioElement | null>(null);
@@ -59,15 +61,17 @@ export function useAudioManager({
   const initializeAudio = useCallback(() => {
     if (isInitialized.current) return;
 
-    // Setup Hum Track 1
-    humAudioRef1.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/XVA0IQMpaTFFPj7AMJYm8k/public/hum_full.mp3");
-    humAudioRef1.current.loop = true;
-    humAudioRef1.current.preload = "auto";
-
-    // Setup Hum Track 2 (The Gap Filler)
-    humAudioRef2.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/XVA0IQMpaTFFPj7AMJYm8k/public/hum_full.mp3");
-    humAudioRef2.current.loop = true;
-    humAudioRef2.current.preload = "auto";
+    // Hum: three voices of the same clip, fading in and out at different points
+    humRef.current = new HumBed(
+      Array.from({ length: HUM_VOICES }, () => {
+        const audio = new Audio(HUM_FILE);
+        audio.loop = true; // in case a pass runs past the end of the clip
+        audio.preload = "auto";
+        return audio;
+      }),
+    );
+    humRef.current.setVolume(volumeRef.current);
+    if (effectsOnRef.current) humRef.current.start();
 
     generalAlarmAudioRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/UDO0NctHis6Id7aEJ8C770/public/alarm_backup_full.mp3");
     generalAlarmAudioRef.current.loop = true;
@@ -112,9 +116,7 @@ export function useAudioManager({
 
   // Volume Management ---
   useEffect(() => {
-    // Update volume for hum tracks
-    if (humAudioRef1.current) humAudioRef1.current.volume = soundVolume;
-    if (humAudioRef2.current) humAudioRef2.current.volume = soundVolume;
+    humRef.current?.setVolume(soundVolume);
     
     if (generalAlarmAudioRef.current) generalAlarmAudioRef.current.volume = soundVolume;
     if (eventAlarmRef.current) eventAlarmRef.current.volume = soundVolume;
@@ -126,25 +128,8 @@ export function useAudioManager({
 
   // Hum Logic 
   useEffect(() => {
-    if (!humAudioRef1.current || !humAudioRef2.current) return;
-
-    if (effectsOn) {
-      humAudioRef1.current.play().catch((e) => console.warn("Hum 1 blocked", e));
-
-      humTimeoutRef.current = setTimeout(() => {
-        if (humAudioRef2.current && effectsOn) {
-            humAudioRef2.current.play().catch((e) => console.warn("Hum 2 blocked", e));
-        }
-      }, 4000); 
-    } else {
-      if (humTimeoutRef.current) clearTimeout(humTimeoutRef.current);
-
-      humAudioRef1.current.pause();
-      humAudioRef1.current.currentTime = 0;
-      
-      humAudioRef2.current.pause();
-      humAudioRef2.current.currentTime = 0;
-    }
+    if (effectsOn) humRef.current?.start();
+    else humRef.current?.stop();
   }, [effectsOn]);
 
   // General Alarm Logic
@@ -250,10 +235,7 @@ export function useAudioManager({
   // Cleanup
   useEffect(() => {
     return () => {
-      if (humTimeoutRef.current) clearTimeout(humTimeoutRef.current);
-
-      if (humAudioRef1.current) { humAudioRef1.current.pause(); humAudioRef1.current = null; }
-      if (humAudioRef2.current) { humAudioRef2.current.pause(); humAudioRef2.current = null; }
+      if (humRef.current) { humRef.current.stop(); humRef.current = null; }
       
       if (generalAlarmAudioRef.current) { generalAlarmAudioRef.current.pause(); generalAlarmAudioRef.current = null; }
       if (eventAlarmRef.current) { eventAlarmRef.current.pause(); eventAlarmRef.current = null; }

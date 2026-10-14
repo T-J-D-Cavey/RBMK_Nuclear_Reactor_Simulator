@@ -1,9 +1,11 @@
-// Checks for the sound effect triggers (lib/sound-cues.ts) and the rod drive's voices (lib/rod-drive-voices.ts),
+// Checks for the sound effect triggers (lib/sound-cues.ts), the rod drive's voices (lib/rod-drive-voices.ts) and the
+// hum (lib/hum-bed.ts),
 // against the real engine where it matters. No browser: audio elements and timers are fakes on a manual clock.
 // Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { DRIVE_FADE_MS, DRIVE_STAGGER_MS, DRIVE_START_DELAY_MS, type DriveAudio, type DriveTimers, RodDriveVoices } from "../../lib/rod-drive-voices"
+import { HUM_ENTRY_MS, HUM_GAIN, HUM_PLAY_MS, HumBed } from "../../lib/hum-bed"
 import { newWarningAppeared, ROD_DRIVE_OFFSETS, rodsMoving, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
 import { advanceReactor } from "../../lib/sim/reactor"
 import { seededRng } from "../../lib/sim/rng"
@@ -43,6 +45,7 @@ class Clock implements DriveTimers {
 class FakeAudio implements DriveAudio {
   volume = 1
   currentTime = 0
+  duration = 120
   playing = false
   startedAt: number[] = []
   stoppedAt: number[] = []
@@ -219,4 +222,43 @@ test("bleeps and printer sounds in a bot shift are occasional, not constant", ()
     assert.ok(bleeps / minutes < 2, `${mode}: under two bleeps a minute`)
     assert.ok(prints / minutes < 3, `${mode}: under three printer sounds a minute`)
   }
+})
+
+test("hum: three voices that dip at different times, points in the clip and levels, never all quiet", () => {
+  const clock = new Clock()
+  const audios = [0, 1, 2].map(() => new FakeAudio(clock))
+  const rng = seededRng(7)
+  const hum = new HumBed(audios, clock, rng)
+  hum.setVolume(0.8)
+  hum.start()
+  clock.advance(0)
+  assert.equal(audios[0].playing, true, "the first voice comes in at once")
+  clock.advance(HUM_ENTRY_MS[2])
+
+  const offsets = new Set<number>()
+  const peaks: number[] = []
+  let quietest = Infinity
+  for (let t = 0; t < 10 * 60_000; t += 100) {
+    clock.advance(100)
+    const level = audios.reduce((sum, a) => sum + (a.playing ? a.volume : 0), 0)
+    quietest = Math.min(quietest, level)
+    for (const a of audios) {
+      assert.ok(a.volume >= 0 && a.volume <= 0.8 * HUM_GAIN[1] + 1e-9, "no voice above its top level")
+      if (a.playing) offsets.add(Math.round(a.currentTime))
+    }
+    peaks.push(Math.max(...audios.map((a) => (a.playing ? a.volume : 0))))
+  }
+  assert.ok(quietest > 0.5, `the hum never drops away (quietest ${quietest.toFixed(2)})`)
+  assert.ok(offsets.size > 10, "passes start at many points in the clip")
+  const starts = audios.map((a) => a.startedAt)
+  for (let i = 1; i < 3; i++) assert.notDeepEqual(starts[i].slice(0, 5), starts[0].slice(0, 5), "voices don't restart together")
+  for (const a of audios) {
+    assert.ok(a.startedAt.length >= (10 * 60_000) / HUM_PLAY_MS[1] - 1, "each voice keeps coming back")
+    assert.ok(a.currentTime + HUM_PLAY_MS[0] / 1000 <= a.duration + 1e-9, "a pass never runs over the loop point")
+  }
+
+  hum.stop()
+  assert.ok(audios.every((a) => !a.playing), "stop silences every voice")
+  clock.advance(60_000)
+  assert.ok(audios.every((a) => !a.playing), "and they stay silent")
 })

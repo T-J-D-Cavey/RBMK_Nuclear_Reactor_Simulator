@@ -2,7 +2,6 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import { ArrowLeft } from "lucide-react"
 import { THRESHOLDS } from "@/lib/types"
-import { EVENT_TUNING, TUNING } from "@/lib/sim/tuning"
 import { MODE_MENU, MODE_MENU_TAGLINE } from "@/lib/mode-menu"
 
 // A quick-start manual (plan §21.6). It teaches the same model the game uses (bible §15): Legasov's red and blue
@@ -58,63 +57,44 @@ export default function InstructionsPage() {
 
           <Section title="Core Concepts">
             <p className="text-sm leading-relaxed">
-              Think of Legasov&apos;s red and blue cards: every second, each card in play pushes radioactivity up or down.
-              On the board every card is the same push, so level columns mean a steady reactor.
+              Like Legasov&apos;s cards: red cards push radioactivity up, blue cards push it down. Aim for balance.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="cr-module p-4 !border-l-[6px] !border-l-red-700">
                 <h3 className="font-[family-name:var(--font-plate)] font-bold uppercase tracking-[0.12em] mb-2 text-red-800">Red cards: push it up</h3>
                 <ul className="text-sm leading-relaxed list-disc list-inside space-y-1">
-                  <li>Nuclear fission in the fuel and graphite, including each rod&apos;s graphite tip in the core</li>
-                  <li>Steam in the core</li>
-                  <li>Fuel cooler than normal (strongly when very cold)</li>
+                  <li>Uranium-235 fuel, especially when cold</li>
+                  <li>Steam in the system</li>
+                  <li>Graphite in the tips of the control rods</li>
                 </ul>
               </div>
               <div className="cr-module p-4 !border-l-[6px] !border-l-[var(--event)]">
                 <h3 className="font-[family-name:var(--font-plate)] font-bold uppercase tracking-[0.12em] mb-2 text-event">Blue cards: push it down</h3>
                 <ul className="text-sm leading-relaxed list-disc list-inside space-y-1">
                   <li>Boron in the control rods</li>
-                  <li>Xenon</li>
-                  <li>Fuel hotter than normal</li>
+                  <li>Xenon in the core</li>
+                  <li>Hot fuel</li>
                 </ul>
               </div>
             </div>
-            <ul className="text-sm leading-relaxed list-disc list-inside space-y-2">
-              <li>
-                <strong>Rods in → radioactivity down. Rods out → up.</strong> Taking a blue card away pushes it up as surely as
-                playing a red one.
-              </li>
-              <li>
-                <strong>Output comes from steam.</strong> Change the rods and power output follows over the next minute or two.
-              </li>
-              <li>
-                <strong>A rise or a fall feeds itself.</strong> Hotter means more steam, which means higher still. Correct early
-                and in small steps: only rods and pumps stop it.
-              </li>
-              <li>
-                <strong>The higher it is, the faster it moves.</strong> Radioactivity changes in proportion to itself.
-              </li>
-            </ul>
           </Section>
 
           <Section title="Controls">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Card title="Control Rods (×10)">
-                Rods take time to travel (about {TUNING.rodFullStrokeSeconds} s end to end). <strong>Never park a rod at 0%:</strong>{" "}
-                as it moves off 0%, its graphite tip briefly pushes radioactivity up. Keep the rod margin (all ten insertions added
-                up) above {t.rodMargin.minimum}.
+                More insertion → radioactivity down. Less insertion → radioactivity up.
               </Card>
               <Card title="AZ-5">
-                One press drives every rod in. Safe from a normal state; deadly with many rods at 0%, high steam and little water
-                flowing.
+                Inserts all 10 control rods at once. Use it to stop a radioactivity spike.
               </Card>
               <Card title="Water Pumps (×4)">
-                A slow lever: more pumps cool the reactor over minutes, so less steam. Two or three is normal. With no pumps at
-                all, the water boils and steam soars.
+                The more pumps powered and running, the cooler the reactor and the less steam. With no pumps running, the
+                reactor boils off the remaining water. Beware.
               </Card>
               <Card title="Turbine">
-                In a power cut, disconnect it and set it to supply the pumps. If high steam (OVR-P) lasts{" "}
-                {EVENT_TUNING.turbineTripSeconds} s while on the grid, it trips.
+                Converts steam into electricity. The water pumps run on power from the grid. In a power cut, disconnect the
+                turbine from the grid and use the electricity it produces to power the pumps. Running at high steam for too long
+                can trip the turbine.
               </Card>
             </div>
           </Section>
@@ -122,36 +102,39 @@ export default function InstructionsPage() {
           <Section title="Warning Signs">
             <ul className="space-y-2 list-disc list-inside text-sm leading-relaxed">
               <li>
-                <strong>Act now:</strong> reactor temperature over {t.reactorTemp.warning}°, steam over {t.steamVolume.highWarning}{" "}
-                or radioactivity over {t.radioactivity.highWarning}. A meltdown or explosion is on its way.
+                <strong>Alarm monitor:</strong> this computer warns you when the reactor is out of balance and recommends how to
+                correct it.
               </li>
               <li>
-                <strong>Watch:</strong> low radioactivity, xenon building, very cold fuel, a low rod margin or low
-                performance. Trouble is building.
+                <strong>Act now:</strong> reactor temperature over {t.reactorTemp.warning}°, steam volume over{" "}
+                {t.steamVolume.highWarning} or radioactivity over {t.radioactivity.highWarning}.
               </li>
               <li>
-                <strong>Shift log:</strong> messages from people. Major emergencies (power cuts, rod jams) are warned first; smaller
-                ones (a pump trip, a grid hold that halves your tolerance) aren&apos;t. Target changes are warned{" "}
-                {EVENT_TUNING.targetNotice} s ahead and confirmed when they take effect.
+                <strong>Watch:</strong> low radioactivity, xenon building up, cold fuel, a low rod margin (most of your control
+                rods withdrawn from the core) and low performance (long periods missing the grid&apos;s power demand).
+              </li>
+              <li>
+                <strong>Shift log:</strong> messages from colleagues and outside contacts arrive here: the local grid controller,
+                technicians and engineers on shift at the station, and members of the leadership team.
               </li>
             </ul>
           </Section>
 
           <Section title="The Xenon Pit">
             <p className="text-sm leading-relaxed">
-              At radioactivity {TUNING.xenonTurnover} or lower xenon builds, pushing it lower still. To climb out, pull rods well out.
-              Above {TUNING.xenonTurnover} the xenon burns off, faster and faster as radioactivity rises, and from{" "}
-              {TUNING.xenonWipeAt} it is gone in seconds. Re-insert rods early and stay below {TUNING.xenonWipeFrom} until it has
-              cleared, or it overshoots.
+              At low radioactivity the core can&apos;t burn off xenon, a byproduct of fission. Xenon builds up and drags
+              radioactivity down further, which lets even more xenon build up. Withdrawing control rods and cooling the fuel can
+              counter this, but be cautious: once radioactivity rises, the xenon (and the brake it was providing) can burn off
+              quickly. It&apos;s best to avoid high xenon levels.
             </p>
           </Section>
 
           <Section title="The Safety Test">
             <p className="text-sm leading-relaxed">
-              You&apos;ll be ordered to cut power, hold it low while xenon builds, then raise it again past the rod-margin minimum.
-              When the test begins, the pumps lose their supply and the coasting turbine powers them for only about{" "}
-              {TUNING.turbineCoastSeconds} s. Some controls change by themselves; each change is announced in the shift log and
-              you can reverse it. Decide in advance what you&apos;ll do.
+              We need to complete a safety test, a box-ticking exercise for the executives. It involves lowering power output,
+              disconnecting the turbine from the grid and measuring how much power the coasting turbine can supply to the water
+              pumps. The deputy chief engineer will be on site to instruct you. It would be wise to keep them happy and get the
+              test done.
             </p>
           </Section>
 
@@ -161,20 +144,20 @@ export default function InstructionsPage() {
                 <strong>Meltdown:</strong> reactor temperature reaches {t.reactorTemp.meltdown}°.
               </li>
               <li>
-                <strong>Core explosion:</strong> steam reaches {t.steamVolume.explosion}.
+                <strong>Steam explosion:</strong> steam volume reaches {t.steamVolume.explosion}.
               </li>
               <li>
-                <strong>Removed from post:</strong> performance reaches 0%. It falls 1% every 5 s off target and rises on target.
+                <strong>Removed from post:</strong> your performance against the grid&apos;s power demand reaches 0%.
               </li>
             </ul>
-            <p className="text-sm leading-relaxed">Survive until the clock runs out to complete your shift.</p>
+            <p className="text-sm leading-relaxed">Avoid all of this and you&apos;ll survive your shift when the clock runs out.</p>
           </Section>
         </div>
 
         {/* Back Button */}
         <div className="flex justify-center pt-2 pb-2">
           <span className="cr-bezel w-full sm:w-auto">
-            <Link href="/" className="cr-key cr-key-cream w-full sm:w-56 h-12">
+            <Link href="/" className="cr-key cr-key-green-lit w-full sm:w-56 h-12">
               Main Menu
             </Link>
           </span>

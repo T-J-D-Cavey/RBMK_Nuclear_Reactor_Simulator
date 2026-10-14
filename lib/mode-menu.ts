@@ -10,7 +10,7 @@ export const MODE_MENU: { mode: GameMode; name: string; specs: string[]; lamp: s
     name: "Easy Mode",
     specs: ["Shorter shift", "Steady demands", "Fewer surprises"],
     lamp: "bg-green-400 text-green-400",
-    key: "cr-key-green",
+    key: "cr-key-green-lit",
     action: "Start Easy",
   },
   {

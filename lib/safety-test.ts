@@ -59,7 +59,7 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 255,
     role: "kiev",
-    text: "We have orders to delay your safety test until the evening peak has passed. Stay on the grid at 1,500 MW and hold it till we confirm.",
+    text: "We have orders to delay your safety test until the evening peak has passed. We'll need you to stay on the grid at low power and hold it till we confirm.",
     target: 1500,
   },
   {
@@ -94,7 +94,7 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 720,
     role: "deputy",
-    text: "This is taking too long. Raise the power to 1,000 MW: the test needs it. Pull rods if you have to.",
+    text: "This is taking too long. We're running the test tonight or you're toast.",
     target: 1000,
   },
   {

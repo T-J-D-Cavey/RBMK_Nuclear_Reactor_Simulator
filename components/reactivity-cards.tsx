@@ -1,21 +1,22 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, type CSSProperties } from "react"
 import type { GameState } from "@/lib/types"
 import { getReactivityCards } from "@/lib/sim/reactor"
 import { BOARD_CARDS, type Board, type BoardSide, readBoard } from "@/lib/reactivity-board"
-import { useElementHeight } from "@/hooks/use-element-height"
+import { useElementSize } from "@/hooks/use-element-height"
 
-// Legasov's board from the show (owner, 2026-10-13): red cards push radioactivity up, blue cards push it down, and
-// the reactor is steady while the two columns are level. Every card is the same push, so a contributor's cards are
-// its size (lib/reactivity-board.ts). The arrows show whether a contributor is getting stronger or weaker.
+// The radioactivity balance, Legasov's board from the show (owner, 2026-10-13; renamed 2026-10-14): red cards push
+// radioactivity up, blue cards push it down, and the reactor is steady while the two columns are level. Every card
+// is the same push, so a contributor's cards are its size (lib/reactivity-board.ts). The arrows show whether a
+// contributor is getting stronger or weaker.
 
 const TREND = 0.5 // points of change over the window that earn an arrow
 const WINDOW = 10 // seconds of game time
 const FULL_CARDS = 32 // a column this tall fills the rack; a taller one makes every card thinner so it still fits
 const MIN_PITCH = 3 // px per card at the thinnest
 const FALLBACK_STACK_PX = 192 // before the rack has been measured
-const LABEL_PX = 30 // room for one tag (two lines of title and the count)
+const FALLBACK_WIDTH_PX = 320
 const BRACKET_PX = 16 // the strip between a stack and its tags (globals.css: .cr-card-brackets)
 
 interface Group {
@@ -30,23 +31,35 @@ interface Group {
   label: number // px from the bottom to the tag's centre
 }
 
+// The tags' type grows with the rack, so a wide screen doesn't leave them small (owner, 2026-10-14)
+function tagFontPx(rackWidth: number) {
+  return Math.min(19.2, Math.max(9.6, rackWidth * 0.034 - 4))
+}
+
+// Room for one tag: two lines of title and the count, and its padding
+function labelPx(fontPx: number) {
+  return Math.ceil(fontPx * 2.6 + 6)
+}
+
 // Bottom to top, each tag as close to its group's middle as the tags below and above allow.
-function placeLabels(groups: Group[], stackPx: number) {
-  let floor = LABEL_PX / 2
+function placeLabels(groups: Group[], stackPx: number, label: number) {
+  let floor = label / 2
   for (const g of groups) {
     g.label = Math.max(g.from + g.height / 2, floor)
-    floor = g.label + LABEL_PX
+    floor = g.label + label
   }
-  let ceiling = stackPx - LABEL_PX / 2
+  let ceiling = stackPx - label / 2
   for (let i = groups.length - 1; i >= 0; i--) {
     groups[i].label = Math.min(groups[i].label, ceiling)
-    ceiling = groups[i].label - LABEL_PX
+    ceiling = groups[i].label - label
   }
 }
 
 export default function ReactivityCards({ gameState, height, className = "" }: { gameState: GameState; height?: number | null; className?: string }) {
-  const [stackRef, measured] = useElementHeight<HTMLDivElement>()
-  const stackPx = measured ?? FALLBACK_STACK_PX
+  const [stackRef, measured] = useElementSize<HTMLDivElement>()
+  const stackPx = measured?.height ?? FALLBACK_STACK_PX
+  const fontPx = tagFontPx(measured?.width ?? FALLBACK_WIDTH_PX)
+  const tagRoom = labelPx(fontPx)
 
   // Counts hold steady near a rounding point, so the board needs the one from the previous game second.
   const last = useRef<{ time: number; board: Board; before?: Board } | null>(null)
@@ -77,7 +90,7 @@ export default function ReactivityCards({ gameState, height, className = "" }: {
       groups.push({ ...card, count, trend: change >= TREND ? 1 : change <= -TREND ? -1 : 0, from, height: count * pitch, label: 0 })
       from += count * pitch
     }
-    placeLabels(groups, stackPx)
+    placeLabels(groups, stackPx, tagRoom)
     return (
       <div className={`cr-card-column is-${side}`}>
         <ul aria-label={side === "red" ? "Red cards: push radioactivity up" : "Blue cards: push radioactivity down"}>
@@ -112,7 +125,7 @@ export default function ReactivityCards({ gameState, height, className = "" }: {
           })}
         </svg>
         {groups.map((g, i) => (
-          <div key={g.key} className="cr-card-label" style={{ bottom: g.label - LABEL_PX / 2, height: LABEL_PX }} aria-hidden="true" title={`${g.title}: ${g.note}`}>
+          <div key={g.key} className="cr-card-label" style={{ bottom: g.label - tagRoom / 2, height: tagRoom }} aria-hidden="true" title={`${g.title}: ${g.note}`}>
             <span className={`cr-card-tag cr-card-${side} ${i % 2 ? "is-alt" : ""}`}>
               {g.tag} <span className="cr-card-count">
                 ×{g.count}
@@ -128,11 +141,11 @@ export default function ReactivityCards({ gameState, height, className = "" }: {
   return (
     <div className={`cr-panel cr-screws p-3 sm:p-4 flex flex-col gap-2 ${className}`} style={height ? { height } : undefined}>
       <div className="flex items-center justify-between gap-2">
-        <div className="cr-plate">Legasov&apos;s Board of Balance</div>
+        <div className="cr-plate">Radioactivity Balance</div>
       </div>
 
       <div className="cr-card-rack p-2 sm:p-2.5 flex-1 min-h-0 flex flex-col" role="group" aria-label="Red and blue cards. Every card is the same push.">
-        <div ref={stackRef} className="grid grid-cols-2 flex-1 min-h-[12rem]">
+        <div ref={stackRef} className="grid grid-cols-2 flex-1 min-h-[12rem]" style={{ "--tag-font": `${fontPx}px` } as CSSProperties}>
           {column("red")}
           {column("blue")}
         </div>

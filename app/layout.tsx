@@ -43,12 +43,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${terminalFont.variable} ${plateFont.variable} font-sans antialiased min-w-[340px]`}>
         {children}
-        <div className="text-sm text-reactor-blue font-mono py-3 bg-black text-center">
+        <div className="text-sm text-reactor-green font-[family-name:var(--font-plate)] font-semibold uppercase tracking-[0.16em] py-3 bg-black text-center">
           <a 
             href="https://github.com/T-J-D-Cavey" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="text-xs hover:underline cursor-pointer"
+            className="text-sm hover:underline cursor-pointer"
           >
             {"© 1986 SKALA CONTROL SYSTEMS"}
           </a>

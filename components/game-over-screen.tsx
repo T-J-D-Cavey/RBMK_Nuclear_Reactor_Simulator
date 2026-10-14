@@ -23,7 +23,7 @@ const ENDINGS = {
   performance: {
     title: "Removed from Post",
     stamp: "Dismissed",
-    lead: "By order of the station director, you are relieved of duty.",
+    lead: "By order of Deputy Chief Engineer, you are relieved of duty.",
   },
 } as const
 

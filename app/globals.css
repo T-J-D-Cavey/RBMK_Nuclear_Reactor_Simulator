@@ -43,7 +43,7 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --reactor-blue: oklch(0.9018 0.0978 187.55);
+  --reactor-green: #5cff9a; /* the alarm monitor's phosphor green (.ws5-crt-screen) */
 }
 
 .dark {
@@ -80,7 +80,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
-  --reactor-blue: oklch(0.9018 0.0978 187.55);
+  --reactor-green: #5cff9a; /* the alarm monitor's phosphor green (.ws5-crt-screen) */
 }
 
 @theme inline {
@@ -125,7 +125,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-reactor-blue: var(--reactor-blue);
+  --color-reactor-green: var(--reactor-green);
   --color-event: var(--event);
 }
 
@@ -410,7 +410,7 @@
   text-shadow:
     0 0 4px currentColor,
     0 0 14px currentColor,
-    0 0 32px rgba(120, 230, 230, 0.45),
+    0 0 32px rgba(92, 255, 154, 0.45),
     2px 0 0 rgba(255, 60, 60, 0.25),
     -2px 0 0 rgba(60, 120, 255, 0.25);
   animation: ws3-title-flicker 6s steps(1, end) infinite;
@@ -925,7 +925,7 @@
 .cr-key-black { --cap: #1d1d1c; --cap-hi: #3a3a38; --cap-side: #050505; --cap-ink: #e2e0d8; }
 .cr-key-red { --cap: #5a1a1a; --cap-hi: #6e2222; --cap-side: #2e0b0b; --cap-ink: rgba(254, 202, 202, 0.45); }
 .cr-key-red-lit { --cap: #c81e1e; --cap-hi: #f04848; --cap-side: #6f1515; --cap-ink: #fff; --cap-glow: rgba(239, 68, 68, 0.5); }
-.cr-key-green-lit { --cap: #1f7a4d; --cap-hi: #34b277; --cap-side: #0d3a24; --cap-ink: #f0fff6; --cap-glow: rgba(52, 211, 153, 0.4); }
+.cr-key-green-lit { --cap: #2aa85d; --cap-hi: #4fe08a; --cap-side: #0d4a26; --cap-ink: #04170b; --cap-glow: rgba(92, 255, 154, 0.4); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3); }
 .cr-key-amber-lit { --cap: #b45309; --cap-hi: #e88a1c; --cap-side: #5c2a05; --cap-ink: #fff8eb; --cap-glow: rgba(245, 158, 11, 0.4); }
 .cr-key-blue { --cap: #24456e; --cap-hi: #39679e; --cap-side: #0f1f33; --cap-ink: #eaf2ff; }
 .cr-key-green { --cap: #20573d; --cap-hi: #2f7d58; --cap-side: #0c2619; --cap-ink: #e9fff3; }
@@ -1118,10 +1118,12 @@
   outline-offset: 6px;
 }
 
-/* ---- Legasov's red and blue cards (components/reactivity-cards.tsx) ----
+/* ---- Radioactivity balance: Legasov's red and blue cards (components/reactivity-cards.tsx) ----
    A galvanised rack like the one in the show's courtroom, with the cards stacked in two columns on its shelf.
-   Every card is the same height, with a gap between cards; each contributor's cards carry a printed tag beside them. */
+   Every card is the same height, with a gap between cards; each contributor's cards carry a printed tag beside them.
+   The stacks and tags grow with the rack's width, so a wide screen doesn't leave them small in a big empty rack. */
 .cr-card-rack {
+  container-type: inline-size;
   background:
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
     linear-gradient(180deg, #d9dbd7 0%, #bfc2bd 100%);
@@ -1132,20 +1134,22 @@
 
 /* One side: the stack sits next to the middle of the rack, its tags on the outside */
 .cr-card-column {
+  --stack: clamp(40px, 22cqw - 50px, 120px); /* a stack's width */
+  --stack-gap: 3px; /* from the middle of the rack to a stack */
   position: relative;
   box-shadow: 0 4px 0 #a3a6a1, 0 5px 0 rgba(255, 255, 255, 0.6); /* the shelf */
 }
 
-/* Across each side from the middle: the stack (40px), the brackets (16px, BRACKET_PX in the component), the tags */
+/* Across each side from the middle: the stack, the brackets (16px, BRACKET_PX in the component), the tags */
 .cr-card-column > ul {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 40px;
+  width: var(--stack);
 }
 
-.cr-card-column.is-red > ul { right: 3px; }
-.cr-card-column.is-blue > ul { left: 3px; }
+.cr-card-column.is-red > ul { right: var(--stack-gap); }
+.cr-card-column.is-blue > ul { left: var(--stack-gap); }
 
 .cr-card-brackets {
   position: absolute;
@@ -1155,8 +1159,8 @@
   overflow: visible;
 }
 
-.cr-card-column.is-red .cr-card-brackets { right: 44px; }
-.cr-card-column.is-blue .cr-card-brackets { left: 44px; }
+.cr-card-column.is-red .cr-card-brackets { right: calc(var(--stack-gap) + var(--stack) + 1px); }
+.cr-card-column.is-blue .cr-card-brackets { left: calc(var(--stack-gap) + var(--stack) + 1px); }
 
 /* Which cards a tag belongs to */
 .cr-card-bracket {
@@ -1200,20 +1204,20 @@
   transition: bottom 0.4s ease;
 }
 
-.cr-card-column.is-red .cr-card-label { left: 0; right: 60px; justify-content: flex-end; }
-.cr-card-column.is-blue .cr-card-label { right: 0; left: 60px; justify-content: flex-start; }
+.cr-card-column.is-red .cr-card-label { left: 0; right: calc(var(--stack-gap) + var(--stack) + 17px); justify-content: flex-end; }
+.cr-card-column.is-blue .cr-card-label { right: 0; left: calc(var(--stack-gap) + var(--stack) + 17px); justify-content: flex-start; }
 
 /* The tag: a small printed card in the group's colour */
 .cr-card-tag {
   display: inline-block;
   max-width: 100%;
-  padding: 2px 5px;
+  padding: 0.2em 0.5em;
   border-radius: 2px;
   background: var(--card);
   color: #fff;
   font-family: var(--font-plate), "Arial Narrow", sans-serif;
   font-weight: 700;
-  font-size: 0.6rem;
+  font-size: var(--tag-font, 0.6rem); /* set by the component, which spaces the tags to suit */
   line-height: 1.1;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1233,7 +1237,7 @@
 }
 
 .cr-card-trend {
-  font-size: 8px;
+  font-size: 0.8em;
 }
 
 /* ---- End screens ---- */
