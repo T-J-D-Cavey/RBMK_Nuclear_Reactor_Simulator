@@ -318,7 +318,7 @@ Decisions made without the owner that they may want to revisit:
 - **Jams:** a jammed rod keeps its position when the jam clears; it doesn't resume its old order.
 - **Tripped pumps** show their PWR lamp off.
 - **Safety Test camera clock** now starts at 01:07:00 (01:10:00 until the test moved 3 minutes later on 2026-10-14), so the test still begins at 01:23:04 as it did on the night and the shift ends at 01:27. The procedure log uses the same clock.
-- **Xenon wiped almost at once from 130 (2026-10-14):** the owner asked for it; Claude picked the shape (unchanged up to 120, steep from 120 to 130, ~3 s for a full load from 130). It makes the pit escape and AZ-5 in a poisoned core far more violent (changelog v2.17). 4 %/s (~25 s) is the mildest rate that kept the bot's pit escape tame, if the owner wants to soften it: `xenonWipeRate` in lib/sim/tuning.ts.
+- **Xenon burn-off from 130 (2026-10-14, capped 2026-10-15):** the owner asked for a near-instant wipe; Claude picked the shape (unchanged up to 120, steep from 120 to 130). After playtests the owner capped it at 10 %/s (~10 s for a full load, was ~3 s), below what all ten rods can cancel (changelog v2.20). `xenonWipeRate` in lib/sim/tuning.ts; 7.5 is the next step down if it still feels too fast.
 - **Bot (2026-10-14):** keeps radioactivity at or below 90 while xenon shows, and the §10 AZ-5 check now allows the peak at up to 6 s. Both follow from the xenon change.
 - **Safety Test card text** says orders come from the test supervisor, the Deputy Chief Engineer and the Kiev grid controller.
 - **WS4–WS6 choices** (event numbers, timings, script targets): listed in §17.4.

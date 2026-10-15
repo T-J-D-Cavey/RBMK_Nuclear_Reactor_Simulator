@@ -227,15 +227,15 @@ test("§9 a poisoned, collapsed reactor restarts within ~1–3 minutes with rods
 
 test("§9 burn-off speed depends on radioactivity", () => {
   // One turnover (owner, plan §21 step 8b): at or below 80 xenon builds, faster the lower radioactivity is;
-  // above it a full load (100%) clears slowly just above 80, at a medium rate by 100, fast by 120 and almost
-  // instantly from 130 (owner, 2026-10-14).
+  // above it a full load (100%) clears slowly just above 80, at a medium rate by 100, fast by 120 and in about
+  // 10 s from 130 (owner, 2026-10-15; was ~3 s).
   const clearTime = (R: number) => 100 / -xenonRate(R)
   assert.ok(xenonRate(80) === 0 && xenonRate(70) > 0, "builds at or below 80")
   assert.ok(xenonRate(0) > 3 * xenonRate(60), "builds faster the closer radioactivity is to 0")
   assert.ok(clearTime(85) >= 240, `slow just above 80: ${clearTime(85)}s`)
   assert.ok(clearTime(100) >= 60 && clearTime(100) <= 120, `medium at 100: ${clearTime(100)}s`)
   assert.ok(clearTime(120) <= 60, `fast at 120: ${clearTime(120)}s`)
-  assert.ok(clearTime(130) <= 5 && clearTime(500) === clearTime(130), `almost instant from 130: ${clearTime(130)}s`)
+  assert.ok(clearTime(130) >= 8 && clearTime(130) <= 12 && clearTime(500) === clearTime(130), `~10 s from 130: ${clearTime(130)}s`)
 })
 
 test("§9 doing nothing during burn-off with rods fully out overshoots dangerously", () => {
@@ -259,7 +259,7 @@ test("§10 AZ-5 with every rod at 0% pushes radioactivity up for about 2 seconds
   const r = scenarios.az5AllOut.run()
   const peak = r.samples.reduce((a, b) => (b.R > a.R ? b : a))
   // The tips alone peak at about 2 s. In this poisoned core their spike carries radioactivity past 120, where the
-  // xenon vanishes almost at once (owner, 2026-10-14), so the surge runs on to about 5 s (peak ~750, was ~140).
+  // xenon burns off fast, so the surge runs on to about 3 s (peak ~145; ~750 at 5 s while a full load went in ~3 s).
   assert.ok(peak.t >= 1 && peak.t <= 6, `peak at ${peak.t}s`)
   assert.ok(peak.R > r.samples[0].R * 1.5)
 })

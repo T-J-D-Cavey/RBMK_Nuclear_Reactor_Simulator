@@ -2,6 +2,14 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.20 – 2026-10-15 (xenon burn-off capped at 10 %/s)
+
+- **Xenon burn-off from 130 slowed from ~3 s to ~10 s for a full load** (Section 9, owner, after playtests). At radioactivity ~140, xenon at 40–50% went to zero in about a second. The player couldn't see it go or answer with rods; radioactivity jumped to 800–1,000+ and then the hot fuel dragged it back down. The rate now climbs from 2.4 %/s at 120 to a cap of 10 %/s at 130 (was 33 %/s), so half a load goes in about 5 s. Up to 120 nothing changed.
+  - **Why 10:** each 1% of xenon is worth about 1.56 points, so 10 %/s removes about 16 points a second. All ten rods driving in at full speed add about 28, so a player who reacts can now out-pace the burn-off; at 33 %/s (51 points a second) nothing could. 15 %/s (23 points) was about level with the rods; 7.5 or 5 %/s let a late-caught pit escape fall back into the pit, which no longer reads as "burns away quickly".
+  - **Measured** (no noise): radioactivity 140 with 50% xenon, hands off, now peaks at ~720 after 6 s (was ~880 after 3 s). With every rod ordered 20% deeper after 1 s it peaks at 151 (was 442). Climbing out of the pit with rods out and no response peaks at ~700 (was ~2,000) and still ends in meltdown. The bot's first surge in a pit escape is 221 (was 466).
+  - **AZ-5 in a poisoned, rods-out core** now peaks at ~145 after 3 s (was ~750 after 5 s, and ~140 after 2 s before v2.17). The tips' spike still passes 120, but the xenon no longer goes with it at once. Still well over the §10 check's ×1.5.
+  - Hands-off Easy, Hard and Safety Test runs are unchanged, and every bot and Safety Test check still passes.
+
 ## v2.19 – 2026-10-14 (after the owner's first listen)
 
 - **The rod drive waits for the confirmation** (Section 15, owner). The confirmation clip starts a moment after the press, so the drive came in first. It now starts 1.25 s after the order. A move that finishes within the first second (about 5% of travel) plays only the confirmation.

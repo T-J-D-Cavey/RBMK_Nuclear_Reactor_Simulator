@@ -111,17 +111,17 @@ const TUNING_BASE = {
   // cold reactor with rods out, so a poisoned reactor can always restart with rods (nearly) all out (§9).
   xenonCapBelowExcess: 33,
   // One threshold (owner, plan §21 step 8b): at or below it xenon builds, faster the closer radioactivity is to
-  // 0; above it xenon burns off, slowly just above, at a medium rate by 100, fast by 120 and almost
-  // instantly from 130.
+  // 0; above it xenon burns off, slowly just above, at a medium rate by 100, fast by 120 and fastest from 130.
   xenonTurnover: 80,
   xenonBuildRate: 0.3, // %/s at radioactivity 0, falling linearly to 0 at the turnover
   xenonBurnRate: 0.06, // %/s per unit of radioactivity above the turnover (1.2 %/s at 100)
   xenonBurnMax: 2.4, // %/s up to 120 (a full load in ~40 s)
-  // Above 120 burn-off climbs steeply to this rate at xenonWipeAt, and stays there: a full load gone in ~3 s
-  // (owner, 2026-10-14).
+  // Above 120 burn-off climbs steeply to this rate at xenonWipeAt, and stays there: a full load gone in ~10 s
+  // (owner, 2026-10-15; was 33, ~3 s). Below the ~18 %/s that all ten rods driving in can cancel, so a surge
+  // with xenon left can still be caught.
   xenonWipeFrom: 120,
   xenonWipeAt: 130,
-  xenonWipeRate: 33,
+  xenonWipeRate: 10,
 } as const
 
 // The brake's shape, measured from 0°: the integral of the per-degree slope above (a smooth step), levelling off
