@@ -141,8 +141,8 @@ function startShift(state: GameState, tuning: ShiftEventTuning, now: number, rng
     s = addLog(
       s,
       "grid",
-      `Unit 4, your shift has started. Hold output at ${formatMW(s.powerTarget)}, within ±${formatMW(getPowerTolerance(s.powerTarget))}.`,
-      GRID_CONTROLLER,
+      `Unit 4, your shift has started. Hold output at ${formatMW(s.powerTarget)}. The grid controller will let us know if they need any adjustments in power output`,
+      SHIFT_FOREMAN,
     )
   }
   return s
