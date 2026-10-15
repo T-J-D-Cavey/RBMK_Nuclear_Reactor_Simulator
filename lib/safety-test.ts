@@ -104,12 +104,12 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 840,
     role: "srce",
-    text: "Watch the rod margin. Regulations say that below the minimum we must shut the reactor down.",
+    text: "We've been at low power for too long. We should stop.",
   },
   {
     at: 855,
     role: "deputy",
-    text: "No. Another three months waiting for this test? Hold 1,000 MW. We run the test tonight.",
+    text: "Never mind that. Hold 1,000 MW. We run the test tonight.",
   },
   // Phase 5: the test (15–18 min), with 4 minutes left. The clock reads 01:23:04 as the test begins, as it did on the night.
   {
@@ -134,7 +134,7 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 964,
     role: "deputy",
-    text: "Radioactivity's collapsed! Pull out every rod that's left, all of them, now! We are finishing this test.",
+    text: "What have you done? You've killed my reactor! Pull out every rod that's left, all of them, now! We are finishing this test.",
     action: "rods-out",
     onlyIf: (s) => s.radioactivity < RODS_OUT_BELOW,
   },
