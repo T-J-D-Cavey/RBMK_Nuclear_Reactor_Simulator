@@ -18,7 +18,7 @@ const ENDINGS = {
   explosion: {
     title: "Core Explosion",
     stamp: "Core destroyed",
-    lead: "The runaway ended the way it did on 26 April 1986.",
+    lead: "This is how it ended on 26 April 1986.",
   },
   performance: {
     title: "Removed from Post",
