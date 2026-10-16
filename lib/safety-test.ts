@@ -35,11 +35,11 @@ interface ScriptStep {
 // If the reactor has collapsed by the time the test begins, the deputy orders every rod out to save the test.
 export const RODS_OUT_BELOW = 35
 
-// Targets follow the physics: with two pumps, xenon creeps up below radioactivity 80 (output below ~3,700 MW)
-// and builds faster the lower it is. Output takes a minute or two to follow radioactivity, so each target is in
-// force for about two minutes, in steps of about a third (owner, 2026-10-14: never below 700 MW). Kiev's hold
-// (1,500 MW) builds xenon steadily; the test band (1,000 → 700 MW) builds it faster, so that raising output
-// back to 1,000 MW for the test takes the rod margin below its minimum.
+// Targets follow the physics: xenon creeps up below radioactivity 80 and builds faster the lower it is. That is
+// below ~3,700 MW with two pumps but only ~2,100 MW with four, so pumps decide who falls into the pit (owner,
+// 2026-10-16: 5,000 → 3,000 → 2,000, Kiev's hold at 2,000, then 1,500 for the test). On two pumps the hold and
+// the test output build xenon to ~100% and take the rod margin below its minimum; a player running four pumps
+// holds 2,000 MW with almost no xenon and reaches the test with about 30%.
 export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   // Phase 1: briefing and power reduction (00–04 min)
   {
@@ -50,21 +50,20 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 15,
     role: "deputy",
-    text: "Let's get ready for power reduction. I'll want it brought down to 3,500 MW shortly. Don't mess this up!",
-    target: 3500,
+    text: "Let's get ready for power reduction. I'll want it brought down to 3,000 MW shortly. Don't mess this up!",
+    target: 3000,
   },
   {
     at: 135,
     role: "deputy",
-    text: "Get on with it! 2,500 MW next",
-    target: 2500,
+    text: "Get on with it! 2,000 MW next",
+    target: 2000,
   },
   // Phase 2: Kiev's delay (04–08 min)
   {
     at: 255,
     role: "kiev",
     text: "We have orders to delay your safety test until the evening peak has passed. We'll need you to stay on the grid at low power and hold it till we confirm.",
-    target: 1500,
   },
   {
     at: 345,
@@ -76,30 +75,28 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     role: "deputy",
     text: "I want this done already!",
   },
-  // Phase 3: shift change and reduction to the test output (08–12 min)
+  // Phase 3: shift change, Kiev's release and reduction to the test output (08–12 min)
   {
     at: 480,
     role: "foreman",
     text: "Shift change: the night shift is on duty. Get them up to speed on the test's progress.",
   },
   {
-    at: 495,
-    role: "deputy",
-    text: "Bring it down to 1,000 MW for the test.",
-    target: 1000,
+    at: 490,
+    role: "kiev",
+    text: "The evening peak has passed. You may proceed with your test.",
   },
   {
-    at: 615,
+    at: 495,
     role: "deputy",
-    text: "Lower. 700 MW.",
-    target: 700,
+    text: "Bring it down to 1,500 MW for the test.",
+    target: 1500,
   },
-  // Phase 4: "Raise the power." (12–15 min)
+  // Phase 4: pressure to run the test (12–15 min)
   {
     at: 720,
     role: "deputy",
     text: "This is taking too long. We're running the test tonight or you're toast.",
-    target: 1000,
   },
   {
     at: 840,
@@ -109,7 +106,7 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 855,
     role: "deputy",
-    text: "Never mind that. Hold 1,000 MW. We run the test tonight.",
+    text: "Never mind that. Hold 1,500 MW. We run the test tonight.",
   },
   // Phase 5: the test (15–18 min), with 4 minutes left. The clock reads 01:23:04 as the test begins, as it did on the night.
   {

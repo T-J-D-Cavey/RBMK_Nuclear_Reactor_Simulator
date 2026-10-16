@@ -321,6 +321,7 @@ Decisions made without the owner that they may want to revisit:
 - **Xenon burn-off from 130 (2026-10-14, capped 2026-10-15):** the owner asked for a near-instant wipe; Claude picked the shape (unchanged up to 120, steep from 120 to 130). After playtests the owner capped it at 10 %/s (~10 s for a full load, was ~3 s), below what all ten rods can cancel (changelog v2.20). `xenonWipeRate` in lib/sim/tuning.ts; 7.5 is the next step down if it still feels too fast.
 - **Bot (2026-10-14):** keeps radioactivity at or below 90 while xenon shows, and the §10 AZ-5 check now allows the peak at up to 6 s. Both follow from the xenon change.
 - **Safety Test card text** says orders come from the test supervisor, the Deputy Chief Engineer and the Kiev grid controller.
+- **Safety Test targets (2026-10-16, changelog v2.21):** the owner set the targets; Claude placed Kiev's release at 08:10 (just after the shift change), with the 1,500 MW order at 08:15. Releasing later (10:15 or 12:00) leaves a skilled player with a little less xenon (24% or 20%, against 29%). Kiev's release message is a placeholder for the owner to rewrite.
 - **WS4–WS6 choices** (event numbers, timings, script targets): listed in §17.4.
 
 ---

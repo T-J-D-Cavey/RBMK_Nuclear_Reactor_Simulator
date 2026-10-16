@@ -2,6 +2,22 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.21 – 2026-10-16 (Safety Test targets: a skilled player can avoid the xenon pit)
+
+- **New targets** (Section 14, owner): 5,000 (start) → 3,000 → 2,000 → Kiev's hold at 2,000 → Kiev's release → 1,500 for the test. The 700 MW step and the raise back to 1,000 MW are gone. Kiev's hold no longer changes the target, and a new Kiev message releases the test at the shift change (Claude placed it at 08:10; wording for the owner to rewrite).
+  - **Why:** above radioactivity 80, output can't go much below 2,000–2,500 MW, so the old targets forced every player into the pit. The owner wants only a poor player to fall in.
+  - **Measured** (scratch bots, 30 runs each, insert rods as the test begins). With 4 pumps, radioactivity 80 gives only ~2,100 MW (2,630 with 3 pumps, 3,670 with 2). Median xenon as the test begins:
+
+    | Bot | Old targets | New targets |
+    |---|---|---|
+    | 2 pumps (the repo's yardstick bot) | 100% | 100% |
+    | 3 pumps below 3,000 MW | 85% | 65% |
+    | 4 pumps at 3,000 MW and below | 57% | 29% |
+
+    No bot got under ~20%: 1,500 MW needs radioactivity ~68 even on four pumps. Rods in or AZ-5 as the test begins still survived in all but one of 30 runs per case, and doing nothing still exploded every time.
+  - **Tried and rejected:** 3,000 → 1,500 → Kiev's hold at 1,500 → 1,000. The four-pump bot reached the test at 52–61% xenon (no better than before) and the three-pump bot at 85–94%.
+  - **The "about a third" step rule is dropped** (2,000 → 1,500 is a quarter), and the hold and the test output now last about 5–6 minutes each.
+
 ## v2.20 – 2026-10-15 (xenon burn-off capped at 10 %/s)
 
 - **Xenon burn-off from 130 slowed from ~3 s to ~10 s for a full load** (Section 9, owner, after playtests). At radioactivity ~140, xenon at 40–50% went to zero in about a second. The player couldn't see it go or answer with rods; radioactivity jumped to 800–1,000+ and then the hot fuel dragged it back down. The rate now climbs from 2.4 %/s at 120 to a cap of 10 %/s at 130 (was 33 %/s), so half a load goes in about 5 s. Up to 120 nothing changed.

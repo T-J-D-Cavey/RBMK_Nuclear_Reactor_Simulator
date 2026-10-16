@@ -345,7 +345,7 @@ test("§14 no grid target from the turbine switch: the display shows N/A and per
   assert.ok(after.every((s) => s.performance === after[0].performance))
 })
 
-test("§14 with the xenon from phases 2–3, holding the test output takes the rod margin below its minimum", () => {
+test("§14 on two pumps, the xenon from phases 2–3 takes the rod margin below its minimum while holding the test output", () => {
   const run = safety()
   const phase4 = run.states.slice(RAISE, PUMPS_ON)
   const lowest = Math.min(...phase4.map((s) => getRodMargin(s.controlRods)))
