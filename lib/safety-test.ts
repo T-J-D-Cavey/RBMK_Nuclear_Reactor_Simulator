@@ -63,56 +63,61 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 255,
     role: "kiev",
-    text: "We have orders to delay your safety test until the evening peak has passed. We'll need you to stay on the grid at low power and hold it till we confirm.",
+    text: "We have orders to delay your safety test until peak demand has passed. We'll need you to stay on the grid at current power and hold it till we confirm.",
   },
-  {
-    at: 345,
-    role: "deputy",
-    text: "Bunch of amateurs. Get it done!",
-  },
-  {
-    at: 430,
-    role: "deputy",
-    text: "I want this done already!",
-  },
+  // {
+  //   at: 345,
+  //   role: "deputy",
+  //   text: "Bunch of amateurs. Get it done!",
+  // },
+  // {
+  //   at: 430,
+  //   role: "deputy",
+  //   text: "I want this done already!",
+  // },
   // Phase 3: shift change, Kiev's release and reduction to the test output (08–12 min)
   {
-    at: 480,
+    at: 300,
     role: "foreman",
-    text: "Shift change: the night shift is on duty. Get them up to speed on the test's progress.",
+    text: "Shift change: the night shift is on duty. Get them up to speed on the test instructions. Some instructions are crossed out. Not sure if they are to be included.",
   },
   {
     at: 490,
     role: "kiev",
-    text: "The evening peak has passed. You may proceed with your test.",
+    text: "Grid demand has dropped. You may now proceed with your test.",
   },
   {
     at: 495,
     role: "deputy",
-    text: "Bring it down to 1,500 MW for the test.",
+    text: "We've been cleared to run the test. Now is it too much to ask that you all know what you're doing? Bring it down to 1,500 MW for the test, quickly!",
     target: 1500,
   },
   // Phase 4: pressure to run the test (12–15 min)
   {
-    at: 720,
+    at: 550,
     role: "deputy",
-    text: "This is taking too long. We're running the test tonight or you're toast.",
+    text: "You should have finished by now. Bunch of amatuers!",
   },
   {
-    at: 840,
+    at: 800,
     role: "srce",
     text: "We've been at low power for too long. We should stop.",
   },
   {
-    at: 855,
+    at: 810,
     role: "deputy",
     text: "Never mind that. Hold 1,500 MW. We run the test tonight.",
+  },
+    {
+    at: 870,
+    role: "deputy",
+    text: "Right we're doing the test. Get ready everyone",
   },
   // Phase 5: the test (15–18 min), with 4 minutes left. The clock reads 01:23:04 as the test begins, as it did on the night.
   {
     at: 900,
     role: "procedure",
-    text: "Test step 1: start all four main circulation pumps.",
+    text: "Test step 1: Turn on all remaining circulation pumps.",
     action: "pumps-on",
   },
   {
@@ -125,13 +130,13 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 964,
     role: "procedure",
-    text: "Test begins. Station power to the pumps is cut: the coasting turbine is now their only supply. Keep the reactor under control.",
+    text: "Test begins. Station power to the pumps is cut: coasting turbine is powering the pumps.",
     action: "mains-off",
   },
   {
     at: 964,
     role: "deputy",
-    text: "What have you done? You've killed my reactor! Pull out every rod that's left, all of them, now! We are finishing this test.",
+    text: "What have you done? You're choking my reactor! bring it back up, we are finishing this test.",
     action: "rods-out",
     onlyIf: (s) => s.radioactivity < RODS_OUT_BELOW,
   },
@@ -139,7 +144,7 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: 1080,
     role: "procedure",
-    text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until the shift ends at 01:27.",
+    text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until end of shift",
     action: "mains-on",
   },
 ]
