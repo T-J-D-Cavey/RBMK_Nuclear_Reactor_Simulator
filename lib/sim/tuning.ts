@@ -176,7 +176,7 @@ export { fuelEffect, pumpEffect }
 type Range = readonly [number, number]
 
 export interface ShiftEventTuning {
-  majorCounts: readonly (readonly [count: number, weight: number])[] // power cuts and rod jams per shift
+  majorCounts: readonly (readonly [count: number, weight: number])[] // power cuts and rod jams per shift (at most one of each)
   smallCounts: readonly (readonly [count: number, weight: number])[] // pump trips and grid hold requests
   firstMajorAfter: number // no major emergency in the first few minutes
   firstSmallAfter: number
@@ -184,8 +184,7 @@ export interface ShiftEventTuning {
   smallSpacing: number // smaller events keep this far from every other planned event
   lastStartBefore: number // nothing is planned to start this close to the end of the shift
   powerCutSeconds: Range
-  rodJamRods: Range
-  rodJamSeconds: Range
+  rodJamRods: Range // rods a jam takes; jams are permanent (owner, 2026-10-16)
   pumpTripSeconds: Range
   gridHoldSeconds: Range
   targetRange: Range // MW
@@ -197,7 +196,7 @@ export interface ShiftEventTuning {
 }
 
 const EASY_EVENTS: ShiftEventTuning = {
-  majorCounts: [[1, 0.8], [2, 0.2]], // ≈1 per 15-minute shift
+  majorCounts: [[1, 1]], // one per 15-minute shift: a power cut or a rod jam (owner, 2026-10-16)
   smallCounts: [[1, 0.5], [2, 0.5]],
   firstMajorAfter: 180,
   firstSmallAfter: 120,
@@ -205,8 +204,7 @@ const EASY_EVENTS: ShiftEventTuning = {
   smallSpacing: 150,
   lastStartBefore: 90,
   powerCutSeconds: [20, 45],
-  rodJamRods: [4, 7],
-  rodJamSeconds: [30, 90],
+  rodJamRods: [2, 3],
   pumpTripSeconds: [60, 90],
   gridHoldSeconds: [90, 150],
   targetRange: [2000, 8000],
@@ -218,16 +216,15 @@ const EASY_EVENTS: ShiftEventTuning = {
 }
 
 const HARD_EVENTS: ShiftEventTuning = {
-  majorCounts: [[2, 0.2], [3, 0.6], [4, 0.2]], // ≈3 per 30-minute shift
-  smallCounts: [[3, 0.5], [4, 0.5]],
+  majorCounts: [[2, 1]], // one power cut and one rod jam per 30-minute shift (owner, 2026-10-16)
+  smallCounts: [[4, 0.5], [5, 0.5]], // one more than before majors were capped, to keep the workload up
   firstMajorAfter: 180,
   firstSmallAfter: 120,
   majorSpacing: 240,
   smallSpacing: 150,
   lastStartBefore: 90,
   powerCutSeconds: [30, 60],
-  rodJamRods: [5, 8],
-  rodJamSeconds: [60, 180],
+  rodJamRods: [3, 4],
   pumpTripSeconds: [60, 120],
   gridHoldSeconds: [120, 180],
   targetRange: [500, 10000],
@@ -246,4 +243,7 @@ export const EVENT_TUNING = {
   holdAfterTargetChange: 90, // a hold request waits this long after a target change, so the player can settle
   warningLead: { "power-cut": 40, "rod-stuck": 25 } as Partial<Record<string, number>>, // advance warning (§12)
   turbineTripSeconds: 20, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12)
+  // A rod sent in from 0% while steam is high jams with only its graphite tip in the core, as the rods did when AZ-5
+  // was pressed on 26 April 1986 (owner, 2026-10-16). Permanent, like an event jam.
+  steamJamInsertion: 1, // %
 }

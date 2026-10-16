@@ -114,6 +114,13 @@ export function getEventWarnings(state: GameState): Warning[] {
   if (getWarningFlags(state).lowPerformance) {
     warnings.push({ key: "lowPerformance", text: "WARNING: Our power station is reporting low grid target performance. Review power targets" })
   }
+  // Jammed rods never free again (owner, 2026-10-16), so this warning, and the general alarm, last the rest of the
+  // shift. The player can switch the alarms off.
+  const jammed = state.controlRods.filter((rod) => rod.stuck).map((rod) => rod.id)
+  if (jammed.length) {
+    const rods = jammed.length === 1 ? `Control rod ${jammed[0]} is` : `Control rods ${jammed.join(", ")} are`
+    warnings.push({ key: "jammedRods", text: `WARNING: ${rods} jammed and can't be moved. Control radioactivity with the remaining rods.` })
+  }
   // Sustained over-pressure trips the turbine off the grid (bible §12): count down so it never comes unannounced.
   if (state.overpressureSeconds > 0 && state.turbineMode === "grid" && GAME_MODE_CONFIGS[state.mode]?.turbineTrips) {
     const left = Math.max(0, EVENT_TUNING.turbineTripSeconds - state.overpressureSeconds)
@@ -133,7 +140,8 @@ export function checkEventWarnings(state: GameState): string[] {
 // instead. The turbine over-pressure countdown only runs while steam is high, so it shares the steam alarm.
 const OWN_ALARM_WARNINGS = new Set(["highRadioactivity", "highReactorTemp", "highSteam", "highXenon", "turbineOverpressure"])
 // Events that sound the event alarm while they last. A grid hold doesn't, and target changes aren't events (owner, 2026-10-14).
-const EVENT_ALARM_KINDS: readonly EventKind[] = ["power-cut", "rod-stuck", "pump-trip"]
+// A rod jam doesn't either: it never ends, so its warning sounds the general alarm instead (owner, 2026-10-16).
+const EVENT_ALARM_KINDS: readonly EventKind[] = ["power-cut", "pump-trip"]
 
 // Which alarm sounds are on: one per alarm, read straight from the warnings so a sound starts and stops with its warning.
 export function getAlarms(state: GameState) {
@@ -146,6 +154,13 @@ export function getAlarms(state: GameState) {
     highReactorTemp: flags.highReactorTemp,
     highSteamOrXenon: flags.highSteam || flags.highXenon,
   }
+}
+
+// The rod display's AZ-5 lamp lights for a few seconds after a press, as on the panel in the show (owner, 2026-10-16)
+export const AZ5_LAMP_SECONDS = 5
+
+export function isAz5LampLit(state: GameState): boolean {
+  return state.az5PressedAt !== null && getShiftTime(state) - state.az5PressedAt < AZ5_LAMP_SECONDS
 }
 
 export const GAME_OVER_REASONS: Record<GameOverCause, string> = {

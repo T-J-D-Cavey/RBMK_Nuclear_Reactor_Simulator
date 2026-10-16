@@ -1240,6 +1240,220 @@
   font-size: 0.8em;
 }
 
+/* ---- Rod position display: the ring of rods from the show's mimic panel (components/rod-display.tsx) ----
+   A painted steel wall with backlit plastic lenses set into it, each lit in its rod's colour. */
+.cr-rod-face {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    linear-gradient(180deg, #5d655f 0%, #4b524d 100%);
+  border: 4px solid #3a403c;
+  border-top-width: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45), inset 0 6px 12px rgba(0, 0, 0, 0.35);
+}
+
+.cr-rod-ring {
+  container-type: inline-size; /* the lenses' type scales with the ring */
+  position: relative;
+  width: min(100%, 24rem);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+/* Each lens's colour */
+.cr-rod-cell,
+.cr-rod-legend li {
+  --lamp: #4ade80;
+}
+.cr-rod-cell.is-moving,
+.cr-rod-legend .is-moving {
+  --lamp: #60a5fa;
+}
+.cr-rod-cell.is-out,
+.cr-rod-legend .is-out {
+  --lamp: #facc15;
+}
+.cr-rod-cell.is-jammed,
+.cr-rod-legend .is-jammed {
+  --lamp: #ef4444;
+}
+
+/* A lit plastic lens: brightest at the lamp behind it, a moulded sheen at the top, a dark socket around it */
+.cr-rod-cell,
+.cr-rod-swatch,
+.cr-rod-az5.is-lit {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.08) 38%, rgba(255, 255, 255, 0) 52%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    radial-gradient(circle at 50% 55%, color-mix(in oklab, var(--lamp) 55%, white) 0%, var(--lamp) 45%, color-mix(in oklab, var(--lamp) 62%, black) 100%);
+}
+
+.cr-rod-cell {
+  position: absolute;
+  width: 14%; /* never overlapping a neighbour: see RING_RADIUS in components/rod-display.tsx */
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em;
+  font-family: "Geist Mono", monospace;
+  line-height: 1;
+  color: rgba(16, 16, 14, 0.86); /* printed on the lens */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 -4px 7px rgba(0, 0, 0, 0.22),
+    0 0 0 3px #1b1e1c,
+    0 0 0 4px rgba(255, 255, 255, 0.1),
+    0 3px 0 4px rgba(0, 0, 0, 0.3),
+    0 0 16px 2px color-mix(in oklab, var(--lamp) 45%, transparent);
+}
+
+.cr-rod-id {
+  font-size: max(8px, 3cqw);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.cr-rod-pos {
+  font-size: max(9px, 3.8cqw);
+  font-weight: 800;
+}
+
+/* AZ-5 in the middle of the ring: a dull red lens until pressed, then lit for a few seconds */
+.cr-rod-az5 {
+  --lamp: #ef4444;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Geist Mono", monospace;
+  font-size: max(10px, 4.4cqw);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(255, 190, 190, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 45%),
+    radial-gradient(circle at 50% 55%, #5c1d1d 0%, #3a1010 70%, #260909 100%);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 -4px 7px rgba(0, 0, 0, 0.3),
+    0 0 0 3px #1b1e1c,
+    0 0 0 4px rgba(255, 255, 255, 0.1),
+    0 3px 0 4px rgba(0, 0, 0, 0.3);
+}
+.cr-rod-az5.is-lit {
+  color: rgba(16, 16, 14, 0.86);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 -4px 7px rgba(0, 0, 0, 0.22),
+    0 0 0 3px #1b1e1c,
+    0 0 0 4px rgba(255, 255, 255, 0.1),
+    0 3px 0 4px rgba(0, 0, 0, 0.3),
+    0 0 26px 6px rgba(239, 68, 68, 0.6);
+}
+
+.cr-rod-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 1rem;
+  font-family: "Geist Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4d8d3;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+.cr-rod-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.cr-rod-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 0 2px #1b1e1c;
+}
+
+/* ---- Dosimeter: a needle meter in a black bakelite case (components/dosimeter.tsx) ---- */
+.cr-dose-bezel {
+  background: linear-gradient(160deg, #2c2c2a 0%, #1b1b1a 55%, #111110 100%);
+  border: 4px solid #3a3a37;
+  border-top-width: 6px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 6px 12px rgba(0, 0, 0, 0.5);
+}
+
+.cr-dose-face {
+  position: relative;
+  border-radius: 10px 10px 4px 4px;
+  background: radial-gradient(ellipse at 50% 85%, #f4eedb 0%, #e8dfc4 60%, #d3c9ab 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 3px 10px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+/* The glass over the face */
+.cr-dose-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 32%, rgba(255, 255, 255, 0) 33%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+.cr-dose-num {
+  font-family: "Geist Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  fill: #1c1b18;
+}
+.cr-dose-num.is-small {
+  font-size: 8px;
+  font-weight: 600;
+}
+.cr-dose-num.is-red {
+  fill: #b42318;
+  font-weight: 800;
+}
+.cr-dose-unit,
+.cr-dose-legend {
+  font-family: "Geist Mono", monospace;
+  font-size: 6.5px;
+  letter-spacing: 0.12em;
+  fill: #3b3a35;
+}
+.cr-dose-legend {
+  font-size: 6px;
+  letter-spacing: 0.2em;
+  fill: #6b685e;
+}
+
+.cr-dose-needle {
+  transition: transform 1s linear; /* one game second per reading */
+}
+/* Pinned against the stop at the end of the scale, the needle trembles */
+.cr-dose-pegged {
+  animation: cr-dose-tremble 0.18s ease-in-out infinite alternate;
+}
+@keyframes cr-dose-tremble {
+  from { transform: rotate(-0.8deg); }
+  to { transform: rotate(0.4deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cr-dose-needle { transition: none; }
+  .cr-dose-pegged { animation: none; }
+}
+
 /* ---- End screens ---- */
 
 /* The control room in darkness, washed with the outcome's colour */

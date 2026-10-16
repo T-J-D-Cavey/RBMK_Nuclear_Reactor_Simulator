@@ -2,10 +2,15 @@ import { useEffect, useReducer, useRef } from "react"
 import type { ControlRod } from "@/lib/types"
 import { DRIVE_START_DELAY_MS } from "@/lib/rod-drive-voices"
 
-// Where the control panel draws each rod. A rod sent off from rest stays where it was until the drive sound starts
-// (DRIVE_START_DELAY_MS after the order, once the confirmation clunk has played), so the marker and the sound start
-// together; after that the marker follows the rod's actual position.
-export function useRodDisplay(rods: ControlRod[]): number[] {
+export interface RodDisplay {
+  insertion: number // where to draw the rod, 0-100%
+  moving: boolean // travelling, as far as the display is concerned
+}
+
+// How the rod display shows each rod. A rod sent off from rest stays where it was, and doesn't show as moving,
+// until the drive sound starts (DRIVE_START_DELAY_MS after the order, once the confirmation clunk has played), so
+// the display and the sound start together; after that it follows the rod's actual position.
+export function useRodDisplay(rods: ControlRod[]): RodDisplay[] {
   const last = useRef(new Map<number, { target: number; insertion: number }>())
   const holds = useRef(new Map<number, { at: number; until: number }>())
   const [, rerender] = useReducer((n: number) => n + 1, 0)
@@ -29,5 +34,9 @@ export function useRodDisplay(rods: ControlRod[]): number[] {
     return () => window.clearTimeout(timer)
   }, [nextRelease])
 
-  return rods.map((rod) => holds.current.get(rod.id)?.at ?? rod.insertion)
+  return rods.map((rod) => {
+    const hold = holds.current.get(rod.id)
+    if (hold) return { insertion: hold.at, moving: false }
+    return { insertion: rod.insertion, moving: !rod.stuck && rod.insertion !== rod.target }
+  })
 }

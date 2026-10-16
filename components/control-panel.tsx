@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react"
 import { ArrowLeft, Cctv, Home, Volume2, VolumeX } from "lucide-react"
 
-import type { GameState } from "@/lib/types"
+import { type GameState, getShiftTime } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
 import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
@@ -67,7 +67,8 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const isOnTarget = isPowerOnTarget(gameState)
 
   const hasWarnings = checkWarnings(gameState).length > 0 || checkEventWarnings(gameState).length > 0
-  const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "rod-stuck" || event.type === "pump-trip")
+  // A rod jam never ends, so its lamp comes from the jammed-rods warning instead (owner, 2026-10-16)
+  const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "pump-trip")
 
   // Same thresholds as the warning list in the message area
   const flags = getWarningFlags(gameState)
@@ -306,7 +307,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                         style={{
                           // Position based on the rod's actual (travelling) insertion %, held back until the drive sound starts.
                           // 0% is top, 100% is bottom. We clamp slightly to keep it inside the lines.
-                          top: `${rodDisplay[idx]}%`,
+                          top: `${rodDisplay[idx].insertion}%`,
                           transform: "translateY(-50%)", // Centers the dash on the exact % point
                         }}
                       >
@@ -434,7 +435,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         onOpenChange={setRodsModalOpen}
         controlRods={gameState.controlRods}
         onUpdate={(rods, az5) => {
-          updateGameState({ controlRods: rods })
+          updateGameState(az5 ? { controlRods: rods, az5PressedAt: getShiftTime(gameState) } : { controlRods: rods })
           onSoundEffect(az5 ? "az5" : "rodConfirm")
         }}
       />

@@ -41,7 +41,7 @@ export interface GameStats {
   secondsInDanger: number
 }
 
-// Shift events (bible §12). Power cuts and rod jams are the major emergencies.
+// Shift events (bible §12). Power cuts and rod jams are the major emergencies; a rod jam is permanent.
 export type EventKind = "power-cut" | "rod-stuck" | "pump-trip" | "grid-hold"
 export const MAJOR_EVENT_KINDS: readonly EventKind[] = ["power-cut", "rod-stuck"]
 
@@ -94,7 +94,7 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     id: "easy",
     name: "Easy Mode",
     badgeText: "EASY MODE",
-    description: "15 minute shift: about one major emergency, smaller and less frequent power target changes.",
+    description: "15 minute shift: one major emergency, smaller and less frequent power target changes.",
     hasTimer: true,
     timerMode: "countdown",
     timeLimit: 900,
@@ -108,7 +108,7 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     id: "hard",
     name: "Hard Mode",
     badgeText: "HARD MODE",
-    description: "30 minute shift: about three major emergencies, larger and more frequent power target changes.",
+    description: "30 minute shift: two major emergencies, larger and more frequent power target changes.",
     hasTimer: true,
     timerMode: "countdown",
     timeLimit: 1800,
@@ -194,6 +194,9 @@ export interface GameState {
   pendingTarget: PendingTargetChange | null // announced, not yet in force
   scriptStep: number // Safety Test: index of the next script step to run
 
+  // Shift time of the last AZ-5 press (null: never), for the rod display's AZ-5 lamp
+  az5PressedAt: number | null
+
   // Warnings
   warnings: string[]
 
@@ -260,6 +263,8 @@ export const INITIAL_GAME_STATE: GameState = {
   nextTargetChangeAt: null,
   pendingTarget: null,
   scriptStep: 0,
+
+  az5PressedAt: null,
 
   warnings: [],
 

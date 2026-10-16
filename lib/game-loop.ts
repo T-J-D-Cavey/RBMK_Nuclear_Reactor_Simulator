@@ -3,7 +3,7 @@
 import { type GameMode, type GameState, GAME_MODE_CONFIGS, INITIAL_GAME_STATE, getShiftTime } from "./types"
 import { calculateGameTick } from "./game-mechanics"
 import { addLog, checkEventWarnings, checkGameOver, checkWarnings } from "./game-utils"
-import { applyPendingTarget, checkTurbineTrip, expireEvents, runShiftEvents } from "./game-events"
+import { applyPendingTarget, checkTurbineTrip, expireEvents, jamRodsInHighSteam, runShiftEvents } from "./game-events"
 import { runSafetyTest } from "./safety-test"
 import type { Rng } from "./sim/rng"
 
@@ -32,12 +32,14 @@ export function advanceGame(prev: GameState, rng: Rng = Math.random): GameState 
   if (prev.isPaused || prev.isGameOver || prev.hasWon) return prev
   const config = GAME_MODE_CONFIGS[prev.mode] ?? GAME_MODE_CONFIGS.easy
 
-  const { updates, ending } = calculateGameTick(prev, rng)
+  // Before the rods move, so a rod sent in from 0% at high steam jams where it is
+  const start = jamRodsInHighSteam(prev)
+  const { updates, ending } = calculateGameTick(start, rng)
 
   // Countdown for timed modes, count-up for Free mode
   const isCountUp = config.timerMode === "countup"
   const gameTime = isCountUp ? prev.gameTime + 1 : Math.max(0, prev.gameTime - 1)
-  let s: GameState = { ...prev, ...updates, gameTime }
+  let s: GameState = { ...start, ...updates, gameTime }
 
   // Victory: the shift's countdown reached zero (a disaster in the final second still counts)
   if (!ending && !isCountUp && config.hasTimer && gameTime === 0) {

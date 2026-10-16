@@ -85,7 +85,7 @@ export default function InstructionsPage() {
                 More insertion → radioactivity down. Less insertion → radioactivity up.
               </Card>
               <Card title="AZ-5">
-                Inserts all 10 control rods at once. Use it to stop a radioactivity spike.
+                Inserts every control rod at once, except any that have jammed. Use it to stop a radioactivity spike.
               </Card>
               <Card title="Water Pumps (×4)">
                 The more pumps powered and running, the cooler the reactor and the less steam. With no pumps running, the

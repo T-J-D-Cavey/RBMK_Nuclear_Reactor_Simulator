@@ -18,8 +18,8 @@ Every mode runs the same physics. Only the workload changes.
 
 | Mode | Shift | Workload |
 | --- | --- | --- |
-| **Easy** | 15 min | About one major emergency; small, infrequent target changes |
-| **Hard** | 30 min | About three major emergencies; larger, more frequent target changes |
+| **Easy** | 15 min | One major emergency; small, infrequent target changes |
+| **Hard** | 30 min | Two major emergencies and more smaller events; larger, more frequent target changes |
 | **Free** | Unlimited | Sandbox: no targets, no events |
 | **Safety Test** | 20 min | A scripted recreation of the Unit 4 turbine rundown test (25–26 April 1986) |
 
@@ -73,7 +73,7 @@ A Next.js 16 / React 19 app (Tailwind, shadcn/ui), deployed on Vercel. The key d
 
 - **`app/`**: the home page with mode selection, the game (`/game`) and How to Play (`/instructions`).
 - **`hooks/use-game-state.ts`**: ticks `advanceGame` once a second and saves the game to `localStorage`, so a refresh resumes the shift.
-- **`components/`**: the control panel and its modals (rods, pumps, turbine), the chart recorder, the red/blue card board, the alarm monitor, the shift log teleprinter, the reactor camera and the end screens. The incident report is styled as a paper end-of-shift report.
+- **`components/`**: the control panel and its modals (rods, pumps, turbine), the chart recorder, the red/blue card board, the rod position display, the dosimeter, the alarm monitor, the shift log teleprinter, the reactor camera and the end screens. The incident report is styled as a paper end-of-shift report.
 - **`hooks/use-audio-manager.ts`**: alarms, the reactor hum and sound effects, driven by the pure cue logic in `lib/`.
 
 ### Design documents (`ai/`)

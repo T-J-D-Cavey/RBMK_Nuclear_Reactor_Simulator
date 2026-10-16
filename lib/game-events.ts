@@ -64,11 +64,13 @@ function spread(rng: Rng, n: number, from: number, to: number, gap: number): num
 }
 
 // A budget of major emergencies (power cuts, rod jams) and smaller events (pump trips, hold requests),
-// none in the first few minutes, sensibly spaced (bible §12). Kinds are random: no fixed alternation.
+// none in the first few minutes, sensibly spaced (bible §12). At most one of each major kind per shift, in a
+// random order (owner, 2026-10-16): a rod jam is permanent, so a second one would leave too few rods.
 export function planShiftEvents(tuning: ShiftEventTuning, shiftLength: number, rng: Rng): ScheduledEvent[] {
   const end = shiftLength - tuning.lastStartBefore
-  const majors = spread(rng, pickCount(rng, tuning.majorCounts), tuning.firstMajorAfter, end, tuning.majorSpacing).map(
-    (at) => ({ at, kind: (rng() < 0.5 ? "power-cut" : "rod-stuck") as EventKind }),
+  const kinds: EventKind[] = rng() < 0.5 ? ["power-cut", "rod-stuck"] : ["rod-stuck", "power-cut"]
+  const majors = spread(rng, Math.min(kinds.length, pickCount(rng, tuning.majorCounts)), tuning.firstMajorAfter, end, tuning.majorSpacing).map(
+    (at, i) => ({ at, kind: kinds[i] }),
   )
   const smalls: { at: number; kind: EventKind }[] = []
   const wanted = pickCount(rng, tuning.smallCounts)
@@ -173,12 +175,16 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
       return begin(s, { ...base, duration: Math.round(between(rng, tuning.powerCutSeconds)) })
     }
     case "rod-stuck": {
-      const rods = pickDistinct(rng, s.controlRods.length, wholeBetween(rng, tuning.rodJamRods))
+      // Only rods that still move: one the player has already jammed can't jam again.
+      const free = s.controlRods.flatMap((rod, i) => (rod.stuck ? [] : [i]))
+      if (!free.length) return s
+      const rods = pickDistinct(rng, free.length, wholeBetween(rng, tuning.rodJamRods)).map((k) => free[k])
       const names = rods.map((i) => i + 1).join(", ")
-      // A jammed rod stops wherever it is, including mid-travel, and stays there once freed (bible §10, §12)
+      // A jammed rod stops wherever it is, including mid-travel, for the rest of the shift (owner, 2026-10-16).
+      // The event itself is over at once: the warning on the alarm screen stays while the rods are jammed.
       s = { ...s, controlRods: s.controlRods.map((rod, i) => (rods.includes(i) ? { ...rod, stuck: true, target: rod.insertion } : rod)) }
       s = addLog(s, "engineer", `Control rods ${names} are stuck in position and can't be moved due to a ruptured fuel channel.`, HEAD_ENGINEER)
-      return begin(s, { ...base, duration: Math.round(between(rng, tuning.rodJamSeconds)), data: { affectedRods: rods } })
+      return begin(s, { ...base, duration: 0, data: { affectedRods: rods } })
     }
     case "pump-trip": {
       const running = s.waterPumps.filter((p) => p.on && !p.tripped)
@@ -230,12 +236,8 @@ function endEvent(state: GameState, event: GameEvent): GameState {
         HEAD_ENGINEER,
       )
       break
-    case "rod-stuck": {
-      const rods = event.data?.affectedRods ?? []
-      s = { ...s, controlRods: s.controlRods.map((rod, i) => (rods.includes(i) ? { ...rod, stuck: false } : rod)) }
-      s = addLog(s, "engineer", `Control rods ${rods.map((i) => i + 1).join(", ")} are free again. They stay where they stopped.`, HEAD_ENGINEER)
-      break
-    }
+    case "rod-stuck":
+      break // the rods stay jammed (owner, 2026-10-16)
     case "pump-trip": {
       const pumps = event.data?.affectedPumps ?? []
       s = { ...s, waterPumps: s.waterPumps.map((p) => (pumps.includes(p.id) ? { ...p, tripped: false } : p)) }
@@ -248,6 +250,21 @@ function endEvent(state: GameState, event: GameEvent): GameState {
   }
   if (isMajorEvent(event.type)) s = { ...s, stats: { ...s.stats, emergenciesHandled: s.stats.emergenciesHandled + 1 } }
   return s
+}
+
+// --- Rods jammed by high steam (every mode) ---
+
+// A rod sent into the core from 0% while steam is high jams with just its graphite tip in (owner, 2026-10-16),
+// as the rods did when AZ-5 was pressed on 26 April 1986. That covers lever orders and AZ-5 alike. No message:
+// nobody saw it coming, so only the alarm screen's jammed-rods warning reports it.
+export function jamRodsInHighSteam(state: GameState): GameState {
+  if (state.steamVolume < THRESHOLDS.steamVolume.highWarning) return state
+  if (!state.controlRods.some((rod) => !rod.stuck && rod.insertion === 0 && rod.target > 0)) return state
+  const at = EVENT_TUNING.steamJamInsertion
+  return {
+    ...state,
+    controlRods: state.controlRods.map((rod) => (!rod.stuck && rod.insertion === 0 && rod.target > 0 ? { ...rod, insertion: at, target: at, stuck: true } : rod)),
+  }
 }
 
 // --- Power targets (bible §13) ---

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useElementSize } from "@/hooks/use-element-height"
 
 /* ------------------------------------------------------------------ */
 /* Types and scales                                                    */
@@ -23,6 +24,8 @@ export interface ChartRecorderProps {
   isPaused: boolean
   /** Length of paper shown, in samples (= seconds at one tick per second). Default 180 (3 minutes). */
   windowSamples?: number
+  /** Wide screens: the panel's height in px, met by making the bands shorter (never taller, never under half). */
+  fitHeight?: number | null
   className?: string
 }
 
@@ -33,8 +36,6 @@ interface Band {
   label: string
   unit: string
   color: string
-  top: number
-  height: number
   /** value -> 0..1 (may exceed 1 when off scale) */
   scale: (v: number) => number
   max: number
@@ -63,8 +64,6 @@ const BANDS: Band[] = [
     label: "Radioactivity",
     unit: "",
     color: "#c81e1e",
-    top: 26,
-    height: 128,
     scale: radScale,
     max: RAD_LOG_MAX,
     ticks: [
@@ -81,8 +80,6 @@ const BANDS: Band[] = [
     label: "Reactor Temp",
     unit: "°",
     color: "#1d4ed8",
-    top: 182,
-    height: 70,
     scale: (v) => Math.max(0, v) / 1200,
     max: 1200,
     ticks: [
@@ -97,8 +94,6 @@ const BANDS: Band[] = [
     label: "Steam",
     unit: "",
     color: "#15803d",
-    top: 280,
-    height: 70,
     scale: (v) => Math.max(0, v) / 600,
     max: 600,
     ticks: [
@@ -109,11 +104,50 @@ const BANDS: Band[] = [
   },
 ]
 
-const VB_H = 372
+// Paper height: the three bands (full heights below) plus a fixed margin for the labels above each band and the
+// time axis. On wide screens the bands shrink, down to half, so the recorder and the dosimeter below it come to the
+// camera's height (owner, 2026-10-16); the type and the pens keep their size.
+const BAND_HEIGHTS: Record<Key, number> = { rad: 128, temp: 70, steam: 70 }
+const FIRST_BAND_TOP = 26
+const BAND_GAP = 28 // room for the next band's label
+const BOTTOM_MARGIN = 22 // the time axis and sprocket holes
+const FIXED_H = FIRST_BAND_TOP + 2 * BAND_GAP + BOTTOM_MARGIN
+const FULL_BANDS_H = BAND_HEIGHTS.rad + BAND_HEIGHTS.temp + BAND_HEIGHTS.steam
+const VB_H = FIXED_H + FULL_BANDS_H // 372, the paper at full height
+const MIN_VB_H = FIXED_H + FULL_BANDS_H / 2
+const LABEL_GAP = 7.5 // scale labels closer than this would run together
 
-const yFor = (band: Band, v: number) => {
+interface Layout {
+  top: number
+  height: number
+}
+
+function layoutBands(vbH: number): Record<Key, Layout> {
+  const k = (vbH - FIXED_H) / FULL_BANDS_H
+  const out = {} as Record<Key, Layout>
+  let top = FIRST_BAND_TOP
+  for (const b of BANDS) {
+    out[b.key] = { top, height: BAND_HEIGHTS[b.key] * k }
+    top += out[b.key].height + BAND_GAP
+  }
+  return out
+}
+
+const yFor = (band: Band, at: Layout, v: number) => {
   const f = Math.min(1, Math.max(0, band.scale(v)))
-  return band.top + band.height * (1 - f)
+  return at.top + at.height * (1 - f)
+}
+
+// Which scale labels have room: warning levels first, then the rest, each only if clear of those already shown.
+// Every tick keeps its line.
+function visibleLabels(band: Band, at: Layout): Set<number> {
+  const shown: number[] = []
+  const order = [...band.ticks.filter((t) => t.warn), ...band.ticks.filter((t) => !t.warn)]
+  for (const t of order) {
+    const y = yFor(band, at, t.v)
+    if (shown.every((v) => Math.abs(yFor(band, at, v) - y) >= LABEL_GAP)) shown.push(t.v)
+  }
+  return new Set(shown)
 }
 
 /* ------------------------------------------------------------------ */
@@ -127,9 +161,24 @@ export default function ChartRecorder({
   gameTime,
   isPaused,
   windowSamples = 180,
+  fitHeight = null,
   className = "",
 }: ChartRecorderProps) {
   const [samples, setSamples] = useState<Sample[]>([])
+
+  // The paper's height to meet fitHeight: everything but the paper keeps its size, so take that off first.
+  const [panelRef, panelSize] = useElementSize<HTMLDivElement>()
+  const [paperRef, paperSize] = useElementSize<SVGSVGElement>()
+  // Sizes are whole pixels, so ignore changes under a couple of units: otherwise a 1px wobble could keep resizing it.
+  const fitted = useRef(VB_H)
+  let wanted = VB_H
+  if (fitHeight && panelSize && paperSize && paperSize.width > 0) {
+    const room = fitHeight - (panelSize.height - paperSize.height)
+    wanted = Math.min(VB_H, Math.max(MIN_VB_H, (room * VB_W) / paperSize.width))
+  }
+  if (Math.abs(wanted - fitted.current) >= 2 || wanted === VB_H || wanted === MIN_VB_H) fitted.current = wanted
+  const vbH = fitted.current
+  const layout = layoutBands(vbH)
 
   // Latest values, read when a tick arrives (so the sampling effect depends only on the clock).
   const latest = useRef({ rad: radioactivity, temp: reactorTemp, steam: steamVolume })
@@ -174,7 +223,7 @@ export default function ChartRecorder({
   const current = samples[samples.length - 1]
 
   return (
-    <div className={`cr-panel cr-screws p-3 sm:p-4 space-y-2 ${className}`}>
+    <div ref={panelRef} className={`cr-panel cr-screws p-3 sm:p-4 space-y-2 ${className}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="cr-plate">Chart Recorder</div>
         <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase text-muted-foreground">
@@ -209,7 +258,8 @@ export default function ChartRecorder({
       {/* Paper */}
       <div className="ws3-chart-window relative bg-neutral-800 border-2 border-neutral-900 p-1">
         <svg
-          viewBox={`0 0 ${VB_W} ${VB_H}`}
+          ref={paperRef}
+          viewBox={`0 0 ${VB_W} ${vbH}`}
           className="block w-full h-auto"
           role="img"
           aria-label={`Strip chart of the last ${Math.round(windowSamples / 60)} minutes: radioactivity, reactor temperature and steam`}
@@ -223,34 +273,36 @@ export default function ChartRecorder({
             </linearGradient>
             {BANDS.map((b) => (
               <clipPath key={b.key} id={`ws3-clip-${b.key}`}>
-                <rect x={PLOT_L} y={b.top - 1} width={PLOT_R - PLOT_L + 1} height={b.height + 2} />
+                <rect x={PLOT_L} y={layout[b.key].top - 1} width={PLOT_R - PLOT_L + 1} height={layout[b.key].height + 2} />
               </clipPath>
             ))}
           </defs>
 
           {/* Paper */}
-          <rect x={PAPER_L} y={2} width={PAPER_R - PAPER_L} height={VB_H - 4} fill="#efe7cf" />
+          <rect x={PAPER_L} y={2} width={PAPER_R - PAPER_L} height={vbH - 4} fill="#efe7cf" />
 
           {/* Sprocket holes */}
           {holes.map((x) => (
             <g key={`h${x}`}>
               <circle cx={x} cy={9} r={2} fill="#3f3f46" />
-              <circle cx={x} cy={VB_H - 9} r={2} fill="#3f3f46" />
+              <circle cx={x} cy={vbH - 9} r={2} fill="#3f3f46" />
             </g>
           ))}
 
           {BANDS.map((b) => {
+            const at = layout[b.key]
+            const labels = visibleLabels(b, at)
             const over = current ? b.scale(current[b.key]) > 1 : false
-            const points = samples.map((s) => `${xFor(s.n).toFixed(1)},${yFor(b, s[b.key]).toFixed(1)}`).join(" ")
-            const penY = current ? yFor(b, current[b.key]) : yFor(b, 0)
+            const points = samples.map((s) => `${xFor(s.n).toFixed(1)},${yFor(b, at, s[b.key]).toFixed(1)}`).join(" ")
+            const penY = current ? yFor(b, at, current[b.key]) : yFor(b, at, 0)
             return (
               <g key={b.key}>
                 {/* Band label */}
-                <text x={PLOT_L} y={b.top - 7} fontSize="9" fontFamily="monospace" fill={b.color} fontWeight="bold">
+                <text x={PLOT_L} y={at.top - 7} fontSize="9" fontFamily="monospace" fill={b.color} fontWeight="bold">
                   {b.label.toUpperCase()}
                 </text>
                 {b.key === "rad" && (
-                  <text x={PLOT_R} y={b.top - 7} fontSize="7" fontFamily="monospace" fill="#6b6b5a" textAnchor="end">
+                  <text x={PLOT_R} y={at.top - 7} fontSize="7" fontFamily="monospace" fill="#6b6b5a" textAnchor="end">
                     LIN 0–500 · LOG ABOVE
                   </text>
                 )}
@@ -259,9 +311,9 @@ export default function ChartRecorder({
                 {b.key === "rad" && (
                   <rect
                     x={PLOT_L}
-                    y={b.top}
+                    y={at.top}
                     width={PLOT_R - PLOT_L}
-                    height={b.height * 0.2}
+                    height={at.height * 0.2}
                     fill="#c81e1e"
                     opacity="0.05"
                   />
@@ -270,9 +322,9 @@ export default function ChartRecorder({
                 {/* Band frame */}
                 <rect
                   x={PLOT_L}
-                  y={b.top}
+                  y={at.top}
                   width={PLOT_R - PLOT_L}
-                  height={b.height}
+                  height={at.height}
                   fill="none"
                   stroke="#8a9a7a"
                   strokeWidth="0.6"
@@ -284,8 +336,8 @@ export default function ChartRecorder({
                     key={`${b.key}-g${g.x}`}
                     x1={g.x}
                     x2={g.x}
-                    y1={b.top}
-                    y2={b.top + b.height}
+                    y1={at.top}
+                    y2={at.top + at.height}
                     stroke="#7d9470"
                     strokeWidth={g.major ? 0.7 : 0.3}
                     opacity={g.major ? 0.7 : 0.5}
@@ -294,7 +346,7 @@ export default function ChartRecorder({
 
                 {/* Horizontal scale ticks */}
                 {b.ticks.map((t) => {
-                  const y = yFor(b, t.v)
+                  const y = yFor(b, at, t.v)
                   return (
                     <g key={`${b.key}-t${t.v}`}>
                       <line
@@ -307,16 +359,18 @@ export default function ChartRecorder({
                         strokeDasharray={t.warn ? "3 2" : undefined}
                         opacity="0.8"
                       />
-                      <text
-                        x={PLOT_L - 3}
-                        y={y + 2.5}
-                        fontSize="7"
-                        fontFamily="monospace"
-                        fill={t.warn ? "#b45309" : "#55604a"}
-                        textAnchor="end"
-                      >
-                        {t.label}
-                      </text>
+                      {labels.has(t.v) && (
+                        <text
+                          x={PLOT_L - 3}
+                          y={y + 2.5}
+                          fontSize="7"
+                          fontFamily="monospace"
+                          fill={t.warn ? "#b45309" : "#55604a"}
+                          textAnchor="end"
+                        >
+                          {t.label}
+                        </text>
+                      )}
                     </g>
                   )
                 })}
@@ -348,7 +402,7 @@ export default function ChartRecorder({
                   <g className="ws3-chart-offscale">
                     <rect
                       x={PLOT_R - 64}
-                      y={b.top + 2}
+                      y={at.top + 2}
                       width={62}
                       height={11}
                       fill="#c81e1e"
@@ -356,7 +410,7 @@ export default function ChartRecorder({
                     />
                     <text
                       x={PLOT_R - 33}
-                      y={b.top + 10}
+                      y={at.top + 10}
                       fontSize="7.5"
                       fontFamily="monospace"
                       fill="#fff"
@@ -379,7 +433,7 @@ export default function ChartRecorder({
               <text
                 key={`ax${age}`}
                 x={x}
-                y={VB_H - 16}
+                y={vbH - 16}
                 fontSize="7"
                 fontFamily="monospace"
                 fill="#55604a"
@@ -391,19 +445,19 @@ export default function ChartRecorder({
           })}
 
           {/* Paper edge shading */}
-          <rect x={PAPER_L} y={2} width={PAPER_R - PAPER_L} height={VB_H - 4} fill="url(#ws3-paper-shade)" />
+          <rect x={PAPER_L} y={2} width={PAPER_R - PAPER_L} height={vbH - 4} fill="url(#ws3-paper-shade)" />
 
           {isPaused && (
             <text
               x={(PLOT_L + PLOT_R) / 2}
-              y={VB_H / 2}
+              y={vbH / 2}
               fontSize="16"
               fontFamily="monospace"
               fill="#b45309"
               opacity="0.55"
               textAnchor="middle"
               fontWeight="bold"
-              transform={`rotate(-12 ${(PLOT_L + PLOT_R) / 2} ${VB_H / 2})`}
+              transform={`rotate(-12 ${(PLOT_L + PLOT_R) / 2} ${vbH / 2})`}
             >
               CHART STOPPED
             </text>

@@ -9,6 +9,8 @@ import { createNewGame } from "../../lib/game-loop"
 import type { GameState } from "../../lib/types"
 import { baseState, setPumps, setRods } from "./harness"
 import { makeBot, playGame } from "./bot"
+import { DOSIMETER_LIMIT, LEAK_ABOVE, readDosimeter, toRoentgenPerHour } from "../../lib/dosimeter"
+import { REFERENCE_STATE } from "../../lib/sim/tuning"
 
 const column = (board: Board, side: "red" | "blue") =>
   BOARD_CARDS.filter((card) => card.side === side).reduce((sum, card) => sum + board.cards[card.key], 0)
@@ -79,4 +81,25 @@ test("fuel cards follow the fuel's push: red below normal, blue above, none at n
   assert.ok(at(1200).cards["hot-fuel"] >= 8, "very hot fuel: lots of blue cards")
   assert.equal(at(0).cards["hot-fuel"], 0)
   assert.equal(at(1200).cards["cool-fuel"], 0)
+})
+
+// ---------- Dosimeter (lib/dosimeter.ts) ----------
+
+test("dosimeter: background with random blips until radioactivity is very high, pinned at 3.6 R/h in a runaway", () => {
+  assert.equal(toRoentgenPerHour(DOSIMETER_LIMIT), 3.6)
+  const seconds = Array.from({ length: 600 }, (_, t) => t)
+  // Normal running, and even the high-radioactivity warning: the room stays at background
+  for (const r of [0, REFERENCE_STATE.radioactivity, 350, LEAK_ABOVE]) {
+    const doses = seconds.map((t) => readDosimeter(r, t).microRPerSecond)
+    assert.ok(Math.max(...doses) <= 60 && Math.min(...doses) >= 0, `R ${r}: ${Math.min(...doses).toFixed(0)}–${Math.max(...doses).toFixed(0)} µR/s`)
+  }
+  // Blips now and then, never all the time
+  const blips = seconds.filter((t) => readDosimeter(100, t).microRPerSecond > 15).length
+  assert.ok(blips > 30 && blips < 150, `${blips} blips in 600 s`)
+  // Steady within a second, so it holds still while paused
+  assert.deepEqual(readDosimeter(100, 42), readDosimeter(100, 42))
+  // Very high radioactivity gets through; a runaway pins it
+  assert.ok(readDosimeter(1000, 0).microRPerSecond > 400)
+  assert.deepEqual(readDosimeter(5000, 0), { microRPerSecond: DOSIMETER_LIMIT, pegged: true })
+  assert.ok(seconds.every((t) => !readDosimeter(350, t).pegged))
 })
