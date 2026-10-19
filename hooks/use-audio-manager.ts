@@ -5,6 +5,7 @@ import { HumBed } from "@/lib/hum-bed";
 
 const HUM_FILE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/XVA0IQMpaTFFPj7AMJYm8k/public/hum_full.mp3";
 const HUM_VOICES = 3;
+const ALARM_VOLUME = 0.5; // alarms, relative to the volume slider
 
 interface AudioManagerProps {
   alarmsOn: boolean; // the sound modal's Alarms switch, off while paused
@@ -56,6 +57,13 @@ export function useAudioManager({
   volumeRef.current = soundVolume;
 
   const isInitialized = useRef(false);
+
+  // The alarms play at half the volume the slider sets (owner, 2026-10-19: at full volume they were too loud).
+  // Sound effects keep the slider's volume.
+  const setAlarmVolume = useCallback((volume: number) => {
+    const alarms = [generalAlarmAudioRef, eventAlarmRef, highRadAlarmRef, highReactorTempAlarmRef, highSteamOrXenonRef];
+    for (const alarm of alarms) if (alarm.current) alarm.current.volume = volume * ALARM_VOLUME;
+  }, []);
 
   // --- 1. Initialization ---
   const initializeAudio = useCallback(() => {
@@ -110,21 +118,17 @@ export function useAudioManager({
       ROD_DRIVE_OFFSETS,
     );
     rodDriveRef.current.setVolume(volumeRef.current);
+    setAlarmVolume(volumeRef.current);
 
     isInitialized.current = true;
-  }, []); 
+  }, [setAlarmVolume]);
 
   // Volume Management ---
   useEffect(() => {
     humRef.current?.setVolume(soundVolume);
-    
-    if (generalAlarmAudioRef.current) generalAlarmAudioRef.current.volume = soundVolume;
-    if (eventAlarmRef.current) eventAlarmRef.current.volume = soundVolume;
-    if (highRadAlarmRef.current) highRadAlarmRef.current.volume = soundVolume;
-    if (highReactorTempAlarmRef.current) highReactorTempAlarmRef.current.volume = soundVolume;
-    if (highSteamOrXenonRef.current) highSteamOrXenonRef.current.volume = soundVolume;
+    setAlarmVolume(soundVolume);
     rodDriveRef.current?.setVolume(soundVolume);
-  }, [soundVolume]);
+  }, [soundVolume, setAlarmVolume]);
 
   // Hum Logic 
   useEffect(() => {

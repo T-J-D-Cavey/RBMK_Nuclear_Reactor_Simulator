@@ -771,6 +771,9 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.45),
     0 1px 0 rgba(255, 255, 255, 0.6);
 }
+/* Sound modal (owner, 2026-10-19): sound effects edged in the Start Game key's green, alarms in orange */
+.cr-module-green { border: 3px solid #2aa85d; }
+.cr-module-orange { border: 3px solid #e88a1c; }
 
 /* ---- Engraved nameplate: white letters cut through black laminate ---- */
 .cr-plate {

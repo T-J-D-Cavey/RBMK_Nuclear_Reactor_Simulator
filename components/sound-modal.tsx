@@ -17,8 +17,9 @@ interface SoundModalProps {
 }
 
 // One switch: round key, nameplate, a hint, what it covers and an ON/OFF readout
-function SoundSwitch({ id, name, hint, covers, on, OnIcon, OffIcon, onToggle }: {
+function SoundSwitch({ id, name, hint, covers, on, OnIcon, OffIcon, onToggle, edge }: {
   id: string
+  edge: "green" | "orange"
   name: string
   hint: string
   covers: string
@@ -28,7 +29,7 @@ function SoundSwitch({ id, name, hint, covers, on, OnIcon, OffIcon, onToggle }: 
   onToggle: () => void
 }) {
   return (
-    <div className="cr-module p-3 space-y-3">
+    <div className={`cr-module cr-module-${edge} p-3 space-y-3`}>
       <div className="flex items-center gap-4">
         <span className="cr-round-bezel shrink-0">
           <button
@@ -68,17 +69,7 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Two switches (bible §15): alarms, recommended for new players, and every other sound */}
-          <SoundSwitch
-            id="alarms-toggle"
-            name="Alarms"
-            hint="Recommended for new operators"
-            covers="Warnings and emergency events."
-            on={alarmsEnabled}
-            OnIcon={BellRing}
-            OffIcon={BellOff}
-            onToggle={() => onAlarmsUpdate(!alarmsEnabled)}
-          />
+          {/* Two switches (bible §15): every other sound first (owner, 2026-10-19), then the alarms, recommended for new players */}
           <SoundSwitch
             id="effects-toggle"
             name="Sound Effects"
@@ -88,6 +79,18 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
             OnIcon={Volume2}
             OffIcon={VolumeX}
             onToggle={() => onEffectsUpdate(!effectsEnabled)}
+            edge="green"
+          />
+          <SoundSwitch
+            id="alarms-toggle"
+            name="Alarms"
+            hint="Recommended for new operators"
+            covers="Warnings and emergency events."
+            on={alarmsEnabled}
+            OnIcon={BellRing}
+            OffIcon={BellOff}
+            onToggle={() => onAlarmsUpdate(!alarmsEnabled)}
+            edge="orange"
           />
 
           {/* VOLUME FADER */}
