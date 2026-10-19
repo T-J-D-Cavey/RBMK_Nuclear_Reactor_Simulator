@@ -18,8 +18,8 @@ Every mode runs the same physics. Only the workload changes.
 
 | Mode | Shift | Workload |
 | --- | --- | --- |
-| **Easy** | 15 min | One major emergency; small, infrequent target changes |
-| **Hard** | 30 min | Two major emergencies and more smaller events; larger, more frequent target changes |
+| **Easy** | 15 min | 7 events: one major emergency, smaller events and target changes |
+| **Hard** | 30 min | 14 events: both major emergencies, tougher, plus smaller events and larger target changes |
 | **Free** | Unlimited | Sandbox: no targets, no events |
 | **Safety Test** | 20 min | A scripted recreation of the Unit 4 turbine rundown test (25–26 April 1986) |
 

@@ -118,8 +118,19 @@ export function getEventWarnings(state: GameState): Warning[] {
   // shift. The player can switch the alarms off.
   const jammed = state.controlRods.filter((rod) => rod.stuck).map((rod) => rod.id)
   if (jammed.length) {
-    const rods = jammed.length === 1 ? `Control rod ${jammed[0]} is` : `Control rods ${jammed.join(", ")} are`
-    warnings.push({ key: "jammedRods", text: `WARNING: ${rods} jammed and can't be moved. Control radioactivity with the remaining rods.` })
+    const rods = jammed.length === 1 ? `control rod ${jammed[0]}` : `control rods ${jammed.join(", ")}`
+    warnings.push({ key: "jammedRods", text: `WARNING: Issue detected with ${rods}.` })
+  }
+  // A power cut or pump trip lights the warning lamp and sounds the event alarm, so the screen says why while it
+  // lasts (owner, 2026-10-19). The Safety Test's own mains loss is scripted and announced, so it isn't included.
+  if (state.activeEvents.some((event) => event.type === "power-cut")) {
+    warnings.push({
+      key: "powerCut",
+      text: "WARNING: No mains power detected. Recommend checking that water pumps are powered directly with turbine generation",
+    })
+  }
+  if (state.activeEvents.some((event) => event.type === "pump-trip")) {
+    warnings.push({ key: "pumpTrip", text: "WARNING: Ongoing water pump issue detected." })
   }
   // Sustained over-pressure trips the turbine off the grid (bible §12): count down so it never comes unannounced.
   if (state.overpressureSeconds > 0 && state.turbineMode === "grid" && GAME_MODE_CONFIGS[state.mode]?.turbineTrips) {
@@ -137,8 +148,9 @@ export function checkEventWarnings(state: GameState): string[] {
 }
 
 // Warnings with an alarm sound of their own (owner, 2026-10-14). Every other warning sounds the general alarm
-// instead. The turbine over-pressure countdown only runs while steam is high, so it shares the steam alarm.
-const OWN_ALARM_WARNINGS = new Set(["highRadioactivity", "highReactorTemp", "highSteam", "highXenon", "turbineOverpressure"])
+// instead. The turbine over-pressure countdown only runs while steam is high, so it shares the steam alarm. Power-cut
+// and pump-trip warnings last exactly as long as their events, so they share the event alarm.
+const OWN_ALARM_WARNINGS = new Set(["highRadioactivity", "highReactorTemp", "highSteam", "highXenon", "turbineOverpressure", "powerCut", "pumpTrip"])
 // Events that sound the event alarm while they last. A grid hold doesn't, and target changes aren't events (owner, 2026-10-14).
 // A rod jam doesn't either: it never ends, so its warning sounds the general alarm instead (owner, 2026-10-16).
 const EVENT_ALARM_KINDS: readonly EventKind[] = ["power-cut", "pump-trip"]

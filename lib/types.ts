@@ -56,11 +56,15 @@ export interface GameEvent {
   }
 }
 
-// One event in this shift's plan (shift time = seconds since the shift started).
+// One thing in this shift's plan (shift time = seconds since the shift started): an event, or the grid announcing
+// a target change.
+export type PlannedKind = EventKind | "target-change"
+
 export interface ScheduledEvent {
   at: number
-  kind: EventKind
+  kind: PlannedKind
   warned: boolean // advance warning already given
+  duration?: number // drawn when the shift is planned, so the plan can space everything out
 }
 
 // A target change the grid (or the Safety Test script) has announced but which is not yet in force.
@@ -94,7 +98,7 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     id: "easy",
     name: "Easy Mode",
     badgeText: "EASY MODE",
-    description: "15 minute shift: one major emergency, smaller and less frequent power target changes.",
+    description: "15 minute shift: one major emergency and smaller power target changes.",
     hasTimer: true,
     timerMode: "countdown",
     timeLimit: 900,
@@ -108,7 +112,7 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     id: "hard",
     name: "Hard Mode",
     badgeText: "HARD MODE",
-    description: "30 minute shift: two major emergencies, larger and more frequent power target changes.",
+    description: "30 minute shift: two tougher major emergencies and larger power target changes.",
     hasTimer: true,
     timerMode: "countdown",
     timeLimit: 1800,
@@ -190,7 +194,7 @@ export interface GameState {
   activeEvents: GameEvent[]
   eventHistory: GameEvent[]
   eventPlan: ScheduledEvent[] | null // this shift's upcoming events; planned on the first tick (Easy/Hard)
-  nextTargetChangeAt: number | null // shift time when the grid next announces a target change
+  nextTargetChangeAt: number | null // unused since target changes joined the event plan (2026-10-19); kept for old saves
   pendingTarget: PendingTargetChange | null // announced, not yet in force
   scriptStep: number // Safety Test: index of the next script step to run
 

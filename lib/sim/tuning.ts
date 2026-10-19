@@ -176,13 +176,16 @@ export { fuelEffect, pumpEffect }
 type Range = readonly [number, number]
 
 export interface ShiftEventTuning {
-  majorCounts: readonly (readonly [count: number, weight: number])[] // power cuts and rod jams per shift (at most one of each)
-  smallCounts: readonly (readonly [count: number, weight: number])[] // pump trips and grid hold requests
+  // Every shift has the same number of things happening: major emergencies, smaller events and target changes, in
+  // a random order and split (owner, 2026-10-19). The difficulty comes from tougher events, not more of them.
+  totalEvents: number
+  majors: number // power cuts and rod jams, at most one of each (a rod jam is permanent)
+  minorCounts: Range // pump trips and grid hold requests; target changes fill the rest
+  firstAfter: number // nothing happens before this
   firstMajorAfter: number // no major emergency in the first few minutes
-  firstSmallAfter: number
+  lastStartBefore: number // nothing starts this close to the end of the shift
+  minGap: number // at least this long between the starts of any two things
   majorSpacing: number // at least this long between the starts of two major emergencies
-  smallSpacing: number // smaller events keep this far from every other planned event
-  lastStartBefore: number // nothing is planned to start this close to the end of the shift
   powerCutSeconds: Range
   rodJamRods: Range // rods a jam takes; jams are permanent (owner, 2026-10-16)
   pumpTripSeconds: Range
@@ -190,47 +193,46 @@ export interface ShiftEventTuning {
   targetRange: Range // MW
   targetMaxStep: number // largest single change, MW
   targetMinStep: number // smallest change worth announcing, MW
-  targetInterval: Range // between two target changes taking effect
   lowTargetBelow: number // targets below this risk the xenon pit, so they are rarer (§13)
   lowTargetChance: number // chance a low target is kept when one is drawn
 }
 
 const EASY_EVENTS: ShiftEventTuning = {
-  majorCounts: [[1, 1]], // one per 15-minute shift: a power cut or a rod jam (owner, 2026-10-16)
-  smallCounts: [[1, 0.5], [2, 0.5]],
+  totalEvents: 7, // owner, 2026-10-19
+  majors: 1, // a power cut or a rod jam (owner, 2026-10-16)
+  minorCounts: [2, 3], // so 3–4 target changes: eventful without chasing targets (owner, 2026-10-19)
+  firstAfter: 60,
   firstMajorAfter: 180,
-  firstSmallAfter: 120,
-  majorSpacing: 240,
-  smallSpacing: 150,
-  lastStartBefore: 90,
+  lastStartBefore: 120,
+  minGap: 60,
+  majorSpacing: 300,
   powerCutSeconds: [20, 45],
-  rodJamRods: [2, 3],
+  rodJamRods: [3, 4],
   pumpTripSeconds: [60, 90],
   gridHoldSeconds: [90, 150],
-  targetRange: [2000, 8000],
-  targetMaxStep: 1500,
+  targetRange: [1500, 8000],
+  targetMaxStep: 2000,
   targetMinStep: 500,
-  targetInterval: [240, 300],
   lowTargetBelow: 3000,
   lowTargetChance: 0.3,
 }
 
 const HARD_EVENTS: ShiftEventTuning = {
-  majorCounts: [[2, 1]], // one power cut and one rod jam per 30-minute shift (owner, 2026-10-16)
-  smallCounts: [[4, 0.5], [5, 0.5]], // one more than before majors were capped, to keep the workload up
+  totalEvents: 14, // owner, 2026-10-19
+  majors: 2, // one power cut and one rod jam (owner, 2026-10-16)
+  minorCounts: [3, 4],
+  firstAfter: 60,
   firstMajorAfter: 180,
-  firstSmallAfter: 120,
-  majorSpacing: 240,
-  smallSpacing: 150,
-  lastStartBefore: 90,
-  powerCutSeconds: [30, 60],
-  rodJamRods: [3, 4],
+  lastStartBefore: 120,
+  minGap: 45,
+  majorSpacing: 300,
+  powerCutSeconds: [45, 75],
+  rodJamRods: [4, 5],
   pumpTripSeconds: [60, 120],
   gridHoldSeconds: [120, 180],
   targetRange: [500, 10000],
   targetMaxStep: 2500,
   targetMinStep: 500,
-  targetInterval: [120, 180],
   lowTargetBelow: 2000,
   lowTargetChance: 0.3,
 }
@@ -239,8 +241,9 @@ export const EVENT_TUNING = {
   easy: EASY_EVENTS,
   hard: HARD_EVENTS,
   targetNotice: 60, // the grid announces a target change this long before it takes effect (§13)
-  eventGap: 20, // an event due while another is running waits until this long after it ends
-  holdAfterTargetChange: 90, // a hold request waits this long after a target change, so the player can settle
+  eventGap: 20, // after an event ends, the next event or target change waits at least this long
+  majorQuiet: 60, // after a major emergency ends, the next thing waits at least this long
+  holdAfterTargetChange: 90, // a hold request waits this long after a target change takes effect, so the player can settle
   warningLead: { "power-cut": 40, "rod-stuck": 25 } as Partial<Record<string, number>>, // advance warning (§12)
   turbineTripSeconds: 20, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12)
   // A rod sent in from 0% while steam is high jams with only its graphite tip in the core, as the rods did when AZ-5

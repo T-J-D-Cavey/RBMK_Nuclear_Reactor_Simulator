@@ -54,57 +54,58 @@ function targetChanges(run: GameRun) {
 
 // ---------- §12 Random emergency events ----------
 
-test("§12 the shift's plan: one major emergency on Easy, one of each on Hard, none early, sensibly spaced", () => {
+test("§12 the shift's plan: always the same number of things, one major emergency on Easy, one of each on Hard, sensibly spaced", () => {
   for (const mode of ["easy", "hard"] as const) {
     const tuning = EVENT_TUNING[mode]
     const length = GAME_MODE_CONFIGS[mode].timeLimit!
-    const smalls: number[] = []
+    const minorCounts = new Set<number>()
     const firstKinds = new Set<string>()
-    for (let seed = 1; seed <= 400; seed++) {
+    for (let seed = 1; seed <= 2000; seed++) {
       const plan = planShiftEvents(tuning, length, seededRng(seed))
+      const why = `${mode} seed ${seed}: ${plan.map((e) => `${e.kind}@${e.at}`).join(" ")}`
+      assert.equal(plan.length, tuning.totalEvents, why)
       const m = plan.filter((e) => isMajor(e.kind))
       // At most one of each kind (owner, 2026-10-16): Easy draws one, Hard both
-      assert.equal(m.length, mode === "easy" ? 1 : 2, `${mode} seed ${seed}: ${m.length} majors`)
-      assert.equal(new Set(m.map((e) => e.kind)).size, m.length, `${mode} seed ${seed}: a major kind twice`)
+      assert.equal(m.length, tuning.majors, why)
+      assert.equal(new Set(m.map((e) => e.kind)).size, m.length, why)
       firstKinds.add(m[0].kind)
-      smalls.push(plan.length - m.length)
-      for (const e of m) assert.ok(e.at >= 180, `${mode} seed ${seed}: major at ${e.at}s`)
-      for (let i = 1; i < m.length; i++) assert.ok(m[i].at - m[i - 1].at >= tuning.majorSpacing - 1, `${mode} seed ${seed}: majors ${m[i - 1].at}s, ${m[i].at}s`)
-      for (const e of plan) assert.ok(e.at <= length - tuning.lastStartBefore, `${mode} seed ${seed}: event at ${e.at}s`)
-      for (const e of plan.filter((x) => !isMajor(x.kind))) {
-        assert.ok(plan.every((o) => o === e || Math.abs(o.at - e.at) >= tuning.smallSpacing - 1), `${mode} seed ${seed}: small event crowded`)
+      const minors = plan.filter((e) => e.kind === "pump-trip" || e.kind === "grid-hold").length
+      assert.ok(minors >= tuning.minorCounts[0] && minors <= tuning.minorCounts[1], why)
+      minorCounts.add(minors)
+      for (const e of m) assert.ok(e.at >= tuning.firstMajorAfter, why)
+      for (let i = 1; i < m.length; i++) assert.ok(m[i].at - m[i - 1].at >= tuning.majorSpacing, why)
+      for (const e of plan) assert.ok(e.at >= tuning.firstAfter && e.at <= length - tuning.lastStartBefore, why)
+      for (let i = 1; i < plan.length; i++) {
+        const [a, b] = [plan[i - 1], plan[i]]
+        assert.ok(b.at - a.at >= tuning.minGap, `${why}: ${b.at - a.at}s apart`)
+        // One event at a time, and a major emergency's warning comes after the thing before it is over
+        if (a.kind !== "target-change" && b.kind !== "target-change") assert.ok(b.at >= a.at + a.duration!, why)
+        if (isMajor(b.kind)) assert.ok(b.at - EVENT_TUNING.warningLead[b.kind]! >= a.at + a.duration!, why)
+        if (a.kind === "target-change" && b.kind === "grid-hold") assert.ok(b.at - a.at >= a.duration! + EVENT_TUNING.holdAfterTargetChange, why)
       }
     }
     assert.equal(firstKinds.size, 2, `${mode}: either kind can come first`)
-    const [slo, shi] = mode === "easy" ? [1, 2] : [3.5, 5]
-    assert.ok(mean(smalls) >= slo && mean(smalls) <= shi, `${mode}: ${mean(smalls).toFixed(2)} smaller events per shift`)
+    assert.equal(minorCounts.size, 2, `${mode}: both numbers of smaller events occur`)
   }
 })
 
-test("§12 a typical shift shows the budgeted emergencies, each major warned of in advance", () => {
+test("§12 a typical shift shows every planned thing, each major warned of in advance", () => {
   for (const mode of ["easy", "hard"] as const) {
-    let budgeted = 0
-    let happened = 0
-    for (const run of shifts(mode)) {
-      const plan = run.states[0].eventPlan ?? []
-      budgeted += plan.filter((e) => isMajor(e.kind)).length
+    for (const run of shifts(mode).filter((r) => r.final.hasWon)) {
+      // Nothing is dropped: every planned event happens, and every planned target change is announced and in force
+      const tuning = EVENT_TUNING[mode]
+      const changes = targetChanges(run).length
+      assert.equal(run.final.eventHistory.length + changes, tuning.totalEvents, `${mode}: ${run.final.eventHistory.length} events, ${changes} changes`)
       const fired = run.final.eventHistory.filter((e) => isMajor(e.type))
-      happened += fired.length
+      assert.equal(fired.length, tuning.majors, `${mode}: ${fired.length} majors`)
       for (const event of fired) {
         const startedAt = (run.final.timeLimit ?? 0) - event.timestamp
         const warning = run.final.log.find((l) =>
           event.type === "power-cut" ? l.text.startsWith("Reports of power cable damage") : l.text.startsWith("Detected pressure fluctuations"),
         )
-        assert.ok(warning, `${mode}: no warning before the ${event.type} at ${startedAt}s`)
+        assert.ok(warning && startedAt - warning.time >= EVENT_TUNING.warningLead[event.type]!, `${mode}: ${event.type} at ${startedAt}s warned at ${warning?.time}s`)
       }
-      const warnings = run.final.log.filter((l) => l.text.startsWith("Reports of power cable damage"))
-      const cuts = run.final.eventHistory.filter((e) => e.type === "power-cut")
-      cuts.forEach((cut, i) => {
-        const startedAt = (run.final.timeLimit ?? 0) - cut.timestamp
-        assert.ok(warnings[i] && startedAt - warnings[i].time >= 30, `${mode}: power cut at ${startedAt}s warned at ${warnings[i]?.time}s`)
-      })
     }
-    assert.ok(happened >= budgeted * 0.9 && happened <= budgeted, `${mode}: ${happened} of ${budgeted} budgeted majors happened`)
   }
 })
 
@@ -194,13 +195,13 @@ test("§12 a rod jam is permanent: rods stop where they are, even mid-travel, an
   })
   assert.ok(s.controlRods.filter((_, i) => !jammed.includes(i)).every((r) => r.insertion === 100))
   assert.equal(s.log.length, logged + 1, "no all-clear message")
-  const warning = checkEventWarnings(s).find((w) => w.startsWith("WARNING: Control rods"))
+  const warning = checkEventWarnings(s).find((w) => w.startsWith("WARNING: Issue detected with control rods"))
   assert.ok(warning && jammed.every((i) => warning.includes(String(i + 1))), `warning names the rods: ${warning}`)
 })
 
-test("§12 a rod jam takes 2–3 rods on Easy, 3–4 on Hard, never one already jammed", () => {
+test("§12 a rod jam takes 3–4 rods on Easy, 4–5 on Hard, never one already jammed", () => {
   for (const mode of ["easy", "hard"] as const) {
-    const [lo, hi] = mode === "easy" ? [2, 3] : [3, 4]
+    const [lo, hi] = EVENT_TUNING[mode].rodJamRods
     const counts = new Set<number>()
     for (let seed = 1; seed <= 40; seed++) {
       const s = startEvent(quietGame(mode), "rod-stuck", EVENT_TUNING[mode], seededRng(seed))
@@ -232,7 +233,7 @@ test("a rod sent in from 0% while steam is high jams at 1%, by lever or AZ-5, wi
   assert.deepEqual([s.controlRods[1].insertion, s.controlRods[1].stuck], [0, false], "rod 2 untouched")
   assert.ok(!s.controlRods[3].stuck && s.controlRods[3].insertion > 50, "a rod already in moves as usual")
   assert.equal(s.log.length, 0, "no shift log message")
-  assert.ok(checkEventWarnings(s).some((w) => w.startsWith("WARNING: Control rod 1 is jammed")), "the warning reports it")
+  assert.ok(checkEventWarnings(s).some((w) => w === "WARNING: Issue detected with control rod 1."), "the warning reports it")
   assert.equal(getAlarms(s).general, true)
   // AZ-5: every rod at 0% jams with its tip in; the rest go in
   s = step(az5(rods({ ...base, steamVolume: 350 }, at, at)), 20)
@@ -261,11 +262,14 @@ test("§12 a power cut takes the pumps' mains supply; the turbine can supply the
   assert.ok(cut.duration >= 20 && cut.duration <= 45)
   s = step(s, 1, rng)
   assert.ok(s.waterPumps.every((p) => !p.powered), "no supply on the grid")
+  assert.ok(checkEventWarnings(s).some((w) => w.startsWith("WARNING: No mains power detected.")), "the alarm screen says why the lamp is lit")
+  assert.equal(getAlarms(s).general, false, "it shares the event alarm")
   s = step({ ...s, turbineMode: "pumps", turbineConnected: false }, 2, rng)
   assert.ok(s.waterPumps.filter((p) => p.powered).length >= 2, "turbine supplies the ON pumps")
   assert.equal(s.powerOutput, 0)
   s = step(s, cut.duration, rng)
   assert.equal(s.mainsPower, true)
+  assert.ok(!checkEventWarnings(s).some((w) => w.includes("mains power")), "the warning clears with the event")
   assert.equal(s.stats.emergenciesHandled, 1)
   assert.ok(s.log.some((l) => l.text.startsWith("Station power restored")))
 })
@@ -279,9 +283,12 @@ test("§12 a pump trip takes one running pump out for a while", () => {
   s = step(s, 5, rng)
   const pump = s.waterPumps.find((p) => p.id === id)!
   assert.ok(!pump.powered && pump.flow === 0, "PWR lamp off and no flow")
+  assert.ok(checkEventWarnings(s).includes("WARNING: Ongoing water pump issue detected."), "the alarm screen says why the lamp is lit")
+  assert.equal(getAlarms(s).general, false, "it shares the event alarm")
   s = step(s, trip.duration, rng)
   const back = s.waterPumps.find((p) => p.id === id)!
   assert.ok(!back.tripped && back.powered && back.flow === 1, "back in service")
+  assert.ok(!checkEventWarnings(s).some((w) => w.includes("water pump")), "the warning clears with the event")
   assert.equal(s.stats.emergenciesHandled, 0, "a smaller event is not a major emergency")
 })
 
@@ -290,7 +297,7 @@ test("§12 a grid hold request halves the tolerance and the grid announces nothi
   let s = startEvent({ ...quietGame("hard"), powerOutput: 5300 }, "grid-hold", EVENT_TUNING.hard, seededRng(1))
   assert.equal(isPowerOnTarget(s), false)
   assert.equal(isPowerOnTarget({ ...s, powerOutput: 5200 }), true)
-  s = runShiftEvents({ ...s, nextTargetChangeAt: 0 }, seededRng(1))
+  s = runShiftEvents({ ...s, eventPlan: [{ at: 0, kind: "target-change", warned: false }] }, seededRng(1))
   assert.equal(s.pendingTarget, null)
 })
 
@@ -304,15 +311,13 @@ test("§13 tolerance is ±10% of the target, never tighter than ±200 MW, in eve
   assert.equal(isPowerOnTarget({ powerOutput: 5510, powerTarget: 5000, activeEvents: [] }), false)
 })
 
-test("§13 target changes are warned 60 s ahead, smaller than before, within range; Hard's are bigger and more frequent", () => {
+test("§13 target changes are warned 60 s ahead, smaller than before, within range; Hard's are bigger", () => {
   const sizes: Record<string, number[]> = { easy: [], hard: [] }
-  const gaps: Record<string, number[]> = { easy: [], hard: [] }
   for (const mode of ["easy", "hard"] as const) {
     const tuning = EVENT_TUNING[mode]
     for (const run of shifts(mode)) {
       const changes = targetChanges(run)
       // A shift that ends early (the bot fired) has fewer changes
-      if (run.final.hasWon) assert.ok(changes.length >= (mode === "easy" ? 2 : 7), `${mode}: only ${changes.length} target changes`)
       changes.forEach((c, i) => {
         assert.equal(c.effective - c.announced, EVENT_TUNING.targetNotice, `${mode}: notice ${c.effective - c.announced}s`)
         const size = Math.abs(c.to - c.from)
@@ -321,14 +326,12 @@ test("§13 target changes are warned 60 s ahead, smaller than before, within ran
         sizes[mode].push(size)
         if (i > 0) {
           const gap = c.effective - changes[i - 1].effective
-          assert.ok(gap >= tuning.targetInterval[0], `${mode}: changes ${gap}s apart`)
-          gaps[mode].push(gap)
+          assert.ok(gap >= EVENT_TUNING.targetNotice + EVENT_TUNING.eventGap, `${mode}: changes ${gap}s apart`)
         }
       })
     }
   }
   assert.ok(mean(sizes.hard) > mean(sizes.easy), `sizes: easy ${mean(sizes.easy)}, hard ${mean(sizes.hard)}`)
-  assert.ok(mean(gaps.hard) < mean(gaps.easy), `gaps: easy ${mean(gaps.easy)}s, hard ${mean(gaps.hard)}s`)
 })
 
 test("§13 a competent player meets the targets on Easy and Hard, and Hard is harder", () => {
