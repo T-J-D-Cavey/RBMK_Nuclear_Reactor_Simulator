@@ -30,7 +30,14 @@ interface ScriptStep {
   target?: number | null // announce a target change (usual notice), or null: no grid target from now on
   action?: Action
   onlyIf?: (s: GameState) => boolean // a conditional step: checked when it is due, and skipped for good if false
+  waitsUntil?: number // with onlyIf: instead of being skipped, the step waits for its condition until this time
 }
+
+// The reactor is starting to run away: the high-radioactivity warning, which comes 16–28 s before the reactor is
+// lost when the test is ignored, or the steam warning (only 2–4 s before, so a backstop).
+export const runningAway = (s: GameState) =>
+  s.steamVolume >= THRESHOLDS.steamVolume.highWarning || s.radioactivity >= THRESHOLDS.radioactivity.highWarning
+export const AZ5_ORDER = "Engage all control rods. AZ-5 now."
 
 // If the reactor has collapsed by the time the test begins, the deputy orders every rod out to save the test.
 export const RODS_OUT_BELOW = 35
@@ -139,8 +146,17 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     action: "rods-out",
     onlyIf: (s) => s.radioactivity < RODS_OUT_BELOW,
   },
+  // If the reactor starts to run away during the test, the senior reactor control engineer orders AZ-5, in a
+  // hurry (owner, 2026-10-20). Advice only: the test carries on, and the pumps stay on the coasting turbine.
+  {
+    at: 964,
+    role: "srce",
+    text: AZ5_ORDER,
+    onlyIf: runningAway,
+    waitsUntil: 1039,
+  },
   // Phase 6: after the test (18–20 min). The test lasts 75 s (owner, 2026-10-20): long enough that a player who
-  // does nothing loses the reactor, unless steam scraps the test first (TEST_SCRAPPED).
+  // does nothing loses the reactor. Surviving it, by any use of the rods, completes the test.
   {
     at: 1039,
     role: "procedure",
@@ -149,33 +165,17 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   },
 ]
 
-// If steam reaches its warning level while the test runs (after the cut, before "Test complete"), the test
-// supervisor scraps it (owner, 2026-10-20), so the player knows they must act. It takes the place of "Test
-// complete": the station's supply to the pumps comes back and no more script steps run.
-export const TEST_SCRAPPED: ScriptStep = {
-  at: 0, // not on the clock: triggered by steam
-  role: "procedure",
-  text: "Scrap test, AZ-5 and turn on all pumps asap!",
-  action: "mains-on",
-}
-export const runningAway = (s: GameState) =>
-  s.steamVolume >= THRESHOLDS.steamVolume.highWarning || s.radioactivity >= THRESHOLDS.radioactivity.highWarning
-const MAINS_OFF_STEP = SAFETY_TEST_SCRIPT.findIndex((step) => step.action === "mains-off")
-const MAINS_ON_STEP = SAFETY_TEST_SCRIPT.findIndex((step) => step.action === "mains-on")
-
-// Run every script step that is due (each runs exactly once: scriptStep only moves forward).
+// Run every script step that is due (each runs exactly once: scriptStep only moves forward). A waiting step holds
+// back the steps after it until its condition holds or its wait is over.
 export function runSafetyTest(state: GameState): GameState {
   const now = getShiftTime(state)
   let s = state
   let step = state.scriptStep
   while (step < SAFETY_TEST_SCRIPT.length && SAFETY_TEST_SCRIPT[step].at <= now) {
-    s = runStep(s, SAFETY_TEST_SCRIPT[step], now)
+    const next = SAFETY_TEST_SCRIPT[step]
+    if (next.waitsUntil !== undefined && now < next.waitsUntil && !next.onlyIf?.(s)) break
+    s = runStep(s, next, now)
     step++
-  }
-  const testRunning = step > MAINS_OFF_STEP && step <= MAINS_ON_STEP
-  if (testRunning && runningAway(s)) {
-    s = { ...runStep(s, TEST_SCRAPPED, now), testScrapped: true }
-    step = MAINS_ON_STEP + 1
   }
   return step === state.scriptStep ? s : { ...s, scriptStep: step }
 }

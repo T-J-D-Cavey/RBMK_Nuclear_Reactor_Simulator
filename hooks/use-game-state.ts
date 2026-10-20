@@ -73,7 +73,6 @@ function migrateSavedState(state: GameState): GameState {
     nextTargetChangeAt: state.nextTargetChangeAt ?? null,
     pendingTarget: state.pendingTarget ?? null,
     scriptStep: state.scriptStep ?? 0,
-    testScrapped: state.testScrapped ?? false,
     az5PressedAt: state.az5PressedAt ?? null,
     // Saves from before every message had a named sender (owner, 2026-10-12) hold unsigned "system" lines.
     log: Array.isArray(state.log)

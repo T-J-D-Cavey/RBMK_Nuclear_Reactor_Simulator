@@ -197,7 +197,6 @@ export interface GameState {
   nextTargetChangeAt: number | null // unused since target changes joined the event plan (2026-10-19); kept for old saves
   pendingTarget: PendingTargetChange | null // announced, not yet in force
   scriptStep: number // Safety Test: index of the next script step to run
-  testScrapped: boolean // Safety Test: steam forced the test supervisor to scrap the test
 
   // Shift time of the last AZ-5 press (null: never), for the rod display's AZ-5 lamp
   az5PressedAt: number | null
@@ -268,7 +267,6 @@ export const INITIAL_GAME_STATE: GameState = {
   nextTargetChangeAt: null,
   pendingTarget: null,
   scriptStep: 0,
-  testScrapped: false,
 
   az5PressedAt: null,
 

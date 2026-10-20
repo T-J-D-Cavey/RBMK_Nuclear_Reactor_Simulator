@@ -69,7 +69,6 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Two switches (bible §15): every other sound first (owner, 2026-10-19), then the alarms, recommended for new players */}
           <SoundSwitch
             id="effects-toggle"
             name="Sound Effects"
@@ -84,7 +83,7 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
           <SoundSwitch
             id="alarms-toggle"
             name="Alarms"
-            hint="Recommended for new operators"
+            hint="Not recommended for iOS devices: No volume control"
             covers="Warnings and emergency events."
             on={alarmsEnabled}
             OnIcon={BellRing}
