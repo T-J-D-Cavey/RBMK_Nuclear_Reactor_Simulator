@@ -19,10 +19,14 @@ export function getRadioactivityOpacity(value: number): number {
   return (value - RADIATION_GLOW_START) / (RADIATION_GLOW_FULL - RADIATION_GLOW_START)
 }
 
+// The hot-reactor picture starts just below the temperature warning (800) and is at its reddest by 900 (owner, 2026-10-20).
+const TEMP_GLOW_START = 750
+const TEMP_GLOW_FULL = 900
+
 export function getTemperatureOpacity(value: number): number {
-  if (value <= 600) return 0
-  if (value >= 800) return 1
-  return (value - 600) / 200
+  if (value <= TEMP_GLOW_START) return 0
+  if (value >= TEMP_GLOW_FULL) return 1
+  return (value - TEMP_GLOW_START) / (TEMP_GLOW_FULL - TEMP_GLOW_START)
 }
 
 /** Interference starts at the high-radioactivity warning and is at full strength by this level. */
