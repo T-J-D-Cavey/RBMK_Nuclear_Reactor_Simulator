@@ -81,14 +81,15 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const lowFuelTempWarning = flags.lowFuelTemp
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="@container max-w-6xl mx-auto">
       <div className="cr-panel cr-screws p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
         {/* Header: menu keys, nameplate, then the warning and shift-log lamps with the keys that bring each machine
-            into view (plan §21.5). Wide screens: one row, both keys on the left. Narrower: home, nameplate and sound
-            (so the nameplate stays centred), then the two lamps. The key group is `contents` below lg so each key is
-            placed in the grid on its own. */}
-        <div className="grid grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-3">
-          <div className="contents lg:flex lg:col-start-1 lg:row-start-1 items-center gap-2">
+            into view (plan §21.5). A wide panel (60rem+, measured on the panel, so it holds when the side columns sit
+            beside it): one row, both keys on the left. Narrower: home, nameplate and sound (so the nameplate stays
+            centred), then the two lamps. The key group is `contents` when narrower so each key is placed in the grid
+            on its own. */}
+        <div className="grid grid-cols-[auto_1fr_auto] @min-[60rem]:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-3">
+          <div className="contents @min-[60rem]:flex @min-[60rem]:col-start-1 @min-[60rem]:row-start-1 items-center gap-2">
             <span className="cr-bezel col-start-1 row-start-1">
               <button className="cr-key cr-key-cream size-9" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
                 <Home className="h-[18px] w-[18px]" />
@@ -102,12 +103,12 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           </div>
 
           <div className="col-start-2 row-start-1 flex justify-center min-w-0">
-            <h1 className="cr-nameplate px-3 py-2 md:px-6 md:py-2.5 text-[13px] !tracking-[0.12em] min-[400px]:text-sm sm:text-lg sm:!tracking-[0.2em] md:text-2xl xl:text-3xl whitespace-nowrap">
+            <h1 className="cr-nameplate px-3 py-2 md:px-6 md:py-2.5 text-[13px] !tracking-[0.12em] min-[400px]:text-sm sm:text-lg sm:!tracking-[0.2em] md:text-2xl @min-[68rem]:text-3xl whitespace-nowrap">
               Reactor Control System
             </h1>
           </div>
 
-          <div className="col-span-3 row-start-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 grid grid-cols-2 lg:flex lg:justify-end items-center gap-2 lg:gap-4">
+          <div className="col-span-3 row-start-2 @min-[60rem]:col-span-1 @min-[60rem]:col-start-3 @min-[60rem]:row-start-1 grid grid-cols-2 @min-[60rem]:flex @min-[60rem]:justify-end items-center gap-2 @min-[60rem]:gap-4">
             <Annunciator lit={hasWarnings || majorEvent} colour="red" label="See Warning" ariaLabel="Show the alarm monitor" onClick={onSeeWarnings} />
             <Annunciator lit={logLampLit} colour="amber" label="See Message" ariaLabel="Show the shift log" onClick={onSeeLog} />
           </div>
