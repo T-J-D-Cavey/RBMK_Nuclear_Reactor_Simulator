@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, type CSSProperties, type ReactNode } from "react"
+import { useLayoutEffect, type CSSProperties, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import type { GameState } from "@/lib/types"
 import { useTypewriter } from "@/hooks/use-typewriter"
@@ -143,9 +143,22 @@ export default function EndScreen({ kind, gameState, title, message, lead, repor
   const router = useRouter()
 
   // The end screen replaces the game page in place, so the browser keeps the player's scroll position (usually
-  // well down the page on a phone). Start at the top, with the camera in view.
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" })
+  // well down the page on a phone). Start at the top, with the camera in view. iOS Safari needs more than one
+  // scroll: it restores the old position when it reloads a discarded tab (the ended game is saved, so a reload
+  // opens here), and it ignores a scroll while a flick is still coasting. So turn off its scroll restoration,
+  // scroll before the first paint, and again a frame and a moment later.
+  useLayoutEffect(() => {
+    const restoration = history.scrollRestoration
+    history.scrollRestoration = "manual"
+    const toTop = () => window.scrollTo(0, 0)
+    toTop()
+    const frame = requestAnimationFrame(toTop)
+    const late = setTimeout(toTop, 250)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(late)
+      history.scrollRestoration = restoration
+    }
   }, [])
   const reduced = usePrefersReducedMotion()
   const look = LOOK[kind]
