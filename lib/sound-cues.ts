@@ -2,9 +2,18 @@
 // hooks/use-audio-manager.ts plays the clips.
 import type { ControlRod } from "./types"
 
-export type SoundEffect = "rodConfirm" | "turbineConfirm" | "pumpConfirm" | "az5" | "warningBleep" | "shiftLogPrinter"
+export type SoundEffect =
+  | "rodConfirm"
+  | "turbineConfirm"
+  | "pumpConfirm"
+  | "az5"
+  | "warningBleep"
+  | "shiftLogPrinter"
+  | "targetInside"
+  | "targetOutside"
 
-// Clips the owner provided (2026-10-14), served from public/sounds. Rods and the turbine share a switch clunk.
+// Clips the owner provided (2026-10-14; target clips 2026-10-20), served from public/sounds. Rods and the turbine
+// share a switch clunk.
 export const SOUND_EFFECT_FILES: Record<SoundEffect, string> = {
   rodConfirm: "/sounds/switch-confirm.mp3",
   turbineConfirm: "/sounds/switch-confirm.mp3",
@@ -12,6 +21,16 @@ export const SOUND_EFFECT_FILES: Record<SoundEffect, string> = {
   az5: "/sounds/az5.mp3",
   warningBleep: "/sounds/warning-bleep.mp3",
   shiftLogPrinter: "/sounds/shift-log-printer.mp3",
+  targetInside: "/sounds/target-inside.mp3",
+  targetOutside: "/sounds/target-outside.mp3",
+}
+
+// The power output has come back inside its target range, or gone outside it (owner, 2026-10-20). Each reading is
+// whether the output is on target, or null when there is no target (Free mode, the Safety Test after the turbine
+// goes to the pumps). Gaining or losing a target is not a move in or out, so it plays nothing.
+export function targetCue(prev: boolean | null, next: boolean | null): "targetInside" | "targetOutside" | null {
+  if (prev === null || next === null || prev === next) return null
+  return next ? "targetInside" : "targetOutside"
 }
 
 // The rod drive: one voice per moving rod, at most three (owner). The clip is 104 s, longer than any rod's travel

@@ -11,6 +11,7 @@ import { useAudioManager } from "@/hooks/use-audio-manager"
 import { useShiftLogLamp } from "@/hooks/use-shift-log-lamp"
 import { getAlarms, getEventWarnings, getReactorWarnings } from "@/lib/game-utils"
 import { rodsMoving } from "@/lib/sound-cues"
+import { isPowerOnTarget } from "@/lib/game-mechanics"
 import SoundModal from "@/components/sound-modal"
 import { useRouter } from "next/navigation"
 import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/components/reactor-camera"
@@ -98,6 +99,7 @@ export default function GamePage() {
     rodsMoving: rodsMoving(gameState.controlRods),
     warningKeys: [...getReactorWarnings(gameState), ...getEventWarnings(gameState)].map((warning) => warning.key),
     lastLogId: gameState.log[gameState.log.length - 1]?.id,
+    powerOnTarget: gameState.powerTarget === null ? null : isPowerOnTarget(gameState),
   })
   const handleInteraction = () => {
     initializeAudio();

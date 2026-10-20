@@ -10,7 +10,7 @@ import { advanceGame, createNewGame } from "../../lib/game-loop"
 import { isPowerOnTarget } from "../../lib/game-mechanics"
 import { AZ5_LAMP_SECONDS, checkEventWarnings, getAlarms, getWarningFlags, isAz5LampLit } from "../../lib/game-utils"
 import { applyPendingTarget, checkTurbineTrip, planShiftEvents, runShiftEvents, startEvent } from "../../lib/game-events"
-import { RODS_OUT_BELOW, SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
+import { RODS_OUT_BELOW, SAFETY_TEST_SCRIPT, TEST_SCRAPPED } from "../../lib/safety-test"
 import { REFERENCE_STATE } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
 import { az5 } from "./harness"
@@ -395,7 +395,10 @@ test("§14 every phase is triggered in order; each automated change happens once
   assert.equal(at(MAINS_OFF).mainsPower, false)
   assert.equal(at(MAINS_ON).mainsPower, true)
   assert.ok(Math.min(...SAFETY_TEST_SCRIPT.map((step) => step.target ?? Infinity)) >= 700, "no target below 700 MW")
-  assert.ok(run.final.timeLimit! - MAINS_ON <= 120, "at most 2 minutes from test complete to the end")
+  // The test itself lasts 75 s (owner, 2026-10-20), leaving a few minutes of survival after it
+  assert.equal(MAINS_ON - MAINS_OFF, 75, "the test lasts 75 s")
+  assert.ok(run.final.timeLimit! - MAINS_ON >= 120, "at least 2 minutes from test complete to the end")
+  assert.equal(run.final.testScrapped, false, "handled well, the test is not scrapped")
   assert.equal(run.final.eventHistory.length, 0, "no random events")
 })
 
@@ -448,18 +451,50 @@ test("§14 a reactor collapsed when the test begins: every rod is ordered out, a
     while (!s.isGameOver && !s.hasWon) s = advanceGame(respond(s), rng)
     return s
   }
-  assert.equal(collapsed((s) => s).gameOverCause, "explosion", "doing nothing")
+  assert.ok(collapsed((s) => s).isGameOver, "doing nothing")
   const az5Late = (s: GameState) => (s.radioactivity > 400 && !s.controlRods.every((r) => r.target === 100) ? az5(s) : s)
   assert.ok(collapsed(az5Late).hasWon, "AZ-5 once radioactivity runs away")
 })
 
-test("§11/§14 a Safety Test runaway with the pumps unpowered ends in an explosion", () => {
-  // Player error: the turbine goes back on the grid as the test begins, so nothing powers the pumps.
+test("§14 a Safety Test runaway with the pumps unpowered ends in disaster, even once the test is scrapped", () => {
+  // Player error: the turbine goes back on the grid as the test begins, so nothing powers the pumps. (The
+  // explosion from a runaway with no flow is §11's check, in acceptance.test.ts.)
   const rng = seededRng(1)
   const bot = makeBot({ testResponse: "none" })
   let s = createNewGame("safety_test")
   for (let t = 0; t < MAINS_OFF + 2; t++) s = advanceGame(bot.act(s), rng)
   s = { ...s, turbineMode: "grid", turbineConnected: true }
   while (!s.isGameOver && !s.hasWon) s = advanceGame(s, rng)
-  assert.equal(s.gameOverCause, "explosion")
+  assert.ok(s.isGameOver)
+})
+
+// A runaway during the test, then a player who does as the scrap message says, `delay` seconds after it appears
+function scrappedTest(opts: Parameters<typeof makeBot>[0], delay: number | null) {
+  const rng = seededRng(1)
+  const bot = makeBot(opts)
+  let s = createNewGame("safety_test")
+  let scrappedAt: number | null = null
+  while (!s.isGameOver && !s.hasWon) {
+    if (s.testScrapped) scrappedAt ??= getShiftTime(s)
+    const obey = delay !== null && scrappedAt !== null && getShiftTime(s) >= scrappedAt + delay
+    s = obey && !s.controlRods.every((r) => r.target === 100) ? { ...az5(s), waterPumps: s.waterPumps.map((p) => ({ ...p, on: true })) } : s
+    s = advanceGame(bot.act(s), rng)
+  }
+  return { final: s, scrappedAt }
+}
+
+test("§14 a runaway during the test scraps it: one order to AZ-5 in place of 'Test complete', with time to act", () => {
+  for (const pumps of [2, 4]) {
+    const ignored = scrappedTest({ pumps, testResponse: "none" }, null)
+    const { scrappedAt, final } = ignored
+    assert.ok(scrappedAt !== null && scrappedAt > MAINS_OFF && scrappedAt < MAINS_ON, `${pumps} pumps: scrapped at ${scrappedAt}`)
+    const lines = final.log.map((l) => l.text)
+    assert.equal(lines.filter((text) => text === TEST_SCRAPPED.text).length, 1, "scrapped once")
+    assert.ok(!lines.some((text) => text.startsWith("Test complete")), "never 'Test complete'")
+    assert.ok(final.isGameOver, `${pumps} pumps: ignoring the order still ends in disaster`)
+    assert.ok(getShiftTime(final) - scrappedAt >= 10, `${pumps} pumps: only ${getShiftTime(final) - scrappedAt} s to act`)
+    const obeyed = scrappedTest({ pumps, testResponse: "none" }, 5)
+    assert.ok(obeyed.final.hasWon, `${pumps} pumps: AZ-5 and all pumps 5 s after the order saves the reactor`)
+    assert.ok(obeyed.final.mainsPower, "the station's supply comes back with the order")
+  }
 })

@@ -4,9 +4,9 @@
 // Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { DRIVE_FADE_MS, DRIVE_STAGGER_MS, DRIVE_START_DELAY_MS, type DriveAudio, type DriveTimers, RodDriveVoices } from "../../lib/rod-drive-voices"
+import { DRIVE_MIN_PLAY_MS, DRIVE_STAGGER_MS, DRIVE_START_DELAY_MS, type DriveAudio, type DriveTimers, RodDriveVoices } from "../../lib/rod-drive-voices"
 import { HUM_ENTRY_MS, HUM_GAIN, HUM_PLAY_MS, HumBed } from "../../lib/hum-bed"
-import { newWarningAppeared, ROD_DRIVE_OFFSETS, rodsMoving, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
+import { newWarningAppeared, ROD_DRIVE_OFFSETS, rodsMoving, targetCue, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
 import { advanceReactor } from "../../lib/sim/reactor"
 import { seededRng } from "../../lib/sim/rng"
 import { createNewGame } from "../../lib/game-loop"
@@ -95,47 +95,58 @@ test("rod drive: one voice per moving rod, at most three, after the confirmation
   assert.deepEqual(many.audios.map((a) => a.currentTime), ROD_DRIVE_OFFSETS)
 })
 
-test("rod drive: a voice whose rod has arrived fades out, the others carry on", () => {
+test("rod drive: a voice whose rod has arrived stops there, with no fade; the others carry on", () => {
   const { clock, audios, drive } = voices()
   drive.setCount(3)
-  clock.advance(2000)
+  clock.advance(3000)
   drive.setCount(1)
-  clock.advance(DRIVE_FADE_MS / 2)
-  assert.ok(audios[1].playing && audios[1].volume < 0.8 && audios[1].volume > 0, "half-way through the fade")
-  assert.equal(audios[0].volume, 0.8)
-  clock.advance(DRIVE_FADE_MS)
   assert.deepEqual(audios.map((a) => a.playing), [true, false, false])
-  assert.deepEqual(audios[1].stoppedAt, [2000 + DRIVE_FADE_MS])
+  assert.deepEqual(audios[1].stoppedAt, [3000])
+  assert.equal(audios[0].volume, 0.8)
   drive.setCount(0)
-  clock.advance(DRIVE_FADE_MS)
   assert.equal(audios[0].playing, false)
 })
 
-test("rod drive: a rod ordered again mid-fade picks its voice back up; a voice not yet started is cancelled", () => {
+test("rod drive: a rod ordered again keeps its voice; a move shorter than the start delay is still heard", () => {
   const a = voices()
   a.drive.setCount(2)
-  a.clock.advance(2000)
-  a.drive.setCount(1)
-  a.clock.advance(DRIVE_FADE_MS / 2)
-  a.drive.setCount(2)
+  a.clock.advance(1000)
+  a.drive.setCount(1) // the second rod arrives before its voice has started...
+  a.drive.setCount(2) // ...and is ordered again
   a.clock.advance(5000)
   assert.equal(a.audios[1].playing, true)
-  assert.equal(a.audios[1].volume, 0.8)
-  assert.equal(a.audios[1].startedAt.length, 1, "kept playing, not restarted")
+  assert.equal(a.audios[1].startedAt.length, 1, "started once, not restarted")
 
-  const b = voices()
-  b.drive.setCount(3)
-  b.drive.setCount(1) // before the second and third voices' turn
-  b.clock.advance(2000)
-  assert.deepEqual(b.audios.map((x) => x.startedAt.length), [1, 0, 0])
-
-  // A move that ends before the drive's start delay stays silent (only the confirmation plays)
+  // A small move: the rod arrives before the drive starts, so the voice plays its shortest run and stops
+  const D = DRIVE_START_DELAY_MS
   const c = voices()
   c.drive.setCount(1)
-  c.clock.advance(1000)
+  c.clock.advance(500)
   c.drive.setCount(0)
-  c.clock.advance(2000)
-  assert.deepEqual(c.audios[0].startedAt, [])
+  c.clock.advance(D)
+  assert.deepEqual(c.audios[0].startedAt, [D])
+  assert.equal(c.audios[0].playing, true)
+  c.clock.advance(DRIVE_MIN_PLAY_MS)
+  assert.deepEqual(c.audios[0].stoppedAt, [D + DRIVE_MIN_PLAY_MS])
+
+  // Voices that start together are all heard, even when their rods arrive first
+  const b = voices()
+  b.drive.setCount(3)
+  b.drive.setCount(1)
+  b.clock.advance(5000)
+  assert.deepEqual(b.audios.map((x) => x.startedAt.length), [1, 1, 1])
+  assert.deepEqual(b.audios.map((x) => x.playing), [true, false, false])
+})
+
+test("rod drive: silenced at once when paused or the effects go off, even a voice still to start", () => {
+  const { clock, audios, drive } = voices()
+  drive.setCount(1)
+  clock.advance(DRIVE_START_DELAY_MS + 200)
+  drive.setCount(2)
+  drive.silence()
+  clock.advance(5000)
+  assert.deepEqual(audios.map((a) => a.playing), [false, false, false])
+  assert.deepEqual(audios[1].startedAt, [], "the second voice never starts")
 })
 
 // The engine's rods, one tick a second, fed to the drive as the game page does
@@ -148,7 +159,7 @@ function driveThrough(start: GameState, seconds: number) {
   for (let t = 0; t < seconds; t++) {
     counts.push(rodsMoving(s.controlRods))
     drive.setCount(rodsMoving(s.controlRods))
-    clock.advance(900) // late in the second: after any fade, and after the start delay from the second before
+    clock.advance(900) // late in the second: after the start delay from the second before
     heard.push(playing())
     clock.advance(100)
     s = advanceReactor(s, rng).state
@@ -165,7 +176,7 @@ test("rod drive follows the engine: sound lasts as long as each rod moves", () =
   // Rods 1 and 2 arrive in the 4th second; rod 3 in the 9th or 10th (rounding in the engine's sub-steps)
   assert.deepEqual(counts.slice(0, 9), [3, 3, 3, 3, 1, 1, 1, 1, 1])
   assert.ok(counts.slice(10).every((c) => c === 0) && counts[9] <= 1)
-  assert.deepEqual(heard, [0, ...counts.slice(1)], "1.25 s after the order, one voice per moving rod, faded out within the second a rod arrives")
+  assert.deepEqual(heard, [0, ...counts.slice(1)], "1.25 s after the order, one voice per moving rod, stopped within the second a rod arrives")
 })
 
 test("rod drive: a jammed rod falls silent; AZ-5 runs three voices until the last rod is in", () => {
@@ -187,6 +198,15 @@ test("rod drive: a jammed rod falls silent; AZ-5 runs three voices until the las
   assert.equal(heard[0], 0)
   assert.ok(heard.slice(1, lastMoving + 1).every((h, i) => h === Math.min(3, counts[i + 1])))
   assert.equal(heard[lastMoving + 1], 0)
+})
+
+test("target cues: one sound coming back inside the target range, another going outside; none when a target comes or goes", () => {
+  assert.equal(targetCue(false, true), "targetInside")
+  assert.equal(targetCue(true, false), "targetOutside")
+  assert.equal(targetCue(true, true), null)
+  assert.equal(targetCue(false, false), null)
+  assert.equal(targetCue(null, false), null)
+  assert.equal(targetCue(true, null), null)
 })
 
 test("warning bleep: once per new warning, not again for one that flickers at its level", () => {

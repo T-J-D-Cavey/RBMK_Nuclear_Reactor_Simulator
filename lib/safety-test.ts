@@ -3,8 +3,8 @@
 // notice) and makes the automated control changes the procedure calls for. Each automated change happens
 // once and is announced as it happens; the player can reverse it and the script never undoes that.
 // No random events: every disruption is scripted.
-import { type GameState, type LogSource, getShiftTime } from "./types"
-import { addLog } from "./game-utils"
+import { type GameState, type LogSource, THRESHOLDS, getShiftTime } from "./types"
+import { FIRST_LOG_AT, addLog } from "./game-utils"
 import { EVENT_TUNING } from "./sim/tuning"
 import { turbineCoastStart } from "./sim/reactor"
 
@@ -43,7 +43,7 @@ export const RODS_OUT_BELOW = 35
 export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   // Phase 1: briefing and power reduction (00–04 min)
   {
-    at: 0,
+    at: FIRST_LOG_AT,
     role: "procedure",
     text: "Unit 4 turbine rundown test about to start. Follow the procedure step by step.",
   },
@@ -87,14 +87,13 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     text: "Grid demand has dropped. You may now proceed with your test.",
   },
   {
-    at: 495,
+    at: 505,
     role: "deputy",
-    text: "We've been cleared to run the test. Now is it too much to ask that you all know what you're doing? Bring it down to 1,500 MW for the test, quickly!",
+    text: "We've been cleared to run the test. Now is it too much to ask that you all know what you're doing? Bring it down to 1,500 MW",
     target: 1500,
   },
-  // Phase 4: pressure to run the test (12–15 min)
   {
-    at: 550,
+    at: 700,
     role: "deputy",
     text: "You should have finished by now. Bunch of amatuers!",
   },
@@ -104,7 +103,7 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     text: "We've been at low power for too long. We should stop.",
   },
   {
-    at: 810,
+    at: 815,
     role: "deputy",
     text: "Never mind that. Hold 1,500 MW. We run the test tonight.",
   },
@@ -140,14 +139,29 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     action: "rods-out",
     onlyIf: (s) => s.radioactivity < RODS_OUT_BELOW,
   },
-  // Phase 6: after the test (18–20 min)
+  // Phase 6: after the test (18–20 min). The test lasts 75 s (owner, 2026-10-20): long enough that a player who
+  // does nothing loses the reactor, unless steam scraps the test first (TEST_SCRAPPED).
   {
-    at: 1080,
+    at: 1039,
     role: "procedure",
     text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until end of shift",
     action: "mains-on",
   },
 ]
+
+// If steam reaches its warning level while the test runs (after the cut, before "Test complete"), the test
+// supervisor scraps it (owner, 2026-10-20), so the player knows they must act. It takes the place of "Test
+// complete": the station's supply to the pumps comes back and no more script steps run.
+export const TEST_SCRAPPED: ScriptStep = {
+  at: 0, // not on the clock: triggered by steam
+  role: "procedure",
+  text: "Scrap test, AZ-5 and turn on all pumps asap!",
+  action: "mains-on",
+}
+export const runningAway = (s: GameState) =>
+  s.steamVolume >= THRESHOLDS.steamVolume.highWarning || s.radioactivity >= THRESHOLDS.radioactivity.highWarning
+const MAINS_OFF_STEP = SAFETY_TEST_SCRIPT.findIndex((step) => step.action === "mains-off")
+const MAINS_ON_STEP = SAFETY_TEST_SCRIPT.findIndex((step) => step.action === "mains-on")
 
 // Run every script step that is due (each runs exactly once: scriptStep only moves forward).
 export function runSafetyTest(state: GameState): GameState {
@@ -157,6 +171,11 @@ export function runSafetyTest(state: GameState): GameState {
   while (step < SAFETY_TEST_SCRIPT.length && SAFETY_TEST_SCRIPT[step].at <= now) {
     s = runStep(s, SAFETY_TEST_SCRIPT[step], now)
     step++
+  }
+  const testRunning = step > MAINS_OFF_STEP && step <= MAINS_ON_STEP
+  if (testRunning && runningAway(s)) {
+    s = { ...runStep(s, TEST_SCRAPPED, now), testScrapped: true }
+    step = MAINS_ON_STEP + 1
   }
   return step === state.scriptStep ? s : { ...s, scriptStep: step }
 }
@@ -181,7 +200,7 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
       return addLog(
         s,
         ROLES.turbine.source,
-        "Turbine disconnected from the grid and supplying the station pumps, as the test requires.",
+        "Turbine disconnected from the grid and supplying the station pumps.",
         ROLES.turbine.from,
       )
     case "mains-off":

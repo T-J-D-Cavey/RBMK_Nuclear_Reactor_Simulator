@@ -33,6 +33,10 @@ export function formatMinutes(seconds: number): string {
 
 const LOG_LIMIT = 60
 
+// In every mode the shift log's first message arrives this far into play, not at the very start, so the player
+// sees the teleprinter print it (owner, 2026-10-20).
+export const FIRST_LOG_AT = 5 // s
+
 // Every message is sent by a named person (`from`); the computer's warnings go on the alarm screen instead.
 export function addLog(state: GameState, source: LogSource, text: string, from: string): GameState {
   const last = state.log[state.log.length - 1]
@@ -90,7 +94,7 @@ const REACTOR_WARNINGS: [WarningFlag, string][] = [
   ["highRadioactivity", "WARNING: High radioactivity. Reactor temperature expected to spike. Recommend to increase insertion of control rods to reduce radioactivity."],
   ["lowRadioactivity", "WARNING: Low radioactivity. Xenon levels are expected to spike, further reducing radioactivity. Recommend reducing control rod insertion to increase radioactivity"],
   ["highReactorTemp", "WARNING: High reactor temperature. Steam levels and radioactivity expected to spike. Recommend turning on more water pumps to cool reactor"],
-  ["lowFuelTemp", "WARNING: Low fuel temperature. Radiation is expected to spike. Recommended turning off some water pumps to increase reactor and fuel temperature"],
+  ["lowFuelTemp", "WARNING: Low fuel temperature. Radiation is expected to spike. Recommended turning off some water pumps"],
   ["highSteam", "WARNING: High steam pressure. Disconnect turbine to avoid damage to the transmission infrastructure"],
   ["lowSteam", "WARNING: Low steam pressure causing reduced power generation. Recommend turning off some water pumps to increase reactor temperature and reducing control rod insertion to increase radioactivity"],
   ["highXenon", "WARNING: High xenon levels detected, lowering radioactivity. Recommend reducing control rod insertion to increase radioactivity."],

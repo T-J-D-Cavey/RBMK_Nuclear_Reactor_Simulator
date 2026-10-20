@@ -16,7 +16,7 @@ import {
   getShiftTime,
 } from "./types"
 import { EVENT_TUNING, type ShiftEventTuning } from "./sim/tuning"
-import { addLog, formatMW } from "./game-utils"
+import { FIRST_LOG_AT, addLog, formatMW } from "./game-utils"
 import type { Rng } from "./sim/rng"
 
 type Range = readonly [number, number]
@@ -143,6 +143,16 @@ export function runShiftEvents(state: GameState, rng: Rng): GameState {
   const now = getShiftTime(state)
   let s = state.eventPlan ? state : startShift(state, tuning, now, rng)
 
+  // The shift's opening order, a few seconds into play
+  if (s.log.length === 0 && now >= FIRST_LOG_AT && s.powerTarget !== null) {
+    s = addLog(
+      s,
+      "grid",
+      `Unit 4, your shift has started. Hold output at ${formatMW(s.powerTarget)}. The grid controller will let us know if they need any adjustments in power output`,
+      SHIFT_FOREMAN,
+    )
+  }
+
   // Brief warning before a major emergency (bible §12), e.g. grid instability before a power cut.
   let plan = (s.eventPlan ?? []).map((e) => {
     const lead = EVENT_TUNING.warningLead[e.kind]
@@ -162,16 +172,7 @@ export function runShiftEvents(state: GameState, rng: Rng): GameState {
 
 function startShift(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
   const plan = planShiftEvents(tuning, state.timeLimit ?? 0, rng).filter((e) => e.at > now)
-  let s: GameState = { ...state, eventPlan: plan, nextTargetChangeAt: null }
-  if (now <= 5 && s.powerTarget !== null) {
-    s = addLog(
-      s,
-      "grid",
-      `Unit 4, your shift has started. Hold output at ${formatMW(s.powerTarget)}. The grid controller will let us know if they need any adjustments in power output`,
-      SHIFT_FOREMAN,
-    )
-  }
-  return s
+  return { ...state, eventPlan: plan, nextTargetChangeAt: null }
 }
 
 const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; text: string }>> = {
@@ -195,7 +196,7 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
   switch (kind) {
     case "power-cut": {
       // The pumps' normal supply is lost; the turbine can still supply them (bible §8)
-      s = addLog({ ...s, mainsPower: false }, "engineer", "Power cut detected. Recommend disconnecting turbine to power the pumps.", HEAD_ENGINEER)
+      s = addLog({ ...s, mainsPower: false }, "engineer", "We've lost grid mains power to the pumps!", HEAD_ENGINEER)
       return begin(s, { ...base, duration: planned ?? Math.round(between(rng, tuning.powerCutSeconds)) })
     }
     case "rod-stuck": {

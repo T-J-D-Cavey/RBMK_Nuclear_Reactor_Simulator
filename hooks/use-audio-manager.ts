@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, SOUND_EFFECT_FILES, type SoundEffect } from "@/lib/sound-cues";
+import { newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, SOUND_EFFECT_FILES, targetCue, type SoundEffect } from "@/lib/sound-cues";
 import { RodDriveVoices } from "@/lib/rod-drive-voices";
 import { HumBed } from "@/lib/hum-bed";
 
@@ -21,6 +21,7 @@ interface AudioManagerProps {
   rodsMoving: number;
   warningKeys: string[];
   lastLogId: string | undefined;
+  powerOnTarget: boolean | null; // null when there is no power target
 }
 
 export function useAudioManager({
@@ -36,6 +37,7 @@ export function useAudioManager({
   rodsMoving,
   warningKeys,
   lastLogId,
+  powerOnTarget,
 }: AudioManagerProps) {
   // --- REFS ---
   const humRef = useRef<HumBed | null>(null);
@@ -208,7 +210,8 @@ export function useAudioManager({
 
   // Rod drive: one voice per moving rod, up to three; silent while paused or with the effects off
   useEffect(() => {
-    rodDriveRef.current?.setCount(effectsOn ? rodsMoving : 0);
+    if (effectsOn) rodDriveRef.current?.setCount(rodsMoving);
+    else rodDriveRef.current?.silence();
   }, [effectsOn, rodsMoving]);
 
   // Warning bleep: a warning has appeared on the alarm monitor (alongside its alarm)
@@ -235,6 +238,17 @@ export function useAudioManager({
     knownLogId.current = lastLogId;
     if (lastLogId !== undefined) playEffect("shiftLogPrinter");
   }, [loaded, lastLogId, playEffect]);
+
+  // Target cues: the power output has moved back inside its target range, or out of it
+  const prevOnTarget = useRef<boolean | null | undefined>(undefined); // undefined until the save has loaded
+  useEffect(() => {
+    if (!loaded) return;
+    const prev = prevOnTarget.current;
+    prevOnTarget.current = powerOnTarget;
+    if (prev === undefined) return;
+    const cue = targetCue(prev, powerOnTarget);
+    if (cue) playEffect(cue);
+  }, [loaded, powerOnTarget, playEffect]);
 
   // Cleanup
   useEffect(() => {

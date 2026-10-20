@@ -302,12 +302,13 @@ From the engine tuning (raised at Checkpoint A; the owner's playtest file may an
    | Sound | Plays when | Notes |
    |---|---|---|
    | Rod confirmation | The player confirms new rod orders in `control-rods-modal.tsx` | One-off. |
-   | Rod drive | While any rod is travelling (insertion ≠ target and not jammed) | One voice per moving rod, up to three, 300 ms apart; each fades out as its rod arrives. |
+   | Rod drive | While any rod is travelling (insertion ≠ target and not jammed) | One voice per moving rod, up to three, 300 ms apart; each stops as its rod arrives, with no fade (owner, 2026-10-20), but plays for at least 1 s so a small move is still heard. |
    | AZ-5 | The AZ-5 button is pressed | One-off. Takes the place of the rod confirmation for that press. |
    | Pump confirmation | A pump change is applied in `water-pumps-modal.tsx` | One-off. |
    | Turbine | The turbine setting is changed in `turbine-modal.tsx` | One-off. |
    | Warning bleep | A warning appears that wasn't there last tick (`getReactorWarnings` + `getEventWarnings` keys) | One bleep per tick, however many arrive; not again for a warning that cleared under 10 s before. Alongside the alarm, which is under the Alarms switch. |
    | Shift log printer | A new shift-log message arrives (the same trigger as the header's shift-log lamp, `use-shift-log-lamp.ts`) | The clip is 3.2 s. One sound for messages that arrive together. |
+   | Target in / out (2026-10-20) | The power output moves back inside its target range, or out of it | One-off each. Not when a target appears or goes away (Free mode, the Safety Test's turbine switch). |
    | Reactor hum | Always, while playing | Exists today. |
 
    Neither new trigger fires for warnings or messages already in a save being loaded.
@@ -323,6 +324,7 @@ Decisions made without the owner that they may want to revisit:
 - **Safety Test card text** says orders come from the test supervisor, the Deputy Chief Engineer and the Kiev grid controller.
 - **Safety Test targets (2026-10-16, changelog v2.21):** the owner set the targets; Claude placed Kiev's release at 08:10 (just after the shift change), with the 1,500 MW order at 08:15. Releasing later (10:15 or 12:00) leaves a skilled player with a little less xenon (24% or 20%, against 29%). Kiev's release message is a placeholder for the owner to rewrite.
 - **WS4–WS6 choices** (event numbers, timings, script targets): listed in §17.4.
+- **Safety Test scrapped (2026-10-20):** the owner asked for "Scrap test, AZ-5 and turn on all pumps asap!" when steam passes its warning level during the 75 s test. Steam reaches 300 only 2–4 s before the reactor is lost, too late to act on, so Claude also triggers it on the high-radioactivity warning (350), which comes 16–28 s before (`runningAway` in lib/safety-test.ts). Scrapping also brings the station's supply back to the pumps, so "turn on all pumps" works. The cost: a player who ignores the order now ends in meltdown rather than explosion. Leaving the supply off keeps the explosion, and AZ-5 alone still saves an obedient player; that is one line to drop (`action: "mains-on"` on `TEST_SCRAPPED`).
 
 ---
 

@@ -2,7 +2,7 @@
 // and endings. Pure, so the React hook and the scenario harness (scripts/sim) run exactly the same loop.
 import { type GameMode, type GameState, GAME_MODE_CONFIGS, INITIAL_GAME_STATE, getShiftTime } from "./types"
 import { calculateGameTick } from "./game-mechanics"
-import { addLog, checkEventWarnings, checkGameOver, checkWarnings } from "./game-utils"
+import { FIRST_LOG_AT, addLog, checkEventWarnings, checkGameOver, checkWarnings } from "./game-utils"
 import { applyPendingTarget, checkTurbineTrip, expireEvents, jamRodsInHighSteam, runShiftEvents } from "./game-events"
 import { runSafetyTest } from "./safety-test"
 import type { Rng } from "./sim/rng"
@@ -20,11 +20,10 @@ export function createNewGame(mode: GameMode): GameState {
   }
 }
 
-// Free mode has no events, so without this its shift log would stay blank (owner). Logged a few seconds in,
-// not in createNewGame, so the player sees the teleprinter print it.
-const FREE_MODE_WELCOME_AT = 10 // s
+// Free mode has no events, so without this its shift log would stay blank (owner). Logged a few seconds in
+// (FIRST_LOG_AT), not in createNewGame, so the player sees the teleprinter print it.
 function welcomeToFreeMode(s: GameState): GameState {
-  if (s.mode !== "free" || s.log.length > 0 || getShiftTime(s) < FREE_MODE_WELCOME_AT) return s
+  if (s.mode !== "free" || s.log.length > 0 || getShiftTime(s) < FIRST_LOG_AT) return s
   return addLog(s, "engineer", "Welcome to your induction. It's the late shift and we're expecting a nice quiet night. Keep things stable.", "PLANT DIRECTOR")
 }
 
