@@ -31,6 +31,7 @@ interface ScriptStep {
   action?: Action
   onlyIf?: (s: GameState) => boolean // a conditional step: checked when it is due, and skipped for good if false
   waitsUntil?: number // with onlyIf: instead of being skipped, the step waits for its condition until this time
+  givesUpIf?: (s: GameState) => boolean // with waitsUntil: the step stops waiting, skipped for good, once this holds
 }
 
 // The reactor is starting to run away: the high-radioactivity warning, which comes 16–28 s before the reactor is
@@ -39,8 +40,20 @@ export const runningAway = (s: GameState) =>
   s.steamVolume >= THRESHOLDS.steamVolume.highWarning || s.radioactivity >= THRESHOLDS.radioactivity.highWarning
 export const AZ5_ORDER = "Engage all control rods. AZ-5 now."
 
-// If the reactor has collapsed by the time the test begins, the deputy orders every rod out to save the test.
-export const RODS_OUT_BELOW = 35
+// The test begins as the clock reads 01:23:04, as it did on the night, and lasts 120 s (owner, 2026-10-21; was
+// 75 s): long enough that even a slow creep from low radioactivity runs away if the player does nothing.
+export const TEST_STARTS = 964
+export const TEST_ENDS = TEST_STARTS + 120
+
+// If radioactivity falls below this at any point in the test, the deputy orders every rod out to save it (owner,
+// 2026-10-21; was only at the start, below 35). Steering the test gently down is no escape: the player has to
+// handle a real surge with the pumps running down.
+export const RODS_OUT_BELOW = 50
+
+// The deputy stands down for good once the reactor is running away (the AZ-5 order then follows), so he never
+// overrules an AZ-5 the crew ordered. An AZ-5 pressed while nothing showed danger is no way out (owner,
+// 2026-10-21): radioactivity falls below 50 and he pulls those rods out too.
+const deputyStandsDown = runningAway
 
 // Targets follow the physics: xenon creeps up below radioactivity 80 and builds faster the lower it is. That is
 // below ~3,700 MW with two pumps but only ~2,100 MW with four, so pumps decide who falls into the pit (owner,
@@ -134,31 +147,33 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     action: "turbine-to-pumps",
   },
   {
-    at: 964,
+    at: TEST_STARTS,
     role: "procedure",
     text: "Test begins. Station power to the pumps is cut: coasting turbine is powering the pumps.",
     action: "mains-off",
   },
+  // The deputy watches the whole test, and orders the rods out once if radioactivity falls below 50.
   {
-    at: 964,
+    at: TEST_STARTS,
     role: "deputy",
     text: "What have you done? You're choking my reactor! bring it back up, we are finishing this test.",
     action: "rods-out",
-    onlyIf: (s) => s.radioactivity < RODS_OUT_BELOW,
+    onlyIf: (s) => s.radioactivity < RODS_OUT_BELOW && !deputyStandsDown(s),
+    waitsUntil: TEST_ENDS,
+    givesUpIf: deputyStandsDown,
   },
   // If the reactor starts to run away during the test, the senior reactor control engineer orders AZ-5, in a
   // hurry (owner, 2026-10-20). Advice only: the test carries on, and the pumps stay on the coasting turbine.
   {
-    at: 964,
+    at: TEST_STARTS,
     role: "srce",
     text: AZ5_ORDER,
     onlyIf: runningAway,
-    waitsUntil: 1039,
+    waitsUntil: TEST_ENDS,
   },
-  // Phase 6: after the test (18–20 min). The test lasts 75 s (owner, 2026-10-20): long enough that a player who
-  // does nothing loses the reactor. Surviving it, by any use of the rods, completes the test.
+  // Phase 6: after the test (18–20 min). Surviving the test, by any use of the rods, completes it.
   {
-    at: 1039,
+    at: TEST_ENDS,
     role: "procedure",
     text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until end of shift",
     action: "mains-on",
@@ -166,14 +181,14 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
 ]
 
 // Run every script step that is due (each runs exactly once: scriptStep only moves forward). A waiting step holds
-// back the steps after it until its condition holds or its wait is over.
+// back the steps after it until its condition holds, it gives up, or its wait is over.
 export function runSafetyTest(state: GameState): GameState {
   const now = getShiftTime(state)
   let s = state
   let step = state.scriptStep
   while (step < SAFETY_TEST_SCRIPT.length && SAFETY_TEST_SCRIPT[step].at <= now) {
     const next = SAFETY_TEST_SCRIPT[step]
-    if (next.waitsUntil !== undefined && now < next.waitsUntil && !next.onlyIf?.(s)) break
+    if (next.waitsUntil !== undefined && now < next.waitsUntil && !next.onlyIf?.(s) && !next.givesUpIf?.(s)) break
     s = runStep(s, next, now)
     step++
   }
@@ -194,7 +209,7 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
   switch (step.action) {
     case "pumps-on":
       s = { ...s, waterPumps: s.waterPumps.map((p) => ({ ...p, on: true })) }
-      return addLog(s, ROLES.pumps.source, "All four pumps switched on, as the procedure requires.", ROLES.pumps.from)
+      return addLog(s, ROLES.pumps.source, "All remaining pumps switched on.", ROLES.pumps.from)
     case "turbine-to-pumps":
       s = { ...s, turbineMode: "pumps", turbineConnected: false }
       return addLog(

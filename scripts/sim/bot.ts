@@ -3,7 +3,7 @@
 // seconds, like a person. It is a yardstick for "a competent player can…" checks, not part of the game.
 import { type ControlRod, type GameState, getShiftTime } from "../../lib/types"
 import { advanceGame } from "../../lib/game-loop"
-import { SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
+import { AZ5_ORDER, SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
 import { seededRng, type Rng } from "../../lib/sim/rng"
 import { TUNING } from "../../lib/sim/tuning"
 
@@ -36,6 +36,7 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
   const outputs: number[] = []
   let correction = 0 // learnt offset (log scale) between the rule of thumb and reality
   let survival = false // Safety Test: the test has begun; only safety matters now
+  let pressedAz5 = false // Safety Test: AZ-5 pressed during the test; the rods are left in from then on
   let heldR: number | null = null // Safety Test: radioactivity held through the test preparations
 
   const act = (input: GameState): GameState => {
@@ -49,7 +50,10 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
     // --- Housekeeping: power cuts, trips, the turbine ---
     if (s.mode === "safety_test" && !s.mainsPower && !survival) {
       survival = true
-      if (o.testResponse === "az5") return az5(s)
+      if (o.testResponse === "az5") {
+        pressedAz5 = true
+        return az5(s)
+      }
     }
     if (!survival) {
       if (!s.mainsPower && s.turbineMode === "grid") s = { ...s, turbineMode: "pumps", turbineConnected: false }
@@ -65,6 +69,14 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
     if (survival) {
       if (o.testResponse === "none") return s
       if (o.testResponse === "late-az5") return R > 400 && !s.controlRods.every((r) => r.target === 100) ? az5(s) : s
+      // A skilled operator answers the deputy's withdrawal (every rod ordered out) or the AZ-5 order with AZ-5, and
+      // then leaves the rods in. The deputy overrules an AZ-5 pressed before any danger showed, so AZ-5 again.
+      const withdrawn = s.controlRods.every((r) => r.stuck || r.target === 0)
+      if (withdrawn || (!pressedAz5 && s.log.some((l) => l.text === AZ5_ORDER))) {
+        pressedAz5 = true
+        return az5(s)
+      }
+      if (pressedAz5) return s
       goal = 5
     } else if (testPrep) {
       heldR ??= R
@@ -117,8 +129,9 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
   return { act, options: o }
 }
 
+// Pressing AZ-5, as the panel does: every free rod ordered fully in, and the press noted.
 function az5(s: GameState): GameState {
-  return { ...s, controlRods: s.controlRods.map((r) => (r.stuck ? r : { ...r, target: 100 })) }
+  return { ...s, az5PressedAt: getShiftTime(s), controlRods: s.controlRods.map((r) => (r.stuck ? r : { ...r, target: 100 })) }
 }
 
 function keepPumps(s: GameState, wanted: number): GameState {

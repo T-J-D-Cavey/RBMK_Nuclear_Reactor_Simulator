@@ -2,6 +2,24 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.22 – 2026-10-21 (Safety Test: the deputy watches the whole test, and the test lasts 120 s)
+
+- **The deputy's rods-out order now covers the whole test** (Section 14, owner): once, whenever radioactivity falls below 50 (was only as the test begins, below 35). He stands down for good once the reactor is running away (the high radioactivity or high steam warning).
+  - **Why:** in a playtest the owner held radioactivity at 40–50, above the old trigger, and nudged rods in as the pumps ran down. Nothing happened. At that level losing the pumps only adds about +5 points over the first 50 s, and one 1% nudge on all ten rods takes off 5, so the test was an anticlimax for a careful player.
+  - **A precautionary AZ-5 doesn't stop him** (owner): pressed with no danger showing, it took radioactivity towards 0 and nothing happened (peak 57–65 on 3–4 pumps). Now the deputy pulls those rods out too, about 2 s later. The AZ-5 the crew orders is never overruled, because the order only comes after the warning that stands him down. A first draft also stood him down after any AZ-5; that is dropped.
+  - **Measured after a precautionary AZ-5** (3–4 pumps, AZ-5 at +2 s or +20 s; seed 1): no second AZ-5 explodes at +28–45 s. AZ-5 again 2 s after the withdrawal (rods still 25–30% in) peaks at 57–70; 5 s after (rods 6–14% in) peaks at 570–860; 10 s after (rods at 0%) peaks at 1,000–2,400; on radioactivity passing 400, 1,500–1,650. All of these survive.
+- **The test lasts 120 s** (was 75 s), starting at the same time, so the survival time after it falls from about 2:41 to 1:56. At radioactivity 40 a hands-off runaway takes ~65–70 s to show, and below ~38 it used to arrive after the test had ended.
+- **Measured** (the repo's bot, seeds 1–3):
+
+  | Pumps | Radioactivity at test start | Deputy steps in | AZ-5 at once (again after the deputy) | AZ-5 late (>400) | Hands off |
+  |---|---|---|---|---|---|
+  | 2 | 47 | at test start | survives, peak ~185 | survives, peak ~1,100 | explosion at +27 s |
+  | 3 | 57 | +5 s if steered down; +3–4 s after AZ-5 | survives | survives, peak ~700, no deputy | explosion at +75–80 s |
+  | 4 | 65 | +9 s if steered down; +4 s after AZ-5 | survives | survives, peak ~600, no deputy | explosion at +72 s |
+
+  Putting the rods back to 20% after the withdrawal, instead of AZ-5, explodes: the tips re-enter from 0% (Section 10).
+- **Still open:** a player who holds radioactivity at 50 or more and nudges rods in to stop the creep never triggers the deputy, and survives without a surge (3–4 pumps: peak radioactivity ~60–70, steam ~180–200).
+
 ## v2.21 – 2026-10-16 (Safety Test targets: a skilled player can avoid the xenon pit)
 
 - **New targets** (Section 14, owner): 5,000 (start) → 3,000 → 2,000 → Kiev's hold at 2,000 → Kiev's release → 1,500 for the test. The 700 MW step and the raise back to 1,000 MW are gone. Kiev's hold no longer changes the target, and a new Kiev message releases the test at the shift change (Claude placed it at 08:10; wording for the owner to rewrite).

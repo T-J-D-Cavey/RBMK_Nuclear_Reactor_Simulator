@@ -385,19 +385,34 @@ const RAISE = SAFETY_TEST_SCRIPT.findLast((step) => step.target != null && step.
 test("§14 every phase is triggered in order; each automated change happens once, as it is announced", () => {
   const run = safety()
   // A conditional step runs only if its condition held when it was due (the script runs after that second's physics).
-  const due = SAFETY_TEST_SCRIPT.filter((step) => !step.onlyIf || step.onlyIf(run.states[step.at - 1]))
-  const scripted = run.final.log.filter((l) => SAFETY_TEST_SCRIPT.some((step) => step.text === l.text))
-  assert.equal(scripted.length, due.length, "every due script step logged exactly once")
-  due.forEach((step, i) => assert.ok(Math.abs(scripted[i].time - step.at) <= 1, `step at ${step.at}s logged at ${scripted[i].time}s`))
+  // A waiting step may run at any point in its wait, or never.
+  const waits = (step: (typeof SAFETY_TEST_SCRIPT)[number]) => step.waitsUntil !== undefined
+  const due = SAFETY_TEST_SCRIPT.filter((step) => !step.onlyIf || waits(step) || step.onlyIf(run.states[step.at - 1]))
+  const scripted = run.final.log
+    .map((l) => ({ time: l.time, index: SAFETY_TEST_SCRIPT.findIndex((step) => step.text === l.text) }))
+    .filter((l) => l.index >= 0)
+  const logged = scripted.map((l) => l.index)
+  assert.deepEqual(logged, [...logged].sort((a, b) => a - b), "logged in script order")
+  assert.equal(new Set(logged).size, logged.length, "no script step logged twice")
+  due.forEach((step) => {
+    const entry = scripted.find((l) => SAFETY_TEST_SCRIPT[l.index] === step)
+    if (waits(step)) {
+      assert.ok(!entry || (entry.time >= step.at && entry.time <= step.waitsUntil!), `waiting step logged at ${entry?.time}s`)
+    } else {
+      assert.ok(entry && Math.abs(entry.time - step.at) <= 1, `step at ${step.at}s logged at ${entry?.time}s`)
+    }
+  })
+  assert.equal(scripted.filter((l) => !waits(SAFETY_TEST_SCRIPT[l.index])).length, due.filter((step) => !waits(step)).length)
   const at = (t: number) => run.states[t - 1]
   assert.ok(at(PUMPS_ON).waterPumps.every((p) => p.on), "pumps switched on with the announcement")
   assert.equal(at(TURBINE_SWITCH).turbineMode, "pumps")
   assert.equal(at(MAINS_OFF).mainsPower, false)
   assert.equal(at(MAINS_ON).mainsPower, true)
   assert.ok(Math.min(...SAFETY_TEST_SCRIPT.map((step) => step.target ?? Infinity)) >= 700, "no target below 700 MW")
-  // The test itself lasts 75 s (owner, 2026-10-20), leaving a few minutes of survival after it
-  assert.equal(MAINS_ON - MAINS_OFF, 75, "the test lasts 75 s")
-  assert.ok(run.final.timeLimit! - MAINS_ON >= 120, "at least 2 minutes from test complete to the end")
+  // The test itself lasts 120 s (owner, 2026-10-21; was 75 s), starting at the same time, so the survival time
+  // after it is shorter
+  assert.equal(MAINS_ON - MAINS_OFF, 120, "the test lasts 120 s")
+  assert.ok(run.final.timeLimit! - MAINS_ON >= 110, "nearly 2 minutes from test complete to the end")
   assert.ok(!run.final.log.some((l) => l.text === AZ5_ORDER), "handled well, no AZ-5 order")
   assert.equal(run.final.eventHistory.length, 0, "no random events")
 })
@@ -461,6 +476,31 @@ test("§14 a reactor collapsed when the test begins: every rod is ordered out, a
   }
   const obeyed = collapsed(obey)
   assert.ok(obeyed.hasWon && obeyed.log.some((l) => l.text.startsWith("Test complete")), "AZ-5 5 s after the order")
+})
+
+test("§14 radioactivity below 50 at any point in the test: the deputy orders every rod out, once, unless it already ran away", () => {
+  const deputyOrders = (run: GameRun) => run.final.log.filter((l) => l.text.startsWith("Withdrawing all control rods"))
+  // Four pumps: the test begins above 50, and steering radioactivity down mid-test brings the deputy in
+  const steered = safety({ pumps: 4 })
+  const [order, ...again] = deputyOrders(steered)
+  assert.ok(order && order.time > MAINS_OFF && order.time < MAINS_ON, `deputy steps in mid-test (at ${order?.time})`)
+  assert.equal(again.length, 0, "only once")
+  assert.ok(steered.states[MAINS_OFF - 1].radioactivity >= RODS_OUT_BELOW && steered.states[order.time - 1].radioactivity < RODS_OUT_BELOW)
+  assert.ok(steered.final.hasWon, "AZ-5 after the withdrawal saves the reactor")
+  // AZ-5 as the test begins, with no danger showing, is no way out: he pulls those rods out, and AZ-5 again saves it
+  const precaution = safety({ pumps: 4, testResponse: "az5" })
+  assert.equal(deputyOrders(precaution).length, 1, "precautionary AZ-5 overruled")
+  assert.ok(precaution.final.hasWon, "AZ-5 again after the withdrawal")
+  // Once it has run away he stands down for good: the AZ-5 the crew ordered is never overruled
+  const ranAway = safety({ pumps: 4, testResponse: "late-az5" })
+  assert.ok(ranAway.final.log.some((l) => l.text === AZ5_ORDER), "the AZ-5 order came")
+  assert.ok(ranAway.states.slice(MAINS_OFF, MAINS_ON).some((s) => s.radioactivity < RODS_OUT_BELOW), "below 50 after AZ-5")
+  assert.equal(deputyOrders(ranAway).length, 0)
+  assert.ok(ranAway.final.hasWon)
+  // Two pumps: below 50 as the test begins, so the order comes at once, and doing nothing then is a disaster
+  const ignored = safety({ testResponse: "none" })
+  assert.equal(deputyOrders(ignored)[0]?.time, MAINS_OFF)
+  assert.equal(ignored.final.gameOverCause, "explosion")
 })
 
 test("§11/§14 a Safety Test runaway with the pumps unpowered ends in an explosion", () => {
