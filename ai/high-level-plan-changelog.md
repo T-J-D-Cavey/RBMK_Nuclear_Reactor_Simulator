@@ -2,6 +2,26 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.23 – 2026-10-22 (Safety Test: the deputy's withdrawal is sized to the reactor)
+
+- **The deputy no longer pulls every rod to 0%** (Section 14, owner). Every free rod comes out by the same amount, sized so that the balance of all the cards (xenon, rods and tips, fuel, steam) would take radioactivity from where it is to the 350 warning in about 8 s (`DEPUTY_SURGE_SECONDS`). The log reads "Withdrawing control rods on the Deputy Chief Engineer's order."
+  - **Why:** in a playtest, radioactivity went from below 50 to about 2,000 in roughly 2 s, before the owner could read the order. With rods ~35% in, all ten driving out removed ~28 points a second while their tips stayed in. The balance reached +92 points in 4 s, where radioactivity grows ×4 a second. That is a real prompt-critical excursion, but unfair in play. In the show the operators see the surge build before AZ-5.
+  - **A death trap removed:** after an AZ-5 late in the test (rods ~47% in), the full withdrawal exploded even with AZ-5 pressed again 3 s after the warning (peak ~20,000).
+  - **Sizes of pull:** 2 pumps with xenon 100% and rods 13%: 5% per rod. 4 pumps with xenon 43% and rods 34%: 8%. A collapsed reactor (radioactivity ~0, rods 42%): 24%.
+- **Measured** (seven scenarios across 2–4 pumps, steering down, early and late AZ-5, collapsed; seed 1):
+
+  | | Every rod to 0% (v2.22) | Sized (now) |
+  |---|---|---|
+  | Warning after the order | 4–7 s | 8–11 s |
+  | Radioactivity 1,000 | 5–22 s | 22–37 s |
+  | Ignored | explosion at +15–30 s | explosion at +27–41 s, within the test |
+  | AZ-5 3 s after the warning | peak 1,000–2,400; one explodes | peak 670–735; all survive |
+
+  A target of 6 s gave warnings after 6–9 s; 12 s gave 10–16 s.
+- **Trade-off:** the deputy no longer parks every rod at 0%, so AZ-5 in answer to him gets a much smaller graphite-tip kick. The tip trap stays for players who pull rods to 0% themselves.
+- **The orders take a moment** (owner, after a playtest): everything used to happen in the same second as the dip below 50, often the second the test began. Now the deputy speaks 5 s after the dip (`DEPUTY_REACTS_SECONDS`), and the Senior Reactor Control Engineer starts withdrawing the rods 4 s after him (`CREW_ACTS_SECONDS`). The withdrawal is sized when the rods start moving, so it allows for whatever happened in between. If the reactor runs away meanwhile, the withdrawal never comes. He only notices a dip early enough for the rods to move before the test ends.
+- **Short rod moves now show as moving** (Section 10 display): the panel holds a rod's marker for 1.25 s so it starts with the drive sound, and a move of a few % (the deputy's 4–8%) had already arrived by then. The rod just jumped, and the "Moving" lamp never lit. Now such a move shows as moving for as long as its travel takes, and at least 1 s, like the drive sound. This applies to the player's own small moves too.
+
 ## v2.22 – 2026-10-21 (Safety Test: the deputy watches the whole test, and the test lasts 120 s)
 
 - **The deputy's rods-out order now covers the whole test** (Section 14, owner): once, whenever radioactivity falls below 50 (was only as the test begins, below 35). He stands down for good once the reactor is running away (the high radioactivity or high steam warning).

@@ -164,6 +164,14 @@ export function growthRate(rho: number): number {
   return rho * slow + Math.sign(rho) * beyond * (1 / T.promptGenerationTime - slow)
 }
 
+// The balance (points) that gives a growth rate (1/s) of at least 0: growthRate turned round.
+export function balanceForGrowth(growth: number): number {
+  const slow = 1 / T.generationTime
+  const fast = 1 / T.promptGenerationTime
+  const g = Math.max(0, growth)
+  return g <= T.promptAbove * slow ? g / slow : (g + T.promptAbove * (fast - slow)) / fast
+}
+
 // Xenon %/s: builds at low radioactivity (faster the lower), burns off faster the higher it is (bible §9).
 export function xenonRate(radioactivity: number): number {
   const R = Math.max(0, radioactivity)

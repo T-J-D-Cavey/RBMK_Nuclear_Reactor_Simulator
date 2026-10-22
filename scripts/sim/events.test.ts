@@ -10,7 +10,15 @@ import { advanceGame, createNewGame } from "../../lib/game-loop"
 import { isPowerOnTarget } from "../../lib/game-mechanics"
 import { AZ5_LAMP_SECONDS, checkEventWarnings, getAlarms, getWarningFlags, isAz5LampLit } from "../../lib/game-utils"
 import { applyPendingTarget, checkTurbineTrip, planShiftEvents, runShiftEvents, startEvent } from "../../lib/game-events"
-import { AZ5_ORDER, RODS_OUT_BELOW, SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
+import {
+  AZ5_ORDER,
+  CREW_ACTS_SECONDS,
+  DEPUTY_ORDER,
+  DEPUTY_REACTS_SECONDS,
+  DEPUTY_WITHDRAWAL,
+  RODS_OUT_BELOW,
+  SAFETY_TEST_SCRIPT,
+} from "../../lib/safety-test"
 import { REFERENCE_STATE } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
 import { az5 } from "./harness"
@@ -385,9 +393,11 @@ const RAISE = SAFETY_TEST_SCRIPT.findLast((step) => step.target != null && step.
 test("§14 every phase is triggered in order; each automated change happens once, as it is announced", () => {
   const run = safety()
   // A conditional step runs only if its condition held when it was due (the script runs after that second's physics).
-  // A waiting step may run at any point in its wait, or never.
-  const waits = (step: (typeof SAFETY_TEST_SCRIPT)[number]) => step.waitsUntil !== undefined
-  const due = SAFETY_TEST_SCRIPT.filter((step) => !step.onlyIf || waits(step) || step.onlyIf(run.states[step.at - 1]))
+  // A waiting step or a follow-up may run at any point in the test, or never. Silent steps log nothing.
+  const waits = (step: (typeof SAFETY_TEST_SCRIPT)[number]) => step.waitsUntil !== undefined || step.after !== undefined
+  const due = SAFETY_TEST_SCRIPT.filter(
+    (step) => step.text !== undefined && (!step.onlyIf || waits(step) || step.onlyIf(run.states[step.at - 1])),
+  )
   const scripted = run.final.log
     .map((l) => ({ time: l.time, index: SAFETY_TEST_SCRIPT.findIndex((step) => step.text === l.text) }))
     .filter((l) => l.index >= 0)
@@ -397,7 +407,7 @@ test("§14 every phase is triggered in order; each automated change happens once
   due.forEach((step) => {
     const entry = scripted.find((l) => SAFETY_TEST_SCRIPT[l.index] === step)
     if (waits(step)) {
-      assert.ok(!entry || (entry.time >= step.at && entry.time <= step.waitsUntil!), `waiting step logged at ${entry?.time}s`)
+      assert.ok(!entry || (entry.time >= step.at && entry.time <= (step.waitsUntil ?? MAINS_ON)), `waiting step logged at ${entry?.time}s`)
     } else {
       assert.ok(entry && Math.abs(entry.time - step.at) <= 1, `step at ${step.at}s logged at ${entry?.time}s`)
     }
@@ -452,7 +462,7 @@ test("§14 surviving to the end is possible with skilful play; ignoring the test
   assert.ok(safety({ testResponse: "none" }).final.isGameOver, "doing nothing")
 })
 
-test("§14 a reactor collapsed when the test begins: every rod is ordered out, and only AZ-5 saves it", () => {
+test("§14 a reactor collapsed when the test begins: the rods are ordered out, and only AZ-5 saves it", () => {
   // Player error: rods driven in at 700 s and left there, so radioactivity falls to 0 and xenon fills the core.
   const collapsed = (respond: (s: GameState) => GameState) => {
     const rng = seededRng(1)
@@ -462,7 +472,8 @@ test("§14 a reactor collapsed when the test begins: every rod is ordered out, a
     s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: 40 })) }
     while (getShiftTime(s) < MAINS_OFF) s = advanceGame(s, rng)
     assert.ok(s.radioactivity < RODS_OUT_BELOW && s.xenon > 99, `R ${s.radioactivity.toFixed(1)}, xenon ${s.xenon.toFixed(0)}%`)
-    assert.ok(s.controlRods.every((r) => r.target === 0), "every rod ordered out with the announcement")
+    while (getShiftTime(s) < MAINS_OFF + DEPUTY_REACTS_SECONDS + CREW_ACTS_SECONDS) s = advanceGame(s, rng)
+    assert.ok(s.controlRods.every((r) => r.target < r.insertion), "every rod ordered out with the announcement")
     while (!s.isGameOver && !s.hasWon) s = advanceGame(respond(s), rng)
     return s
   }
@@ -478,14 +489,26 @@ test("§14 a reactor collapsed when the test begins: every rod is ordered out, a
   assert.ok(obeyed.hasWon && obeyed.log.some((l) => l.text.startsWith("Test complete")), "AZ-5 5 s after the order")
 })
 
-test("§14 radioactivity below 50 at any point in the test: the deputy orders every rod out, once, unless it already ran away", () => {
-  const deputyOrders = (run: GameRun) => run.final.log.filter((l) => l.text.startsWith("Withdrawing all control rods"))
+test("§14 radioactivity below 50 at any point in the test: the deputy orders rods out, once, unless it already ran away", () => {
+  const deputyOrders = (run: GameRun) => run.final.log.filter((l) => l.text === DEPUTY_WITHDRAWAL)
+  // The orders take a moment (owner, 2026-10-22): the deputy speaks a few seconds after the dip, and the rods start
+  // moving a few seconds after him
+  const timeline = (run: GameRun) => {
+    const said = run.final.log.filter((l) => l.text === DEPUTY_ORDER)
+    const withdrawn = deputyOrders(run)
+    assert.ok(said.length === 1 && withdrawn.length === 1, "the deputy speaks once, and the rods are withdrawn once")
+    assert.equal(withdrawn[0].time - said[0].time, CREW_ACTS_SECONDS, "the crew acts a few seconds after his order")
+    const noticed = said[0].time - DEPUTY_REACTS_SECONDS
+    assert.ok(run.states[noticed - 1].radioactivity < RODS_OUT_BELOW, "he speaks a few seconds after radioactivity dips below 50")
+    const before = run.states[withdrawn[0].time - 2].controlRods
+    const after = run.states[withdrawn[0].time - 1].controlRods
+    assert.ok(after.some((r, i) => r.target < before[i].target), "the rods are ordered out only then")
+    return { noticed, withdrawnAt: withdrawn[0].time }
+  }
   // Four pumps: the test begins above 50, and steering radioactivity down mid-test brings the deputy in
   const steered = safety({ pumps: 4 })
-  const [order, ...again] = deputyOrders(steered)
-  assert.ok(order && order.time > MAINS_OFF && order.time < MAINS_ON, `deputy steps in mid-test (at ${order?.time})`)
-  assert.equal(again.length, 0, "only once")
-  assert.ok(steered.states[MAINS_OFF - 1].radioactivity >= RODS_OUT_BELOW && steered.states[order.time - 1].radioactivity < RODS_OUT_BELOW)
+  const { noticed } = timeline(steered)
+  assert.ok(noticed > MAINS_OFF && steered.states[MAINS_OFF - 1].radioactivity >= RODS_OUT_BELOW, `noticed mid-test (at ${noticed})`)
   assert.ok(steered.final.hasWon, "AZ-5 after the withdrawal saves the reactor")
   // AZ-5 as the test begins, with no danger showing, is no way out: he pulls those rods out, and AZ-5 again saves it
   const precaution = safety({ pumps: 4, testResponse: "az5" })
@@ -497,10 +520,46 @@ test("§14 radioactivity below 50 at any point in the test: the deputy orders ev
   assert.ok(ranAway.states.slice(MAINS_OFF, MAINS_ON).some((s) => s.radioactivity < RODS_OUT_BELOW), "below 50 after AZ-5")
   assert.equal(deputyOrders(ranAway).length, 0)
   assert.ok(ranAway.final.hasWon)
-  // Two pumps: below 50 as the test begins, so the order comes at once, and doing nothing then is a disaster
+  // Two pumps: below 50 as the test begins, so he notices at once, and doing nothing then is a disaster
   const ignored = safety({ testResponse: "none" })
-  assert.equal(deputyOrders(ignored)[0]?.time, MAINS_OFF)
+  assert.equal(timeline(ignored).withdrawnAt, MAINS_OFF + DEPUTY_REACTS_SECONDS + CREW_ACTS_SECONDS)
   assert.equal(ignored.final.gameOverCause, "explosion")
+})
+
+test("§14 the deputy's withdrawal leaves time to see the surge: warning 6 s or more after his order; AZ-5 then saves it", () => {
+  // Sized to the reactor (owner, 2026-10-22): pulling every rod to 0% from ~35% in made radioactivity jump from 50 to
+  // ~2,000 in about 2 s, and after a late AZ-5 it exploded even with AZ-5 pressed again 3 s after the warning.
+  const rodsIn = (by: number) => (s: GameState) => ({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: r.target + by })) })
+  const cases: [string, number, number | null, (s: GameState) => GameState][] = [
+    ["2 pumps, xenon-poisoned", 2, null, (s) => s],
+    ["4 pumps, steered down", 4, MAINS_OFF, rodsIn(4)],
+    ["4 pumps, AZ-5 late in the test", 4, MAINS_OFF + 40, az5],
+  ]
+  for (const [name, pumps, at, before] of cases) {
+    const play = (az5After: number | null) => {
+      const rng = seededRng(1)
+      const bot = makeBot({ pumps, testResponse: "none" })
+      let s = createNewGame("safety_test")
+      let order: number | null = null
+      let warning: number | null = null
+      while (!s.isGameOver && !s.hasWon) {
+        const t = getShiftTime(s)
+        s = bot.act(s)
+        if (t === at) s = before(s)
+        if (az5After !== null && warning !== null && t === warning + az5After) s = az5(s)
+        s = advanceGame(s, rng)
+        order ??= s.log.find((l) => l.text === DEPUTY_WITHDRAWAL)?.time ?? null
+        if (order !== null && warning === null && s.radioactivity >= THRESHOLDS.radioactivity.highWarning) warning = getShiftTime(s)
+      }
+      return { order, warning, final: s }
+    }
+    const ignored = play(null)
+    assert.ok(ignored.order !== null && ignored.warning !== null, `${name}: the deputy stepped in and it ran away`)
+    assert.ok(ignored.warning! - ignored.order! >= 6, `${name}: warning only ${ignored.warning! - ignored.order!} s after the order`)
+    assert.equal(ignored.final.gameOverCause, "explosion", `${name}: ignored`)
+    assert.ok(getShiftTime(ignored.final) < MAINS_ON, `${name}: lost within the test`)
+    assert.ok(play(3).final.hasWon, `${name}: AZ-5 3 s after the warning saves it`)
+  }
 })
 
 test("§11/§14 a Safety Test runaway with the pumps unpowered ends in an explosion", () => {
