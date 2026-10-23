@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { ArrowLeft, Cctv, Home, Volume2, VolumeX } from "lucide-react"
+import { ArrowLeft, Cctv, Home, Pause, Play, Volume2, VolumeX } from "lucide-react"
 
 import { type GameState, getShiftTime } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
@@ -25,25 +25,20 @@ interface ControlPanelProps {
   onSeeLog: () => void
 }
 
-// A header lamp with the key beside it that brings its machine into view (plan §21.5). The red lamp flashes while
-// any warning is active or a major event runs; the amber one while a new shift-log message is unseen.
-function Annunciator({ lit, colour, label, ariaLabel, onClick }: { lit: boolean; colour: "red" | "amber"; label: string; ariaLabel: string; onClick: () => void }) {
-  const on = colour === "red" ? "bg-red-500 text-red-500" : "bg-amber-400 text-amber-400"
-  const off = colour === "red" ? "bg-red-950/30" : "bg-amber-950/30"
+// The compact desk (owner, 2026-10-23, "machine keys"): a thin nameplate strip over one row of keys, the readings three
+// across, then the three machines. It looks the same on every screen; the page keeps it narrow (DESK_WIDTH).
+
+// An illuminated push key: the cap is the lamp (plan §21.5). Red flashes while any warning is active or a major event
+// runs; amber while a new shift-log message is unseen. The lit layer is always mounted, so it keeps time with the
+// nameplate lamps' flasher; a lit lamp only shows it.
+function LampKey({ lit, colour, label, ariaLabel, onClick, className = "" }: { lit: boolean; colour: "red" | "amber"; label: string; ariaLabel: string; onClick: () => void; className?: string }) {
   return (
-    <div className="flex items-center justify-center gap-2 min-w-0">
-      <span className="cr-lamp-bezel">
-        <span
-          aria-hidden="true"
-          className={`retro-lamp block w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-all ${lit ? `${on} on animate-[pulse_0.8s_ease-in-out_infinite] motion-reduce:animate-none shadow-[0_0_15px_currentColor]` : off}`}
-        />
-      </span>
-      <span className="cr-bezel">
-        <button className={`cr-key ${colour === "red" ? "cr-key-maroon" : "cr-key-mustard"} h-9 px-2.5 sm:px-3 !text-[0.72rem] sm:!text-[0.8rem] !tracking-[0.1em]`} aria-label={ariaLabel} onClick={onClick}>
-          {label}
-        </button>
-      </span>
-    </div>
+    <span className={`cr-bezel w-full ${className}`}>
+      <button className={`cr-key cr-key-lamp cr-key-lamp-${colour} w-full h-8 px-2 !text-[0.75rem] !tracking-[0.08em]`} aria-label={ariaLabel} onClick={onClick}>
+        <span aria-hidden="true" className={`cr-key-lit ${lit ? "on" : ""}`} />
+        <span className="relative">{label}</span>
+      </button>
+    </span>
   )
 }
 
@@ -52,8 +47,8 @@ function Annunciator({ lit, colour, label, ariaLabel, onClick }: { lit: boolean;
 function Bay({ label, warn, className = "", children }: { label: string; warn?: boolean; className?: string; children: ReactNode }) {
   const lamp = warn !== undefined
   return (
-    <div className={`cr-module p-2 md:p-2.5 space-y-2 ${className}`}>
-      <div className={`cr-plate ${lamp ? `cr-plate-lens ${warn ? "on" : ""}` : ""}`}>
+    <div className={`cr-module min-w-0 p-1.5 flex flex-col gap-1.5 ${className}`}>
+      <div className={`cr-plate cr-plate-compact ${lamp ? `cr-plate-lens ${warn ? "on" : ""}` : ""}`}>
         {label}
         {/* Always mounted, so every lamp's flasher keeps time with the others; a warning only shows it */}
         {lamp && (
@@ -63,6 +58,20 @@ function Bay({ label, warn, className = "", children }: { label: string; warn?: 
         )}
       </div>
       {children}
+    </div>
+  )
+}
+
+// One machine: its status window above, and a key with its name that opens its controls
+function Machine({ label, ariaLabel, disabled, onOpen, children }: { label: string; ariaLabel: string; disabled: boolean; onOpen: () => void; children: ReactNode }) {
+  return (
+    <div className="cr-module min-w-0 p-1.5 flex flex-col gap-1.5">
+      {children}
+      <span className="cr-bezel w-full">
+        <button onClick={onOpen} disabled={disabled} aria-label={ariaLabel} className="cr-key w-full h-8 px-1 !text-[0.8rem] !tracking-[0.12em]">
+          {label}
+        </button>
+      </span>
     </div>
   )
 }
@@ -90,226 +99,152 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const highXenonWarning = flags.highXenon
   const lowFuelTempWarning = flags.lowFuelTemp
 
+  const paused = gameState.isPaused
+  const vfd = "font-mono font-bold vfd-display !px-1 !py-0.5 text-center text-sm"
+  const led = "led-display !px-0 !py-1 text-center text-sm"
+  const unit = <span className="text-[0.6rem] tracking-[0.1em] opacity-75 ml-1">MW</span>
+
   return (
-    <div className="@container max-w-6xl mx-auto">
-      <div className="cr-panel cr-screws p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
-        {/* Header: menu keys, nameplate, then the warning and shift-log lamps with the keys that bring each machine
-            into view (plan §21.5). A wide panel (60rem+, measured on the panel, so it holds when the side columns sit
-            beside it): one row, both keys on the left. Narrower: home, nameplate and sound (so the nameplate stays
-            centred), then the two lamps. The key group is `contents` when narrower so each key is placed in the grid
-            on its own. */}
-        <div className="grid grid-cols-[auto_1fr_auto] @min-[60rem]:grid-cols-[1fr_auto_1fr] items-center gap-x-3 gap-y-3">
-          <div className="contents @min-[60rem]:flex @min-[60rem]:col-start-1 @min-[60rem]:row-start-1 items-center gap-2">
-            <span className="cr-bezel col-start-1 row-start-1">
-              <button className="cr-key cr-key-cream size-9" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
-                <Home className="h-[18px] w-[18px]" />
-              </button>
-            </span>
-            <span className="cr-bezel col-start-3 row-start-1 justify-self-end">
-              <button className="cr-key cr-key-grey size-9" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
-                {gameState.alarmsEnabled || gameState.effectsEnabled ? <Volume2 className="h-[18px] w-[18px]" /> : <VolumeX className="h-[18px] w-[18px]" />}
-              </button>
-            </span>
-          </div>
+    <div>
+      <div className="cr-panel cr-screws p-3 space-y-2.5">
+        {/* Header: the nameplate strip, then home, pause, the warning and message keys, camera and sound */}
+        <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_minmax(0,1fr)_auto_auto] items-center gap-x-1.5 gap-y-2.5">
+          <h1 className="cr-nameplate col-span-6 row-start-1 py-1 text-center text-[11px] !tracking-[0.3em] whitespace-nowrap">
+            Reactor Control System
+          </h1>
 
-          <div className="col-start-2 row-start-1 flex justify-center min-w-0">
-            <h1 className="cr-nameplate px-3 py-2 md:px-6 md:py-2.5 text-[13px] !tracking-[0.12em] min-[400px]:text-sm sm:text-lg sm:!tracking-[0.2em] md:text-2xl @min-[68rem]:text-3xl whitespace-nowrap">
-              Reactor Control System
-            </h1>
-          </div>
+          <span className="cr-bezel col-start-1 row-start-2">
+            <button className="cr-key cr-key-cream w-[34px] h-8 px-0" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
+              <Home className="h-4 w-4" />
+            </button>
+          </span>
+          <span className="cr-bezel col-start-6 row-start-2">
+            <button className="cr-key cr-key-grey w-[34px] h-8 px-0" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
+              {gameState.alarmsEnabled || gameState.effectsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
+          </span>
 
-          <div className="col-span-3 row-start-2 @min-[60rem]:col-span-1 @min-[60rem]:col-start-3 @min-[60rem]:row-start-1 grid grid-cols-2 @min-[60rem]:flex @min-[60rem]:justify-end items-center gap-2 @min-[60rem]:gap-4">
-            <Annunciator lit={hasWarnings || majorEvent} colour="red" label="See Warning" ariaLabel="Show the alarm monitor" onClick={onSeeWarnings} />
-            <Annunciator lit={logLampLit} colour="amber" label="See Message" ariaLabel="Show the shift log" onClick={onSeeLog} />
-          </div>
+          <LampKey
+            lit={hasWarnings || majorEvent}
+            colour="red"
+            label="Warning"
+            ariaLabel="Show the alarm monitor"
+            onClick={onSeeWarnings}
+            className="col-start-3 row-start-2"
+          />
+          <LampKey
+            lit={logLampLit}
+            colour="amber"
+            label="Message"
+            ariaLabel="Show the shift log"
+            onClick={onSeeLog}
+            className="col-start-4 row-start-2"
+          />
+
+          {/* Pause lights while the simulation is paused */}
+          <span className="cr-bezel col-start-2 row-start-2">
+            <button
+              onClick={onTogglePause}
+              aria-label={paused ? "Resume" : "Pause"}
+              className={`cr-key ${paused ? "cr-key-red-lit" : "cr-key-red [--cap-ink:#fecaca]"} w-[34px] h-8 px-0 !text-[0.75rem] !tracking-[0.08em]`}
+            >
+              {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+            </button>
+          </span>
+          <span className="cr-bezel col-start-5 row-start-2">
+            <button
+              onClick={() => setShowReactorView(true)}
+              aria-label="View the reactor camera"
+              className="cr-key cr-key-teal w-[34px] h-8 px-0 !text-[0.75rem] !tracking-[0.08em]"
+            >
+              <Cctv className="h-4 w-4" />
+            </button>
+          </span>
         </div>
 
-        {/* Main Readouts */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-          {/* Current Power Output */}
-          <Bay label="Power Output">
-            <div className="cr-screen-bezel">
-              <div
-                className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${isOnTarget ? "led-green" : "text-red-500"}`}
-              >
-                {Math.round(gameState.powerOutput)} MW
-              </div>
-            </div>
-          </Bay>
-
-          {/* Power Target */}
-          <Bay label="Power Target">
-            <div className="cr-screen-bezel">
-              <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">
-                {gameState.powerTarget !== null ? `${gameState.powerTarget} MW` : "N/A"}
-              </div>
-            </div>
-          </Bay>
-
-          <Bay label="Performance">
-            {/* With no target, performance holds its value (Free mode stays at 100%; the Safety Test freezes it) */}
-            <div className="cr-screen-bezel">
-              <div
-                className={`!pl-0 !pr-0 text-center led-display text-sm md:text-lg ${
-                  gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""
-                }`}
-              >
-                {`${Math.round(gameState.performance)}%`}
-              </div>
-            </div>
-          </Bay>
-
-          {/* Time */}
-          <Bay label="Time">
-            <div className="cr-screen-bezel">
-              <div className="!pl-0 !pr-0 text-center led-display led-amber text-sm md:text-lg">
-                {formatTime(gameState.gameTime)}
-              </div>
-            </div>
-          </Bay>
-        </div>
-
-        {/* Secondary Readouts */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 text-sm">
-          <Bay label="Radioactivity" warn={lowRadioactivityWarning || highRadioactivityWarning}>
-            <div className="font-mono vfd-display">{Math.round(gameState.radioactivity)}</div>
-          </Bay>
-
-          <Bay label="Reactor Temp" warn={highReactorTempWarning}>
-            <div className="font-mono font-bold vfd-display">{Math.round(gameState.reactorTemp)}°</div>
-          </Bay>
-
-          <Bay label="Fuel Temp" warn={lowFuelTempWarning}>
-            <div className="font-mono font-bold vfd-display">{Math.round(gameState.fuelTemp)}°</div>
-          </Bay>
-
-          <Bay label="Steam" warn={highSteamWarning || lowSteamWarning}>
-            <div className="font-mono font-bold vfd-display">{Math.round(gameState.steamVolume)}</div>
-          </Bay>
-
-          <Bay label="Xenon" warn={highXenonWarning}>
-            <div className="font-mono font-bold vfd-display">{Math.round(gameState.xenon)}%</div>
-          </Bay>
-
-          {/* Reactor view key */}
-          <Bay label="CCTV" className="flex flex-col">
-            <span className="cr-bezel w-full flex-1">
-              <button onClick={() => setShowReactorView(true)} className="cr-key cr-key-teal w-full min-h-8 !text-[0.78rem] !tracking-[0.12em]">
-                <Cctv className="w-4 h-4" />
-                View Reactor
-              </button>
-            </span>
-          </Bay>
-        </div>
-
-        {/* Control panel buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 text-sm">
-          {/* PAUSE BUTTON  -  LED SCREEN */}
-
-          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
-            {/* Top Section: Label & Status Text */}
-            <div className="space-y-2">
-              <div className="cr-plate">Simulation</div>
-              {/* A small "screen" showing current status */}
+        {/* The readings, then the machines */}
+        <div className="grid gap-2.5">
+          <div className="grid grid-cols-3 gap-1.5">
+            {/* Output and target on one meter, as a setpoint is shown beside its reading */}
+            <Bay label="Power · Output / Target" className="col-span-2">
               <div className="cr-screen-bezel">
-                <div className="led-display !px-2 md:!px-4 text-center h-16 flex items-center justify-center">
-                  <span
-                    className={`!pl-0 !pr-0 text-center text-sm md:text-lg whitespace-nowrap ${gameState.isPaused ? "text-red-500" : "led-green"}`}
-                  >
-                    {gameState.isPaused ? "• PAUSED •" : "RUNNING..."}
+                <div className={`${led} grid grid-cols-2`}>
+                  <span className={isOnTarget ? "led-green" : "text-red-500"}>
+                    {Math.round(gameState.powerOutput)}
+                    {unit}
+                  </span>
+                  <span className="led-amber border-l border-white/10">
+                    {gameState.powerTarget !== null ? (
+                      <>
+                        {gameState.powerTarget}
+                        {unit}
+                      </>
+                    ) : (
+                      "N/A"
+                    )}
                   </span>
                 </div>
               </div>
-            </div>
+            </Bay>
 
-            {/* PAUSE BUTTON  -  The Physical Button */}
-            <div className="w-full flex-1 flex items-center justify-center">
-              <span className="cr-bezel">
-                <button
-                  onClick={onTogglePause}
-                  className={`cr-key w-32 h-12 ${gameState.isPaused ? "cr-key-red-lit" : "cr-key-red"}`}
-                >
-                  {gameState.isPaused ? "RESUME" : "PAUSE"}
-                </button>
-              </span>
-            </div>
-          </div>
-
-          {/* WATER PUMPS (Lights Above, Button Below)*/}
-
-          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
-            {/* Top Section: Label & Lights Grid */}
-            <div className="space-y-2">
-              <div className="cr-plate">Water Pumps</div>
-
-              {/* The Lamp Grid Container */}
-              <div className="bg-black/80 border-2 border-neutral-800 rounded-md p-2 shadow-inner h-16 flex items-center justify-center">
-                {/* NEW FLEX WRAPPER: Holds Labels (Left) and Grid (Right) */}
-                <div className="flex items-center gap-4">
-                  {/* 1. The Labels Column */}
-                  <div className="flex flex-col gap-3 text-right">
-                    {/* Top Label (Aligns with Pump ON) */}
-                    <span className="text-[9px] font-mono text-neutral-500 leading-3">ON</span>
-
-                    {/* Bottom Label (Aligns with Pump POWERED) */}
-                    <span className="text-[9px] font-mono text-neutral-500 leading-3">PWR</span>
-                  </div>
-
-                  {/* 2. The Existing Lights Grid */}
-                  <div className="grid grid-cols-4 gap-2">
-                    {gameState.waterPumps.map((pump, idx) => (
-                      <div key={idx} className="flex flex-col gap-3 items-center">
-                        {/* Top Row: Pump ON */}
-                        <div
-                          className={`
-                              retro-lamp w-3 h-3 rounded-full
-                              ${pump.on ? "bg-emerald-400 text-emerald-400 on" : "bg-emerald-900/20"}
-                            `}
-                        />
-
-                        {/* Bottom Row: Pump POWERED */}
-                        <div
-                          className={`
-                              retro-lamp w-3 h-3 rounded-full
-                              ${pump.powered ? "bg-amber-400 text-amber-400 on" : "bg-amber-900/20"}
-                            `}
-                        />
-                      </div>
-                    ))}
-                  </div>
+            <Bay label="Performance">
+              {/* With no target, performance holds its value (Free mode stays at 100%; the Safety Test freezes it) */}
+              <div className="cr-screen-bezel">
+                <div className={`${led} ${gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""}`}>
+                  {`${Math.round(gameState.performance)}%`}
                 </div>
               </div>
-            </div>
+            </Bay>
 
-            {/* Bottom Section: The Physical Button */}
-            <div className="w-full flex-1 flex items-center justify-center">
-              <span className="cr-bezel">
-                <button
-                  data-manage
-                  onClick={() => !gameState.isPaused && setPumpsModalOpen(true)}
-                  disabled={gameState.isPaused}
-                  className="cr-key w-32 h-12"
-                >
-                  MANAGE
-                </button>
-              </span>
-            </div>
+            <Bay label="Radioactivity" warn={lowRadioactivityWarning || highRadioactivityWarning}>
+              <div className={vfd}>{Math.round(gameState.radioactivity)}</div>
+            </Bay>
+
+            <Bay label="Reactor Temp" warn={highReactorTempWarning}>
+              <div className={vfd}>{Math.round(gameState.reactorTemp)}°</div>
+            </Bay>
+
+            <Bay label="Fuel Temp" warn={lowFuelTempWarning}>
+              <div className={vfd}>{Math.round(gameState.fuelTemp)}°</div>
+            </Bay>
+
+            <Bay label="Steam" warn={highSteamWarning || lowSteamWarning}>
+              <div className={vfd}>{Math.round(gameState.steamVolume)}</div>
+            </Bay>
+
+            <Bay label="Xenon" warn={highXenonWarning}>
+              <div className={vfd}>{Math.round(gameState.xenon)}%</div>
+            </Bay>
+
+            <Bay label="Time">
+              <div className="cr-screen-bezel">
+                <div className={`${led} led-amber !text-[0.8rem]`}>{formatTime(gameState.gameTime)}</div>
+              </div>
+            </Bay>
           </div>
 
-          {/* CONTROL RODS (Display Top, Button/Light Bottom) */}
+          <div className="grid grid-cols-3 gap-1.5">
+            {/* Water pumps: on (green) over powered (amber), one column per pump */}
+            <Machine label="Pumps" ariaLabel="Manage the water pumps" disabled={paused} onOpen={() => !paused && setPumpsModalOpen(true)}>
+              <div className="h-9 bg-black/80 border-2 border-neutral-800 rounded-md shadow-inner flex items-center justify-center">
+                <div className="grid grid-cols-4 gap-x-1.5">
+                  {gameState.waterPumps.map((pump, idx) => (
+                    <div key={idx} className="flex flex-col gap-1.5 items-center">
+                      <div className={`retro-lamp w-2.5 h-2.5 rounded-full ${pump.on ? "bg-emerald-400 text-emerald-400 on" : "bg-emerald-900/20"}`} />
+                      <div className={`retro-lamp w-2.5 h-2.5 rounded-full ${pump.powered ? "bg-amber-400 text-amber-400 on" : "bg-amber-900/20"}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Machine>
 
-          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
-            {/* Top Section: Label & VFD Display Screen */}
-            <div className="space-y-2 w-full">
-              <div className="cr-plate">Control Rods</div>
-
-              {/* VFD Green Screen */}
-              <div className="vfd-display h-16 w-full relative flex flex-col justify-between py-1">
+            {/* Control rods: each rod's insertion on the VFD (0% at the top), and the jam lamp at its right edge */}
+            <Machine label="Rods" ariaLabel="Manage the control rods" disabled={paused} onOpen={() => !paused && setRodsModalOpen(true)}>
+              <div className={`h-9 vfd-display !px-0 !py-0.5 w-full relative flex flex-col justify-between`}>
                 <div className="w-full border-t-2 border-black/60 h-0"></div>
-                {/* Rod Indicators Container */}
-                <div className="absolute inset-y-0 left-3 right-3 top-1 bottom-1 flex justify-between">
+                <div className="absolute left-1.5 right-5 top-1 bottom-1 flex justify-between">
                   {gameState.controlRods.map((rod, idx) => (
-                    <div key={rod.id} className="relative w-full h-full border-r border-black/5 last:border-r-0">
+                    <div key={rod.id} className="relative w-full h-full">
                       <div
                         className={`
                           absolute w-full text-center font-bold leading-none text-xs transition-all duration-1000 ease-linear
@@ -317,7 +252,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                         `}
                         style={{
                           // Position based on the rod's actual (travelling) insertion %, held back until the drive sound starts.
-                          // 0% is top, 100% is bottom. We clamp slightly to keep it inside the lines.
+                          // 0% is top, 100% is bottom.
                           top: `${rodDisplay[idx].insertion}%`,
                           transform: "translateY(-50%)", // Centers the dash on the exact % point
                         }}
@@ -327,116 +262,39 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                     </div>
                   ))}
                 </div>
-
+                <div
+                  title="Rod jam"
+                  className={`retro-lamp absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    gameState.controlRods.some((r) => r.stuck)
+                      ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]"
+                      : "bg-red-950/40"
+                  }`}
+                />
                 <div className="w-full border-b-2 border-black/60 h-0"></div>
               </div>
-            </div>
+            </Machine>
 
-            {/* Bottom Section: Button (Left) & Warning Light (Right) */}
-            <div className="w-full flex-1 flex items-center justify-between gap-3">
-              {/* The Button */}
-              <span className="cr-bezel flex-1 min-w-0 max-w-[8.5rem]">
-                <button
-                  data-manage
-                  onClick={() => !gameState.isPaused && setRodsModalOpen(true)}
-                  disabled={gameState.isPaused}
-                  className="cr-key w-full h-12"
-                >
-                  MANAGE
-                </button>
-              </span>
-
-              {/* The Status Light */}
-              <div className="flex flex-col items-center justify-center gap-1 pr-2">
-                <div className="p-1.5 rounded-full border border-white/10 shadow-inner">
+            {/* Turbine: on the grid (green), over-pressure (red, flashing at steam 300 and above), feeding the pumps (amber) */}
+            <Machine label="Turbine" ariaLabel="Manage the turbine" disabled={paused} onOpen={() => !paused && setTurbineModalOpen(true)}>
+              <div className={`h-9 bg-black/80 border-2 border-neutral-800 rounded-md shadow-inner flex items-center justify-center gap-1.5`}>
+                <div className="flex flex-col gap-1 items-center">
+                  <div className={`retro-lamp w-2.5 h-2.5 rounded-full ${gameState.turbineConnected ? "bg-emerald-400 text-emerald-400 on shadow-[0_0_10px_currentColor]" : "bg-emerald-900/20"}`} />
+                  <span className="text-[7.5px] font-mono text-neutral-500 leading-none">CONN</span>
+                </div>
+                <div className="flex flex-col gap-1 items-center">
                   <div
-                    className={`
-                      retro-lamp w-5 h-5 rounded-full transition-all duration-300
-                      ${
-                        gameState.controlRods.some((r) => r.stuck)
-                          ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]"
-                          : "bg-red-950/30"
-                      }
-                    `}
+                    className={`retro-lamp w-2.5 h-2.5 rounded-full transition-all ${
+                      highSteamWarning ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/20"
+                    }`}
                   />
+                  <span className="text-[7.5px] font-mono text-neutral-500 leading-none">OVR-P</span>
                 </div>
-                <span className="text-[8px] font-mono text-neutral-500 tracking-widest">JAM</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 4. TURBINE (2 Lights Top, Toggle Bottom)   */}
-
-          <div className="cr-module p-2 md:p-2.5 flex flex-col gap-2 min-h-[13rem]">
-            {/* Top Section: Label & Status Lights */}
-            <div className="space-y-2 w-full">
-              <div className="cr-plate">Turbine</div>
-
-              {/* The Lamp Display Container */}
-              <div className="bg-black/80 border-2 border-neutral-800 rounded-md p-2 shadow-inner h-16 flex items-center justify-center">
-                <div className="flex gap-5">
-                  {/* Light 1: Connection Status (Green) */}
-                  <div className="flex flex-col gap-1.5 items-center">
-                    <div
-                      className={`
-                                retro-lamp w-4 h-4 rounded-full
-                                ${
-                                  gameState.turbineConnected
-                                    ? "bg-emerald-400 text-emerald-400 on shadow-[0_0_10px_currentColor]"
-                                    : "bg-emerald-900/20"
-                                }
-                              `}
-                    />
-                    <span className="text-[9px] font-mono text-neutral-500">CONN</span>
-                  </div>
-
-                  {/* Light 2: High Steam Warning (Red Flashing) */}
-                  {/* Logic: Flashes if steam is 'High' (at or above 300) */}
-                  <div className="flex flex-col gap-1.5 items-center">
-                    <div
-                      className={`
-                                retro-lamp w-4 h-4 rounded-full transition-all
-                                ${
-                                  highSteamWarning
-                                    ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]"
-                                    : "bg-red-950/20"
-                                }
-                              `}
-                    />
-                    <span className="text-[9px] font-mono text-neutral-500">OVR-P</span>
-                  </div>
-
-                  {/* Light 3: Turbine supplying station pumps (Amber) */}
-                  <div className="flex flex-col gap-1.5 items-center">
-                    <div
-                      className={`
-                                retro-lamp w-4 h-4 rounded-full
-                                ${
-                                  gameState.turbineMode === "pumps"
-                                    ? "bg-amber-400 text-amber-400 on shadow-[0_0_10px_currentColor]"
-                                    : "bg-amber-900/20"
-                                }
-                              `}
-                    />
-                    <span className="text-[9px] font-mono text-neutral-500">PUMPS</span>
-                  </div>
+                <div className="flex flex-col gap-1 items-center">
+                  <div className={`retro-lamp w-2.5 h-2.5 rounded-full ${gameState.turbineMode === "pumps" ? "bg-amber-400 text-amber-400 on shadow-[0_0_10px_currentColor]" : "bg-amber-900/20"}`} />
+                  <span className="text-[7.5px] font-mono text-neutral-500 leading-none">PUMPS</span>
                 </div>
               </div>
-            </div>
-
-            {/* Bottom Section: The Physical Button */}
-            <div className="w-full flex-1 flex items-center justify-center">
-              <span className="cr-bezel">
-                <button
-                  data-manage
-                  onClick={() => !gameState.isPaused && setTurbineModalOpen(true)}
-                  disabled={gameState.isPaused}
-                  className="cr-key w-32 h-12"
-                >
-                  MANAGE
-                </button>
-              </span>
-            </div>
+            </Machine>
           </div>
         </div>
       </div>

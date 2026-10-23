@@ -29,7 +29,7 @@ This document is the source of truth for *what* we are changing and *what the pl
 
 ## 2. Guardrails (do not change)
 
-- The reactor control interface: button appearance/style, the "MANAGE" button → modal method of control, the lever-drag control rods modal, the pump toggle modal, the AZ-5 button.
+- The reactor control interface: button appearance/style, the machine key → modal method of control (each machine's key opens its modal; the keys read "MANAGE" until v2.24 and now carry the machine's name), the lever-drag control rods modal, the pump toggle modal, the AZ-5 button.
 - **10 control rods. 4 water pumps.** Same set of controls (rods, pumps, turbine, pause).
 - The existing displayed variables: radioactivity, reactor temperature, fuel temperature, steam, xenon, power output, power target, performance, time. **No new player-facing reactor variables.** (Internal helper values are fine if they are not new gauges.)
 - Easy, Hard and Free modes continue to exist, and **every mode uses identical reactor physics** (Section 11).
@@ -397,7 +397,7 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 - **A chart recorder** (paper strip chart) showing the last few minutes of radioactivity, and perhaps steam and reactor temperature. With exponential behaviour, seeing the *trend and acceleration* is essential, and it fits the control-room aesthetic.
 - On narrow screens these collapse below or hide; no horizontal scrolling.
 
-**Message area:** distinguish message sources visually (Grid Controller, Head Engineer, Test Supervisor, automatic alarms) and give it a teletype/log feel with timestamps. Keep it compact. The control panel's header has a red warning lamp (lit while any warning is active) and an amber shift-log lamp (lit when a new message arrives), each with a button that brings its machine into view, so a player on a phone knows to look below the dials.
+**Message area:** distinguish message sources visually (Grid Controller, Head Engineer, Test Supervisor, automatic alarms) and give it a teletype/log feel with timestamps. Keep it compact. The control panel's header has a red warning key (lit while any warning is active) and an amber shift-log key (lit when a new message arrives). Each is an illuminated push key that brings its machine into view when pressed, so a player on a phone knows to look below the dials.
 
 **Homepage and menus:** stronger atmosphere (CRT title treatment, subtle flicker, and the disaster end screens' red emergency beacon, mounted on the ceiling and sweeping down through the room, with embers drifting up). The mode selection includes Safety Test as a visually distinct "historical scenario" card. The Easy and Hard cards describe workload (shift length, targets, emergencies), not different reactor mechanics (Section 11).
 

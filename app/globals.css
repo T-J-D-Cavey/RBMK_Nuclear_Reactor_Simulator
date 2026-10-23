@@ -832,8 +832,51 @@
   100% { opacity: 1; }
 }
 
+/* The compact desk's readout plates: small enough for three across */
+.cr-plate-compact {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 0.3rem 0.25rem 0.26rem;
+}
+
+/* Illuminated push key: the cap is the lamp, on the same flasher as the nameplate lamps */
+.cr-key-lamp {
+  overflow: hidden;
+}
+
+/* .cr-key comes later in this file and sets the default cap, so these need the extra class */
+.cr-key.cr-key-lamp-red {
+  --cap: #5a1a1a;
+  --cap-hi: #6e2222;
+  --cap-side: #2e0b0b;
+  --cap-ink: #ffe3dd;
+  --lit: radial-gradient(ellipse at 50% 40%, #ffb4a0 0%, #f04848 40%, #c81e1e 100%);
+}
+
+.cr-key.cr-key-lamp-amber {
+  --cap: #6a4a10;
+  --cap-hi: #806019;
+  --cap-side: #2c1b05;
+  --cap-ink: #fff1d6;
+  --lit: radial-gradient(ellipse at 50% 40%, #ffe2a8 0%, #f0a830 40%, #b46d09 100%);
+}
+
+.cr-key-lit {
+  position: absolute;
+  inset: 0;
+  background: var(--lit);
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.4);
+  visibility: hidden;
+  animation: cr-flasher 0.9s linear infinite;
+}
+
+.cr-key-lit.on {
+  visibility: visible;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .cr-plate-lit {
+  .cr-plate-lit,
+  .cr-key-lit {
     animation: none;
   }
 }

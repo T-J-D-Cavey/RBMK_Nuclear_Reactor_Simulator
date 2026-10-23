@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { GAME_MODE_CONFIGS, THRESHOLDS, type GameMode } from "@/lib/types"
 import { getClockStartSeconds } from "@/lib/game-utils"
 import { usePrefersReducedMotion } from "./presentation-use-reduced-motion"
+import { useElementHeight } from "@/hooks/use-element-height"
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -151,6 +152,8 @@ export interface ReactorCameraProps {
   variant?: "inline" | "fullscreen"
   /** Optional clock start (ms since epoch, read as UTC). Defaults to 26-04-1986 00:00:00. */
   clockStartMs?: number
+  /** Inline: the most the whole monitor may be, in px. The square screen gives way to a wider one (the picture is cropped to fill). */
+  fitHeight?: number | null
   className?: string
 }
 
@@ -160,20 +163,30 @@ export default function ReactorCamera({
   elapsedSeconds,
   variant = "inline",
   clockStartMs = CAMERA_CLOCK_START_MS,
+  fitHeight = null,
   className = "",
 }: ReactorCameraProps) {
   const reducedMotion = usePrefersReducedMotion()
   const interference = getInterferenceIntensity(radioactivity)
   const timestamp = formatCameraTimestamp(elapsedSeconds, clockStartMs)
   const isFullscreen = variant === "fullscreen"
+  // To meet fitHeight, everything but the screen keeps its size, so take that off first
+  const [monitorRef, monitorHeight] = useElementHeight<HTMLDivElement>()
+  const [screenRef, screenHeight] = useElementHeight<HTMLDivElement>()
+  const screenMax = !isFullscreen && fitHeight && monitorHeight && screenHeight ? fitHeight - (monitorHeight - screenHeight) : null
 
   const monitor = (
     <div
+      ref={monitorRef}
       className={`ws3-cam-bezel relative w-full p-2 sm:p-3 md:p-4 ${isFullscreen ? "" : "rounded-lg"}`}
       style={isFullscreen ? { width: "min(100%, calc(100dvh - 4rem))" } : undefined}
     >
       {/* The screen */}
-      <div className="@container ws3-cam-screen relative isolate w-full aspect-square overflow-hidden bg-gray-900">
+      <div
+        ref={screenRef}
+        className="@container ws3-cam-screen relative isolate w-full aspect-square overflow-hidden bg-gray-900"
+        style={screenMax ? { maxHeight: screenMax } : undefined}
+      >
         {/* 1. BASE LAYER (Always Visible) */}
         <img
           src="/new_reactor_image_cropped.jpg"

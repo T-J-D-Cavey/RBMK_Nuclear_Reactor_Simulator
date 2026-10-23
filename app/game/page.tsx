@@ -19,12 +19,12 @@ import ChartRecorder from "@/components/chart-recorder"
 import ReactivityCards from "@/components/reactivity-cards"
 import RodDisplay from "@/components/rod-display"
 import Dosimeter from "@/components/dosimeter"
-import { useElementHeight, useMediaQuery, usePinnedTop, useViewportHeight } from "@/hooks/use-element-height"
+import { useElementHeight, useMediaQuery } from "@/hooks/use-element-height"
 
-const COLUMN_GAP = 16 // px between the panels in a side column (gap-4)
-// From here up the side columns sit either side of the control desk instead of below it
-const DESK_PADDING = 24 // px around the desk and its side columns (p-6)
-const BESIDE_DESK_QUERY = "(min-width: 1536px)" // Tailwind 2xl
+// From here up the page is a dashboard (owner, 2026-10-23): the chart recorder and the reactor camera either side of the
+// control panel, the alarm monitor and shift log across the full width below them, then the radioactivity balance, the
+// rod display and the dosimeter in one row. Narrower, everything stacks below the panel.
+const DASHBOARD_QUERY = "(min-width: 1024px)" // Tailwind lg
 
 export default function GamePage() {
   const { gameState, isLoaded, updateGameState, resetGame, togglePause } = useGameState()
@@ -32,28 +32,15 @@ export default function GamePage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSoundModal, setShowSoundModal] = useState(false)
   const router = useRouter()
-  // The radioactivity balance is as tall as the chart recorder (owner, 2026-10-14)
+  // The radioactivity balance is as tall as the chart recorder beside it on medium screens (owner, 2026-10-14)
   const [chartRef, chartHeight] = useElementHeight<HTMLElement>()
-  // ...and the dosimeter as tall as the rod display beside it, from medium screens up
+  // ...and the dosimeter as tall as the rod display beside it (on the dashboard, the balance too)
   const [rodsRef, rodsHeight] = useElementHeight<HTMLElement>()
-  // Wide screens make each side column the camera's height (owner, 2026-10-16): the chart recorder takes whatever the
-  // camera leaves after the dosimeter, by shortening its bands (down to half), and the balance follows the recorder.
-  const wide = useMediaQuery("(min-width: 1280px)") // Tailwind xl
-  // Wider still, the side columns move up beside the control desk, so nothing is below the fold (layout trial)
-  const besideDesk = useMediaQuery(BESIDE_DESK_QUERY)
-  const [cameraRef, cameraHeight] = useElementHeight<HTMLDivElement>()
-  const [doseRef, doseHeight] = useElementHeight<HTMLElement>()
-  // Beside the desk, the chart recorder gives way so the camera column is no taller than the desk (or the window)
-  const [deskRef, deskHeight] = useElementHeight<HTMLDivElement>()
-  const viewportHeight = useViewportHeight()
-  const chartFit = !(cameraHeight && doseHeight)
-    ? null
-    : besideDesk
-      ? deskHeight && viewportHeight ? Math.max(deskHeight, viewportHeight - 2 * DESK_PADDING) - 2 * COLUMN_GAP - doseHeight - cameraHeight : null
-      : wide ? cameraHeight - COLUMN_GAP - doseHeight : null
-  // Wide screens pin both side columns while the page scrolls
-  const [leftColumnRef, leftColumnTop] = usePinnedTop<HTMLDivElement>()
-  const [rightColumnRef, rightColumnTop] = usePinnedTop<HTMLDivElement>()
+  const dashboard = useMediaQuery(DASHBOARD_QUERY)
+  // On the dashboard the chart recorder (by shortening its bands, down to half) and the camera (by widening its screen)
+  // are no taller than the panel between them, so the alarm monitor sits right under the panel (owner, 2026-10-23)
+  const [panelRef, panelHeight] = useElementHeight<HTMLDivElement>()
+  const sideFit = dashboard && panelHeight ? panelHeight : null
 
   // Header keys that bring the alarm monitor or the shift log into view, and the shift log's lamp (plan §21.5)
   const [alarmRevealSignal, setAlarmRevealSignal] = useState(0)
@@ -119,29 +106,28 @@ export default function GamePage() {
     return <GameOverScreen gameState={gameState} onReset={resetGame} />
   }
 
-  // The control desk, and the panels hung beside it (wide screens) or on the monitor wall below it
-  const desk = (
-    <>
-      <ControlPanel
-        gameState={gameState}
-        onTogglePause={togglePause}
-        updateGameState={updateGameState}
-        onHomeClick={handleHomeClick}
-        onSoundClick={handleSoundModalToggle}
-        onSoundEffect={playEffect}
-        logLampLit={logLamp.lit}
-        onSeeWarnings={handleSeeWarnings}
-        onSeeLog={handleSeeLog}
-      />
-
-      {/* Message Area */}
-      <MessageArea
-        gameState={gameState}
-        alarmRevealSignal={alarmRevealSignal}
-        logRevealSignal={logRevealSignal}
-        onLogInView={logLamp.setInView}
-      />
-    </>
+  const panel = (
+    <ControlPanel
+      gameState={gameState}
+      onTogglePause={togglePause}
+      updateGameState={updateGameState}
+      onHomeClick={handleHomeClick}
+      onSoundClick={handleSoundModalToggle}
+      onSoundEffect={playEffect}
+      logLampLit={logLamp.lit}
+      onSeeWarnings={handleSeeWarnings}
+      onSeeLog={handleSeeLog}
+    />
+  )
+  // The alarm monitor and the shift log
+  const messages = (
+    <MessageArea
+      gameState={gameState}
+      alarmRevealSignal={alarmRevealSignal}
+      logRevealSignal={logRevealSignal}
+      onLogInView={logLamp.setInView}
+      wide={dashboard}
+    />
   )
   const camera = (
     <ReactorCamera
@@ -150,6 +136,7 @@ export default function GamePage() {
       reactorTemp={gameState.reactorTemp}
       elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
       clockStartMs={getCameraClockStartMs(gameState.mode)}
+      fitHeight={sideFit}
     />
   )
   const chart = (
@@ -159,15 +146,15 @@ export default function GamePage() {
       steamVolume={gameState.steamVolume}
       gameTime={gameState.gameTime}
       isPaused={gameState.isPaused}
-      fitHeight={chartFit}
+      fitHeight={sideFit}
     />
   )
-  const dosimeter = <Dosimeter radioactivity={gameState.radioactivity} second={gameState.gameTime} matchHeight={besideDesk ? null : rodsHeight} />
-  const cards = <ReactivityCards gameState={gameState} height={chartHeight} />
+  const dosimeter = <Dosimeter radioactivity={gameState.radioactivity} second={gameState.gameTime} matchHeight={rodsHeight} />
+  const cards = <ReactivityCards gameState={gameState} height={dashboard ? rodsHeight : chartHeight} />
   const rods = <RodDisplay gameState={gameState} />
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-background flex flex-col relative"
       onClick={handleInteraction}
       onTouchStart={handleInteraction}
@@ -185,67 +172,60 @@ export default function GamePage() {
        onEffectsUpdate={(effectsEnabled) => updateGameState({ effectsEnabled })}
        onVolumeUpdate={(soundVolume) => updateGameState({ soundVolume })}
       />
-      
-      {besideDesk ? (
-        /* Wide screens (layout trial): the control desk in the middle at its usual max width, the balance and the rod
-           display to its left, the chart recorder, camera and dosimeter to its right, all scrolling with the page.
-           The chart recorder shortens its bands so that column is no taller than the desk or the window, and the
-           balance stays as tall as the chart. Each side column takes what the desk leaves, between 17rem and 26rem;
-           the desk gives way first, down to the breakpoint. */
+
+      {dashboard ? (
+        /* Dashboard (lg up). The panel keeps its narrow phone size (at most 28rem) between the chart recorder and the
+           camera, which share what is left, at least 17rem each; the panel gives way first, down to the breakpoint.
+           Below them the alarm monitor and shift log run the full width, then the balance, the rod display and the
+           dosimeter share one row. All of it stops growing at 1,400px and stays centred, so log lines stay short enough to
+           scan and the side widgets stay no taller than the panel (owner, 2026-10-23). */
         <div className="flex-1 p-6 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${controlRoomBackground})` }}>
-          <div className="grid gap-4 items-start justify-center grid-cols-[clamp(17rem,calc((100%_-_74rem)/2),26rem)_minmax(0,72rem)_clamp(17rem,calc((100%_-_74rem)/2),26rem)]">
-            <div className="col-start-2 row-start-1 min-w-0 space-y-6" ref={deskRef}>{desk}</div>
-            <div className="col-start-1 row-start-1 flex flex-col gap-4 min-w-0">
+          <div className="mx-auto max-w-[87.5rem] space-y-4">
+            <div className="grid gap-4 items-start grid-cols-[minmax(17rem,1fr)_minmax(0,28rem)_minmax(17rem,1fr)]">
+              <aside className="min-w-0" ref={chartRef}>{chart}</aside>
+              <div className="min-w-0" ref={panelRef}>{panel}</div>
+              <div className="min-w-0">{camera}</div>
+            </div>
+            {messages}
+            <div className="grid grid-cols-3 gap-4 items-start">
               <aside className="min-w-0">{cards}</aside>
               <aside className="min-w-0" ref={rodsRef}>{rods}</aside>
-            </div>
-            <div className="col-start-3 row-start-1 flex flex-col gap-4 min-w-0">
-              <aside className="min-w-0" ref={chartRef}>{chart}</aside>
-              <div className="min-w-0" ref={cameraRef}>{camera}</div>
-              <aside className="min-w-0" ref={doseRef}>{dosimeter}</aside>
+              <aside className="min-w-0">{dosimeter}</aside>
             </div>
           </div>
         </div>
       ) : (
         <>
-          {/* Top Half - the control desk: control panel, then the alarm monitor and shift log, in the control room */}
+          {/* Top half - the control desk: the control panel (as narrow as on a phone), then the alarm monitor and shift
+              log, in the control room */}
           <div className="flex-1 px-3 py-4 sm:p-4 md:p-6 space-y-5 md:space-y-6 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
-            {desk}
+            <div className="max-w-[28rem] mx-auto">{panel}</div>
+            {messages}
           </div>
 
           <div className="cr-rail" aria-hidden="true" />
 
-          {/* Reactor camera + side panels (WS3 presentation).
-              Wide screens (xl): three columns, so the camera sits on the control panel's centre line (same max width),
-              with the red and blue cards to its left and the chart recorder to its right. Each side column is a quarter
-              of the row (half the camera's width, so never wider or taller than the camera) between 18rem and 36rem;
-              the row stops growing at 36 + 72 + 36rem plus the gaps, for very wide screens (owner, 2026-10-14).
-              Medium (md): the camera on top, then the cards and the chart recorder side by side. Phones: stacked, the
-              cards below the chart. The rod display sits below the cards and the dosimeter below the chart recorder, each
-              at the same width; on phones the dosimeter comes last (owner, 2026-10-16). Each side column is one pinned
-              stack on wide screens; below that its wrapper is `contents`, so each panel is placed in the grid itself. */}
+          {/* Reactor camera + side panels (WS3 presentation). Medium (md): the camera on top, then the cards and the
+              chart recorder side by side, the rod display below the cards and the dosimeter below the chart recorder.
+              Phones: stacked, the cards below the chart and the dosimeter last (owner, 2026-10-16). */}
           <div className="w-full cr-monitor-wall px-3 py-5 sm:px-4 md:py-8">
-            <div className="mx-auto w-full max-w-6xl xl:max-w-[146rem] grid grid-cols-1 md:grid-cols-2 gap-4 items-start xl:grid-cols-[clamp(18rem,calc((100%_-_2rem)/4),36rem)_minmax(0,72rem)_clamp(18rem,calc((100%_-_2rem)/4),36rem)]">
-              <div className="w-full min-w-0 max-w-6xl mx-auto md:col-span-2 md:row-start-1 xl:col-span-1 xl:col-start-2 xl:row-start-1" ref={cameraRef}>
+            <div className="mx-auto w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div className="w-full min-w-0 md:col-span-2 md:row-start-1">
                 {camera}
               </div>
-              <div className="contents xl:flex xl:flex-col xl:gap-4 xl:col-start-3 xl:row-start-1 xl:sticky xl:w-full xl:min-w-0" ref={rightColumnRef} style={{ top: rightColumnTop }}>
-                <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto xl:mx-0 md:col-start-2 md:row-start-2" ref={chartRef}>
-                  {chart}
-                </aside>
-                <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto xl:mx-0 order-last md:order-none md:col-start-2 md:row-start-3" ref={doseRef}>
-                  {dosimeter}
-                </aside>
-              </div>
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2" ref={chartRef}>
+                {chart}
+              </aside>
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto order-last md:order-none md:col-start-2 md:row-start-3">
+                {dosimeter}
+              </aside>
               {/* Legasov's red and blue cards (owner, 2026-10-13), then the rod display */}
-              <div className="contents xl:flex xl:flex-col xl:gap-4 xl:col-start-1 xl:row-start-1 xl:sticky xl:w-full xl:min-w-0" ref={leftColumnRef} style={{ top: leftColumnTop }}>
-                <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto xl:mx-0 md:col-start-1 md:row-start-2">
-                  {cards}
-                </aside>
-                <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto xl:mx-0 md:col-start-1 md:row-start-3" ref={rodsRef}>
-                  {rods}
-                </aside>
-              </div>
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2">
+                {cards}
+              </aside>
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-3" ref={rodsRef}>
+                {rods}
+              </aside>
             </div>
           </div>
         </>

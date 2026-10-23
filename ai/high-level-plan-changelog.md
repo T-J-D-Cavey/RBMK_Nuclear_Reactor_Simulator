@@ -2,6 +2,18 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.24 – 2026-10-23 (Compact control desk: machine keys)
+
+- **The control panel is compacted** (Section 2 guardrail and Section 15, owner, from prototype "C · machine keys"). On a phone it was about 1,050 px tall, so the alarm monitor and shift log were well below the first screen; it is now about 460 px.
+  - The Simulation bay is gone: pause is a key in the header row, and it lights while paused.
+  - "View Reactor" becomes a camera key in the header row.
+  - The warning and shift-log lamps are now the keys themselves (illuminated push keys), on the same flasher as the readout nameplate lamps.
+  - Power output and target share one meter, as a setpoint is shown beside its reading.
+  - The readings sit three across. Each machine's key carries its name (Pumps, Rods, Turbine) instead of "MANAGE", under a smaller status window. The key still opens the same modal, so the guardrail now names the machine key rather than the "MANAGE" button.
+  - The panel looks the same on every screen, at most 28rem wide. From 1,024 px the page is a dashboard: the chart recorder and reactor camera either side of the panel, the alarm monitor and shift log across the full width below, then the radioactivity balance, rod display and dosimeter in one row. The chart recorder and camera are never taller than the panel, so the alarm monitor sits right under it, and the dashboard stops growing at 1,400 px so log lines stay easy to scan. Narrower, everything stacks below the panel.
+- **Why:** players on phones had to scroll a long way between the readouts and the alarm monitor. A narrow panel also lets the widgets sit beside it on more screens (from 1,024 px wide, was 1,536 px); only their sizes change with the screen.
+- The alarm monitor and shift log are unchanged (owner).
+
 ## v2.23 – 2026-10-22 (Safety Test: the deputy's withdrawal is sized to the reactor)
 
 - **The deputy no longer pulls every rod to 0%** (Section 14, owner). Every free rod comes out by the same amount, sized so that the balance of all the cards (xenon, rods and tips, fuel, steam) would take radioactivity from where it is to the 350 warning in about 8 s (`DEPUTY_SURGE_SECONDS`). The log reads "Withdrawing control rods on the Deputy Chief Engineer's order."
