@@ -47,11 +47,21 @@ function Annunciator({ lit, colour, label, ariaLabel, onClick }: { lit: boolean;
   )
 }
 
-// A readout bay: engraved plate above, instrument below. Flashes red while its value is in a warning band.
-function Bay({ label, warn = false, className = "", children }: { label: string; warn?: boolean; className?: string; children: ReactNode }) {
+// A readout bay: engraved plate above, instrument below. A reading that can warn has a red lens for its nameplate,
+// lit from behind and flashing while the value is in a warning band (owner, 2026-10-23).
+function Bay({ label, warn, className = "", children }: { label: string; warn?: boolean; className?: string; children: ReactNode }) {
+  const lamp = warn !== undefined
   return (
-    <div className={`cr-module p-2 md:p-2.5 space-y-2 transition-all ${warn ? "!border-red-600 animate-border-flash" : ""} ${className}`}>
-      <div className="cr-plate">{label}</div>
+    <div className={`cr-module p-2 md:p-2.5 space-y-2 ${className}`}>
+      <div className={`cr-plate ${lamp ? `cr-plate-lens ${warn ? "on" : ""}` : ""}`}>
+        {label}
+        {/* Always mounted, so every lamp's flasher keeps time with the others; a warning only shows it */}
+        {lamp && (
+          <span aria-hidden="true" className={`cr-plate-lit ${warn ? "on" : ""}`}>
+            {label}
+          </span>
+        )}
+      </div>
       {children}
     </div>
   )

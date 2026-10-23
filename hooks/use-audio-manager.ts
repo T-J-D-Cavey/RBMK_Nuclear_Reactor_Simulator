@@ -5,6 +5,16 @@ import { HumBed } from "@/lib/hum-bed";
 
 const HUM_FILE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/XVA0IQMpaTFFPj7AMJYm8k/public/hum_full.mp3";
 const HUM_VOICES = 3;
+
+// Alarm clips. The file names don't match the alarms: the general alarm plays alarm_high_rad_full.mp3 and high
+// radioactivity plays the more urgent alarm_backup_full.mp3 (owner, 2026-10-23); the event alarm's clip is named for
+// rod jams, which now sound the general alarm instead.
+const BLOB = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr";
+const GENERAL_ALARM_FILE = `${BLOB}/w11O2GBJNi4hmwrAnLDkDo/public/alarm_high_rad_full.mp3`;
+const EVENT_ALARM_FILE = `${BLOB}/56DSNdysYjjBozGYYRqcym/public/alarm_rod_stuck_full.mp3`;
+const HIGH_RAD_ALARM_FILE = `${BLOB}/UDO0NctHis6Id7aEJ8C770/public/alarm_backup_full.mp3`;
+const HIGH_REACTOR_TEMP_ALARM_FILE = `${BLOB}/sHWXXkF7pXyeOxSzfh7fp7/public/alarm_high_reactor_temp_full.mp3`;
+const HIGH_STEAM_OR_XENON_ALARM_FILE = `${BLOB}/b84OkunKQm0YQMc1KakN6o/public/alarm_high_steam_full.mp3`;
 const ALARM_VOLUME = 1 / 3; // alarms, relative to the volume slider
 
 interface AudioManagerProps {
@@ -83,24 +93,25 @@ export function useAudioManager({
     humRef.current.setVolume(volumeRef.current);
     if (effectsOnRef.current) humRef.current.start();
 
-    generalAlarmAudioRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/UDO0NctHis6Id7aEJ8C770/public/alarm_backup_full.mp3");
+    // Each alarm is one looping element, so it plays once however many of its warnings are showing
+    generalAlarmAudioRef.current = new Audio(GENERAL_ALARM_FILE);
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
 
-    // Event alarm (rod jams, pump trips, turbine trips)
-    eventAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/56DSNdysYjjBozGYYRqcym/public/alarm_rod_stuck_full.mp3");
+    // Event alarm (power cuts, pump trips, turbine trips)
+    eventAlarmRef.current = new Audio(EVENT_ALARM_FILE);
     eventAlarmRef.current.loop = true;
     eventAlarmRef.current.preload = "auto";
 
-    highRadAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/w11O2GBJNi4hmwrAnLDkDo/public/alarm_high_rad_full.mp3");
+    highRadAlarmRef.current = new Audio(HIGH_RAD_ALARM_FILE);
     highRadAlarmRef.current.loop = true;
     highRadAlarmRef.current.preload = "auto";
 
-    highReactorTempAlarmRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/sHWXXkF7pXyeOxSzfh7fp7/public/alarm_high_reactor_temp_full.mp3");
+    highReactorTempAlarmRef.current = new Audio(HIGH_REACTOR_TEMP_ALARM_FILE);
     highReactorTempAlarmRef.current.loop = true;
     highReactorTempAlarmRef.current.preload = "auto";
 
-    highSteamOrXenonRef.current = new Audio("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/b84OkunKQm0YQMc1KakN6o/public/alarm_high_steam_full.mp3");
+    highSteamOrXenonRef.current = new Audio(HIGH_STEAM_OR_XENON_ALARM_FILE);
     highSteamOrXenonRef.current.loop = true;
     highSteamOrXenonRef.current.preload = "auto";
 
@@ -150,7 +161,7 @@ export function useAudioManager({
     }
   }, [alarmsOn, generalAlarmIsNeeded]);
 
-  // Event alarm: rod jams, pump trips and turbine trips
+  // Event alarm: power cuts, pump trips and turbine trips
   useEffect(() => {
     if (!eventAlarmRef.current) return;
 

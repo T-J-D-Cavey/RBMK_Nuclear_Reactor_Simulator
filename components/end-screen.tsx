@@ -33,8 +33,9 @@ interface EndScreenProps {
 // The reactor hall camera, playing out how the shift ended.
 function EndCamera({ kind, timestamp, reduced }: { kind: EndingKind; timestamp: string; reduced: boolean }) {
   const hot = kind === "meltdown" || kind === "explosion"
+  // Explosion: the hall is gone once the white-out peaks, so the picture can't show through as the white-out fades
   const picture = (
-    <div className={`absolute inset-0 ${kind === "meltdown" ? "cr-cam-haze" : ""}`}>
+    <div className={`absolute inset-0 ${kind === "meltdown" ? "cr-cam-haze" : kind === "explosion" ? "cr-cam-blown" : ""}`}>
       <img src="/new_reactor_image_cropped.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
       {hot && (
         <img
