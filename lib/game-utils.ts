@@ -181,7 +181,7 @@ export function isAz5LampLit(state: GameState): boolean {
 
 export const GAME_OVER_REASONS: Record<GameOverCause, string> = {
   meltdown: "MELTDOWN - Reactor temperature has exceeded maximum limits. Uranium fuel is melting down. Initiate emergency stations",
-  explosion: "CORE EXPLOSION - Steam pressure has torn the reactor apart. The core is open. The stack is burning.",
+  explosion: "CORE EXPLOSION - Steam pressure has torn the reactor apart. The lid is off. The stack is burning.",
   performance: "UNACCEPTABLE POWER GRID PERFORMANCE - You have been removed from your post due to poor performance meeting grid targets",
 }
 
