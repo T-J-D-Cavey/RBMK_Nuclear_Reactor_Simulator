@@ -1752,6 +1752,62 @@
   filter: url(#cr-heat-haze);
 }
 
+/* ...until the heat cracks the camera's glass (owner, 2026-10-24). Each stage appears at its --at, its cracks running
+   out from the fracture in a blink, with a flash where the glass gives. Delays match MELTDOWN_CRACKS (end-screen). */
+.cr-crack {
+  animation: cr-crack-show 0.01s linear var(--at) 1 both;
+}
+
+@keyframes cr-crack-show {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cr-crack path {
+  stroke-dasharray: 1 2;
+  animation: cr-crack-run 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) var(--at) 1 both;
+}
+
+@keyframes cr-crack-run {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+.cr-crack-flash {
+  opacity: 0;
+  animation: cr-crack-flash 0.5s ease-out var(--at) 1 both;
+}
+
+@keyframes cr-crack-flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* The picture jumps as each fracture gives */
+.cr-crack-jolt {
+  animation:
+    cr-crack-jolt 0.3s ease-out 4s 1,
+    cr-crack-jolt 0.25s ease-out 5.6s 1,
+    cr-crack-jolt 0.3s ease-out 7.4s 1;
+}
+
+@keyframes cr-crack-jolt {
+  0% { transform: none; filter: none; }
+  15% { transform: translate(-1.2%, 0.8%) scale(1.03); filter: brightness(1.6); }
+  40% { transform: translate(0.8%, -0.5%) scale(1.03); filter: brightness(1.15); }
+  70% { transform: translate(-0.3%, 0.2%) scale(1.02); filter: none; }
+  100% { transform: none; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-crack,
+  .cr-crack path,
+  .cr-crack-flash,
+  .cr-crack-jolt {
+    animation: none;
+  }
+}
+
 /* Dismissal: the monitor switches off like a CRT. Success: it switches on. */
 .cr-crt-off {
   animation: cr-crt-off 0.7s cubic-bezier(0.7, 0, 0.84, 0) 2.2s 1 both;

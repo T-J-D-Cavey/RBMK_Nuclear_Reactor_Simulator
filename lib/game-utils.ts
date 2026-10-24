@@ -91,14 +91,14 @@ export interface Warning {
 type WarningFlag = keyof ReturnType<typeof getWarningFlags>
 
 const REACTOR_WARNINGS: [WarningFlag, string][] = [
-  ["highRadioactivity", "WARNING: High radioactivity. Reactor temperature expected to spike. Recommend to increase insertion of control rods to reduce radioactivity."],
-  ["lowRadioactivity", "WARNING: Low radioactivity. Xenon levels are expected to spike, further reducing radioactivity. Recommend reducing control rod insertion to increase radioactivity"],
-  ["highReactorTemp", "WARNING: High reactor temperature. Steam levels and radioactivity expected to spike. Recommend turning on more water pumps to cool reactor"],
-  ["lowFuelTemp", "WARNING: Low fuel temperature. Radiation is expected to spike. Recommended turning off some water pumps"],
-  ["highSteam", "WARNING: High steam pressure. Disconnect turbine to avoid damage to the transmission infrastructure"],
-  ["lowSteam", "WARNING: Low steam pressure causing reduced power generation. Recommend turning off some water pumps to increase reactor temperature and reducing control rod insertion to increase radioactivity"],
-  ["highXenon", "WARNING: High xenon levels detected, lowering radioactivity. Recommend reducing control rod insertion to increase radioactivity."],
-  ["lowRodMargin", "WARNING: Rod margin below minimum. Too few control rods in the core. Recommend inserting control rods."],
+  ["highRadioactivity", "WARNING: High radioactivity. Recommend increasing control rod insertion."],
+  ["lowRadioactivity", "WARNING: Low radioactivity. Recommend reducing control rod insertion."],
+  ["highReactorTemp", "WARNING: High reactor temperature. Recommend turning on any remaining water pumps."],
+  ["lowFuelTemp", "WARNING: Low fuel temperature. Review water pump and control rod configurations."],
+  ["highSteam", "WARNING: High steam pressure. Recommend turning on all remaining water pumps and disconnecting turbine."],
+  ["lowSteam", "WARNING: Low steam pressure causing reduced power generation. Review water pump and control rod configurations."],
+  ["highXenon", "WARNING: High xenon levels detected. Recommend cautious reduction in control rod insertion."],
+  ["lowRodMargin", "WARNING: Rod margin below minimum. Recommend increasing control rod insertion."],
 ]
 
 // Warnings about the reactor's own condition.

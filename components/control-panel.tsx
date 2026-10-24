@@ -109,7 +109,8 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
       <div className="cr-panel cr-screws p-3 space-y-2.5">
         {/* Header: the nameplate strip, then home, pause, the warning and message keys, camera and sound */}
         <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_minmax(0,1fr)_auto_auto] items-center gap-x-1.5 gap-y-2.5">
-          <h1 className="cr-nameplate col-span-6 row-start-1 py-1 text-center text-[11px] !tracking-[0.3em] whitespace-nowrap">
+          {/* Large capitals in the same strip: the fixed leading keeps the strip as tall as it was with 11px text */}
+          <h1 className="cr-nameplate col-span-6 row-start-1 py-1 text-center text-[18px] leading-[16.5px] !tracking-[0.2em] whitespace-nowrap">
             Reactor Control System
           </h1>
 
@@ -238,38 +239,28 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
               </div>
             </Machine>
 
-            {/* Control rods: each rod's insertion on the VFD (0% at the top), and the jam lamp at its right edge */}
+            {/* Control rods: each rod's insertion on the VFD (0% at the top), the ten bars across its full width */}
             <Machine label="Rods" ariaLabel="Manage the control rods" disabled={paused} onOpen={() => !paused && setRodsModalOpen(true)}>
               <div className={`h-9 vfd-display !px-0 !py-0.5 w-full relative flex flex-col justify-between`}>
                 <div className="w-full border-t-2 border-black/60 h-0"></div>
-                <div className="absolute left-1.5 right-5 top-1 bottom-1 flex justify-between">
+                <div className="absolute left-1 right-1 top-1 bottom-1 flex justify-between">
                   {gameState.controlRods.map((rod, idx) => (
                     <div key={rod.id} className="relative w-full h-full">
                       <div
                         className={`
-                          absolute w-full text-center font-bold leading-none text-xs transition-all duration-1000 ease-linear
+                          absolute left-[10%] right-[10%] h-[2px] bg-black transition-all duration-1000 ease-linear
                           ${rod.stuck ? "animate-[pulse_0.5s_ease-in-out_infinite]" : ""}
                         `}
                         style={{
                           // Position based on the rod's actual (travelling) insertion %, held back until the drive sound starts.
                           // 0% is top, 100% is bottom.
                           top: `${rodDisplay[idx].insertion}%`,
-                          transform: "translateY(-50%)", // Centers the dash on the exact % point
+                          transform: "translateY(-50%)", // Centers the bar on the exact % point
                         }}
-                      >
-                        -
-                      </div>
+                      />
                     </div>
                   ))}
                 </div>
-                <div
-                  title="Rod jam"
-                  className={`retro-lamp absolute right-1 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                    gameState.controlRods.some((r) => r.stuck)
-                      ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]"
-                      : "bg-red-950/40"
-                  }`}
-                />
                 <div className="w-full border-b-2 border-black/60 h-0"></div>
               </div>
             </Machine>
