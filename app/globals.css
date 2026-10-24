@@ -528,6 +528,80 @@
   animation: ws3-rec-blink 1s steps(1, end) infinite;
 }
 
+/* The screen's text area: a fixed height, scrolled like a terminal (owner, 2026-10-24) */
+.ws5-crt-viewport {
+  position: relative;
+  overflow: hidden;
+  outline: none;
+}
+
+.ws5-crt-viewport:focus-visible {
+  box-shadow: 0 0 0 1px rgba(92, 255, 154, 0.6);
+}
+
+/* Only when there is more than fits: then a finger on the screen scrolls it, not the page */
+.ws5-crt-draggable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.ws5-crt-draggable:active {
+  cursor: grabbing;
+}
+
+/* Text-mode scroll bar: arrow characters, a dotted track and a solid block for the thumb, all in the phosphor */
+.ws5-crt-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.ws5-crt-arrow {
+  height: 1rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ws5-crt-track {
+  position: relative;
+  flex: 1;
+  margin: 2px 0;
+  background-image: radial-gradient(circle, rgba(92, 255, 154, 0.35) 0.7px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+.ws5-crt-thumb {
+  position: absolute;
+  top: 0;
+  left: 1px;
+  right: 1px;
+  background: #5cff9a;
+  box-shadow: 0 0 6px rgba(92, 255, 154, 0.55);
+  cursor: grab;
+  touch-action: none;
+}
+
+/* Reading back: "LATEST" in inverse video at the foot of the screen */
+.ws5-crt-latest {
+  position: absolute;
+  right: 1.35rem;
+  bottom: 0;
+  padding: 0 0.4em;
+  background: #5cff9a;
+  color: #04170b;
+  text-shadow: none;
+  box-shadow: 0 0 8px rgba(92, 255, 154, 0.45);
+  cursor: pointer;
+}
+
 /* ---- Shift log teleprinter: the chart recorder's paper, newest line at the top (owner, 2026-10-12) ---- */
 .ws5-printer-viewport {
   position: relative;
