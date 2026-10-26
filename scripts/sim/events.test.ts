@@ -279,7 +279,7 @@ test("§12 a power cut takes the pumps' mains supply; the turbine can supply the
   assert.equal(s.mainsPower, true)
   assert.ok(!checkEventWarnings(s).some((w) => w.includes("mains power")), "the warning clears with the event")
   assert.equal(s.stats.emergenciesHandled, 1)
-  assert.ok(s.log.some((l) => l.text.startsWith("Station power restored")))
+  assert.ok(s.log.some((l) => l.text.startsWith("Incoming power restored")))
 })
 
 test("§12 a pump trip takes one running pump out for a while", () => {

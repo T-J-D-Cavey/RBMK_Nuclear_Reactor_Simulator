@@ -29,15 +29,17 @@ export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModal
 
         <div className="cr-hazard h-2.5 rounded-[2px]" aria-hidden="true" />
 
+        {/* Laid out like every other dialog, so red still means back out: quitting is amber, for caution
+            (owner, 2026-10-26) */}
         <div className="flex gap-3">
-          <span className="cr-bezel flex-1">
-            <button onClick={() => onOpenChange(false)} className="cr-key cr-key-cream w-full h-11">
-              Cancel
+          <span className="cr-lens-bezel flex-1">
+            <button onClick={onConfirm} className="cr-lens cr-lens-amber w-full h-12">
+              Quit
             </button>
           </span>
-          <span className="cr-bezel flex-1">
-            <button onClick={onConfirm} className="cr-key cr-key-red-lit w-full h-11">
-              Quit
+          <span className="cr-lens-bezel flex-1">
+            <button onClick={() => onOpenChange(false)} className="cr-lens cr-lens-red w-full h-12">
+              Cancel
             </button>
           </span>
         </div>

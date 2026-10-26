@@ -175,13 +175,13 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           </div>
 
           <div className="flex gap-3 pt-1">
-            <span className="cr-bezel flex-1">
-              <button onClick={handleApply} className="cr-key cr-key-green w-full h-11">
+            <span className="cr-lens-bezel flex-1">
+              <button onClick={handleApply} className="cr-lens w-full h-12">
                 Apply
               </button>
             </span>
-            <span className="cr-bezel flex-1">
-              <button onClick={() => onOpenChange(false)} className="cr-key cr-key-cream w-full h-11">
+            <span className="cr-lens-bezel flex-1">
+              <button onClick={() => onOpenChange(false)} className="cr-lens cr-lens-red w-full h-12">
                 Cancel
               </button>
             </span>

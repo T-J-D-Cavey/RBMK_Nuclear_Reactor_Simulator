@@ -11,7 +11,7 @@ export const MODE_MENU: { mode: GameMode; name: string; specs: string[]; lamp: s
     name: "Easy Mode",
     specs: ["Shorter shift", "Steady demands", "Fewer surprises"],
     lamp: "bg-green-400 text-green-400",
-    key: "cr-key-green-lit",
+    key: "cr-lens-green",
     action: "Start Easy",
   },
   {
@@ -19,7 +19,7 @@ export const MODE_MENU: { mode: GameMode; name: string; specs: string[]; lamp: s
     name: "Hard Mode",
     specs: ["Longer shift", "Tougher demands", "More to deal with"],
     lamp: "bg-red-500 text-red-500",
-    key: "cr-key-red-lit",
+    key: "cr-lens-red",
     action: "Start Hard",
   },
   {
@@ -27,7 +27,7 @@ export const MODE_MENU: { mode: GameMode; name: string; specs: string[]; lamp: s
     name: "Safety Test",
     specs: ["The night of 26 April 1986", "Follow the test team's orders", "Can you save Unit 4?"],
     lamp: "bg-amber-400 text-amber-400",
-    key: "cr-key-amber-lit",
+    key: "cr-lens-amber",
     action: "Begin Test",
   },
   {
@@ -35,7 +35,7 @@ export const MODE_MENU: { mode: GameMode; name: string; specs: string[]; lamp: s
     name: "Free Mode",
     specs: ["No time limit", "No demands", "Learn the reactor"],
     lamp: "bg-sky-400 text-sky-400",
-    key: "cr-key-blue",
+    key: "cr-lens-blue",
     action: "Start Free",
   },
 ]

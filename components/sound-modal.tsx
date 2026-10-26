@@ -1,9 +1,8 @@
 "use client"
 
-import type { ComponentType } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { BellOff, BellRing, Volume2, VolumeX } from "lucide-react"
+import { GripSwitch, JewelLamp } from "@/components/switchgear"
 
 interface SoundModalProps {
   open: boolean
@@ -16,43 +15,26 @@ interface SoundModalProps {
   onVolumeUpdate: (soundVolume: number) => void
 }
 
-// One switch: round key, nameplate, a hint, what it covers and an ON/OFF readout
-function SoundSwitch({ id, name, hint, covers, on, OnIcon, OffIcon, onToggle, edge }: {
+// One switch: a pistol-grip switch with an ON lamp in the bay's own colour, a hint and what it covers
+function SoundSwitch({ id, name, hint, covers, on, onToggle, edge }: {
   id: string
   edge: "green" | "orange"
   name: string
   hint: string
   covers: string
   on: boolean
-  OnIcon: ComponentType<{ className?: string }>
-  OffIcon: ComponentType<{ className?: string }>
   onToggle: () => void
 }) {
   return (
-    <div className={`cr-module cr-module-${edge} p-3 space-y-3`}>
-      <div className="flex items-center gap-4">
-        <span className="cr-round-bezel shrink-0">
-          <button
-            id={id}
-            aria-pressed={on}
-            aria-label={name}
-            aria-describedby={`${id}-covers`}
-            onClick={onToggle}
-            className={`cr-round-key w-16 h-16 ${on ? "on" : ""}`}
-          >
-            {on ? <OnIcon className="w-8 h-8" /> : <OffIcon className="w-8 h-8" />}
-          </button>
-        </span>
-        <div className="flex-1 min-w-0 space-y-2">
-          <Label htmlFor={id} className="cr-plate">
-            {name}
-          </Label>
-          <div className="cr-screen-bezel">
-            <div className={`led-display text-center text-base ${on ? "led-green" : ""}`}>{on ? "ON" : "OFF"}</div>
-          </div>
-        </div>
+    <div className={`cr-module cr-module-${edge} p-3 flex flex-col items-center gap-3`}>
+      <Label htmlFor={id} className="cr-dymo">
+        {name}
+      </Label>
+      <div aria-hidden="true">
+        <JewelLamp colour={edge === "green" ? "green" : "amber"} lit={on} caption="On" />
       </div>
-      <div id={`${id}-covers`} className="cr-note px-3 py-2 uppercase !text-[11px] space-y-0.5">
+      <GripSwitch id={id} on={on} offLegend="Off" onLegend="On" label={name} describedBy={`${id}-covers`} onToggle={onToggle} />
+      <div id={`${id}-covers`} className="cr-note w-full flex-1 mt-2 px-3 py-2 uppercase !text-[11px] space-y-0.5">
         <p className="font-bold">{hint}</p>
         <p>{covers}</p>
       </div>
@@ -63,34 +45,32 @@ function SoundSwitch({ id, name, hint, covers, on, OnIcon, OffIcon, onToggle, ed
 export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsEnabled, soundVolume, onAlarmsUpdate, onEffectsUpdate, onVolumeUpdate }: SoundModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cr-dialog sm:max-w-sm">
+      <DialogContent className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="cr-dialog-title">Sound</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <SoundSwitch
-            id="effects-toggle"
-            name="Sound Effects"
-            hint="Recommended"
-            covers="Reactor hum, rods, pumps, turbine, new warnings and the shift log printer."
-            on={effectsEnabled}
-            OnIcon={Volume2}
-            OffIcon={VolumeX}
-            onToggle={() => onEffectsUpdate(!effectsEnabled)}
-            edge="green"
-          />
-          <SoundSwitch
-            id="alarms-toggle"
-            name="Alarms"
-            hint="Not recommended for iOS devices: No volume control"
-            covers="Warnings and emergency events."
-            on={alarmsEnabled}
-            OnIcon={BellRing}
-            OffIcon={BellOff}
-            onToggle={() => onAlarmsUpdate(!alarmsEnabled)}
-            edge="orange"
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <SoundSwitch
+              id="effects-toggle"
+              name="Sound Effects"
+              hint="Recommended"
+              covers="Reactor hum, rods, pumps, turbine, new warnings and the shift log printer."
+              on={effectsEnabled}
+              onToggle={() => onEffectsUpdate(!effectsEnabled)}
+              edge="green"
+            />
+            <SoundSwitch
+              id="alarms-toggle"
+              name="Alarms"
+              hint="Not recommended for iOS devices: No volume control"
+              covers="Warnings and emergency events."
+              on={alarmsEnabled}
+              onToggle={() => onAlarmsUpdate(!alarmsEnabled)}
+              edge="orange"
+            />
+          </div>
 
           {/* VOLUME FADER */}
           <div className="cr-module p-3 space-y-4">
@@ -112,8 +92,8 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
             />
           </div>
 
-          <span className="cr-bezel w-full">
-            <button onClick={() => onOpenChange(false)} className="cr-key cr-key-cream w-full h-11">
+          <span className="cr-lens-bezel w-full">
+            <button onClick={() => onOpenChange(false)} className="cr-lens w-full h-12">
               Close
             </button>
           </span>

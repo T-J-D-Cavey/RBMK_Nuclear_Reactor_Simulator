@@ -179,7 +179,7 @@ const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; tex
   "power-cut": {
     source: "grid",
     from: GRID_CONTROLLER,
-    text: "Reports of power cable damage nearby. Advise that you prepare for emergency backup generation in the event of a powercut.",
+    text: "Reports of power cable damage in your sector. Your incoming power supply may be affected",
   },
   "rod-stuck": {
     source: "engineer",
@@ -217,7 +217,7 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
       if (!pool.length) return s
       const pump = pool[Math.floor(rng() * pool.length)]
       s = { ...s, waterPumps: s.waterPumps.map((p) => (p.id === pump.id ? { ...p, tripped: true } : p)) }
-      s = addLog(s, "alarm", `Pump ${pump.id} has tripped. Switch on a standby pump to keep the flow up.`, PUMP_OPERATOR)
+      s = addLog(s, "alarm", `Pump ${pump.id} has tripped! Is it in use?`, PUMP_OPERATOR)
       return begin(s, { ...base, duration: planned ?? Math.round(between(rng, tuning.pumpTripSeconds)), data: { affectedPumps: [pump.id] } })
     }
     case "grid-hold": {
@@ -257,7 +257,7 @@ function endEvent(state: GameState, event: GameEvent): GameState {
       s = addLog(
         s,
         "engineer",
-        s.turbineMode === "grid" ? "Station power restored." : "Station power restored. Reconnect the turbine to the grid when ready.",
+        s.turbineMode === "grid" ? "Incoming power restored." : "Incoming power restored. We will reconnect the turbine to the grid on your orders.",
         HEAD_ENGINEER,
       )
       break

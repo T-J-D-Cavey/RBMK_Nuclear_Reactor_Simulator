@@ -602,6 +602,121 @@
   cursor: pointer;
 }
 
+/* ---- Operating manual: the whole manual on one tall SKALA screen (owner, 2026-10-26: prototype A) ---- */
+.ws5-manual-screen {
+  position: relative;
+  overflow: hidden;
+  color: #5cff9a;
+  font-size: 20px;
+  line-height: 1.32;
+  /* Lit from the top and evenly down its length, so a long screen doesn't go dark in the middle */
+  background:
+    radial-gradient(ellipse 140% 900px at 50% 0%, #0b2e18 0%, #04170b 60%),
+    #04170b;
+  border-radius: 22px / 16px;
+  box-shadow:
+    0 0 0 2px #0b0b0b,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 0 70px rgba(0, 0, 0, 0.9);
+}
+
+@media (min-width: 640px) {
+  .ws5-manual-screen {
+    font-size: 23px;
+  }
+}
+
+/* Scanlines */
+.ws5-manual-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.3) 3px,
+    rgba(0, 0, 0, 0) 4px
+  );
+}
+
+/* Dark curved sides and a glare at the top */
+.ws5-manual-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background:
+    linear-gradient(to right, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 7%, rgba(0, 0, 0, 0) 93%, rgba(0, 0, 0, 0.55)),
+    radial-gradient(ellipse 60% 500px at 22% 0%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+}
+
+/* Section heading: number, title in inverse video, then a dashed rule to the edge */
+.ws5-manual-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: 1.3em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ws5-manual-rule {
+  flex: 1;
+  border-top: 2px dashed rgba(92, 255, 154, 0.55);
+}
+
+/* Text-mode boxes */
+.ws5-manual-box {
+  padding: 14px 18px;
+  border: 2px solid rgba(92, 255, 154, 0.75);
+  box-shadow: 0 0 6px rgba(92, 255, 154, 0.3), inset 0 0 6px rgba(92, 255, 154, 0.15);
+}
+
+.ws5-manual-box-double {
+  border: 6px double rgba(92, 255, 154, 0.9);
+}
+
+.ws5-manual-box-dashed {
+  border-style: dashed;
+}
+
+/* Game Over: the box's border pulses */
+.ws5-manual-blink {
+  animation: ws5-manual-blink 1.4s steps(1, end) infinite;
+}
+
+@keyframes ws5-manual-blink {
+  50% { border-color: rgba(92, 255, 154, 0.3); }
+}
+
+.ws5-manual-list li {
+  position: relative;
+  padding-left: 1.15em;
+}
+
+.ws5-manual-list li::before {
+  content: "\203A";
+  position: absolute;
+  left: 0.25em;
+}
+
+.ws5-manual-prompt li::before {
+  content: ">";
+  left: 0.1em;
+}
+
+/* The monitor's chin: air vents beside the power lamp */
+.ws5-manual-vent {
+  height: 4px;
+  border-radius: 2px;
+  background: #0d0d0c;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
 /* ---- Shift log teleprinter: the chart recorder's paper, newest line at the top (owner, 2026-10-12) ---- */
 .ws5-printer-viewport {
   position: relative;
@@ -751,6 +866,7 @@
   .ws3-crt-subtitle,
   .ws5-crt-text,
   .ws5-crt-cursor-blink,
+  .ws5-manual-blink,
   .ws5-lamp-flash,
   .ws5-unread,
   .ws5-flash,
@@ -1145,6 +1261,432 @@
   border-radius: 9999px;
   background: radial-gradient(circle at 50% 30%, #3a3936, #0e0e0d 75%);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* ---- Lit lens keys: a translucent plastic cap with a lamp behind it, set in a black collar ----
+   The confirm, cancel and menu keys (owner, 2026-10-26: the mimic-board prototype's lit tiles, English legends only).
+   Green confirms, red cancels; amber and blue are for the mode menu. */
+.cr-lens-bezel {
+  display: inline-flex;
+  padding: 5px 5px 9px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0d0f0e 0%, #272a28 100%);
+  box-shadow: inset 0 2px 4px #000, 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.cr-lens {
+  --lens: #36c874;
+  --lens-hi: #d4ffe5;
+  --lens-ink: #062a14;
+  --lens-side: #155c32;
+  --lens-glow: rgba(92, 255, 154, 0.45);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--lens-ink);
+  background: radial-gradient(ellipse at 50% 40%, var(--lens-hi), var(--lens) 80%);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.12),
+    0 4px 0 var(--lens-side),
+    0 5px 8px rgba(0, 0, 0, 0.5),
+    0 0 22px var(--lens-glow);
+  transition: transform 80ms ease, box-shadow 80ms ease, filter 120ms ease;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cr-lens:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.cr-lens:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.35),
+    0 0 0 var(--lens-side),
+    0 0 14px var(--lens-glow);
+}
+
+.cr-lens:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cr-lens:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.cr-lens-green { --lens: #36c874; --lens-hi: #d4ffe5; --lens-ink: #062a14; --lens-side: #155c32; --lens-glow: rgba(92, 255, 154, 0.45); }
+.cr-lens-red { --lens: #e0473a; --lens-hi: #ffd6cc; --lens-ink: #2e0503; --lens-side: #6f1515; --lens-glow: rgba(255, 80, 60, 0.42); }
+.cr-lens-amber { --lens: #f0b429; --lens-hi: #fff3c8; --lens-ink: #2a1a00; --lens-side: #7a5205; --lens-glow: rgba(255, 190, 60, 0.42); }
+.cr-lens-blue { --lens: #3b82d6; --lens-hi: #d6ecff; --lens-ink: #061a33; --lens-side: #173a66; --lens-glow: rgba(90, 160, 255, 0.42); }
+
+/* ---- Switchgear: pistol-grip control switches, jewel lamps and Dymo tape (owner, 2026-10-26: prototype E) ---- */
+
+/* Round black escutcheon; the grip turns 45° left for off and 45° right for on, with the legends above */
+.cr-grip-plate {
+  --plate: 104px;
+  position: relative;
+  flex-shrink: 0;
+  width: var(--plate);
+  height: var(--plate);
+  margin-top: 14px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 50% 35%, #3a3a37, #161614 70%);
+  box-shadow:
+    0 0 0 2px #050505,
+    0 0 0 5px #b9bab5,
+    0 0 0 6px #5c5c57,
+    0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 639px) {
+  .cr-grip-plate {
+    --plate: 88px;
+  }
+}
+
+.cr-grip-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 10px;
+  margin: -5px 0 0 -1px;
+  background: #ebe8de;
+  pointer-events: none;
+}
+
+.cr-grip-mark-off { transform: rotate(-45deg) translateY(calc(var(--plate) * -0.42)); }
+.cr-grip-mark-on { transform: rotate(45deg) translateY(calc(var(--plate) * -0.42)); }
+
+.cr-grip-legend {
+  position: absolute;
+  top: -15px;
+  transform: translateX(-50%);
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #23221f;
+  pointer-events: none;
+}
+
+.cr-grip-legend-off { left: 10%; }
+.cr-grip-legend-on { left: 90%; }
+
+.cr-grip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 27%;
+  height: 87%;
+  padding: 0;
+  border: 0;
+  border-radius: 14px 14px 10px 10px;
+  background: linear-gradient(90deg, #121211 0%, #4e4e49 38%, #26261f 70%, #0e0e0d 100%);
+  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  /* Centring and turn share one transform so the grip always pivots on the hub */
+  transform: translate(-50%, -50%) rotate(-45deg);
+  transition: transform 220ms cubic-bezier(0.3, 1.5, 0.5, 1), filter 120ms ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cr-grip.on {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* The white index line on the grip's pointer end */
+.cr-grip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 7%;
+  width: 4px;
+  height: 33%;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #f4f1e8;
+}
+
+.cr-grip:hover {
+  filter: brightness(1.15);
+}
+
+.cr-grip:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.cr-grip-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle at 40% 35%, #fff, #b9bab5 60%, #76776f);
+}
+
+/* Jewel lamp in a chrome ring; lit with .on. A lit red one runs the panel's shared flasher. */
+.cr-jewel {
+  --ring: 0 0 0 2px #1d1d1b, 0 0 0 4px #a9aaa5, 0 0 0 5px #5c5c57;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), var(--ring);
+}
+
+.cr-jewel-green { background: radial-gradient(circle at 40% 35%, #3c5a46, #1a2a1f); }
+.cr-jewel-amber { background: radial-gradient(circle at 40% 35%, #6a5a3a, #3a2e18); }
+.cr-jewel-red { background: radial-gradient(circle at 40% 35%, #6a3a3a, #3a1818); }
+
+.cr-jewel-green.on {
+  background: radial-gradient(circle at 40% 35%, #e6ffef, #5cff9a 45%, #1f9c55);
+  box-shadow: 0 0 12px rgba(92, 255, 154, 0.85), var(--ring);
+}
+
+.cr-jewel-amber.on {
+  background: radial-gradient(circle at 40% 35%, #fff0c8, #f0a830 55%, #b46d09);
+  box-shadow: 0 0 12px rgba(240, 168, 48, 0.85), var(--ring);
+}
+
+.cr-jewel-red.on {
+  background: radial-gradient(circle at 40% 35%, #ffd0c0, #ff3b2a 55%, #a3170f);
+  box-shadow: 0 0 12px rgba(255, 59, 42, 0.85), var(--ring);
+  animation: cr-flasher 0.9s linear infinite;
+}
+
+/* A lamp that shows a state rather than a warning stays lit without flashing */
+.cr-jewel-steady.on {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-jewel-red.on {
+    animation: none;
+  }
+}
+
+/* Engraved caption under a lamp */
+.cr-caption {
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3a3833;
+}
+
+@media (min-width: 640px) {
+  .cr-caption {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+  }
+}
+
+/* ---- Rotary mode selector (turbine; owner, 2026-10-26: prototype D) ----
+   A knurled knob on a brushed aluminium plate, with a lamp and legend at each position. The knob's centre is
+   (140px, 136px) in the 280 x 214 box; the dialog places the legends from that. Scaled down to fit a phone. */
+.cr-selector {
+  position: relative;
+  flex-shrink: 0;
+  width: 280px;
+  height: 214px;
+}
+
+@media (max-width: 639px) {
+  .cr-selector {
+    zoom: 0.86;
+  }
+}
+
+.cr-selector-plate {
+  position: absolute;
+  left: 140px;
+  top: 136px;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border-radius: 9999px;
+  background:
+    repeating-conic-gradient(rgba(255, 255, 255, 0.07) 0 2deg, rgba(0, 0, 0, 0.035) 2deg 4deg),
+    radial-gradient(circle, #ecece8 0%, #c4c5c0 65%, #9fa09b 100%);
+  box-shadow:
+    0 0 0 2px #2a2926,
+    0 3px 5px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.cr-selector-tick {
+  position: absolute;
+  left: 140px;
+  top: 136px;
+  width: 4px;
+  height: 16px;
+  margin: -8px 0 0 -2px;
+  border-radius: 1px;
+  background: #1d1d1b;
+}
+
+.cr-selector-legend {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #5e5c54;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cr-selector-legend:hover,
+.cr-selector-legend.on {
+  color: #161512;
+}
+
+.cr-selector-legend:focus-visible,
+.cr-selector-knob:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.cr-selector-knob {
+  position: absolute;
+  left: 140px;
+  top: 136px;
+  width: 100px;
+  height: 100px;
+  margin: -50px 0 0 -50px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(#3a3a35 0 5deg, #141413 5deg 10deg);
+  box-shadow: 0 0 0 2px #050505, 0 8px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 260ms cubic-bezier(0.3, 1.5, 0.5, 1), filter 120ms ease;
+  cursor: grab;
+  /* the knob can be dragged round, so a touch drag must not scroll the dialog */
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cr-selector-knob:active {
+  cursor: grabbing;
+}
+
+.cr-selector-knob:hover {
+  filter: brightness(1.15);
+}
+
+.cr-selector-knob-face {
+  position: absolute;
+  inset: 9px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 50% 35%, #5a5a54, #22221f 60%, #151513);
+  box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.22), inset 0 -3px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* The pointer bar across the knob */
+.cr-selector-knob-bar {
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  bottom: 50%;
+  width: 10px;
+  margin-left: -5px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #c9c6bb, #fff, #a9a69b);
+  box-shadow: 0 0 0 1px #000;
+}
+
+/* Annunciator tile showing the selected mode */
+.cr-mode-tile {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #8f8a7c;
+  background: linear-gradient(180deg, #3a3936, #262522);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 0 2px #161512,
+    0 0 0 3px #8e8a7d;
+}
+
+.cr-mode-tile.on-green {
+  color: #04220f;
+  background: radial-gradient(ellipse at 50% 45%, #e6ffef, #5cff9a 45%, #1f9c55);
+  box-shadow: 0 0 14px rgba(92, 255, 154, 0.55), 0 0 0 2px #161512, 0 0 0 3px #8e8a7d;
+}
+
+.cr-mode-tile.on-amber {
+  color: #2a1700;
+  background: radial-gradient(ellipse at 50% 45%, #ffe2a8, #f0a830 45%, #b46d09);
+  box-shadow: 0 0 14px rgba(240, 168, 48, 0.55), 0 0 0 2px #161512, 0 0 0 3px #8e8a7d;
+}
+
+.cr-mode-tile.on-red {
+  color: #2a0503;
+  background: radial-gradient(ellipse at 50% 45%, #ffd8bf, #ff6a3d 35%, #c81e1e);
+  box-shadow: 0 0 14px rgba(255, 60, 30, 0.5), 0 0 0 2px #161512, 0 0 0 3px #8e8a7d;
+}
+
+/* Black Dymo embossing tape: raised white letters */
+.cr-dymo {
+  display: inline-block;
+  padding: 3px 8px 2px;
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  background: linear-gradient(180deg, #2c2c2c, #121212);
+  border-radius: 1px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 -1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* Small printed instruction label on the panel */

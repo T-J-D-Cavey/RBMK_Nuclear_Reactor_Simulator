@@ -14,22 +14,13 @@ const plateFont = Barlow_Condensed({ weight: ["500", "600", "700"], subsets: ["l
 export const metadata: Metadata = {
   title: "RBMK Nuclear Reactor Simulation",
   description: "Manage a nuclear reactor in real-time. Control the forces involved to meet power targets and avoid a nuclear disaster",
+  // The "core lid": the RBMK reactor's circle of channel caps in the title's phosphor green
   icons: {
     icon: [
-      {
-        url: "/rbmk_favicon.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/rbmk_favicon.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/rbmk_favicon.png",
-        type: "image/svg+xml",
-      },
+      { url: "/rbmk_favicon.svg", type: "image/svg+xml" },
+      { url: "/rbmk_favicon.png", type: "image/png", sizes: "96x96" },
     ],
-    apple: "/rbmk_favicon.png",
+    apple: { url: "/apple-icon.png", sizes: "180x180" },
   },
     generator: 'v0.app'
 }

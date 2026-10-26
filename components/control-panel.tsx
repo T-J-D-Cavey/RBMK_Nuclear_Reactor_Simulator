@@ -325,8 +325,8 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         <div className="fixed inset-0 z-50 bg-black flex flex-col">
           {/* Back button */}
           <div className="absolute top-4 left-4 z-10">
-            <span className="cr-bezel">
-              <button onClick={() => setShowReactorView(false)} className="cr-key cr-key-black h-10 px-3" aria-label="Back to the control panel">
+            <span className="cr-lens-bezel">
+              <button onClick={() => setShowReactorView(false)} className="cr-lens h-11 px-4" aria-label="Back to the control panel">
                 <ArrowLeft className="h-5 w-5" />
                 Back
               </button>

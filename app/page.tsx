@@ -51,13 +51,13 @@ export default function HomePage() {
         {/* Start console: just big enough for its two keys (plan §21.4) */}
         <div className="cr-panel cr-screws mx-auto w-full max-w-xs sm:max-w-none sm:w-fit px-5 py-5 sm:px-6">
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-stretch sm:items-center">
-            <span className="cr-bezel w-full sm:w-auto">
-              <button onClick={handleStartGame} className="cr-key cr-key-green-lit w-full sm:w-52 h-14 !text-lg">
+            <span className="cr-lens-bezel w-full sm:w-auto">
+              <button onClick={handleStartGame} className="cr-lens w-full sm:w-52 h-14 !text-lg">
                 Start Game
               </button>
             </span>
-            <span className="cr-bezel w-full sm:w-auto">
-              <Link href="/instructions" className="cr-key cr-key-cream w-full sm:w-44 h-14 !text-base">
+            <span className="cr-lens-bezel w-full sm:w-auto">
+              <Link href="/instructions" className="cr-lens cr-lens-amber w-full sm:w-48 h-14 !text-base">
                 How to Play
               </Link>
             </span>

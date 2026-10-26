@@ -69,7 +69,7 @@ const deputyStandsDown = runningAway
 // carry radioactivity from where it is to the high warning in about this many seconds. Measured: the warning comes
 // 8–11 s after the order, so the player sees radioactivity climbing first.
 export const DEPUTY_SURGE_SECONDS = 8
-export const DEPUTY_ORDER = "What have you done? You're choking my reactor! bring it back up, we are finishing this test."
+export const DEPUTY_ORDER = "What have you done? You're choking my reactor! Get it back up, we are finishing this test."
 export const DEPUTY_WITHDRAWAL = "Withdrawing control rods on the Deputy Chief Engineer's order."
 
 export function deputyWithdrawal(s: GameState): ControlRod[] {

@@ -321,8 +321,8 @@ export default function EndScreen({ kind, gameState, title, message, lead, repor
           {report}
 
           <div className="flex justify-center pt-1">
-            <span className="cr-bezel w-full sm:w-auto">
-              <button onClick={handleReturnToMenu} className="cr-key cr-key-cream w-full sm:w-56 h-12">
+            <span className="cr-lens-bezel w-full sm:w-auto">
+              <button onClick={handleReturnToMenu} className="cr-lens w-full sm:w-56 h-12">
                 Main Menu
               </button>
             </span>

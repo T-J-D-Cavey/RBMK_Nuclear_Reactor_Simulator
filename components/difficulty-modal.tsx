@@ -33,8 +33,8 @@ export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: Diff
                   <li key={spec}>{spec}</li>
                 ))}
               </ul>
-              <span className="cr-bezel w-full">
-                <button data-mode={mode} onClick={() => onSelectDifficulty(mode)} className={`cr-key ${key} w-full h-11`}>
+              <span className="cr-lens-bezel w-full">
+                <button data-mode={mode} onClick={() => onSelectDifficulty(mode)} className={`cr-lens ${key} w-full h-12`}>
                   {action}
                 </button>
               </span>

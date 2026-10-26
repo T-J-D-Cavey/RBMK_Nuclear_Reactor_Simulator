@@ -438,22 +438,6 @@ export default function ChartRecorder({
               </g>
             )
           })}
-
-          {isPaused && (
-            <text
-              x={(PAPER_L + PAPER_R) / 2}
-              y={vbH / 2}
-              fontSize="16"
-              fontFamily="monospace"
-              fill="#b45309"
-              opacity="0.55"
-              textAnchor="middle"
-              fontWeight="bold"
-              transform={`rotate(-12 ${(PAPER_L + PAPER_R) / 2} ${vbH / 2})`}
-            >
-              CHART STOPPED
-            </text>
-          )}
         </svg>
       </div>
     </div>
