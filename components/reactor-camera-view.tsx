@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, XIcon } from "lucide-react"
 import ReactorCamera, { getInterferenceIntensity } from "./reactor-camera"
 
 // The full reactor camera view: the CCTV monitor set in its own control panel (owner, 2026-10-27: prototype A, and C
@@ -101,15 +101,19 @@ export default function ReactorCameraView({ radioactivity, reactorTemp, elapsedS
   )
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a09] p-2.5 lg:p-3.5 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Reactor camera">
+    <div className="fixed inset-0 z-50 bg-[#0a0a09] p-2.5 lg:p-3.5 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Reactor hall camera">
       <div className="cr-panel cr-screws min-h-full flex flex-col gap-3.5 lg:gap-[18px] px-3.5 pt-[18px] pb-4 lg:px-7 lg:py-[22px]">
-        {/* Header: Back sits here on a large screen, at the bottom (where a thumb reaches) on a phone */}
-        <div className="flex items-center gap-[18px]">
-          {back("hidden lg:block", "h-[46px]")}
-          <h1 className="cr-nameplate flex-1 text-center px-3 py-2 lg:py-2.5 text-[19px] lg:text-[26px]">Reactor Camera</h1>
-          <div className="hidden lg:block">
-            <span className="cr-plate w-32 !text-xs">CCTV · VK-4</span>
-          </div>
+        {/* Header: the dialogs' black title bar with its close key (owner, 2026-10-27). On a phone Back is also at the
+            bottom, where a thumb reaches. */}
+        <div className="relative">
+          <h1 className="cr-dialog-title">Reactor Hall Camera</h1>
+          <button
+            onClick={onBack}
+            className="cr-key cr-key-black !absolute top-1.5 right-1.5 size-7 !tracking-normal [&_svg]:size-4"
+            aria-label="Back to the control panel"
+          >
+            <XIcon />
+          </button>
         </div>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-3.5 lg:gap-6 min-h-0">
