@@ -257,7 +257,8 @@ function endEvent(state: GameState, event: GameEvent): GameState {
       s = addLog(
         s,
         "engineer",
-        s.turbineMode === "grid" ? "Incoming power restored." : "Incoming power restored. We will reconnect the turbine to the grid on your orders.",
+        // A turbine on the pumps keeps supplying them, steam-limited, until the player switches it back
+        s.turbineMode === "pumps" ? "Incoming power restored and available for water pumps, power output from turbine can be exported to grid on your orders." : "Incoming power to water pumps restored.",
         HEAD_ENGINEER,
       )
       break

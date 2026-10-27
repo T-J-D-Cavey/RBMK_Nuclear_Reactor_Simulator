@@ -2,6 +2,15 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.25 – 2026-10-27 (The turbine can supply the pumps at any time)
+
+- **A turbine switched to the pumps now supplies them whether or not their normal supply is available** (Section 8, owner). The wiring is there, so the choice belongs to the player, even though it is a poor one outside a power cut: output drops to 0, and unless steam is plentiful fewer pumps run. Before this, the mode did nothing for the pumps while mains was on. When a power cut ends, pumps on the turbine stay on it until the player switches back, and the head engineer now says so.
+- **Safety Test retimed around it** (Section 14, owner):
+  - At test power the turbine's steam can run at most one pump. Under the new rule, switching it at the old step 2 (30 s before the test) would have stopped the other pumps before the test began.
+  - Step 2 is now a "stand by" message, and the grid target still ends there. The switch happens in the same second as the test begins, so the rundown starts exactly as it was tuned.
+  - Station power stays off the pumps during the test, so putting the turbine back on the grid can't trivialise it.
+  - At "Test complete" the crew put the turbine back on the grid, wherever the player left it, so station power runs every pump again.
+
 ## v2.24 – 2026-10-23 (Compact control desk: machine keys)
 
 - **The control panel is compacted** (Section 2 guardrail and Section 15, owner, from prototype "C · machine keys"). On a phone it was about 1,050 px tall, so the alarm monitor and shift log were well below the first screen; it is now about 460 px.

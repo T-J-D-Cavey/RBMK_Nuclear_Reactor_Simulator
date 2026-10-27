@@ -26,7 +26,7 @@ function SoundSwitch({ id, name, hint, covers, on, onToggle, edge }: {
   onToggle: () => void
 }) {
   return (
-    <div className={`cr-module cr-module-${edge} p-3 flex flex-col items-center gap-3`}>
+    <div className={`cr-sound-bay cr-module cr-module-${edge} p-2 sm:p-3 flex flex-col items-center gap-2 sm:gap-3`}>
       <Label htmlFor={id} className="cr-dymo">
         {name}
       </Label>
@@ -34,7 +34,7 @@ function SoundSwitch({ id, name, hint, covers, on, onToggle, edge }: {
         <JewelLamp colour={edge === "green" ? "green" : "amber"} lit={on} caption="On" />
       </div>
       <GripSwitch id={id} on={on} offLegend="Off" onLegend="On" label={name} describedBy={`${id}-covers`} onToggle={onToggle} />
-      <div id={`${id}-covers`} className="cr-note w-full flex-1 mt-2 px-3 py-2 uppercase !text-[11px] space-y-0.5">
+      <div id={`${id}-covers`} className="cr-note w-full flex-1 mt-1 sm:mt-2 px-2 py-1.5 sm:px-3 sm:py-2 uppercase !text-[10px] sm:!text-[11px] !leading-snug space-y-0.5">
         <p className="font-bold">{hint}</p>
         <p>{covers}</p>
       </div>
@@ -45,13 +45,14 @@ function SoundSwitch({ id, name, hint, covers, on, onToggle, edge }: {
 export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsEnabled, soundVolume, onAlarmsUpdate, onEffectsUpdate, onVolumeUpdate }: SoundModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem]">
         <DialogHeader>
           <DialogTitle className="cr-dialog-title">Sound</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-3 sm:space-y-4">
+          {/* Side by side even on a phone, so the whole dialog fits one screen */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <SoundSwitch
               id="effects-toggle"
               name="Sound Effects"
@@ -73,7 +74,7 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
           </div>
 
           {/* VOLUME FADER */}
-          <div className="cr-module p-3 space-y-4">
+          <div className="cr-module p-2.5 sm:p-3 space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="volume-slider" className="cr-plate">
                 Volume
@@ -93,7 +94,7 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
           </div>
 
           <span className="cr-lens-bezel w-full">
-            <button onClick={() => onOpenChange(false)} className="cr-lens w-full h-12">
+            <button onClick={() => onOpenChange(false)} className="cr-lens w-full h-11 sm:h-12">
               Close
             </button>
           </span>

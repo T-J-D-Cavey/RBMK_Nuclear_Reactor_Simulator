@@ -131,7 +131,6 @@ export default function GamePage() {
   )
   const camera = (
     <ReactorCamera
-      variant="inline"
       radioactivity={gameState.radioactivity}
       reactorTemp={gameState.reactorTemp}
       elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}

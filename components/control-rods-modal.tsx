@@ -5,7 +5,6 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import type { ControlRod } from "@/lib/types"
-import { AlertCircle } from "lucide-react"
 
 interface ControlRodsModalProps {
   open: boolean
@@ -121,57 +120,65 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
             </div>
           </div>
 
-          {/* GRID LAYOUT */}
-          <div className="cr-module grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 p-2 sm:p-3 justify-items-center">
-            {controlRods.map((rod, idx) => {
-              const currentInsertion = tempValues[idx] ?? rod.insertion
-              return (
-                <div key={rod.id} className="flex flex-col items-center gap-1 w-full">
+          {/* The levers in backlit channels, with one SKALA strip under the bank for the set positions (owner,
+              2026-10-27: prototype A). A jammed rod's channel glows red; the lever and its plate are hardware and
+              never change. */}
+          <div className="cr-module p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center">
+              {controlRods.map((rod, idx) => {
+                const currentInsertion = tempValues[idx] ?? rod.insertion
+                return (
+                  <div key={rod.id} className="flex flex-col items-center gap-1 w-full">
+                    <Label className="cr-plate !px-1.5 !py-1 !text-[0.7rem] !tracking-[0.1em]">R{rod.id}</Label>
 
-                  {/* Header Label */}
-                  <div className="flex items-center gap-1 h-5">
-                    <Label className={`cr-plate !px-1.5 !py-1 !text-[0.7rem] !tracking-[0.1em] ${rod.stuck ? "!text-red-300" : ""}`}>R{rod.id}</Label>
-                    {rod.stuck && <AlertCircle className="h-3 w-3 text-destructive" />}
-                  </div>
+                    {/* Top Cap: the drive housing */}
+                    <div className="w-8 sm:w-6 h-2 sm:h-3 rounded-t-sm bg-gradient-to-b from-neutral-500 to-neutral-800 border border-black/70" />
 
-                  {/* Top Cap: the drive housing */}
-                  <div className="w-8 sm:w-6 h-2 sm:h-3 rounded-t-sm bg-gradient-to-b from-neutral-500 to-neutral-800 border border-black/70" />
-
-                  {/* Rod Track */}
-                  <div
-                    id={`rod-container-${idx}`}
-                    className={`cr-rod-slot relative w-8 sm:w-6 h-36 sm:h-48 rounded-b-sm touch-none ${
-                      rod.stuck ? "cursor-not-allowed" : "cursor-grab"
-                    }`}
-                    onMouseDown={(e) => handleStart(idx, e)}
-                    onTouchStart={(e) => handleStart(idx, e)}
-                  >
+                    {/* Rod Track */}
                     <div
-                      className={`absolute top-0 left-0 w-full ${rod.stuck ? "cr-rod-body-stuck" : "cr-rod-body"}`}
-                      style={{
-                        height: `${currentInsertion}%`,
-                      }}
-                    />
-
-                    {/* Draggable Lever Handle, inside a transparent fingertip-sized grab area */}
-                    <div
-                      className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-11 flex items-center justify-center touch-none ${
-                        rod.stuck ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"
+                      id={`rod-container-${idx}`}
+                      className={`cr-rod-slot relative w-8 sm:w-6 h-36 sm:h-48 rounded-b-sm touch-none ${
+                        rod.stuck ? "cr-rod-slot-jammed cursor-not-allowed" : "cursor-grab"
                       }`}
-                      style={{
-                        top: `${currentInsertion}%`,
-                      }}
                       onMouseDown={(e) => handleStart(idx, e)}
                       onTouchStart={(e) => handleStart(idx, e)}
                     >
-                      <div className={`w-12 sm:w-10 h-4 sm:h-5 ${rod.stuck ? "cr-lever-stuck" : "cr-lever"}`} />
+                      {/* Draggable Lever Handle, inside a transparent fingertip-sized grab area */}
+                      <div
+                        className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-11 flex items-center justify-center touch-none ${
+                          rod.stuck ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"
+                        }`}
+                        style={{
+                          top: `${currentInsertion}%`,
+                        }}
+                        onMouseDown={(e) => handleStart(idx, e)}
+                        onTouchStart={(e) => handleStart(idx, e)}
+                      >
+                        <div className="w-12 sm:w-10 h-4 sm:h-5 cr-lever" />
+                      </div>
                     </div>
                   </div>
+                )
+              })}
+            </div>
 
-                  <span className="font-mono text-[10px] sm:text-xs font-bold mt-1 tabular-nums">{currentInsertion}%</span>
+            <div className="ws3-cam-bezel rounded-md px-1.5 pt-1.5 pb-1">
+              <div className="ws5-crt-screen ws5-crt-text pt-1 pb-1.5 text-[20px] sm:text-[22px] leading-none" style={{ borderRadius: "10px / 8px" }}>
+                <div className="relative z-[1] grid grid-cols-5 sm:grid-cols-10 gap-y-1 text-center tabular-nums">
+                  {controlRods.map((rod, idx) => (
+                    <span key={rod.id} aria-label={`Rod ${rod.id}: ${rod.stuck ? "jammed" : `${tempValues[idx] ?? rod.insertion}%`}`}>
+                      {rod.stuck ? <span className="ws5-crt-inverse">JAM</span> : (tempValues[idx] ?? rod.insertion)}
+                    </span>
+                  ))}
                 </div>
-              )
-            })}
+              </div>
+              <div className="cr-skala-chin !pt-1" aria-hidden="true">
+                <span>SKALA · Rod set position %</span>
+                <span className="flex-1" />
+                <span className="ws5-manual-vent" />
+                <span className="ws5-manual-vent" />
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-1">

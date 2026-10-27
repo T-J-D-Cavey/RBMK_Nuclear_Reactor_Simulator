@@ -148,8 +148,6 @@ export interface ReactorCameraProps {
   reactorTemp: number
   /** Seconds since the shift started; drives the on-screen timestamp (see getShiftElapsedSeconds). */
   elapsedSeconds: number
-  /** "inline": sits in the game page layout. "fullscreen": fills a `fixed inset-0` container supplied by the parent. */
-  variant?: "inline" | "fullscreen"
   /** Optional clock start (ms since epoch, read as UTC). Defaults to 26-04-1986 00:00:00. */
   clockStartMs?: number
   /** Inline: the most the whole monitor may be, in px. The square screen gives way to a wider one (the picture is cropped to fill). */
@@ -161,7 +159,6 @@ export default function ReactorCamera({
   radioactivity,
   reactorTemp,
   elapsedSeconds,
-  variant = "inline",
   clockStartMs = CAMERA_CLOCK_START_MS,
   fitHeight = null,
   className = "",
@@ -169,128 +166,115 @@ export default function ReactorCamera({
   const reducedMotion = usePrefersReducedMotion()
   const interference = getInterferenceIntensity(radioactivity)
   const timestamp = formatCameraTimestamp(elapsedSeconds, clockStartMs)
-  const isFullscreen = variant === "fullscreen"
   // To meet fitHeight, everything but the screen keeps its size, so take that off first
   const [monitorRef, monitorHeight] = useElementHeight<HTMLDivElement>()
   const [screenRef, screenHeight] = useElementHeight<HTMLDivElement>()
-  const screenMax = !isFullscreen && fitHeight && monitorHeight && screenHeight ? fitHeight - (monitorHeight - screenHeight) : null
+  const screenMax = fitHeight && monitorHeight && screenHeight ? fitHeight - (monitorHeight - screenHeight) : null
 
-  const monitor = (
-    <div
-      ref={monitorRef}
-      className={`ws3-cam-bezel relative w-full p-2 sm:p-3 md:p-4 ${isFullscreen ? "" : "rounded-lg"}`}
-      style={isFullscreen ? { width: "min(100%, calc(100dvh - 4rem))" } : undefined}
-    >
-      {/* The screen */}
-      <div
-        ref={screenRef}
-        className="@container ws3-cam-screen relative isolate w-full aspect-square overflow-hidden bg-gray-900"
-        style={screenMax ? { maxHeight: screenMax } : undefined}
-      >
-        {/* 1. BASE LAYER (Always Visible) */}
-        <img
-          src="/new_reactor_image_cropped.jpg"
-          alt="Reactor hall, seen from above on a security camera"
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        />
+  return (
+    <div className={`w-full ${className}`}>
+      <div ref={monitorRef} className="ws3-cam-bezel relative w-full p-2 sm:p-3 md:p-4 rounded-lg">
+        {/* The screen */}
+        <div
+          ref={screenRef}
+          className="@container ws3-cam-screen relative isolate w-full aspect-square overflow-hidden bg-gray-900"
+          style={screenMax ? { maxHeight: screenMax } : undefined}
+        >
+          {/* 1. BASE LAYER (Always Visible) */}
+          <img
+            src="/new_reactor_image_cropped.jpg"
+            alt="Reactor hall, seen from above on a security camera"
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
 
-        {/* 2. TEMPERATURE LAYER (Dynamic Opacity) */}
-        <img
-          src="/new_reactor_image_high_temp_cropped.jpg"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 pointer-events-none mix-blend-screen"
-          style={{ opacity: getTemperatureOpacity(reactorTemp) }}
-        />
-
-        {/* 3. RADIOACTIVITY LAYER (Dynamic Opacity) */}
-        <img
-          src="/new_reactor_image_high_radioactivity_cropped.jpg"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover z-20 transition-opacity duration-500 pointer-events-none mix-blend-screen"
-          style={{ opacity: getRadioactivityOpacity(radioactivity) }}
-        />
-
-        {/* --- CCTV treatment (all pointer-events-none, above the picture) --- */}
-        <div className="absolute inset-0 z-30 pointer-events-none">
-          {/* Static / snow (only above the high-radioactivity warning) */}
-          <div
-            className="ws3-cam-static-wrap absolute inset-0 overflow-hidden transition-opacity duration-700"
-            style={{ opacity: interference > 0 ? 0.12 + interference * 0.5 : 0 }}
+          {/* 2. TEMPERATURE LAYER (Dynamic Opacity) */}
+          <img
+            src="/new_reactor_image_high_temp_cropped.jpg"
+            alt=""
             aria-hidden="true"
-          >
-            {interference > 0 && <div className="ws3-cam-static absolute -inset-1/2" />}
-          </div>
-          <SpeckleCanvas intensity={interference} reducedMotion={reducedMotion} />
+            className="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 pointer-events-none mix-blend-screen"
+            style={{ opacity: getTemperatureOpacity(reactorTemp) }}
+          />
 
-          {/* Scanlines */}
-          <div className="ws3-cam-scanlines absolute inset-0" aria-hidden="true" />
-          {/* Faint flicker */}
-          <div className="ws3-cam-flicker absolute inset-0" aria-hidden="true" />
-          {/* Vignette + tube curvature */}
-          <div className="ws3-cam-vignette absolute inset-0" aria-hidden="true" />
-
-          {/* Hairline crack, bottom-right corner */}
-          <svg
-            className="absolute bottom-0 right-0 w-[22%] h-[22%] opacity-40"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
+          {/* 3. RADIOACTIVITY LAYER (Dynamic Opacity) */}
+          <img
+            src="/new_reactor_image_high_radioactivity_cropped.jpg"
+            alt=""
             aria-hidden="true"
-          >
-            <path
-              d="M100 62 L86 66 L78 61 L69 70 L58 72 L50 80 L41 83 L33 94 L29 100"
-              fill="none"
-              stroke="rgba(255,255,255,0.85)"
-              strokeWidth="0.6"
-              vectorEffect="non-scaling-stroke"
-            />
-            <path
-              d="M69 70 L66 79 L60 86 M50 80 L47 74 L40 71 M86 66 L88 76 L84 84"
-              fill="none"
-              stroke="rgba(255,255,255,0.6)"
-              strokeWidth="0.5"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
+            className="absolute inset-0 w-full h-full object-cover z-20 transition-opacity duration-500 pointer-events-none mix-blend-screen"
+            style={{ opacity: getRadioactivityOpacity(radioactivity) }}
+          />
 
-          {/* On-screen display */}
-          <div className="ws3-cam-osd absolute inset-0 p-[3.5%] flex flex-col justify-between font-mono uppercase text-white text-[9px] @xs:text-[11px] @md:text-sm @3xl:text-lg leading-tight">
-            <div className="flex items-start justify-between gap-2">
-              <span className="min-w-0 truncate">CAM 04 – REACTOR HALL – UNIT 4</span>
-              <span className="flex items-center gap-1.5 shrink-0">
-                <span className="ws3-cam-rec-dot inline-block rounded-full bg-red-600 w-[0.8em] h-[0.8em]" />
-                REC
-              </span>
+          {/* --- CCTV treatment (all pointer-events-none, above the picture) --- */}
+          <div className="absolute inset-0 z-30 pointer-events-none">
+            {/* Static / snow (only above the high-radioactivity warning) */}
+            <div
+              className="ws3-cam-static-wrap absolute inset-0 overflow-hidden transition-opacity duration-700"
+              style={{ opacity: interference > 0 ? 0.12 + interference * 0.5 : 0 }}
+              aria-hidden="true"
+            >
+              {interference > 0 && <div className="ws3-cam-static absolute -inset-1/2" />}
             </div>
-            <div className="flex items-end justify-between gap-2">
-              <span className="tabular-nums">{timestamp}</span>
-              {interference > 0.15 && (
-                <span className="ws3-cam-signal shrink-0 text-amber-300">SIGNAL DEGRADED</span>
-              )}
+            <SpeckleCanvas intensity={interference} reducedMotion={reducedMotion} />
+
+            {/* Scanlines */}
+            <div className="ws3-cam-scanlines absolute inset-0" aria-hidden="true" />
+            {/* Faint flicker */}
+            <div className="ws3-cam-flicker absolute inset-0" aria-hidden="true" />
+            {/* Vignette + tube curvature */}
+            <div className="ws3-cam-vignette absolute inset-0" aria-hidden="true" />
+
+            {/* Hairline crack, bottom-right corner */}
+            <svg
+              className="absolute bottom-0 right-0 w-[22%] h-[22%] opacity-40"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M100 62 L86 66 L78 61 L69 70 L58 72 L50 80 L41 83 L33 94 L29 100"
+                fill="none"
+                stroke="rgba(255,255,255,0.85)"
+                strokeWidth="0.6"
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                d="M69 70 L66 79 L60 86 M50 80 L47 74 L40 71 M86 66 L88 76 L84 84"
+                fill="none"
+                stroke="rgba(255,255,255,0.6)"
+                strokeWidth="0.5"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+
+            {/* On-screen display */}
+            <div className="ws3-cam-osd absolute inset-0 p-[3.5%] flex flex-col justify-between font-mono uppercase text-white text-[9px] @xs:text-[11px] @md:text-sm @3xl:text-lg leading-tight">
+              <div className="flex items-start justify-between gap-2">
+                <span className="min-w-0 truncate">CAM 04 – REACTOR HALL – UNIT 4</span>
+                <span className="flex items-center gap-1.5 shrink-0">
+                  <span className="ws3-cam-rec-dot inline-block rounded-full bg-red-600 w-[0.8em] h-[0.8em]" />
+                  REC
+                </span>
+              </div>
+              <div className="flex items-end justify-between gap-2">
+                <span className="tabular-nums">{timestamp}</span>
+                {interference > 0.15 && (
+                  <span className="ws3-cam-signal shrink-0 text-amber-300">SIGNAL DEGRADED</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Bezel details */}
-      <div className="flex items-center justify-between pt-1.5 sm:pt-2 px-1 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-neutral-500 select-none">
-        <span>CCTV · VK-4</span>
-        <span className="flex items-center gap-1.5">
-          <span className="retro-lamp on inline-block w-2 h-2 bg-green-500 text-green-500" />
-          PWR
-        </span>
+        {/* Bezel details */}
+        <div className="flex items-center justify-between pt-1.5 sm:pt-2 px-1 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-neutral-500 select-none">
+          <span>CCTV · VK-4</span>
+          <span className="flex items-center gap-1.5">
+            <span className="retro-lamp on inline-block w-2 h-2 bg-green-500 text-green-500" />
+            PWR
+          </span>
+        </div>
       </div>
     </div>
   )
-
-  if (isFullscreen) {
-    return (
-      <div className={`w-full h-full flex justify-center items-center p-4 ${className}`}>
-        {monitor}
-      </div>
-    )
-  }
-
-  return <div className={`w-full ${className}`}>{monitor}</div>
 }

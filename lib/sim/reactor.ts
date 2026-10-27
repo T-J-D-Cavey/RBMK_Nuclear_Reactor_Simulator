@@ -72,13 +72,13 @@ export function turbineCoastStart(steam: number): number {
   return Math.min(4, steam / T.turbineSteamPerPump)
 }
 
-// Decide which pumps receive power this second (PWR lamps).
+// Decide which pumps receive power this second (PWR lamps). A turbine switched to the pumps supplies them whether or
+// not mains is available (owner, 2026-10-27: the wiring is there, so it's the player's choice, even a poor one).
 export function supplyPumps(state: GameState): { pumps: WaterPump[]; capacity: number } {
-  if (state.mainsPower) {
-    return { pumps: state.waterPumps.map((p) => ({ ...p, powered: !p.tripped })), capacity: state.turbinePumpCapacity }
-  }
   if (state.turbineMode !== "pumps") {
-    return { pumps: state.waterPumps.map((p) => ({ ...p, powered: false })), capacity: 0 }
+    return state.mainsPower
+      ? { pumps: state.waterPumps.map((p) => ({ ...p, powered: !p.tripped })), capacity: state.turbinePumpCapacity }
+      : { pumps: state.waterPumps.map((p) => ({ ...p, powered: false })), capacity: 0 }
   }
   // A coasting turbine powers what its remaining spin allows; otherwise steam decides (bible §8).
   const capacity =

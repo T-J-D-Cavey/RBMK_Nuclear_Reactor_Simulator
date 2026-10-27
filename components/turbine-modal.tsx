@@ -86,11 +86,10 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, onUpdate
         <div className="space-y-4">
           <div className="cr-note px-3 py-2 uppercase space-y-1">
             <p>
-              <span className="font-bold">Grid:</span> steam becomes power output.
+              <span className="font-bold">Grid:</span> steam volume sets power output.
             </p>
             <p>
-              <span className="font-bold">Pumps:</span> off grid, steam can run the pumps if their supply fails. More steam,
-              more pumps. Output is 0.
+              <span className="font-bold">Pumps:</span> steam volume sets how many pumps have power. Output to grid is 0.
             </p>
           </div>
 

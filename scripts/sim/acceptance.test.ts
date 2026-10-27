@@ -207,6 +207,14 @@ test("§8 no supply without mains or turbine; mains powers every untripped pump"
   assert.ok(mains.pumps.every((p) => p.powered))
 })
 
+test("§8 a turbine switched to the pumps supplies them even with mains available (owner, 2026-10-27)", () => {
+  const s: GameState = { ...baseState(), mainsPower: true, turbineMode: "pumps", turbinePumpCapacity: 0 }
+  const low = supplyPumps({ ...s, steamVolume: 40 }) // about 2,000 MW: steam for one pump, not four
+  assert.equal(low.pumps.filter((p) => p.powered).length, 1)
+  const lots = supplyPumps({ ...s, steamVolume: 200 })
+  assert.equal(lots.pumps.filter((p) => p.powered).length, 4)
+})
+
 // ---------- §9 Xenon ----------
 
 test("§9 after sustained normal running, xenon reads 0%", () => {

@@ -43,7 +43,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
         <div className="space-y-4">
           <div className="cr-note px-3 py-2 uppercase text-center">A pump cools the core only when ON and POWERED.</div>
 
-          {/* One switchgear bay per pump: RUN lights when the switch is on and the pump has power */}
+          {/* One switchgear bay per pump: ON lights when the switch is on and the pump has power */}
           <div className="grid grid-cols-2 gap-3">
             {waterPumps.map((pump, idx) => {
               const on = tempStates[idx] ?? pump.on
@@ -54,7 +54,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
                   </Label>
 
                   <div className="flex gap-2.5 sm:gap-4" aria-hidden="true">
-                    <JewelLamp colour="green" lit={on && pump.powered} caption="Run" />
+                    <JewelLamp colour="green" lit={on && pump.powered} caption="On" />
                     <JewelLamp colour="amber" lit={pump.powered} caption="Power" />
                     <JewelLamp colour="red" lit={pump.tripped} caption="Trip" />
                   </div>
@@ -65,8 +65,8 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
                   <GripSwitch
                     id={`pump-${pump.id}`}
                     on={on}
-                    offLegend="Stop"
-                    onLegend="Run"
+                    offLegend="Off"
+                    onLegend="On"
                     label={`Pump ${pump.id}`}
                     describedBy={`pump-${pump.id}-status`}
                     onToggle={() => {

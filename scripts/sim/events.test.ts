@@ -386,6 +386,7 @@ const safety = (opts = {}) => playGame(createNewGame("safety_test"), makeBot(opt
 const stepAt = (action: string) => SAFETY_TEST_SCRIPT.find((step) => step.action === action)!.at
 const PUMPS_ON = stepAt("pumps-on")
 const TURBINE_SWITCH = stepAt("turbine-to-pumps")
+const STAND_BY = SAFETY_TEST_SCRIPT.find((step) => step.target === null)!.at
 const MAINS_OFF = stepAt("mains-off")
 const MAINS_ON = stepAt("mains-on")
 const RAISE = SAFETY_TEST_SCRIPT.findLast((step) => step.target != null && step.at < PUMPS_ON)!.at
@@ -418,6 +419,12 @@ test("§14 every phase is triggered in order; each automated change happens once
   assert.equal(at(TURBINE_SWITCH).turbineMode, "pumps")
   assert.equal(at(MAINS_OFF).mainsPower, false)
   assert.equal(at(MAINS_ON).mainsPower, true)
+  // The turbine supplies the pumps as soon as it is switched (owner, 2026-10-27), so the switch comes with the test:
+  // every pump keeps station power until then, and the crew put the turbine back on the grid when it is over
+  assert.equal(TURBINE_SWITCH, MAINS_OFF, "switched in the same second as the test begins")
+  assert.ok(at(TURBINE_SWITCH - 1).waterPumps.every((p) => p.powered), "all four pumps powered up to the test")
+  assert.equal(at(MAINS_ON).turbineMode, "grid")
+  assert.ok(at(MAINS_ON + 5).waterPumps.every((p) => p.powered), "station power runs every pump after the test")
   assert.ok(Math.min(...SAFETY_TEST_SCRIPT.map((step) => step.target ?? Infinity)) >= 700, "no target below 700 MW")
   // The test itself lasts 120 s (owner, 2026-10-21; was 75 s), starting at the same time, so the survival time
   // after it is shorter
@@ -441,9 +448,9 @@ test("§14 the player can reverse an automated change and the script never undoe
   assert.equal(s.waterPumps.filter((p) => p.on).length, 2)
 })
 
-test("§14 no grid target from the turbine switch: the display shows N/A and performance is frozen", () => {
+test("§14 no grid target from test step 2: the display shows N/A and performance is frozen", () => {
   const run = safety()
-  const after = run.states.slice(TURBINE_SWITCH)
+  const after = run.states.slice(STAND_BY)
   assert.ok(after.every((s) => s.powerTarget === null))
   assert.ok(after.every((s) => s.performance === after[0].performance))
 })

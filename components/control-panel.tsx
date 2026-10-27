@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { ArrowLeft, Cctv, Home, Pause, Play, Volume2, VolumeX } from "lucide-react"
+import { Cctv, Home, Pause, Play, Volume2, VolumeX } from "lucide-react"
 
 import { type GameState, getShiftTime } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
 import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import { useRodDisplay } from "@/hooks/use-rod-display"
-import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
+import { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
+import ReactorCameraView from "./reactor-camera-view"
 import ControlRodsModal from "./control-rods-modal"
 import WaterPumpsModal from "./water-pumps-modal"
 import TurbineModal from "./turbine-modal"
@@ -320,28 +321,15 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         }}
       />
 
-      {/* Fullscreen reactor view modal */}
+      {/* Fullscreen reactor view: the camera in its own control panel */}
       {showReactorView && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          {/* Back button */}
-          <div className="absolute top-4 left-4 z-10">
-            <span className="cr-lens-bezel">
-              <button onClick={() => setShowReactorView(false)} className="cr-lens h-11 px-4" aria-label="Back to the control panel">
-                <ArrowLeft className="h-5 w-5" />
-                Back
-              </button>
-            </span>
-          </div>
-
-          {/* Reactor view (security camera) */}
-          <ReactorCamera
-            variant="fullscreen"
-            radioactivity={gameState.radioactivity}
-            reactorTemp={gameState.reactorTemp}
-            elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
-            clockStartMs={getCameraClockStartMs(gameState.mode)}
-          />
-        </div>
+        <ReactorCameraView
+          radioactivity={gameState.radioactivity}
+          reactorTemp={gameState.reactorTemp}
+          elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
+          clockStartMs={getCameraClockStartMs(gameState.mode)}
+          onBack={() => setShowReactorView(false)}
+        />
       )}
     </div>
   )

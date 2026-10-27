@@ -168,17 +168,23 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
     text: "Test step 1: Turn on all remaining circulation pumps.",
     action: "pumps-on",
   },
+  // The turbine supplies the pumps from the moment it is switched (owner, 2026-10-27), and at test power its steam runs
+  // only one, so step 2 only stands by. The switch comes in the same second as the test, before any pump can run down.
   {
     at: 930,
     role: "procedure",
-    text: "Test step 2: switch the turbine to power the pumps.",
+    text: "Test step 2: stand by to switch the turbine to power the pumps.",
     target: null,
+  },
+  {
+    at: TEST_STARTS,
+    role: "turbine",
     action: "turbine-to-pumps",
   },
   {
     at: TEST_STARTS,
     role: "procedure",
-    text: "Test begins. Station power to the pumps is cut: coasting turbine is powering the pumps.",
+    text: "Test begins. Steam to the turbine is shut off: its rundown is powering the pumps.",
     action: "mains-off",
   },
   // The deputy watches the whole test, and notices (once) if radioactivity falls below 50. A few seconds later he
@@ -219,7 +225,7 @@ export const SAFETY_TEST_SCRIPT: ScriptStep[] = [
   {
     at: TEST_ENDS,
     role: "procedure",
-    text: "Test complete. Station power to the pumps is restored. No more orders: keep the reactor stable until end of shift",
+    text: "Test complete. Turbine reconnected to the grid and station power to the pumps restored. No more orders: keep the reactor stable until end of shift",
     action: "mains-on",
   },
 ]
@@ -268,13 +274,15 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
         ROLES.turbine.from,
       )
     case "mains-off":
-      // The test itself: steam to the turbine is shut off, so it coasts down while it powers the pumps.
+      // The test itself: steam to the turbine is shut off, so it coasts down while it powers the pumps. Station power
+      // stays off the pumps throughout, so putting the turbine back on the grid mid-test leaves them with nothing.
       return { ...s, mainsPower: false, turbineCoast: turbineCoastStart(s.steamVolume) }
     case "rods-out":
       // Jammed rods stay where they are (bible §10.3); the rest travel out at the usual drive speed.
       return { ...s, controlRods: deputyWithdrawal(s) }
     case "mains-on":
-      return { ...s, mainsPower: true, turbineCoast: null }
+      // The crew put the turbine back on the grid, wherever the player left it, so station power runs every pump
+      return { ...s, mainsPower: true, turbineCoast: null, turbineMode: "grid", turbineConnected: true }
     default:
       return s
   }
