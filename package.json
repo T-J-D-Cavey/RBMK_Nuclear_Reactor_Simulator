@@ -1,7 +1,7 @@
 {
-  "name": "R B M K - Nuclear Reactor Simulator",
+  "name": "rbmk-nuclear-reactor-simulator",
   "version": "2.0.0",
-  "private": false,
+  "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
@@ -12,15 +12,15 @@
     "sim:shift": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs scripts/sim/shift.ts"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "latest",
-    "@radix-ui/react-label": "latest",
-    "@vercel/analytics": "latest",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-label": "^2.1.15",
+    "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
-    "next": "16.0.10",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "next": "16.4.3",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
     "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
