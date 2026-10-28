@@ -45,5 +45,6 @@ export const GAME_JSON_LD = {
   offers: { "@type": "Offer", price: 0, priceCurrency: "GBP" },
   author: { "@type": "Person", name: AUTHOR_NAME, url: AUTHOR_URL },
   codeRepository: SOURCE_URL,
-  about: { "@type": "Event", name: "Chernobyl disaster", startDate: "1986-04-26" },
+  // A plain Thing linked to Wikipedia: typed as an Event, Google reads it as an event listing and wants a venue
+  about: { "@type": "Thing", name: "Chernobyl disaster", sameAs: "https://en.wikipedia.org/wiki/Chernobyl_disaster" },
 }
