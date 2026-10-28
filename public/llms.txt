@@ -1,0 +1,22 @@
+# RBMK Nuclear Reactor Simulation
+
+> A free, single-player browser game. You are the reactor control engineer at Unit 4 of the Chernobyl Nuclear Power Station in 1986. Run the RBMK reactor in real time to deliver the power the grid asks for, without letting it melt down or explode. No download, no account, no cost.
+
+The reactor model is a simplified, game-sized version of Valery Legasov's courtroom explanation of the accident: "red cards" push radioactivity up (steam in the core through the positive void coefficient, graphite rod tips entering the core, cold fuel) and "blue cards" push it down (boron in the control rods, xenon, hot fuel). It is meant to be educational and playable, not an engineering-grade simulator.
+
+The player controls ten control rods, the AZ-5 emergency button, four water pumps and the turbine. The game ends in a meltdown (reactor temperature reaches 1,200°), a core explosion (steam reaches 600), dismissal (performance falls to 0%) or a completed shift.
+
+Game modes:
+- Easy: 15-minute shift, 7 events including one major emergency.
+- Hard: 30-minute shift, 14 events including both major emergencies and larger target changes.
+- Free: unlimited sandbox with no targets or events.
+- Safety Test: a 20-minute scripted recreation of the Unit 4 turbine rundown test of 25–26 April 1986.
+
+## Pages
+
+- [Home](https://rbmk-simulator.vercel.app/): start a game and choose a mode.
+- [Operating Manual](https://rbmk-simulator.vercel.app/instructions): how to play, covering the modes, the reactivity cards, every control, warning signs, the xenon pit, the Safety Test and how the game ends.
+
+## Optional
+
+- [Source code and technical README](https://github.com/T-J-D-Cavey/RBMK_Nuclear_Reactor_Simulator): Next.js and React app with the physics model, event system and automated tests.

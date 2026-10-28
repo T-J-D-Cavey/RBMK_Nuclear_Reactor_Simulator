@@ -1,8 +1,22 @@
 import Link from "next/link"
+import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { ArrowLeft } from "lucide-react"
 import { THRESHOLDS } from "@/lib/types"
 import { MODE_MENU, MODE_MENU_TAGLINE } from "@/lib/mode-menu"
+import { BASE_OPEN_GRAPH } from "@/lib/site"
+
+// The tab reads "How to Play | RBMK Nuclear Reactor Simulation"; link previews get the longer title
+const MANUAL_TITLE = "How to Play: RBMK Reactor Operating Manual"
+const MANUAL_DESCRIPTION =
+  "How to play the RBMK reactor simulation: the game modes, the red and blue reactivity cards, control rods, AZ-5, pumps and turbine, warning signs, the xenon pit and the 1986 safety test."
+
+export const metadata: Metadata = {
+  title: "How to Play",
+  description: MANUAL_DESCRIPTION,
+  alternates: { canonical: "/instructions" },
+  openGraph: { ...BASE_OPEN_GRAPH, url: "/instructions", title: MANUAL_TITLE, description: MANUAL_DESCRIPTION },
+}
 
 // A quick-start manual (plan §21.6). It teaches the same model the game uses (bible §15): Legasov's red and blue
 // cards. Numbers are read from the code, so they track tuning. The whole manual reads off one tall SKALA screen set
