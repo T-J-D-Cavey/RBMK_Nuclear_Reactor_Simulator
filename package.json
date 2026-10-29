@@ -1,13 +1,13 @@
 {
   "name": "rbmk-nuclear-reactor-simulator",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
-    "sim:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs --test --test-reporter=spec scripts/sim/acceptance.test.ts scripts/sim/events.test.ts scripts/sim/board.test.ts scripts/sim/sounds.test.ts",
+    "sim:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs --test --test-reporter=spec scripts/sim/acceptance.test.ts scripts/sim/events.test.ts scripts/sim/board.test.ts scripts/sim/sounds.test.ts scripts/sim/tutorial.test.ts",
     "sim:trace": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs scripts/sim/trace.ts",
     "sim:shift": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/sim/register.mjs scripts/sim/shift.ts"
   },

@@ -1,34 +1,62 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { DifficultyModal } from "@/components/difficulty-modal"
 import type { GameMode } from "@/lib/types"
 import { createNewGame } from "@/lib/game-loop"
+import { TUTORIAL_KEY } from "@/lib/tutorial"
 import RisingParticles from "@/components/rising-particles"
+
+// The mode menu has its own history entry, so Back (or a phone's swipe back) closes it and stays on this page rather
+// than leaving it (owner, 2026-10-29). Same URL; only this flag in the entry's state.
+const MENU_ENTRY = "rbmkModeMenu"
+const menuEntryIsCurrent = () => Boolean(window.history.state?.[MENU_ENTRY])
 
 export default function HomePage() {
   const [showDifficultyModal, setShowDifficultyModal] = useState(false)
   const router = useRouter()
 
+  // The menu is open exactly while its entry is the current one: Back closes it, Forward (or a reload) reopens it
+  useEffect(() => {
+    const sync = () => setShowDifficultyModal(menuEntryIsCurrent())
+    sync()
+    window.addEventListener("popstate", sync)
+    return () => window.removeEventListener("popstate", sync)
+  }, [])
+
   const handleStartGame = () => {
+    if (!menuEntryIsCurrent()) window.history.pushState({ [MENU_ENTRY]: true }, "")
     setShowDifficultyModal(true)
   }
 
+  // Closed with its X, Escape or a tap outside: step back off its entry, as the Back button would
+  const handleMenuOpenChange = (open: boolean) => {
+    if (open) return handleStartGame()
+    setShowDifficultyModal(false)
+    if (menuEntryIsCurrent()) window.history.back()
+  }
+
   const handleSelectDifficulty = (mode: GameMode) => {
-    // Countdown modes start at their time limit; Free mode counts up from 0
-    const newGameState = createNewGame(mode)
+    // Countdown modes start at their time limit; Free mode counts up from 0. Every game opens with the control-room
+    // briefing, paused until it ends (owner, 2026-10-29).
+    const newGameState = { ...createNewGame(mode), isPaused: true }
 
     localStorage.setItem("chernobyl-game-state", JSON.stringify(newGameState))
+    localStorage.setItem(TUTORIAL_KEY, "1")
     setShowDifficultyModal(false)
-    router.push("/game")
+    // The game takes the menu's place in the history, so Back from the game comes here with the menu closed
+    router.replace("/game")
   }
 
   const controlRoomBackground = "control_room_background.jpg"
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${controlRoomBackground})`}}>
+    <div
+      className={`relative min-h-screen flex flex-col items-center justify-center p-4 bg-cover bg-center bg-no-repeat ${showDifficultyModal ? "cr-home-menu-open" : ""}`}
+      style={{ backgroundImage: `url(${controlRoomBackground})` }}
+    >
       {/* Atmosphere: dark vignette + faint scanlines over the control room */}
       <div className="ws3-home-vignette absolute inset-0 pointer-events-none" aria-hidden="true" />
       {/* The end screen's emergency beacon, mounted on the ceiling, and embers drifting up the room (owner, 2026-10-14) */}
@@ -65,7 +93,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <DifficultyModal open={showDifficultyModal} onOpenChange={setShowDifficultyModal} onSelectDifficulty={handleSelectDifficulty} />
+      <DifficultyModal open={showDifficultyModal} onOpenChange={handleMenuOpenChange} onSelectDifficulty={handleSelectDifficulty} />
     </div>
   )
 }

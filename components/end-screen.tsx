@@ -280,7 +280,7 @@ export default function EndScreen({ kind, gameState, title, message, lead, repor
 
   const handleReturnToMenu = () => {
     localStorage.removeItem("chernobyl-game-state")
-    router.push("/")
+    router.replace("/") // as leaving mid-game: the finished game leaves the history
   }
 
   const delay = (s: number) => ({ "--delay": `${s}s` }) as CSSProperties

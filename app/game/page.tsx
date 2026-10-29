@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useGameState } from "@/hooks/use-game-state"
 import ControlPanel from "@/components/control-panel"
 import MessageArea from "@/components/message-area"
@@ -20,6 +20,8 @@ import ReactivityCards from "@/components/reactivity-cards"
 import RodDisplay from "@/components/rod-display"
 import Dosimeter from "@/components/dosimeter"
 import { useElementHeight, useMediaQuery } from "@/hooks/use-element-height"
+import Tutorial from "@/components/tutorial"
+import { TUTORIAL_KEY, tutorialSteps } from "@/lib/tutorial"
 
 // From here up the page is a dashboard (owner, 2026-10-23): the chart recorder and the reactor camera either side of the
 // control panel, the alarm monitor and shift log across the full width below them, then the radioactivity balance, the
@@ -52,6 +54,21 @@ export default function GamePage() {
     setLogRevealSignal((n) => n + 1)
   }
 
+  // The control-room briefing opens every new game (owner, 2026-10-29). The home page starts the game paused and marks
+  // the briefing due; it stays due through a reload until it is closed, and then the shift starts from second zero.
+  const [briefing, setBriefing] = useState(false)
+  const briefingSteps = useMemo(() => tutorialSteps(gameState.mode), [gameState.mode])
+  useEffect(() => {
+    if (!isLoaded || localStorage.getItem(TUTORIAL_KEY) === null) return
+    setBriefing(true)
+    updateGameState({ isPaused: true })
+  }, [isLoaded, updateGameState])
+  const handleBriefingDone = () => {
+    localStorage.removeItem(TUTORIAL_KEY)
+    setBriefing(false)
+    updateGameState({ isPaused: false })
+  }
+
   // BACKGROUND IMAGE LOGIC:
   const controlRoomBackground = "control_room_background.jpg" 
 
@@ -66,7 +83,8 @@ export default function GamePage() {
   const handleConfirmLeave = () => {
     resetGame()
     setShowLeaveModal(false)
-    router.push("/")
+    // The game leaves the history, so Back from the home page doesn't return to it (owner, 2026-10-29)
+    router.replace("/")
   }
 
   // --- AUDIO LOGIC ---
@@ -117,6 +135,7 @@ export default function GamePage() {
       logLampLit={logLamp.lit}
       onSeeWarnings={handleSeeWarnings}
       onSeeLog={handleSeeLog}
+      briefing={briefing}
     />
   )
   // The alarm monitor and the shift log
@@ -158,6 +177,8 @@ export default function GamePage() {
       onClick={handleInteraction}
       onTouchStart={handleInteraction}
     >
+      {briefing && <Tutorial steps={briefingSteps} onFinish={handleBriefingDone} />}
+
       {/* MODALS */}
       <LeaveGameModal open={showLeaveModal} onOpenChange={setShowLeaveModal} onConfirm={handleConfirmLeave} />
 
@@ -181,15 +202,15 @@ export default function GamePage() {
         <div className="flex-1 p-6 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${controlRoomBackground})` }}>
           <div className="mx-auto max-w-[87.5rem] space-y-4">
             <div className="grid gap-4 items-start grid-cols-[minmax(17rem,1fr)_minmax(0,28rem)_minmax(17rem,1fr)]">
-              <aside className="min-w-0" ref={chartRef}>{chart}</aside>
+              <aside className="min-w-0" ref={chartRef} data-tutorial="chart">{chart}</aside>
               <div className="min-w-0" ref={panelRef}>{panel}</div>
-              <div className="min-w-0">{camera}</div>
+              <div className="min-w-0" data-tutorial="camera">{camera}</div>
             </div>
             {messages}
             <div className="grid grid-cols-3 gap-4 items-start">
-              <aside className="min-w-0">{cards}</aside>
-              <aside className="min-w-0" ref={rodsRef}>{rods}</aside>
-              <aside className="min-w-0">{dosimeter}</aside>
+              <aside className="min-w-0" data-tutorial="balance">{cards}</aside>
+              <aside className="min-w-0" ref={rodsRef} data-tutorial="rod-display">{rods}</aside>
+              <aside className="min-w-0" data-tutorial="dosimeter">{dosimeter}</aside>
             </div>
           </div>
         </div>
@@ -209,20 +230,20 @@ export default function GamePage() {
               Phones: stacked, the cards below the chart and the dosimeter last (owner, 2026-10-16). */}
           <div className="w-full cr-monitor-wall px-3 py-5 sm:px-4 md:py-8">
             <div className="mx-auto w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              <div className="w-full min-w-0 md:col-span-2 md:row-start-1">
+              <div className="w-full min-w-0 md:col-span-2 md:row-start-1" data-tutorial="camera">
                 {camera}
               </div>
-              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2" ref={chartRef}>
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2" ref={chartRef} data-tutorial="chart">
                 {chart}
               </aside>
-              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto order-last md:order-none md:col-start-2 md:row-start-3">
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto order-last md:order-none md:col-start-2 md:row-start-3" data-tutorial="dosimeter">
                 {dosimeter}
               </aside>
               {/* Legasov's red and blue cards (owner, 2026-10-13), then the rod display */}
-              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2">
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2" data-tutorial="balance">
                 {cards}
               </aside>
-              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-3" ref={rodsRef}>
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-3" ref={rodsRef} data-tutorial="rod-display">
                 {rods}
               </aside>
             </div>

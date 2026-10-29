@@ -1786,6 +1786,19 @@
   }
 }
 
+/* The menu's four screens hold still, and the room behind it stops moving while it is open: fewer animated layers
+   for a phone to repaint inside a scrolling dialog (2026-10-29) */
+.cr-mode-dialog .ws5-crt-text {
+  animation: none;
+}
+
+.cr-home-menu-open .cr-ember,
+.cr-home-menu-open .cr-beacon,
+.cr-home-menu-open .cr-beacon-glow,
+.cr-home-menu-open .ws3-crt-sweep {
+  animation-play-state: paused;
+}
+
 .cr-dialog-title {
   display: flex;
   align-items: center;
@@ -2719,4 +2732,216 @@
   border-radius: 3px;
   background: linear-gradient(180deg, #bdb9ab, #c9c5b8);
   box-shadow: 0 0 0 1px #8e8a7d, inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ---- Control-room briefing (owner, 2026-10-29): components/tutorial.tsx ---- */
+/* The amber frame round whatever the engineer is talking about */
+.cr-tut-ring {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  border: 3px solid #f0b429;
+  border-radius: 6px;
+  box-shadow: 0 0 22px 3px rgba(240, 180, 41, 0.7);
+  animation: cr-tut-ring-in 0.35s ease-out;
+}
+
+@keyframes cr-tut-ring-in {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+/* His words, typed on a ruled sheet */
+.cr-tut-card {
+  position: relative;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 3px;
+  color: #23221f;
+  font-family: var(--font-typed), "Courier New", monospace;
+  background-color: #f4efe1;
+  background-image: repeating-linear-gradient(180deg, transparent 0 23px, rgba(70, 110, 160, 0.2) 23px 24px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.cr-tut-meta {
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5f5a4f;
+}
+
+.cr-tut-title {
+  margin: 0 0 4px;
+  font-size: 21px;
+  line-height: 26px;
+}
+
+.cr-tut-text {
+  margin: 0 0 8px;
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.cr-tut-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(35, 34, 31, 0.35);
+}
+
+/* Small typed keys, plain text that shades on hover */
+.cr-tut-btn {
+  height: 32px;
+  padding: 0 10px;
+  border: 1.5px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  color: #3a362e;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cr-tut-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.cr-tut-btn:disabled {
+  color: #b0aa9b;
+  cursor: default;
+}
+
+.cr-tut-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: -6px;
+  border-radius: 3px;
+  color: #3a362e;
+  cursor: pointer;
+}
+
+.cr-tut-close:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.cr-tut-btn:focus-visible,
+.cr-tut-close:focus-visible {
+  outline: 2px solid #c9921f;
+  outline-offset: 2px;
+}
+
+/* The sheet's corner points down at him */
+.cr-tut-tail {
+  position: absolute;
+  bottom: -19px;
+  width: 26px;
+  height: 20px;
+  background: #f4efe1;
+}
+
+.cr-tut-tail-left {
+  left: 10px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.cr-tut-tail-right {
+  right: 10px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+/* On a phone the sheet is narrower and its type a size smaller */
+@media (max-width: 639px) {
+  .cr-tut-card {
+    padding: 8px 12px;
+    background-image: repeating-linear-gradient(180deg, transparent 0 20px, rgba(70, 110, 160, 0.2) 20px 21px);
+  }
+  .cr-tut-meta {
+    font-size: 12px;
+  }
+  .cr-tut-title {
+    margin-bottom: 2px;
+    font-size: 18px;
+    line-height: 22px;
+  }
+  .cr-tut-text {
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 21px;
+  }
+  .cr-tut-btn {
+    font-size: 14px;
+  }
+}
+
+/* The engineer: he bobs, blinks, talks while his words type out, and gestures with his raised hand */
+.cr-eng-bob {
+  animation: cr-eng-bob 3.2s ease-in-out infinite;
+}
+
+@keyframes cr-eng-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.cr-eng-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cr-eng-blink 4.6s infinite;
+}
+
+@keyframes cr-eng-blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+.cr-eng-talk {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cr-eng-talk 0.26s ease-in-out infinite alternate;
+}
+
+@keyframes cr-eng-talk {
+  to {
+    transform: scaleY(2.6);
+  }
+}
+
+.cr-eng-wave {
+  transform-box: view-box;
+  transform-origin: 110px 104px;
+  animation: cr-eng-wave 2.6s ease-in-out infinite;
+}
+
+@keyframes cr-eng-wave {
+  50% {
+    transform: rotate(-6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-tut-ring,
+  .cr-eng-bob,
+  .cr-eng-blink,
+  .cr-eng-talk,
+  .cr-eng-wave {
+    animation: none;
+  }
 }

@@ -24,7 +24,7 @@ export default function MessageArea({ gameState, alarmRevealSignal, logRevealSig
   const warnings = [...getReactorWarnings(gameState), ...getEventWarnings(gameState)]
 
   return (
-    <div className={`${wide ? "" : "max-w-6xl"} mx-auto cr-panel cr-screws p-3 sm:p-4 md:px-6 space-y-3`}>
+    <div className={`${wide ? "" : "max-w-6xl"} mx-auto cr-panel cr-screws p-3 sm:p-4 md:px-6 space-y-3`} data-tutorial="messages">
       <AlarmScreen warnings={warnings} revealSignal={alarmRevealSignal} />
       <ShiftLogPrinter gameState={gameState} revealSignal={logRevealSignal} onInView={onLogInView} />
     </div>

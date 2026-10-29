@@ -19,8 +19,10 @@ const SHEET_TILT = [-0.8, 0.6, 0.4, -0.5]
 export function DifficultyModal({ open, onSelectDifficulty, onOpenChange }: DifficultyModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* Centred by margins, not a transform, and it fades in without zooming: on phones a scrolling dialog that is
+          transformed sometimes left a SKALA screen or a key unpainted until it was scrolled away and back (2026-10-29) */}
       <DialogContent
-        className="cr-dialog cr-mode-dialog max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem]"
+        className="cr-dialog cr-mode-dialog inset-0 m-auto h-fit translate-x-0 translate-y-0 data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem]"
         showCloseButton={true}
       >
         <DialogHeader>

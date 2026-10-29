@@ -24,6 +24,7 @@ interface ControlPanelProps {
   logLampLit: boolean // a new shift-log message hasn't been seen yet
   onSeeWarnings: () => void
   onSeeLog: () => void
+  briefing?: boolean // the control-room briefing is on: paused, but the machine keys look as they will in play
 }
 
 // The compact desk (owner, 2026-10-23, "machine keys"): a thin nameplate strip over one row of keys, the readings three
@@ -34,7 +35,7 @@ interface ControlPanelProps {
 // nameplate lamps' flasher; a lit lamp only shows it.
 function LampKey({ lit, colour, label, ariaLabel, onClick, className = "" }: { lit: boolean; colour: "red" | "amber"; label: string; ariaLabel: string; onClick: () => void; className?: string }) {
   return (
-    <span className={`cr-bezel w-full ${className}`}>
+    <span className={`cr-bezel w-full ${className}`} data-tutorial="desk-keys">
       <button className={`cr-key cr-key-lamp cr-key-lamp-${colour} w-full h-8 px-2 !text-[0.75rem] !tracking-[0.08em]`} aria-label={ariaLabel} onClick={onClick}>
         <span aria-hidden="true" className={`cr-key-lit ${lit ? "on" : ""}`} />
         <span className="relative">{label}</span>
@@ -45,10 +46,11 @@ function LampKey({ lit, colour, label, ariaLabel, onClick, className = "" }: { l
 
 // A readout bay: engraved plate above, instrument below. A reading that can warn has a red lens for its nameplate,
 // lit from behind and flashing while the value is in a warning band (owner, 2026-10-23).
-function Bay({ label, warn, className = "", children }: { label: string; warn?: boolean; className?: string; children: ReactNode }) {
+// `tutorial` names it for the control-room briefing (lib/tutorial).
+function Bay({ label, warn, tutorial, className = "", children }: { label: string; warn?: boolean; tutorial: string; className?: string; children: ReactNode }) {
   const lamp = warn !== undefined
   return (
-    <div className={`cr-module min-w-0 p-1.5 flex flex-col gap-1.5 ${className}`}>
+    <div className={`cr-module min-w-0 p-1.5 flex flex-col gap-1.5 ${className}`} data-tutorial={tutorial}>
       <div className={`cr-plate cr-plate-compact ${lamp ? `cr-plate-lens ${warn ? "on" : ""}` : ""}`}>
         {label}
         {/* Always mounted, so every lamp's flasher keeps time with the others; a warning only shows it */}
@@ -64,9 +66,9 @@ function Bay({ label, warn, className = "", children }: { label: string; warn?: 
 }
 
 // One machine: its status window above, and a key with its name that opens its controls
-function Machine({ label, ariaLabel, disabled, onOpen, children }: { label: string; ariaLabel: string; disabled: boolean; onOpen: () => void; children: ReactNode }) {
+function Machine({ label, ariaLabel, disabled, tutorial, onOpen, children }: { label: string; ariaLabel: string; disabled: boolean; tutorial: string; onOpen: () => void; children: ReactNode }) {
   return (
-    <div className="cr-module min-w-0 p-1.5 flex flex-col gap-1.5">
+    <div className="cr-module min-w-0 p-1.5 flex flex-col gap-1.5" data-tutorial={tutorial}>
       {children}
       <span className="cr-bezel w-full">
         <button onClick={onOpen} disabled={disabled} aria-label={ariaLabel} className="cr-key w-full h-8 px-1 !text-[0.8rem] !tracking-[0.12em]">
@@ -77,7 +79,7 @@ function Machine({ label, ariaLabel, disabled, onOpen, children }: { label: stri
   )
 }
 
-export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick, onSoundEffect, logLampLit, onSeeWarnings, onSeeLog }: ControlPanelProps) {
+export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick, onSoundEffect, logLampLit, onSeeWarnings, onSeeLog, briefing = false }: ControlPanelProps) {
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
@@ -101,6 +103,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const lowFuelTempWarning = flags.lowFuelTemp
 
   const paused = gameState.isPaused
+  const keysOff = paused && !briefing
   const vfd = "font-mono font-bold vfd-display !px-1 !py-0.5 text-center text-sm"
   const led = "led-display !px-0 !py-1 text-center text-sm"
   const unit = <span className="text-[0.6rem] tracking-[0.1em] opacity-75 ml-1">MW</span>
@@ -115,12 +118,12 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             Reactor Control System
           </h1>
 
-          <span className="cr-bezel col-start-1 row-start-2">
+          <span className="cr-bezel col-start-1 row-start-2" data-tutorial="desk-keys">
             <button className="cr-key cr-key-cream w-[34px] h-8 px-0" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
               <Home className="h-4 w-4" />
             </button>
           </span>
-          <span className="cr-bezel col-start-6 row-start-2">
+          <span className="cr-bezel col-start-6 row-start-2" data-tutorial="desk-keys">
             <button className="cr-key cr-key-grey w-[34px] h-8 px-0" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
               {gameState.alarmsEnabled || gameState.effectsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </button>
@@ -144,7 +147,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           />
 
           {/* Pause lights while the simulation is paused */}
-          <span className="cr-bezel col-start-2 row-start-2">
+          <span className="cr-bezel col-start-2 row-start-2" data-tutorial="desk-keys">
             <button
               onClick={onTogglePause}
               aria-label={paused ? "Resume" : "Pause"}
@@ -153,7 +156,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
               {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
             </button>
           </span>
-          <span className="cr-bezel col-start-5 row-start-2">
+          <span className="cr-bezel col-start-5 row-start-2" data-tutorial="desk-keys">
             <button
               onClick={() => setShowReactorView(true)}
               aria-label="View the reactor camera"
@@ -168,7 +171,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         <div className="grid gap-2.5">
           <div className="grid grid-cols-3 gap-1.5">
             {/* Output and target on one meter, as a setpoint is shown beside its reading */}
-            <Bay label="Power · Output / Target" className="col-span-2">
+            <Bay label="Power · Output / Target" tutorial="power" className="col-span-2">
               <div className="cr-screen-bezel">
                 <div className={`${led} grid grid-cols-2`}>
                   <span className={isOnTarget ? "led-green" : "text-red-500"}>
@@ -189,7 +192,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
               </div>
             </Bay>
 
-            <Bay label="Performance">
+            <Bay label="Performance" tutorial="performance">
               {/* With no target, performance holds its value (Free mode stays at 100%; the Safety Test freezes it) */}
               <div className="cr-screen-bezel">
                 <div className={`${led} ${gameState.performance >= 70 ? "led-green" : gameState.performance >= 40 ? "led-amber" : ""}`}>
@@ -198,27 +201,27 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
               </div>
             </Bay>
 
-            <Bay label="Radioactivity" warn={lowRadioactivityWarning || highRadioactivityWarning}>
+            <Bay label="Radioactivity" tutorial="radioactivity" warn={lowRadioactivityWarning || highRadioactivityWarning}>
               <div className={vfd}>{Math.round(gameState.radioactivity)}</div>
             </Bay>
 
-            <Bay label="Reactor Temp" warn={highReactorTempWarning}>
+            <Bay label="Reactor Temp" tutorial="reactor-temp" warn={highReactorTempWarning}>
               <div className={vfd}>{Math.round(gameState.reactorTemp)}°</div>
             </Bay>
 
-            <Bay label="Fuel Temp" warn={lowFuelTempWarning}>
+            <Bay label="Fuel Temp" tutorial="fuel-temp" warn={lowFuelTempWarning}>
               <div className={vfd}>{Math.round(gameState.fuelTemp)}°</div>
             </Bay>
 
-            <Bay label="Steam" warn={highSteamWarning || lowSteamWarning}>
+            <Bay label="Steam" tutorial="steam" warn={highSteamWarning || lowSteamWarning}>
               <div className={vfd}>{Math.round(gameState.steamVolume)}</div>
             </Bay>
 
-            <Bay label="Xenon" warn={highXenonWarning}>
+            <Bay label="Xenon" tutorial="xenon" warn={highXenonWarning}>
               <div className={vfd}>{Math.round(gameState.xenon)}%</div>
             </Bay>
 
-            <Bay label="Time">
+            <Bay label="Time" tutorial="time">
               <div className="cr-screen-bezel">
                 <div className={`${led} led-amber !text-[0.8rem]`}>{formatTime(gameState.gameTime)}</div>
               </div>
@@ -227,7 +230,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
           <div className="grid grid-cols-3 gap-1.5">
             {/* Water pumps: on (green) over powered (amber), one column per pump */}
-            <Machine label="Pumps" ariaLabel="Manage the water pumps" disabled={paused} onOpen={() => !paused && setPumpsModalOpen(true)}>
+            <Machine label="Pumps" tutorial="pumps" ariaLabel="Manage the water pumps" disabled={keysOff} onOpen={() => !paused && setPumpsModalOpen(true)}>
               <div className="h-9 bg-black/80 border-2 border-neutral-800 rounded-md shadow-inner flex items-center justify-center">
                 <div className="grid grid-cols-4 gap-x-1.5">
                   {gameState.waterPumps.map((pump, idx) => (
@@ -241,7 +244,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             </Machine>
 
             {/* Control rods: each rod's insertion on the VFD (0% at the top), the ten bars across its full width */}
-            <Machine label="Rods" ariaLabel="Manage the control rods" disabled={paused} onOpen={() => !paused && setRodsModalOpen(true)}>
+            <Machine label="Rods" tutorial="rods" ariaLabel="Manage the control rods" disabled={keysOff} onOpen={() => !paused && setRodsModalOpen(true)}>
               <div className={`h-9 vfd-display !px-0 !py-0.5 w-full relative flex flex-col justify-between`}>
                 <div className="w-full border-t-2 border-black/60 h-0"></div>
                 <div className="absolute left-1 right-1 top-1 bottom-1 flex justify-between">
@@ -267,7 +270,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             </Machine>
 
             {/* Turbine: on the grid (green), over-pressure (red, flashing at steam 300 and above), feeding the pumps (amber) */}
-            <Machine label="Turbine" ariaLabel="Manage the turbine" disabled={paused} onOpen={() => !paused && setTurbineModalOpen(true)}>
+            <Machine label="Turbine" tutorial="turbine" ariaLabel="Manage the turbine" disabled={keysOff} onOpen={() => !paused && setTurbineModalOpen(true)}>
               <div className={`h-9 bg-black/80 border-2 border-neutral-800 rounded-md shadow-inner flex items-center justify-center gap-1.5`}>
                 <div className="flex flex-col gap-1 items-center">
                   <div className={`retro-lamp w-2.5 h-2.5 rounded-full ${gameState.turbineConnected ? "bg-emerald-400 text-emerald-400 on shadow-[0_0_10px_currentColor]" : "bg-emerald-900/20"}`} />
