@@ -244,7 +244,10 @@ export const EVENT_TUNING = {
   eventGap: 20, // after an event ends, the next event or target change waits at least this long
   majorQuiet: 60, // after a major emergency ends, the next thing waits at least this long
   holdAfterTargetChange: 90, // a hold request waits this long after a target change takes effect, so the player can settle
-  warningLead: { "power-cut": 40, "rod-stuck": 25 } as Partial<Record<string, number>>, // advance warning (§12)
+  holdStepFactor: 0.5, // a hold request's new target is at most half a target change's step away (owner, 2026-10-29)
+  // Advance warning (§12). A grid hold's is its notice: the new target is named and in force at once, and the narrow
+  // window starts this long after, so a competent player can get there first (about 60–70 s; owner, 2026-10-29).
+  warningLead: { "power-cut": 40, "rod-stuck": 25, "grid-hold": 60 } as Partial<Record<string, number>>,
   turbineTripSeconds: 20, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12)
   // A rod sent in from 0% while steam is high jams with only its graphite tip in the core, as the rods did when AZ-5
   // was pressed on 26 April 1986 (owner, 2026-10-16). Permanent, like an event jam.

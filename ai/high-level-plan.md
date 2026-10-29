@@ -318,7 +318,8 @@ Each ending gets its own game-over presentation.
 - **New, smaller events (fit the theme):**
   - **Single pump trip:** one pump fails for a period. A lighter alternative to a full power cut.
   - **Turbine trip:** consequence-based rather than random. Sustained over-pressure (the existing OVR-P lamp) trips the turbine off the grid. This gives the high-steam warning a real consequence.
-  - **Grid controller "hold" request:** the grid asks the station to hold its current output for a period (Kiev's request from the show). Flavour plus mild pressure. The window for power output matching power target reduces by 50% for the duration of the event.
+  - **Grid controller "hold" request:** the grid asks the station to hold a new output for a period (Kiev's request from the show). Flavour plus mild pressure. The new target is at most half as far from the current one as a normal target change, is named in the request and takes effect at once; a minute later, the window for power output matching power target reduces by 50% for the rest of the event.
+- **The first thing in every Easy or Hard shift is a power target change.**
 - Retire the rigid power-cut / rod-jam alternation in favour of the budget above.
 
 **Starting values by mode** (tune in playtests):

@@ -2,6 +2,13 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.26 – 2026-10-29 (Grid holds move the target; every shift opens with a target change)
+
+- **A grid hold now asks for a new target** (Section 12, owner). Before, the target could stay the same through a target change and one or two holds, with only the window changing. The new target is drawn like a normal change, at half the step (Easy 300–1,000 MW, Hard 300–1,200 MW), and it keeps the same range and the same rarity of low targets.
+- **The hold gives a minute's notice** (Claude, for the owner to review). The request names the new target, which takes effect at once at normal tolerance; the half-width window starts a minute later. **Why:** with the narrow window in force at once, the competent-player bot needed a median of 60–70 s to get inside it, so about half of each hold was lost performance (Easy, on target during holds: 94% before, 41% without notice, 88% with it). Setting the hold's notice to 0 in `EVENT_TUNING.warningLead` brings back "in force at once".
+- **The first planned item in every Easy and Hard shift is a target change** (Section 12, owner). The rest of the order is still random.
+- Bot on target over a whole shift (40 seeds): Easy 73% → 71%, Hard 64% → 61%; survival unchanged. Every hold now moves the target, and an early target change replaces opening minutes the bot would otherwise spend already on target. The §13 check's Easy bar drops from 75% to 70% to match.
+
 ## v2.25 – 2026-10-27 (The turbine can supply the pumps at any time)
 
 - **A turbine switched to the pumps now supplies them whether or not their normal supply is available** (Section 8, owner). The wiring is there, so the choice belongs to the player, even though it is a poor one outside a power cut: output drops to 0, and unless steam is plentiful fewer pumps run. Before this, the mode did nothing for the pumps while mains was on. When a power cut ends, pumps on the turbine stay on it until the player switches back, and the head engineer now says so.

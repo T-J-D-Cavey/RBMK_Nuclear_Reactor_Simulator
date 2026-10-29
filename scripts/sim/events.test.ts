@@ -8,7 +8,7 @@ import { seededRng } from "../../lib/sim/rng"
 import { getRodMargin } from "../../lib/sim/reactor"
 import { advanceGame, createNewGame } from "../../lib/game-loop"
 import { isPowerOnTarget } from "../../lib/game-mechanics"
-import { AZ5_LAMP_SECONDS, checkEventWarnings, getAlarms, getWarningFlags, isAz5LampLit } from "../../lib/game-utils"
+import { AZ5_LAMP_SECONDS, checkEventWarnings, formatMW, getAlarms, getWarningFlags, isAz5LampLit } from "../../lib/game-utils"
 import { applyPendingTarget, checkTurbineTrip, planShiftEvents, runShiftEvents, startEvent } from "../../lib/game-events"
 import {
   AZ5_ORDER,
@@ -46,15 +46,17 @@ function shifts(mode: GameMode): GameRun[] {
   return played.get(mode)!
 }
 
-// Target changes seen in a run: when announced, when in force, from and to.
-function targetChanges(run: GameRun) {
-  const changes: { announced: number; effective: number; from: number; to: number }[] = []
+// Target changes seen in a run: when announced, when in force, from and to, and whether a grid hold set it (a hold
+// names its target and sets it at once, at its notice; an announced change was pending first).
+function targetChanges(run: GameRun, which: "announced" | "hold" | "all" = "announced") {
+  const changes: { announced: number; effective: number; from: number; to: number; hold: boolean }[] = []
   let announced = -1
   run.states.forEach((s, i) => {
     const prev = run.states[i - 1]
     if (s.pendingTarget && !prev?.pendingTarget) announced = i + 1
     if (prev && s.powerTarget !== prev.powerTarget && s.powerTarget !== null && prev.powerTarget !== null) {
-      changes.push({ announced, effective: i + 1, from: prev.powerTarget, to: s.powerTarget })
+      const hold = !prev.pendingTarget
+      if (which === "all" || hold === (which === "hold")) changes.push({ announced, effective: i + 1, from: prev.powerTarget, to: s.powerTarget, hold })
     }
   })
   return changes
@@ -72,6 +74,8 @@ test("§12 the shift's plan: always the same number of things, one major emergen
       const plan = planShiftEvents(tuning, length, seededRng(seed))
       const why = `${mode} seed ${seed}: ${plan.map((e) => `${e.kind}@${e.at}`).join(" ")}`
       assert.equal(plan.length, tuning.totalEvents, why)
+      // The shift opens with a target change (owner, 2026-10-29)
+      assert.equal(plan[0].kind, "target-change", why)
       const m = plan.filter((e) => isMajor(e.kind))
       // At most one of each kind (owner, 2026-10-16): Easy draws one, Hard both
       assert.equal(m.length, tuning.majors, why)
@@ -300,13 +304,35 @@ test("§12 a pump trip takes one running pump out for a while", () => {
   assert.equal(s.stats.emergenciesHandled, 0, "a smaller event is not a major emergency")
 })
 
-test("§12 a grid hold request halves the tolerance and the grid announces nothing new meanwhile", () => {
+test("§12 a grid hold request sets a new target, half a change's step away, halves the tolerance, and the grid announces nothing new meanwhile", () => {
   assert.equal(getPowerTolerance(5000, true), 250)
-  let s = startEvent({ ...quietGame("hard"), powerOutput: 5300 }, "grid-hold", EVENT_TUNING.hard, seededRng(1))
-  assert.equal(isPowerOnTarget(s), false)
-  assert.equal(isPowerOnTarget({ ...s, powerOutput: 5200 }), true)
+  const before = quietGame("hard")
+  let s = startEvent({ ...before, powerOutput: before.powerTarget! }, "grid-hold", EVENT_TUNING.hard, seededRng(1))
+  const target = s.powerTarget!
+  const step = Math.abs(target - before.powerTarget!)
+  assert.ok(step >= EVENT_TUNING.hard.targetMinStep * EVENT_TUNING.holdStepFactor, `hold step ${step} MW`)
+  assert.ok(step <= EVENT_TUNING.hard.targetMaxStep * EVENT_TUNING.holdStepFactor, `hold step ${step} MW`)
+  assert.ok(s.log.at(-1)!.text.includes(formatMW(target)), s.log.at(-1)!.text)
+  const tolerance = getPowerTolerance(target, true)
+  assert.equal(isPowerOnTarget({ ...s, powerOutput: target + tolerance + 10 }), false)
+  assert.equal(isPowerOnTarget({ ...s, powerOutput: target + tolerance - 10 }), true)
   s = runShiftEvents({ ...s, eventPlan: [{ at: 0, kind: "target-change", warned: false }] }, seededRng(1))
   assert.equal(s.pendingTarget, null)
+})
+
+test("§12 every grid hold in a shift is at a new target, half a target change's step at most", () => {
+  for (const mode of ["easy", "hard"] as const) {
+    const tuning = EVENT_TUNING[mode]
+    for (const run of shifts(mode)) {
+      for (const c of targetChanges(run, "hold")) {
+        const size = Math.abs(c.to - c.from)
+        assert.ok(size >= tuning.targetMinStep * EVENT_TUNING.holdStepFactor && size <= tuning.targetMaxStep * EVENT_TUNING.holdStepFactor, `${mode}: hold step ${size} MW`)
+        assert.ok(c.to >= tuning.targetRange[0] && c.to <= tuning.targetRange[1], `${mode}: hold target ${c.to}`)
+      }
+      const holds = run.states.filter((s, i) => i > 0 && s.activeEvents.some((e) => e.type === "grid-hold") && !run.states[i - 1].activeEvents.some((e) => e.type === "grid-hold")).length
+      assert.equal(targetChanges(run, "hold").length, holds, `${mode}: every hold changes the target`)
+    }
+  }
 })
 
 // ---------- §13 Power targets ----------
@@ -355,14 +381,15 @@ test("§13 a competent player meets the targets on Easy and Hard, and Hard is ha
     })
   const easy = mean(onTarget("easy"))
   const hard = mean(onTarget("hard"))
-  assert.ok(easy >= 0.75, `easy on target ${(100 * easy).toFixed(0)}%`)
+  // 73% over 40 seeds before every hold moved the target and the shift opened with a change (owner, 2026-10-29); 71% after
+  assert.ok(easy >= 0.7, `easy on target ${(100 * easy).toFixed(0)}%`)
   assert.ok(hard >= 0.5 && hard < easy, `hard on target ${(100 * hard).toFixed(0)}% (easy ${(100 * easy).toFixed(0)}%)`)
   // Nearly every target that stays in force for two minutes is reached.
   for (const mode of ["easy", "hard"] as const) {
     let held = 0
     let met = 0
     for (const run of shifts(mode)) {
-      const changes = targetChanges(run)
+      const changes = targetChanges(run, "all")
       changes.forEach((c, i) => {
         const end = (changes[i + 1]?.effective ?? run.states.length) - 1
         if (end - c.effective < 120) return

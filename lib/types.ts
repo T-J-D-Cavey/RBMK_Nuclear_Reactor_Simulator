@@ -65,6 +65,7 @@ export interface ScheduledEvent {
   kind: PlannedKind
   warned: boolean // advance warning already given
   duration?: number // drawn when the shift is planned, so the plan can space everything out
+  target?: number // a grid hold's target, named and set at its advance notice
 }
 
 // A target change the grid (or the Safety Test script) has announced but which is not yet in force.

@@ -95,19 +95,21 @@ function separation(a: ScheduledEvent, b: ScheduledEvent, tuning: ShiftEventTuni
 
 // The shift's plan (owner, 2026-10-19): always the same number of things, made of the major emergencies (at most one
 // of each kind, as a rod jam is permanent), a random number of smaller events (pump trips, hold requests) and target
-// changes for the rest. The order is random. Spare time is shared out almost evenly between them, so the shift
-// neither clusters nor goes quiet for long, and nothing is ever dropped. Major emergencies keep out of the first few
-// minutes and apart from each other; nothing starts in the last couple of minutes.
+// changes for the rest. The first is always a target change (owner, 2026-10-29); after it the order is random. Spare
+// time is shared out almost evenly between them, so the shift neither clusters nor goes quiet for long, and nothing
+// is ever dropped. Major emergencies keep out of the first few minutes and apart from each other; nothing starts in
+// the last couple of minutes.
 export function planShiftEvents(tuning: ShiftEventTuning, shiftLength: number, rng: Rng): ScheduledEvent[] {
   const from = tuning.firstAfter
   const to = shiftLength - tuning.lastStartBefore
   const majors = shuffle(rng, ["power-cut", "rod-stuck"] as EventKind[]).slice(0, tuning.majors)
   const minors = wholeBetween(rng, tuning.minorCounts)
-  const targets = Math.max(0, tuning.totalEvents - majors.length - minors)
+  const targets = Math.max(1, tuning.totalEvents - majors.length - minors)
   let best: { items: ScheduledEvent[]; slack: number } | null = null
   for (let tries = 0; tries < 500; tries++) {
     const minorKinds = Array.from({ length: minors }, (): EventKind => (rng() < 0.5 ? "pump-trip" : "grid-hold"))
-    const kinds = shuffle<PlannedKind>(rng, [...majors, ...minorKinds, ...Array<PlannedKind>(targets).fill("target-change")])
+    const rest = shuffle<PlannedKind>(rng, [...majors, ...minorKinds, ...Array<PlannedKind>(targets - 1).fill("target-change")])
+    const kinds: PlannedKind[] = ["target-change", ...rest]
     const items: ScheduledEvent[] = kinds.map((kind) => ({ at: 0, kind, warned: false, duration: plannedDuration(kind, tuning, rng) }))
     const gaps = items.slice(1).map((b, i) => separation(items[i], b, tuning))
     const slack = to - from - sum(gaps)
@@ -153,10 +155,17 @@ export function runShiftEvents(state: GameState, rng: Rng): GameState {
     )
   }
 
-  // Brief warning before a major emergency (bible §12), e.g. grid instability before a power cut.
-  let plan = (s.eventPlan ?? []).map((e) => {
+  // Brief warning before a major emergency (bible §12), e.g. grid instability before a power cut, and a grid hold's
+  // notice. A hold's notice sets its target, so it waits until the hold is next and no target change is pending.
+  let plan = (s.eventPlan ?? []).map((e, i) => {
     const lead = EVENT_TUNING.warningLead[e.kind]
     if (!lead || e.warned || now < e.at - lead) return e
+    if (e.kind === "grid-hold") {
+      if (i > 0 || s.pendingTarget || s.powerTarget === null || s.activeEvents.length) return e
+      const target = nextTarget(s.powerTarget, tuning, rng, EVENT_TUNING.holdStepFactor)
+      s = addLog({ ...s, powerTarget: target }, "grid", holdRequest(target, e.duration ?? 0, true), GRID_CONTROLLER)
+      return { ...e, warned: true, target }
+    }
     const warning = e.kind === "target-change" ? undefined : WARNINGS[e.kind]
     if (warning) s = addLog(s, warning.source, warning.text, warning.from)
     return { ...e, warned: true }
@@ -165,9 +174,18 @@ export function runShiftEvents(state: GameState, rng: Rng): GameState {
   const [next, ...rest] = plan
   if (next && next.at <= now && canStart(s, next)) {
     plan = rest
-    s = next.kind === "target-change" ? announceTargetChange(s, tuning, now, rng) : startEvent(s, next.kind, tuning, rng, next.duration)
+    s = next.kind === "target-change" ? announceTargetChange(s, tuning, now, rng) : startEvent(s, next.kind, tuning, rng, next.duration, next.target)
   }
   return { ...s, eventPlan: plan }
+}
+
+// The grid's hold request: with notice (the narrow window starts in a minute) or at once
+function holdRequest(target: number, duration: number, notice: boolean): string {
+  const minutes = Math.max(1, Math.round(duration / 60))
+  const hold = `within ±${formatMW(getPowerTolerance(target, true))} for about ${minutes} minute${minutes > 1 ? "s" : ""}`
+  return notice
+    ? `We need you to bring power to ${formatMW(target)} within the next minute, then hold it ${hold}.`
+    : `We need you to bring power to ${formatMW(target)} and hold it ${hold}.`
 }
 
 function startShift(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
@@ -188,8 +206,9 @@ const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; tex
   },
 }
 
-// Start an event now, lasting as long as planned (or a fresh draw). Exported so tests can trigger one directly.
-export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEventTuning, rng: Rng, planned?: number): GameState {
+// Start an event now, lasting as long as planned (or a fresh draw). A grid hold given notice brings the target it set
+// then (noticed). Exported so tests can trigger one directly.
+export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEventTuning, rng: Rng, planned?: number, noticed?: number): GameState {
   const now = getShiftTime(state)
   const base = { id: `event-${kind}-${now}`, type: kind, timestamp: state.gameTime }
   let s = state
@@ -222,14 +241,15 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
     }
     case "grid-hold": {
       if (s.powerTarget === null) return s
+      // Every hold is at a new target, so the target doesn't sit unchanged through several events (owner, 2026-10-29).
+      // It is named with its window, so the step is half a target change's: different, but quick to reach.
       const duration = planned ?? Math.round(between(rng, tuning.gridHoldSeconds))
-      const minutes = Math.max(1, Math.round(duration / 60))
-      s = addLog(
-        s,
-        "grid",
-        `We need you to hold power at ${formatMW(s.powerTarget)}, within ±${formatMW(getPowerTolerance(s.powerTarget, true))}, for about ${minutes} minute${minutes > 1 ? "s" : ""}.`,
-        GRID_CONTROLLER,
-      )
+      if (noticed !== undefined) {
+        s = addLog(s, "grid", `Hold now in force: ${formatMW(noticed)}, within ±${formatMW(getPowerTolerance(noticed, true))}.`, GRID_CONTROLLER)
+      } else {
+        const target = nextTarget(s.powerTarget, tuning, rng, EVENT_TUNING.holdStepFactor)
+        s = addLog({ ...s, powerTarget: target }, "grid", holdRequest(target, duration, false), GRID_CONTROLLER)
+      }
       return begin(s, { ...base, duration })
     }
   }
@@ -295,20 +315,23 @@ export function jamRodsInHighSteam(state: GameState): GameState {
 
 // --- Power targets (bible §13) ---
 
-// Smaller steps than before, within the mode's range, never trivially small; low targets are kept rarely.
-export function nextTarget(current: number, tuning: ShiftEventTuning, rng: Rng): number {
+// Smaller steps than before, within the mode's range, never trivially small; low targets are kept rarely. A grid
+// hold scales the step range down (stepFactor).
+export function nextTarget(current: number, tuning: ShiftEventTuning, rng: Rng, stepFactor = 1): number {
   const [min, max] = tuning.targetRange
-  const lo = Math.max(min, current - tuning.targetMaxStep)
-  const hi = Math.min(max, current + tuning.targetMaxStep)
+  const maxStep = tuning.targetMaxStep * stepFactor
+  const minStep = tuning.targetMinStep * stepFactor
+  const lo = Math.max(min, current - maxStep)
+  const hi = Math.min(max, current + maxStep)
   for (let tries = 0; tries < 50; tries++) {
     const target = Math.min(max, Math.max(min, Math.round(between(rng, [lo, hi]) / 100) * 100))
-    if (Math.abs(target - current) < tuning.targetMinStep) continue
+    if (Math.abs(target - current) < minStep) continue
     // A low target is a xenon trap: good tension, used sparingly.
     if (target < tuning.lowTargetBelow && rng() >= tuning.lowTargetChance) continue
     return target
   }
   const towardMiddle = current < (min + max) / 2 ? 1 : -1
-  return Math.min(max, Math.max(min, current + towardMiddle * tuning.targetMinStep))
+  return Math.min(max, Math.max(min, current + towardMiddle * Math.ceil(minStep / 100) * 100))
 }
 
 // The grid warns that demand has changed and confirms the new target when it takes effect, 60 s later (owner
