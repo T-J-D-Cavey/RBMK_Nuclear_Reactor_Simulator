@@ -312,12 +312,12 @@ Each ending gets its own game-over presentation.
 
 **Change:**
 - **Four kinds of event, about as many per minute on Easy and Hard.** Easy has one of each kind and one more of any kind: 5 in 15 minutes. Hard has two of each and two more of any kind: 10 in 30 minutes. Hard's are harder because they last longer and its rod jams take more rods.
-- **Random order and random times, but never two events at once.** No event starts in the first minute or the last two minutes of the shift. Between those, the time is shared out at random, so two events can come back to back or minutes apart.
+- **Random order and random times, but never two events at once.** No event starts in the first minute. They run right up to the end of the shift, with the last one over by the end. Between those, the time is shared out at random, so two events can come back to back or minutes apart.
 - **Target changes run separately** (Section 13), and can happen during any event.
 - **Brief warning in the shift log before an event where it fits** (e.g. "grid instability reported" shortly before a power cut) so the player can prepare. A pump trip comes unannounced.
 - **The events:**
   - **Power cut** (major emergency): the pumps lose their normal supply for a period. The turbine-to-pumps option makes it a decision.
-  - **Signal lost from the reactor hall** (major emergency): the link between the control room and the reactor hall goes down, so every reading taken in the hall is lost for a period: radioactivity, reactor and fuel temperature, steam, xenon, the camera, the chart recorder and the radioactivity balance. Each display flickers, shows ERR, then goes dark. The camera turns to snow and NO SIGNAL, the chart recorder's paper stops, and the balance shows an error. The alarm monitor can't see the reactor either: only the signal-loss warning shows, on the event alarm. Power output, the target, the time, the rods, the pumps, the dosimeter and the turbine are read elsewhere and keep working, so the player steers by power output, as operators once did. The reactor itself runs on as usual. A shift foreman warns of cabling faults shortly before; the head engineer reports the loss, and a technician reports when the readings are back.
+  - **Signal lost from the reactor hall** (major emergency): the link between the control room and the reactor hall goes down, so every reading taken in the hall is lost for a period: radioactivity, reactor and fuel temperature, steam, xenon, the camera, the chart recorder and the radioactivity balance. Each display's screen flickers between lit and unlit, shows ERR, then goes dark. The camera turns to snow and NO SIGNAL, the chart recorder's paper stops, and the balance shows NO SIGNAL. The alarm monitor can't see the reactor either: only the signal-loss warning shows, on the event alarm. Power output, the target, the time, the rods, the pumps, the dosimeter and the turbine are read elsewhere and keep working, so the player steers by power output, as operators once did. The reactor itself runs on as usual. A shift foreman warns of cabling faults shortly before; the head engineer reports the loss, and a technician reports when the readings are back.
   - **Single pump trip:** one pump fails for a period.
   - **Rod jam:** with rod travel (Section 10), a jam freezes each affected rod wherever it is, including mid-travel, for a period. The head engineer reports when the fuel channel is repaired and the rods can move again.
 - **Not events, and possible any time:** sustained over-pressure (the existing OVR-P lamp) trips the turbine off the grid, which gives the high-steam warning a real consequence. A rod sent in from 0% while steam is high jams for the rest of the shift (Section 10).
@@ -334,7 +334,7 @@ Each ending gets its own game-over presentation.
 
 **Player outcome:** the shift feels like running a reactor, punctuated by memorable crises, while the grid keeps asking for changes.
 
-**Acceptance checks:** every planned event happens, never two at once, none in the first minute or the last two. A turbine trip only happens after visible over-pressure warning. A rod jammed mid-travel stays where it stopped until the jam clears, then answers the levers again. During a signal loss, nothing on screen gives away a reading from the reactor hall.
+**Acceptance checks:** every planned event happens, never two at once, none in the first minute, and the last one over by the end of the shift. A turbine trip only happens after visible over-pressure warning. A rod jammed mid-travel stays where it stopped until the jam clears, then answers the levers again. During a signal loss, nothing on screen gives away a reading from the reactor hall.
 
 ---
 

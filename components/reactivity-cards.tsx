@@ -161,8 +161,7 @@ export default function ReactivityCards({ gameState, height, className = "" }: {
         </div>
         {fault && (
           <div className="cr-signal-screen absolute inset-2 sm:inset-2.5 flex flex-col items-center justify-center gap-1 text-center rounded-sm" role="status">
-            <span className={`text-4xl ${signal === "error" ? "cr-signal-err" : ""}`}>ERR</span>
-            <span className="text-lg uppercase tracking-[0.12em] px-3">No signal from reactor hall</span>
+            <span className={`text-4xl uppercase tracking-[0.12em] ${signal === "error" ? "cr-signal-err" : ""}`}>No signal</span>
           </div>
         )}
       </div>

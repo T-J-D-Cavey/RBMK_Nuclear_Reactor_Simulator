@@ -2,6 +2,13 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.29 – 2026-11-02 (Events up to the end of the shift; signal-loss wording)
+
+- **Events can now happen in the last two minutes** (Section 12, owner: events felt too close together). The plan spreads them from the first minute to the end of the shift, with the last one over by the end, so it still counts as handled. Target notices keep their two quiet minutes at the end.
+- **Signal loss** (Section 12, owner): the foreman's warning no longer says the readings may be affected, the warning reads "No incoming signal being received from reactor hall.", the radioactivity balance shows just NO SIGNAL, and each panel display's screen flickers between lit and unlit rather than the whole box fading.
+- **Hold request** (Section 13, owner): the grid's message no longer says "half the usual margin".
+- **Lens keys** (Section 2 guardrail, owner's choice from a prototype canvas): the confirm, cancel and menu keys are now sculpted keycaps in a key well, on a brushed aluminium plate held by two slotted screws. Their colours are unchanged.
+
 ## v2.28 – 2026-11-02 (Events and target changes on separate tracks; the next change waits for the player)
 
 - **Events are now a fixed set in a random order at random times, never two at once** (Section 12, owner).

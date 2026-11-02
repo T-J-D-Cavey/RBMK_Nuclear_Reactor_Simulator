@@ -65,12 +65,12 @@ function Bay({ label, warn, tutorial, className = "", children }: { label: strin
   )
 }
 
-// A reading taken in the reactor hall. With the hall's signal lost it flickers, shows ERR, then goes dark (owner,
-// 2026-10-30).
+// A reading taken in the reactor hall. With the hall's signal lost its screen flickers between lit and unlit, shows
+// ERR, then goes dark (owner, 2026-10-30; the screen flickers, not the whole box, 2026-11-02).
 function HallReading({ signal, className, children }: { signal: HallSignal; className: string; children: ReactNode }) {
   if (signal === "dark") return <div className={`${className} cr-vfd-dark`} aria-label="No signal">–</div>
   if (signal === "error") return <div className={className}><span className="cr-signal-err">ERR</span></div>
-  return <div className={`${className} ${signal === "flicker" ? "cr-signal-flicker" : ""}`}>{children}</div>
+  return <div className={`${className} ${signal === "flicker" ? "cr-vfd-flicker" : ""}`}>{children}</div>
 }
 
 // One machine: its status window above, and a key with its name that opens its controls

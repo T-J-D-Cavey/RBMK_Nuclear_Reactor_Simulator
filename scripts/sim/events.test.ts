@@ -103,8 +103,8 @@ test("§12 the shift's events: one of each kind (two on Hard) and a few more, ra
         if (n > tuning.eachKind) extraKinds.add(kind)
       }
       firstKinds.add(plan[0].kind)
-      // None in the first minute or the last two, each as long as its kind lasts, and never two at once
-      assert.ok(plan[0].at >= tuning.firstEventAfter && plan.at(-1)!.at <= length - tuning.lastStartBefore, why)
+      // None in the first minute, the last over by the end, each as long as its kind lasts, and never two at once
+      assert.ok(plan[0].at >= tuning.firstEventAfter && plan.at(-1)!.at + plan.at(-1)!.duration <= length, why)
       for (let i = 1; i < plan.length; i++) {
         assert.ok(plan[i].at >= plan[i - 1].at + plan[i - 1].duration, why)
         gaps.push(plan[i].at - plan[i - 1].at - plan[i - 1].duration)
@@ -354,7 +354,7 @@ test("§12 a signal loss darkens every reactor-hall reading and the alarms on th
   // The alarm computer can't see the reactor either: only the signal loss itself, on the event alarm
   const reactorKeys = ["highRadioactivity", "lowRadioactivity", "highReactorTemp", "lowFuelTemp", "highSteam", "lowSteam", "highXenon"]
   assert.ok(!getReactorWarnings(s).some((w) => reactorKeys.includes(w.key)), getReactorWarnings(s).map((w) => w.key).join())
-  assert.ok(checkEventWarnings(s).some((w) => w.startsWith("WARNING: Signal from reactor hall lost")))
+  assert.ok(checkEventWarnings(s).some((w) => w.startsWith("WARNING: No incoming signal being received from reactor hall")))
   const alarms = getAlarms(s)
   assert.deepEqual([alarms.event, alarms.highRadioactivity, alarms.highReactorTemp], [true, false, false])
   // It ends: readings and warnings back, the technician says so
@@ -506,7 +506,7 @@ test("§13 a hold: the usual notice, then the new target and the narrow window t
 })
 
 test("§13 nothing is announced in the last two minutes", () => {
-  const last = EVENT_TUNING.easy.lastStartBefore
+  const last = EVENT_TUNING.easy.lastNoticeBefore
   // Due just inside the last two minutes: never announced
   const late = trackTick({ ...freshTrack("easy"), gameTime: last - 1 }, 60, true)
   assert.equal(late.pendingTarget, null)

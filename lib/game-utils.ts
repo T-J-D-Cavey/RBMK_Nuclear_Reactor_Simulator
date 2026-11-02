@@ -158,7 +158,7 @@ export function getEventWarnings(state: GameState): Warning[] {
     warnings.push({ key: "pumpTrip", text: "WARNING: Ongoing water pump issue detected." })
   }
   if (isHallSignalLost(state)) {
-    warnings.push({ key: "signalLoss", text: "WARNING: Signal from reactor hall lost. Reactor instrument readings unavailable." })
+    warnings.push({ key: "signalLoss", text: "WARNING: No incoming signal being received from reactor hall." })
   }
   // Sustained over-pressure trips the turbine off the grid (bible §12): count down so it never comes unannounced.
   if (state.overpressureSeconds > 0 && state.turbineMode === "grid" && GAME_MODE_CONFIGS[state.mode]?.turbineTrips) {

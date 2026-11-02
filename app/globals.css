@@ -921,21 +921,34 @@
     0 20px 44px rgba(0, 0, 0, 0.7);
 }
 
-/* Four domed screw heads, one per corner */
+/* One slotted screw everywhere (owner, 2026-11-02: the lens keys' screws, a little smaller), the same 7px size on
+   consoles, bays, lens keys and the clipboard clips. Each is one small drawing, so its slot is always dead centre and
+   its edges are smooth: a steel head in a dark rim, the slot across it, and a glint along the slot's lower edge. The
+   four differ only in which way the slot turns, as real screws end up. */
+.cr-screws::before,
+.cr-bay-screws::after,
+.cr-lens-bezel::after,
+.cr-board-clip::after {
+  --screw-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cdefs%3E%3CradialGradient id='h' cx='.4' cy='.35' r='.75'%3E%3Cstop offset='0' stop-color='%23f6f6f2'/%3E%3Cstop offset='.5' stop-color='%23a9aaa4'/%3E%3Cstop offset='1' stop-color='%235a5b56'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='7' cy='7' r='6.25' fill='url(%23h)' stroke='%233a3b37' stroke-width='1.5'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%23fff' stroke-opacity='.5' stroke-width='1.4' stroke-linecap='round' transform='translate(0 .8) rotate(45 7 7)'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%232e2f2b' stroke-width='2.2' stroke-linecap='round' transform='rotate(45 7 7)'/%3E%3C/svg%3E");
+  --screw-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cdefs%3E%3CradialGradient id='h' cx='.4' cy='.35' r='.75'%3E%3Cstop offset='0' stop-color='%23f6f6f2'/%3E%3Cstop offset='.5' stop-color='%23a9aaa4'/%3E%3Cstop offset='1' stop-color='%235a5b56'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='7' cy='7' r='6.25' fill='url(%23h)' stroke='%233a3b37' stroke-width='1.5'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%23fff' stroke-opacity='.5' stroke-width='1.4' stroke-linecap='round' transform='translate(0 .8) rotate(-30 7 7)'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%232e2f2b' stroke-width='2.2' stroke-linecap='round' transform='rotate(-30 7 7)'/%3E%3C/svg%3E");
+  --screw-c: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cdefs%3E%3CradialGradient id='h' cx='.4' cy='.35' r='.75'%3E%3Cstop offset='0' stop-color='%23f6f6f2'/%3E%3Cstop offset='.5' stop-color='%23a9aaa4'/%3E%3Cstop offset='1' stop-color='%235a5b56'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='7' cy='7' r='6.25' fill='url(%23h)' stroke='%233a3b37' stroke-width='1.5'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%23fff' stroke-opacity='.5' stroke-width='1.4' stroke-linecap='round' transform='translate(0 .8) rotate(75 7 7)'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%232e2f2b' stroke-width='2.2' stroke-linecap='round' transform='rotate(75 7 7)'/%3E%3C/svg%3E");
+  --screw-d: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cdefs%3E%3CradialGradient id='h' cx='.4' cy='.35' r='.75'%3E%3Cstop offset='0' stop-color='%23f6f6f2'/%3E%3Cstop offset='.5' stop-color='%23a9aaa4'/%3E%3Cstop offset='1' stop-color='%235a5b56'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='7' cy='7' r='6.25' fill='url(%23h)' stroke='%233a3b37' stroke-width='1.5'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%23fff' stroke-opacity='.5' stroke-width='1.4' stroke-linecap='round' transform='translate(0 .8) rotate(10 7 7)'/%3E%3Cline x1='3.4' y1='7' x2='10.6' y2='7' stroke='%232e2f2b' stroke-width='2.2' stroke-linecap='round' transform='rotate(10 7 7)'/%3E%3C/svg%3E");
+}
+
+/* Four screws, one per corner */
 .cr-screws::before {
   content: "";
   position: absolute;
   inset: 5px;
   pointer-events: none;
-  --screw: radial-gradient(circle at 40% 35%, #b9b6ab 0 1px, #6c6a62 2.2px, #2e2d29 3.2px, rgba(0, 0, 0, 0) 3.8px);
   background:
-    var(--screw) left top / 8px 8px no-repeat,
-    var(--screw) right top / 8px 8px no-repeat,
-    var(--screw) left bottom / 8px 8px no-repeat,
-    var(--screw) right bottom / 8px 8px no-repeat;
+    var(--screw-a) left top / 7px 7px no-repeat,
+    var(--screw-b) right top / 7px 7px no-repeat,
+    var(--screw-c) left bottom / 7px 7px no-repeat,
+    var(--screw-d) right bottom / 7px 7px no-repeat;
 }
 
-/* The same screws, smaller, in the corners of each bay inside a console or dialog: the control panel's readout and
+/* The same screws in the corners of each bay inside a console or dialog: the control panel's readout and
    machine bays, the side panels' instrument bays, and the bays of the pumps, rods, turbine, sound and camera views
    (owner, 2026-11-02) */
 .cr-bay-screws {
@@ -947,12 +960,11 @@
   position: absolute;
   inset: 1px;
   pointer-events: none;
-  --screw: radial-gradient(circle at 40% 35%, #b9b6ab 0 0.8px, #6c6a62 1.7px, #2e2d29 2.5px, rgba(0, 0, 0, 0) 3px);
   background:
-    var(--screw) left top / 6px 6px no-repeat,
-    var(--screw) right top / 6px 6px no-repeat,
-    var(--screw) left bottom / 6px 6px no-repeat,
-    var(--screw) right bottom / 6px 6px no-repeat;
+    var(--screw-b) left top / 7px 7px no-repeat,
+    var(--screw-d) right top / 7px 7px no-repeat,
+    var(--screw-a) left bottom / 7px 7px no-repeat,
+    var(--screw-c) right bottom / 7px 7px no-repeat;
 }
 
 /* A control panel bay has only 6px of padding, so its screws sit right in the corners, clear of the nameplate */
@@ -1285,15 +1297,50 @@
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-/* ---- Lit lens keys: a translucent plastic cap with a lamp behind it, set in a black collar ----
-   The confirm, cancel and menu keys (owner, 2026-10-26: the mimic-board prototype's lit tiles, English legends only).
-   Green confirms, red cancels; amber and blue are for the mode menu. */
+/* ---- Lens keys: a sculpted keycap in a dark key well, cut into a brushed aluminium escutcheon held by two slotted
+   screws (owner, 2026-11-02: prototype I, B's keycap on H's escutcheon; the lit tiles before it from 2026-10-26).
+   The confirm, cancel and menu keys keep their colours: green confirms, red cancels; amber and blue are for the mode
+   menu. */
 .cr-lens-bezel {
+  position: relative;
   display: inline-flex;
-  padding: 5px 5px 9px;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #0d0f0e 0%, #272a28 100%);
-  box-shadow: inset 0 2px 4px #000, 0 1px 0 rgba(255, 255, 255, 0.45);
+  /* The escutcheon's margin around the well (7px 20px 8px), then the well's around the cap (5px 5px 7px) */
+  padding: 12px 25px 15px;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px),
+    linear-gradient(180deg, #dcddd8 0%, #a4a5a0 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 0 0 1px #4a4a46,
+    0 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* The key well */
+.cr-lens-bezel::before {
+  content: "";
+  position: absolute;
+  inset: 7px 20px 8px;
+  border-radius: 7px;
+  background: #141412;
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.9),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.7),
+    0 -1px 0 rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+/* A screw either side of the well (the shared slotted screw, with the consoles) */
+.cr-lens-bezel::after {
+  content: "";
+  position: absolute;
+  inset: 0 6px;
+  pointer-events: none;
+  background:
+    var(--screw-a) left center / 7px 7px no-repeat,
+    var(--screw-b) right center / 7px 7px no-repeat;
 }
 
 .cr-lens {
@@ -1303,6 +1350,8 @@
   --lens-side: #155c32;
   --lens-glow: rgba(92, 255, 154, 0.45);
   position: relative;
+  /* Above the well, and a stacking context so the dish sits under the legend */
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1315,19 +1364,36 @@
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--lens-ink);
-  background: radial-gradient(ellipse at 50% 40%, var(--lens-hi), var(--lens) 80%);
-  border-radius: 2px;
+  /* The cap's sloped sidewalls: the dish covers the top, so only the walls show around it */
+  padding: 3px 8px 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--lens) 70%, #fff) 0%, var(--lens) 28%, var(--lens-side) 100%);
+  border-radius: 7px;
   box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
-    inset 0 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -4px 6px rgba(0, 0, 0, 0.12),
-    0 4px 0 var(--lens-side),
-    0 5px 8px rgba(0, 0, 0, 0.5),
-    0 0 22px var(--lens-glow);
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset -1px 0 0 rgba(0, 0, 0, 0.15),
+    0 5px 0 color-mix(in srgb, var(--lens-side) 70%, #000),
+    0 7px 8px rgba(0, 0, 0, 0.6),
+    0 0 16px var(--lens-glow);
   transition: transform 80ms ease, box-shadow 80ms ease, filter 120ms ease;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* The keycap's concave dish, under the legend */
+.cr-lens::before {
+  content: "";
+  position: absolute;
+  inset: 3px 8px 10px;
+  z-index: -1;
+  border-radius: 5px;
+  background: radial-gradient(ellipse 90% 120% at 50% 110%, var(--lens-hi) 0%, var(--lens) 70%);
+  box-shadow:
+    inset 0 3px 5px rgba(0, 0, 0, 0.2),
+    inset 0 -2px 3px rgba(255, 255, 255, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.25);
+  pointer-events: none;
 }
 
 .cr-lens:hover:not(:disabled) {
@@ -1335,11 +1401,12 @@
 }
 
 .cr-lens:active:not(:disabled) {
-  transform: translateY(4px);
+  transform: translateY(5px);
   box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.35),
-    0 0 0 var(--lens-side),
-    0 0 14px var(--lens-glow);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 color-mix(in srgb, var(--lens-side) 70%, #000),
+    0 2px 3px rgba(0, 0, 0, 0.6),
+    0 0 10px var(--lens-glow);
 }
 
 .cr-lens:disabled {
@@ -2709,15 +2776,15 @@
   border-radius: 14px 14px 0 0;
 }
 
-/* Its two rivets */
+/* Its two screws (the shared slotted screw) */
 .cr-board-clip::after {
   content: "";
   position: absolute;
   inset: 9px 10px auto;
-  height: 8px;
+  height: 7px;
   background:
-    radial-gradient(circle at 4px 4px, #fafaf8 0 1px, #6c6d68 2px, #3a3b37 3.5px, rgba(0, 0, 0, 0) 4px) left / 8px 8px no-repeat,
-    radial-gradient(circle at 4px 4px, #fafaf8 0 1px, #6c6d68 2px, #3a3b37 3.5px, rgba(0, 0, 0, 0) 4px) right / 8px 8px no-repeat;
+    var(--screw-c) left center / 7px 7px no-repeat,
+    var(--screw-a) right center / 7px 7px no-repeat;
 }
 
 @media (min-width: 640px) {
@@ -3019,6 +3086,16 @@
   color: transparent;
 }
 
+/* A display losing its signal: the screen flickers between lit green and unlit, while the box stays put */
+.vfd-display.cr-vfd-flicker {
+  animation: cr-vfd-flicker 0.7s steps(1, end) infinite;
+}
+
+@keyframes cr-vfd-flicker {
+  0%, 24%, 50%, 78%, 100% { background: oklch(0.55 0.1 130); color: oklch(0 0 0); }
+  12%, 36%, 62%, 88% { background: oklch(0.32 0.04 130); color: transparent; }
+}
+
 /* The radioactivity balance's fault screen */
 .cr-signal-screen {
   background: #050605;
@@ -3029,6 +3106,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cr-signal-flicker,
+  .vfd-display.cr-vfd-flicker,
   .cr-signal-err {
     animation: none;
   }

@@ -180,8 +180,8 @@ export interface ShiftEventTuning {
   // order at random times, never two at once. Easy and Hard have about the same number per minute; Hard's are longer.
   eachKind: number // of every kind: power cut, signal loss, pump trip, rod jam
   extraEvents: number // more, each of any kind
-  firstEventAfter: number // no event starts before this
-  lastStartBefore: number // no event starts, and no target change is announced, this close to the end of the shift
+  firstEventAfter: number // no event starts before this; the last ends by the end of the shift (owner, 2026-11-02)
+  lastNoticeBefore: number // no target change is announced this close to the end of the shift
   powerCutSeconds: Range
   signalLossSeconds: Range // the reactor hall's readings are dark this long (owner, 2026-10-30)
   rodJamRods: Range // rods a jam takes
@@ -207,7 +207,7 @@ const EASY_EVENTS: ShiftEventTuning = {
   eachKind: 1,
   extraEvents: 1, // 5 in 15 minutes (owner, 2026-11-02)
   firstEventAfter: 60,
-  lastStartBefore: 120,
+  lastNoticeBefore: 120,
   powerCutSeconds: [20, 45],
   signalLossSeconds: [45, 75],
   rodJamRods: [3, 4],
@@ -231,7 +231,7 @@ const HARD_EVENTS: ShiftEventTuning = {
   eachKind: 2,
   extraEvents: 2, // 10 in 30 minutes: as many per minute as Easy (owner, 2026-11-02)
   firstEventAfter: 60,
-  lastStartBefore: 120,
+  lastNoticeBefore: 120,
   powerCutSeconds: [45, 75],
   signalLossSeconds: [75, 120],
   rodJamRods: [4, 5],

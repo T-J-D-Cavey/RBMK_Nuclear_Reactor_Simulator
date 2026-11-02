@@ -69,14 +69,15 @@ function eventDuration(kind: ShiftEventKind, tuning: ShiftEventTuning, rng: Rng)
 // The shift's events (owner, 2026-11-02): one of each kind (two on Hard) and a few more of any kind, in a random
 // order at random times, but never two at once. The free time is shared out at random points and the events laid
 // end to end between them, so every arrangement is as likely as any other. The first starts a minute in at the
-// earliest, the last two minutes before the end at the latest. Target changes run separately (runTargetTrack).
+// earliest. They run right up to the end of the shift, with the last one over by then (owner, 2026-11-02). Target
+// changes run separately (runTargetTrack).
 export function planShiftEvents(tuning: ShiftEventTuning, shiftLength: number, rng: Rng): ScheduledEvent[] {
   const kinds = shuffle(rng, [
     ...SHIFT_EVENT_KINDS.flatMap((kind) => Array<ShiftEventKind>(tuning.eachKind).fill(kind)),
     ...Array.from({ length: tuning.extraEvents }, () => SHIFT_EVENT_KINDS[Math.floor(rng() * SHIFT_EVENT_KINDS.length)]),
   ])
   const durations = kinds.map((kind) => eventDuration(kind, tuning, rng))
-  const free = Math.max(0, shiftLength - tuning.lastStartBefore - tuning.firstEventAfter - sum(durations.slice(0, -1)))
+  const free = Math.max(0, shiftLength - tuning.firstEventAfter - sum(durations))
   const points = kinds.map(() => rng() * free).sort((a, b) => a - b)
   let laid = 0
   return kinds.map((kind, i) => {
@@ -153,7 +154,7 @@ function runEvents(state: GameState, tuning: ShiftEventTuning, now: number, rng:
 // couple of minutes.
 function runTargetTrack(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
   if (!state.targetTrack || state.powerTarget === null) return state
-  const end = (state.timeLimit ?? 0) - tuning.lastStartBefore
+  const end = (state.timeLimit ?? 0) - tuning.lastNoticeBefore
   let s = state
   let t: TargetTrack = { ...state.targetTrack }
   switch (t.phase) {
@@ -212,7 +213,7 @@ const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; tex
   "signal-loss": {
     source: "engineer",
     from: SHIFT_FOREMAN,
-    text: "Electricians are reporting faults on the cabling to the reactor hall. Our instrument readings may be affected.",
+    text: "Electricians are reporting faults on the cabling to the reactor hall.",
   },
 }
 
@@ -264,7 +265,7 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
       s = addLog(
         s,
         "grid",
-        `This is a hold request: keep output within ±${formatMW(getPowerTolerance(target, true))}, half the usual margin, until we lift the hold.`,
+        `This is a hold request: keep output within ±${formatMW(getPowerTolerance(target, true))} until we lift the hold.`,
         GRID_CONTROLLER,
       )
       return begin(s, { ...base, duration: 0 })

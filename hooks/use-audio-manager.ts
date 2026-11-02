@@ -7,11 +7,11 @@ const HUM_FILE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-bl
 const HUM_VOICES = 3;
 
 // Alarm clips. The file names don't match the alarms: the general alarm plays alarm_high_rad_full.mp3 and high
-// radioactivity plays the more urgent alarm_backup_full.mp3 (owner, 2026-10-23); the event alarm's clip is named for
-// rod jams, but every event now sounds it.
+// radioactivity plays the more urgent alarm_backup_full.mp3 (owner, 2026-10-23). Every event sounds the event alarm,
+// a clip of its own the owner provided, served from public/sounds (2026-11-02).
 const BLOB = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr";
 const GENERAL_ALARM_FILE = `${BLOB}/w11O2GBJNi4hmwrAnLDkDo/public/alarm_high_rad_full.mp3`;
-const EVENT_ALARM_FILE = `${BLOB}/56DSNdysYjjBozGYYRqcym/public/alarm_rod_stuck_full.mp3`;
+const EVENT_ALARM_FILE = "/sounds/new_event_alarm.mp3";
 const HIGH_RAD_ALARM_FILE = `${BLOB}/UDO0NctHis6Id7aEJ8C770/public/alarm_backup_full.mp3`;
 const HIGH_REACTOR_TEMP_ALARM_FILE = `${BLOB}/sHWXXkF7pXyeOxSzfh7fp7/public/alarm_high_reactor_temp_full.mp3`;
 const HIGH_STEAM_OR_XENON_ALARM_FILE = `${BLOB}/b84OkunKQm0YQMc1KakN6o/public/alarm_high_steam_full.mp3`;
