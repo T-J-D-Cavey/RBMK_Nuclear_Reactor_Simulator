@@ -27,6 +27,16 @@ export const BASE_OPEN_GRAPH = {
   },
 } as const
 
+// The site's own name for Google's search results; without it, Google labels a vercel.app site "Vercel". The url must
+// match the home page's canonical (no trailing slash), and Google only reads this from the home page.
+export const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  alternateName: ["RBMK Simulator", "RBMK Reactor Simulator"],
+  url: SITE_URL,
+}
+
 // schema.org description of the game, embedded as JSON-LD in the layout
 export const GAME_JSON_LD = {
   "@context": "https://schema.org",

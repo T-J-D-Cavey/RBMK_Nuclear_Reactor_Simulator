@@ -46,7 +46,7 @@ export default function AlarmScreen({ warnings, revealSignal = 0 }: { warnings: 
   const Chevron = visible ? ChevronUp : ChevronDown
 
   return (
-    <section ref={section} id="alarm-monitor" className="ws3-cam-bezel rounded-md p-2 sm:p-2.5">
+    <section ref={section} id="alarm-monitor" className="ws3-cam-bezel cr-bay-screws rounded-md p-2 sm:p-2.5">
       <button
         onClick={() => setVisible(!visible)}
         aria-expanded={visible}

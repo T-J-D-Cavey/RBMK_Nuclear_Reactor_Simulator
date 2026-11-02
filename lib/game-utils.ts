@@ -66,16 +66,37 @@ export function formatLogTime(state: Pick<GameState, "mode" | "timeLimit">, entr
   return formatTime(entry.time)
 }
 
-// Every warning condition in one place, so the panel's flashing borders and the message area agree.
+// --- Signal lost from the reactor hall (bible §12, owner 2026-10-30) ---
+
+// While the link to the reactor hall is down, every reading taken there goes: radioactivity, both temperatures, steam
+// and xenon, the camera, the chart recorder and the radioactivity balance. Each display flickers, then shows ERR, then
+// goes dark. The reactor runs on as usual; only what the player sees changes. Power output, the target, the time, the
+// rods, the pumps and the turbine (its over-pressure lamp included) are read elsewhere, so they stay.
+export type HallSignal = "live" | "flicker" | "error" | "dark"
+export const SIGNAL_FLICKER_SECONDS = 2
+export const SIGNAL_DARK_AFTER = 5 // s: ERR shows from the end of the flicker until then
+
+export function getHallSignal(state: Pick<GameState, "activeEvents" | "gameTime">): HallSignal {
+  const loss = state.activeEvents.find((event) => event.type === "signal-loss")
+  if (!loss) return "live"
+  const since = Math.abs(state.gameTime - loss.timestamp)
+  return since < SIGNAL_FLICKER_SECONDS ? "flicker" : since < SIGNAL_DARK_AFTER ? "error" : "dark"
+}
+
+export const isHallSignalLost = (state: Pick<GameState, "activeEvents" | "gameTime">) => getHallSignal(state) !== "live"
+
+// Every warning condition in one place, so the panel's flashing borders and the message area agree. The alarm
+// computer reads the same instruments as the panel, so with the reactor hall's signal lost it can't see them either.
 export function getWarningFlags(state: GameState) {
+  const hall = !isHallSignalLost(state)
   return {
-    highRadioactivity: state.radioactivity >= THRESHOLDS.radioactivity.highWarning,
-    lowRadioactivity: state.radioactivity <= THRESHOLDS.radioactivity.lowWarning,
-    highReactorTemp: state.reactorTemp >= THRESHOLDS.reactorTemp.warning,
-    lowFuelTemp: state.fuelTemp <= THRESHOLDS.fuelTemp.lowWarning,
-    highSteam: state.steamVolume >= THRESHOLDS.steamVolume.highWarning,
-    lowSteam: state.steamVolume <= THRESHOLDS.steamVolume.lowWarning,
-    highXenon: state.xenon >= THRESHOLDS.xenon.highWarning,
+    highRadioactivity: hall && state.radioactivity >= THRESHOLDS.radioactivity.highWarning,
+    lowRadioactivity: hall && state.radioactivity <= THRESHOLDS.radioactivity.lowWarning,
+    highReactorTemp: hall && state.reactorTemp >= THRESHOLDS.reactorTemp.warning,
+    lowFuelTemp: hall && state.fuelTemp <= THRESHOLDS.fuelTemp.lowWarning,
+    highSteam: hall && state.steamVolume >= THRESHOLDS.steamVolume.highWarning,
+    lowSteam: hall && state.steamVolume <= THRESHOLDS.steamVolume.lowWarning,
+    highXenon: hall && state.xenon >= THRESHOLDS.xenon.highWarning,
     lowRodMargin: getRodMargin(state.controlRods) < THRESHOLDS.rodMargin.minimum,
     lowPerformance: state.powerTarget !== null && state.performance < 10,
   }
@@ -118,8 +139,8 @@ export function getEventWarnings(state: GameState): Warning[] {
   if (getWarningFlags(state).lowPerformance) {
     warnings.push({ key: "lowPerformance", text: "WARNING: Our power station is reporting low grid target performance. Review power targets" })
   }
-  // Jammed rods never free again (owner, 2026-10-16), so this warning, and the general alarm, last the rest of the
-  // shift. The player can switch the alarms off.
+  // This warning lasts while any rod is jammed: until a rod jam ends (on the event alarm), or for the rest of the
+  // shift for a rod jammed by high steam (on the general alarm). The player can switch the alarms off.
   const jammed = state.controlRods.filter((rod) => rod.stuck).map((rod) => rod.id)
   if (jammed.length) {
     const rods = jammed.length === 1 ? `control rod ${jammed[0]}` : `control rods ${jammed.join(", ")}`
@@ -135,6 +156,9 @@ export function getEventWarnings(state: GameState): Warning[] {
   }
   if (state.activeEvents.some((event) => event.type === "pump-trip")) {
     warnings.push({ key: "pumpTrip", text: "WARNING: Ongoing water pump issue detected." })
+  }
+  if (isHallSignalLost(state)) {
+    warnings.push({ key: "signalLoss", text: "WARNING: Signal from reactor hall lost. Reactor instrument readings unavailable." })
   }
   // Sustained over-pressure trips the turbine off the grid (bible §12): count down so it never comes unannounced.
   if (state.overpressureSeconds > 0 && state.turbineMode === "grid" && GAME_MODE_CONFIGS[state.mode]?.turbineTrips) {
@@ -152,23 +176,28 @@ export function checkEventWarnings(state: GameState): string[] {
 }
 
 // Warnings with an alarm sound of their own (owner, 2026-10-14). Every other warning sounds the general alarm
-// instead. The turbine over-pressure countdown only runs while steam is high, so it shares the steam alarm. Power-cut
-// and pump-trip warnings last exactly as long as their events, so they share the event alarm.
-const OWN_ALARM_WARNINGS = new Set(["highRadioactivity", "highReactorTemp", "highSteam", "highXenon", "turbineOverpressure", "powerCut", "pumpTrip"])
-// Events that sound the event alarm while they last. A grid hold doesn't, and target changes aren't events (owner, 2026-10-14).
-// A rod jam doesn't either: it never ends, so its warning sounds the general alarm instead (owner, 2026-10-16).
-const EVENT_ALARM_KINDS: readonly EventKind[] = ["power-cut", "pump-trip"]
+// instead. The turbine over-pressure countdown only runs while steam is high, so it shares the steam alarm. Power-cut,
+// pump-trip and signal-loss warnings last exactly as long as their events, so they share the event alarm.
+const OWN_ALARM_WARNINGS = new Set(["highRadioactivity", "highReactorTemp", "highSteam", "highXenon", "turbineOverpressure", "powerCut", "pumpTrip", "signalLoss"])
+// Events that sound the event alarm while they last, so every event sounds the same (owner, 2026-11-02). A grid hold
+// doesn't, and target changes aren't events (owner, 2026-10-14).
+const EVENT_ALARM_KINDS: readonly EventKind[] = ["power-cut", "pump-trip", "signal-loss", "rod-stuck"]
 
 // Which alarm sounds are on: one per alarm, read straight from the warnings so a sound starts and stops with its warning.
 export function getAlarms(state: GameState) {
   const flags = getWarningFlags(state)
   const warnings = [...getReactorWarnings(state), ...getEventWarnings(state)]
+  // The jammed-rods warning sounds the general alarm only for a rod jammed by high steam: a rod jam's own rods are
+  // covered by the event alarm while it lasts
+  const eventJammed = state.activeEvents.flatMap((event) => (event.type === "rod-stuck" ? (event.data?.affectedRods ?? []) : []))
+  const steamJammed = state.controlRods.some((rod, i) => rod.stuck && !eventJammed.includes(i))
   return {
-    general: warnings.some((warning) => !OWN_ALARM_WARNINGS.has(warning.key)),
+    general: warnings.some((warning) => !OWN_ALARM_WARNINGS.has(warning.key) && (warning.key !== "jammedRods" || steamJammed)),
     event: state.turbineTripped || state.activeEvents.some((event) => EVENT_ALARM_KINDS.includes(event.type)),
     highRadioactivity: flags.highRadioactivity,
     highReactorTemp: flags.highReactorTemp,
-    highSteamOrXenon: flags.highSteam || flags.highXenon,
+    // The over-pressure countdown is the turbine's own, so it still sounds with the reactor hall's signal lost
+    highSteamOrXenon: flags.highSteam || flags.highXenon || warnings.some((warning) => warning.key === "turbineOverpressure"),
   }
 }
 

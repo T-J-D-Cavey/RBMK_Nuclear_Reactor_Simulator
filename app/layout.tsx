@@ -2,7 +2,16 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Barlow_Condensed, Geist, Geist_Mono, Special_Elite, VT323 } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { BASE_OPEN_GRAPH, GAME_JSON_LD, SITE_DESCRIPTION, SITE_TITLE, SITE_URL, THEME_COLOR, TITLE_TEMPLATE } from "@/lib/site"
+import {
+  BASE_OPEN_GRAPH,
+  GAME_JSON_LD,
+  SITE_DESCRIPTION,
+  SITE_TITLE,
+  SITE_URL,
+  THEME_COLOR,
+  TITLE_TEMPLATE,
+  WEBSITE_JSON_LD,
+} from "@/lib/site"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -61,6 +70,7 @@ export default function RootLayout({
         <Analytics />
         {/* What the game is, for search engines and AI crawlers (not rendered) */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(GAME_JSON_LD) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD) }} />
       </body>
     </html>
   )

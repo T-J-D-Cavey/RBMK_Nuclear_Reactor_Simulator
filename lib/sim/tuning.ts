@@ -176,63 +176,77 @@ export { fuelEffect, pumpEffect }
 type Range = readonly [number, number]
 
 export interface ShiftEventTuning {
-  // Every shift has the same number of things happening: major emergencies, smaller events and target changes, in
-  // a random order and split (owner, 2026-10-19). The difficulty comes from tougher events, not more of them.
-  totalEvents: number
-  majors: number // power cuts and rod jams, at most one of each (a rod jam is permanent)
-  minorCounts: Range // pump trips and grid hold requests; target changes fill the rest
-  firstAfter: number // nothing happens before this
-  firstMajorAfter: number // no major emergency in the first few minutes
-  lastStartBefore: number // nothing starts this close to the end of the shift
-  minGap: number // at least this long between the starts of any two things
-  majorSpacing: number // at least this long between the starts of two major emergencies
+  // Events (owner, 2026-11-02): one of each kind (two on Hard) plus a few of any kind drawn at random, in a random
+  // order at random times, never two at once. Easy and Hard have about the same number per minute; Hard's are longer.
+  eachKind: number // of every kind: power cut, signal loss, pump trip, rod jam
+  extraEvents: number // more, each of any kind
+  firstEventAfter: number // no event starts before this
+  lastStartBefore: number // no event starts, and no target change is announced, this close to the end of the shift
   powerCutSeconds: Range
-  rodJamRods: Range // rods a jam takes; jams are permanent (owner, 2026-10-16)
+  signalLossSeconds: Range // the reactor hall's readings are dark this long (owner, 2026-10-30)
+  rodJamRods: Range // rods a jam takes
+  rodJamSeconds: Range // a jam frees again after this long (owner, 2026-10-30; permanent from 2026-10-16)
   pumpTripSeconds: Range
-  gridHoldSeconds: Range
+
+  // Target changes (owner, 2026-11-02): their own track, alongside the events. The next notice comes once the player
+  // has been on target for the settle time, so a target never moves just as it is reached, and never sits for long.
+  firstNotice: Range // when the shift's first notice comes; it is always a plain change
+  settleSeconds: Range // on target without a break this long before the next notice
+  holds: number // grid holds per shift, never the first change, spread across the shift
+  holdForSeconds: Range // inside the narrow window without a break this long lifts a hold
+  giveUpSeconds: number // a target or hold not reached by then is moved on anyway; the clock stops in a power cut or signal loss
+  changeEverySeconds: number // about how often a notice comes, to spread the holds across the shift (measured, 2026-11-02)
   targetRange: Range // MW
-  targetMaxStep: number // largest single change, MW
+  targetMaxStep: number // largest single change, MW (a hold moves half as far)
   targetMinStep: number // smallest change worth announcing, MW
   lowTargetBelow: number // targets below this risk the xenon pit, so they are rarer (§13)
   lowTargetChance: number // chance a low target is kept when one is drawn
 }
 
 const EASY_EVENTS: ShiftEventTuning = {
-  totalEvents: 7, // owner, 2026-10-19
-  majors: 1, // a power cut or a rod jam (owner, 2026-10-16)
-  minorCounts: [2, 3], // so 3–4 target changes: eventful without chasing targets (owner, 2026-10-19)
-  firstAfter: 60,
-  firstMajorAfter: 180,
+  eachKind: 1,
+  extraEvents: 1, // 5 in 15 minutes (owner, 2026-11-02)
+  firstEventAfter: 60,
   lastStartBefore: 120,
-  minGap: 60,
-  majorSpacing: 300,
   powerCutSeconds: [20, 45],
+  signalLossSeconds: [45, 75],
   rodJamRods: [3, 4],
+  rodJamSeconds: [60, 120],
   pumpTripSeconds: [60, 90],
-  gridHoldSeconds: [90, 150],
+
+  firstNotice: [30, 60],
+  settleSeconds: [20, 45], // small steps are reached quickly, so the settle time sets Easy's pace
+  holds: 2, // owner, 2026-11-02
+  holdForSeconds: [60, 90],
+  giveUpSeconds: 240,
+  changeEverySeconds: 183,
   targetRange: [1500, 8000],
-  targetMaxStep: 2000,
+  targetMaxStep: 1500,
   targetMinStep: 500,
   lowTargetBelow: 3000,
   lowTargetChance: 0.3,
 }
 
 const HARD_EVENTS: ShiftEventTuning = {
-  totalEvents: 14, // owner, 2026-10-19
-  majors: 2, // one power cut and one rod jam (owner, 2026-10-16)
-  minorCounts: [3, 4],
-  firstAfter: 60,
-  firstMajorAfter: 180,
+  eachKind: 2,
+  extraEvents: 2, // 10 in 30 minutes: as many per minute as Easy (owner, 2026-11-02)
+  firstEventAfter: 60,
   lastStartBefore: 120,
-  minGap: 45,
-  majorSpacing: 300,
   powerCutSeconds: [45, 75],
+  signalLossSeconds: [75, 120],
   rodJamRods: [4, 5],
+  rodJamSeconds: [90, 180],
   pumpTripSeconds: [60, 120],
-  gridHoldSeconds: [120, 180],
+
+  firstNotice: [20, 40],
+  settleSeconds: [30, 60], // bigger steps take longer to reach, which is where Hard's difficulty comes from
+  holds: 4, // owner, 2026-11-02
+  holdForSeconds: [60, 90],
+  giveUpSeconds: 240,
+  changeEverySeconds: 241,
   targetRange: [500, 10000],
-  targetMaxStep: 2500,
-  targetMinStep: 500,
+  targetMaxStep: 2000,
+  targetMinStep: 750,
   lowTargetBelow: 2000,
   lowTargetChance: 0.3,
 }
@@ -240,16 +254,12 @@ const HARD_EVENTS: ShiftEventTuning = {
 export const EVENT_TUNING = {
   easy: EASY_EVENTS,
   hard: HARD_EVENTS,
-  targetNotice: 60, // the grid announces a target change this long before it takes effect (§13)
-  eventGap: 20, // after an event ends, the next event or target change waits at least this long
-  majorQuiet: 60, // after a major emergency ends, the next thing waits at least this long
-  holdAfterTargetChange: 90, // a hold request waits this long after a target change takes effect, so the player can settle
+  targetNotice: 60, // the grid announces a target change, or a hold, this long before it takes effect (§13)
   holdStepFactor: 0.5, // a hold request's new target is at most half a target change's step away (owner, 2026-10-29)
-  // Advance warning (§12). A grid hold's is its notice: the new target is named and in force at once, and the narrow
-  // window starts this long after, so a competent player can get there first (about 60–70 s; owner, 2026-10-29).
-  warningLead: { "power-cut": 40, "rod-stuck": 25, "grid-hold": 60 } as Partial<Record<string, number>>,
+  // Advance warning in the shift log (§12); a pump trip comes unannounced
+  warningLead: { "power-cut": 40, "signal-loss": 30, "rod-stuck": 25 } as Partial<Record<string, number>>,
   turbineTripSeconds: 20, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12)
   // A rod sent in from 0% while steam is high jams with only its graphite tip in the core, as the rods did when AZ-5
-  // was pressed on 26 April 1986 (owner, 2026-10-16). Permanent, like an event jam.
+  // was pressed on 26 April 1986 (owner, 2026-10-16). Permanent, unlike an event jam.
   steamJamInsertion: 1, // %
 }

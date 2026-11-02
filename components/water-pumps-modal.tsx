@@ -48,7 +48,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
             {waterPumps.map((pump, idx) => {
               const on = tempStates[idx] ?? pump.on
               return (
-                <div key={pump.id} className="cr-module p-2.5 pb-4 flex flex-col items-center gap-3">
+                <div key={pump.id} className="cr-module cr-bay-screws p-2.5 pb-4 flex flex-col items-center gap-3">
                   <Label htmlFor={`pump-${pump.id}`} className="cr-dymo">
                     Pump {pump.id}
                   </Label>

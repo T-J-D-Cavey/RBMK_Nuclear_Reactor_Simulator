@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useElementSize } from "@/hooks/use-element-height"
+import type { HallSignal } from "@/lib/game-utils"
 
 /* ------------------------------------------------------------------ */
 /* Types and scales                                                    */
@@ -22,6 +23,8 @@ export interface ChartRecorderProps {
   gameTime: number
   /** While paused, no samples are taken (the paper stops). */
   isPaused: boolean
+  /** The reactor hall's signal: once it is lost (past the flicker) the paper stops and the readings go (owner, 2026-10-30). */
+  signal?: HallSignal
   /** Length of paper shown, in samples (= seconds at one tick per second). Default 180 (3 minutes). */
   windowSamples?: number
   /** Wide screens: the panel's height in px, met by making the bands shorter (never taller, never under half). */
@@ -169,6 +172,7 @@ export default function ChartRecorder({
   steamVolume,
   gameTime,
   isPaused,
+  signal = "live",
   windowSamples = 180,
   fitHeight = null,
   className = "",
@@ -194,12 +198,14 @@ export default function ChartRecorder({
   latest.current = { rad: radioactivity, temp: reactorTemp, steam: steamVolume }
   const lastTime = useRef<number | null>(null)
   const counter = useRef(0)
+  const stopped = signal === "error" || signal === "dark"
 
   useEffect(() => {
     if (isPaused) return
     const prevTime = lastTime.current
     if (prevTime === gameTime) return
     lastTime.current = gameTime
+    if (stopped) return // nothing to write: the paper waits, and picks up where it left off
     const jumped = prevTime !== null && Math.abs(gameTime - prevTime) > 5 // new game / reset
     counter.current += 1
     const s: Sample = { n: counter.current, ...latest.current }
@@ -209,7 +215,7 @@ export default function ChartRecorder({
       next.push(s)
       return next
     })
-  }, [gameTime, isPaused, windowSamples])
+  }, [gameTime, isPaused, stopped, windowSamples])
 
   const step = (PEN_X - PAPER_L) / Math.max(1, windowSamples - 1)
   const latestN = samples.length ? samples[samples.length - 1].n : 0
@@ -237,10 +243,10 @@ export default function ChartRecorder({
         <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase text-muted-foreground">
           <span
             className={`retro-lamp inline-block w-2.5 h-2.5 ${
-              isPaused ? "bg-amber-500 text-amber-500 on" : "bg-green-500 text-green-500 on"
+              isPaused || stopped ? "bg-amber-500 text-amber-500 on" : "bg-green-500 text-green-500 on"
             }`}
           />
-          {isPaused ? "Paper stopped" : `Last ${Math.round(windowSamples / 60)} min`}
+          {isPaused || stopped ? "Paper stopped" : `Last ${Math.round(windowSamples / 60)} min`}
         </div>
       </div>
 
@@ -254,9 +260,17 @@ export default function ChartRecorder({
                 <span className="inline-block w-3 h-0.5 shrink-0" style={{ background: b.color }} />
                 <span className="truncate text-muted-foreground">{b.label}</span>
               </div>
-              <div className="font-bold tabular-nums" style={{ color: b.color }}>
-                {Math.round(v)}
-                {b.unit}
+              <div className={`font-bold tabular-nums ${signal === "flicker" ? "cr-signal-flicker" : ""}`} style={{ color: b.color }}>
+                {signal === "dark" ? (
+                  "–"
+                ) : signal === "error" ? (
+                  <span className="cr-signal-err">ERR</span>
+                ) : (
+                  <>
+                    {Math.round(v)}
+                    {b.unit}
+                  </>
+                )}
               </div>
             </div>
           )
@@ -372,7 +386,7 @@ export default function ChartRecorder({
           {BANDS.map((b) => {
             const at = layout[b.key]
             const labels = visibleLabels(b, at)
-            const over = current ? b.scale(current[b.key]) > 1 : false
+            const over = !stopped && current ? b.scale(current[b.key]) > 1 : false
             const penY = current ? yFor(b, at, current[b.key]) : yFor(b, at, 0)
             return (
               <g key={b.key}>

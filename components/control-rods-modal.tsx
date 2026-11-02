@@ -123,7 +123,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           {/* The levers in backlit channels, with one SKALA strip under the bank for the set positions (owner,
               2026-10-27: prototype A). A jammed rod's channel glows red; the lever and its plate are hardware and
               never change. */}
-          <div className="cr-module p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
+          <div className="cr-module cr-bay-screws p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center">
               {controlRods.map((rod, idx) => {
                 const currentInsertion = tempValues[idx] ?? rod.insertion

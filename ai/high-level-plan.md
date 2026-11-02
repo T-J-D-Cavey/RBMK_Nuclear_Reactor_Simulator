@@ -311,49 +311,62 @@ Each ending gets its own game-over presentation.
 ## 12. Random emergency events
 
 **Change:**
-- **Far fewer major emergencies, each more meaningful.** Starting budget: Easy ≈ 1 major emergency per 15-minute shift. Hard ≈ 3 per 30 minute shift. No major emergency in the first few minutes, with sensible spacing between them. Major emergencies are power cuts and rod jams.
-- **Brief warning before major events where it fits** (e.g. "grid instability reported" shortly before a power cut) so the player can prepare.
-- **Power cut:** keep. Somewhat shorter on average, now with the turbine-to-pumps option making it a decision.
-- **Rod jam:** keep as today. With rod travel (Section 10), a jam freezes each affected rod wherever it is, including mid-travel.
-- **New, smaller events (fit the theme):**
-  - **Single pump trip:** one pump fails for a period. A lighter alternative to a full power cut.
-  - **Turbine trip:** consequence-based rather than random. Sustained over-pressure (the existing OVR-P lamp) trips the turbine off the grid. This gives the high-steam warning a real consequence.
-  - **Grid controller "hold" request:** the grid asks the station to hold a new output for a period (Kiev's request from the show). Flavour plus mild pressure. The new target is at most half as far from the current one as a normal target change, is named in the request and takes effect at once; a minute later, the window for power output matching power target reduces by 50% for the rest of the event.
-- **The first thing in every Easy or Hard shift is a power target change.**
-- Retire the rigid power-cut / rod-jam alternation in favour of the budget above.
+- **Four kinds of event, about as many per minute on Easy and Hard.** Easy has one of each kind and one more of any kind: 5 in 15 minutes. Hard has two of each and two more of any kind: 10 in 30 minutes. Hard's are harder because they last longer and its rod jams take more rods.
+- **Random order and random times, but never two events at once.** No event starts in the first minute or the last two minutes of the shift. Between those, the time is shared out at random, so two events can come back to back or minutes apart.
+- **Target changes run separately** (Section 13), and can happen during any event.
+- **Brief warning in the shift log before an event where it fits** (e.g. "grid instability reported" shortly before a power cut) so the player can prepare. A pump trip comes unannounced.
+- **The events:**
+  - **Power cut** (major emergency): the pumps lose their normal supply for a period. The turbine-to-pumps option makes it a decision.
+  - **Signal lost from the reactor hall** (major emergency): the link between the control room and the reactor hall goes down, so every reading taken in the hall is lost for a period: radioactivity, reactor and fuel temperature, steam, xenon, the camera, the chart recorder and the radioactivity balance. Each display flickers, shows ERR, then goes dark. The camera turns to snow and NO SIGNAL, the chart recorder's paper stops, and the balance shows an error. The alarm monitor can't see the reactor either: only the signal-loss warning shows, on the event alarm. Power output, the target, the time, the rods, the pumps, the dosimeter and the turbine are read elsewhere and keep working, so the player steers by power output, as operators once did. The reactor itself runs on as usual. A shift foreman warns of cabling faults shortly before; the head engineer reports the loss, and a technician reports when the readings are back.
+  - **Single pump trip:** one pump fails for a period.
+  - **Rod jam:** with rod travel (Section 10), a jam freezes each affected rod wherever it is, including mid-travel, for a period. The head engineer reports when the fuel channel is repaired and the rods can move again.
+- **Not events, and possible any time:** sustained over-pressure (the existing OVR-P lamp) trips the turbine off the grid, which gives the high-steam warning a real consequence. A rod sent in from 0% while steam is high jams for the rest of the shift (Section 10).
 
 **Starting values by mode** (tune in playtests):
 | | Easy (15 min) | Hard (30 min) |
 |---|---|---|
-| Major emergencies | ≈1 | ≈3 |
-| Smaller events (pump trip, hold request) | ≈1–2 | ≈3–4 |
-| Power cut length | ≈20–45 s | ≈30–60 s |
-| Rod jam | as today: 4–7 rods for 30–90 s | as today: 5–8 rods for 1–3 min |
+| Events | 1 of each kind + 1 more (5) | 2 of each kind + 2 more (10) |
+| Power cut length | 20–45 s | 45–75 s |
+| Signal loss length | 45–75 s | 75–120 s |
+| Pump trip length | 60–90 s | 60–120 s |
+| Rod jam | 3–4 rods for 1–2 min | 4–5 rods for 1.5–3 min |
+| Advance warning | power cut 40 s, signal loss 30 s, rod jam 25 s | the same |
 
-**Player outcome:** the shift feels like running a reactor, punctuated by a couple of memorable crises, not a stream of unrelated failures.
+**Player outcome:** the shift feels like running a reactor, punctuated by memorable crises, while the grid keeps asking for changes.
 
-**Acceptance checks:** a typical Hard game shows the budgeted number of major emergencies. A turbine trip only happens after visible over-pressure warning. A rod jammed mid-travel stays where it stopped until the jam clears.
+**Acceptance checks:** every planned event happens, never two at once, none in the first minute or the last two. A turbine trip only happens after visible over-pressure warning. A rod jammed mid-travel stays where it stopped until the jam clears, then answers the levers again. During a signal loss, nothing on screen gives away a reading from the reactor hall.
 
 ---
 
 ## 13. Power targets
 
 **Change** (values are starting points for playtesting):
-- **Smaller, less frequent changes.** Cap each change at a fraction of today's maximum (roughly ±1,500–2,500 MW), at intervals of several minutes.
-- **Warned changes:** the grid controller warns that demand has changed ("We may require an adjustment in your power output. Confirmation to follow shortly"), then confirms the new target 60 seconds later, when it takes effect. The player knows a change is coming, but not its size or direction until it is confirmed. (The Safety Test's orders still state the new target with their notice.)
-- **Tolerance proportional to target:** ±10%, never tighter than about ±200 MW, the same in every mode. Low targets become precise rather than trivially wide.
+- **Target changes run on their own track, alongside the events and whatever they are doing.** A grid hold is a kind of target change.
+- **The first change comes early and is always plain:** its notice comes 30–60 s into an Easy shift, 20–40 s into a Hard one.
+- **Every change is warned the same way:** the grid controller says "We may soon require an adjustment in your power output", with no number, and the change takes effect 60 seconds later. The player knows a change is coming, but not its size or direction until it takes effect. (The Safety Test's orders still state the new target with their notice.)
+  - **A plain change:** the grid confirms the new target.
+  - **A hold** (Kiev's request in the show): the grid confirms the new target and says it is a hold, giving the window, which is 50% narrower from that moment. The hold is lifted ("Hold lifted. Normal tolerance restored.") once output has been inside the narrow window for 60–90 s without a break. A hold's new target is at most half as far from the current one as a plain change's.
+- **The next notice waits until the player has settled:** it comes once output has been on target without a break for the settle time (Easy 20–45 s, Hard 30–60 s), or after a hold is lifted and the settle time has passed. So a target never moves just as it is reached (it stays at least a settle time plus the 60 s notice), and a player on target is never left idle for long.
+- **The grid gives up waiting after 4 minutes:** a target (or hold) not reached and held by then is moved on anyway, so a struggling player isn't stuck. That clock stops while a power cut or signal loss is on.
+- **A set number of holds per shift,** never the first change, spread across the shift.
+- **No notice in the last two minutes of the shift.**
+- **Tolerance proportional to target:** ±10%, never tighter than about ±200 MW, the same in every mode; half that during a hold.
 - **Keep low targets as a deliberate danger, but rarer.** A low target is a xenon trap; that is good tension, used sparingly.
-- **Easy and Hard differ in the size and frequency of changes** (starting values):
+- **Hard is harder through bigger changes over a wider range.** Easy's small steps are reached quickly, so its pace is set by the settle time; Hard's take longer to reach, and that chasing is the challenge.
 
 | | Easy | Hard |
 |---|---|---|
-| Target range | as today (2,000–8,000 MW) | as today (500–10,000 MW) |
-| Largest single change | ≈ ±1,500 MW | ≈ ±2,500 MW |
-| Time between changes | ≈ 4–5 min | ≈ 2–3 min |
+| Target range | 1,500–8,000 MW | 500–10,000 MW |
+| Plain change | 500–1,500 MW | 750–2,000 MW |
+| Hold change | 250–750 MW | 375–1,000 MW |
+| Holds per shift | 2 | 4 |
+| Settle time | 20–45 s | 30–60 s |
+| Hold held for | 60–90 s | 60–90 s |
+| Target changes per shift (bot, typical) | 4–5 | 6–8 |
 
 - Final values are tuned together with Sections 5–12, not independently.
 
-**Acceptance checks:** a competent player, reacting once each target is confirmed, can meet every Hard target, but the targets are still harder to meet than on easy. Low targets visibly risk xenon buildup.
+**Acceptance checks:** a competent player, reacting once each target takes effect, survives nearly every Easy shift and most Hard ones, and is on target less of the time on Hard. Every target that stays in force for two minutes is nearly always reached. A target never moves sooner than the settle time plus the notice after it is reached, unless the grid gave up waiting. Low targets visibly risk xenon buildup.
 
 ---
 

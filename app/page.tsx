@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { DifficultyModal } from "@/components/difficulty-modal"
 import type { GameMode } from "@/lib/types"
 import { createNewGame } from "@/lib/game-loop"
@@ -16,7 +14,6 @@ const menuEntryIsCurrent = () => Boolean(window.history.state?.[MENU_ENTRY])
 
 export default function HomePage() {
   const [showDifficultyModal, setShowDifficultyModal] = useState(false)
-  const router = useRouter()
 
   // The menu is open exactly while its entry is the current one: Back closes it, Forward (or a reload) reopens it
   useEffect(() => {
@@ -46,8 +43,10 @@ export default function HomePage() {
     localStorage.setItem("chernobyl-game-state", JSON.stringify(newGameState))
     localStorage.setItem(TUTORIAL_KEY, "1")
     setShowDifficultyModal(false)
-    // The game takes the menu's place in the history, so Back from the game comes here with the menu closed
-    router.replace("/game")
+    // The game takes the menu's place in the history, so Back from the game comes here with the menu closed. A full
+    // page load rather than the router's: a phone browser reached the game with no tab icon otherwise (owner,
+    // 2026-10-30), as it only takes a page's icon when the page itself loads.
+    window.location.replace("/game")
   }
 
   const controlRoomBackground = "control_room_background.jpg"
@@ -85,9 +84,10 @@ export default function HomePage() {
               </button>
             </span>
             <span className="cr-lens-bezel w-full sm:w-auto">
-              <Link href="/instructions" className="cr-lens cr-lens-amber w-full sm:w-48 h-14 !text-base">
+              {/* A plain link, so the manual loads as a page of its own and gets its tab icon, like the game */}
+              <a href="/instructions" className="cr-lens cr-lens-amber w-full sm:w-48 h-14 !text-base">
                 How to Play
-              </Link>
+              </a>
             </span>
           </div>
         </div>

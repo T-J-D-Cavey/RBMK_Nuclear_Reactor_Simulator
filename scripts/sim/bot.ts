@@ -6,6 +6,7 @@ import { advanceGame } from "../../lib/game-loop"
 import { AZ5_ORDER, DEPUTY_WITHDRAWAL, SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
 import { seededRng, type Rng } from "../../lib/sim/rng"
 import { TUNING } from "../../lib/sim/tuning"
+import { isHallSignalLost } from "../../lib/game-utils"
 
 // Safety Test: from the first test step (all pumps on) a careful operator stops chasing output.
 const TEST_PREP_AT = SAFETY_TEST_SCRIPT.find((step) => step.action === "pumps-on")?.at ?? Infinity
@@ -42,7 +43,10 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
 
   const act = (input: GameState): GameState => {
     let s = input
-    history.push(Math.max(1e-3, s.radioactivity))
+    // With the reactor hall's signal lost, radioactivity can't be seen: the trend starts afresh when it comes back
+    const blind = isHallSignalLost(s)
+    if (blind) history.length = 0
+    else history.push(Math.max(1e-3, s.radioactivity))
     outputs.push(s.powerOutput)
     const now = getShiftTime(s)
     if (now % o.cadence !== 0) return s
@@ -63,6 +67,9 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
       }
       s = keepPumps(s, testPrep ? 4 : o.pumps) // follows the procedure: four pumps for the test
     }
+
+    // None of the readings below can be seen, so a careful operator leaves the rods where they are until they return
+    if (blind) return s
 
     // --- How far is radioactivity from where it should be? ---
     const R = s.radioactivity

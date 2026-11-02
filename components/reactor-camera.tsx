@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { GAME_MODE_CONFIGS, THRESHOLDS, type GameMode } from "@/lib/types"
-import { getClockStartSeconds } from "@/lib/game-utils"
+import { type HallSignal, getClockStartSeconds } from "@/lib/game-utils"
 import { usePrefersReducedMotion } from "./presentation-use-reduced-motion"
 import { useElementHeight } from "@/hooks/use-element-height"
 
@@ -146,6 +146,8 @@ function SpeckleCanvas({ intensity, reducedMotion }: { intensity: number; reduce
 export interface ReactorCameraProps {
   radioactivity: number
   reactorTemp: number
+  /** The reactor hall's signal: while it is lost the picture flickers, then gives way to snow and NO SIGNAL. */
+  signal?: HallSignal
   /** Seconds since the shift started; drives the on-screen timestamp (see getShiftElapsedSeconds). */
   elapsedSeconds: number
   /** Optional clock start (ms since epoch, read as UTC). Defaults to 26-04-1986 00:00:00. */
@@ -158,13 +160,18 @@ export interface ReactorCameraProps {
 export default function ReactorCamera({
   radioactivity,
   reactorTemp,
+  signal = "live",
   elapsedSeconds,
   clockStartMs = CAMERA_CLOCK_START_MS,
   fitHeight = null,
   className = "",
 }: ReactorCameraProps) {
   const reducedMotion = usePrefersReducedMotion()
-  const interference = getInterferenceIntensity(radioactivity)
+  // The feed from the reactor hall is lost (owner, 2026-10-30): no glow or interference gives the reactor away
+  const lost = signal !== "live"
+  const snow = signal === "error" || signal === "dark"
+  const flicker = signal === "flicker" ? "cr-signal-flicker" : ""
+  const interference = lost ? 0 : getInterferenceIntensity(radioactivity)
   const timestamp = formatCameraTimestamp(elapsedSeconds, clockStartMs)
   // To meet fitHeight, everything but the screen keeps its size, so take that off first
   const [monitorRef, monitorHeight] = useElementHeight<HTMLDivElement>()
@@ -184,7 +191,7 @@ export default function ReactorCamera({
           <img
             src="/new_reactor_image_cropped.jpg"
             alt="Reactor hall, seen from above on a security camera"
-            className="absolute inset-0 w-full h-full object-cover z-0"
+            className={`absolute inset-0 w-full h-full object-cover z-0 ${flicker}`}
           />
 
           {/* 2. TEMPERATURE LAYER (Dynamic Opacity) */}
@@ -193,7 +200,7 @@ export default function ReactorCamera({
             alt=""
             aria-hidden="true"
             className="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 pointer-events-none mix-blend-screen"
-            style={{ opacity: getTemperatureOpacity(reactorTemp) }}
+            style={{ opacity: lost ? 0 : getTemperatureOpacity(reactorTemp) }}
           />
 
           {/* 3. RADIOACTIVITY LAYER (Dynamic Opacity) */}
@@ -202,8 +209,27 @@ export default function ReactorCamera({
             alt=""
             aria-hidden="true"
             className="absolute inset-0 w-full h-full object-cover z-20 transition-opacity duration-500 pointer-events-none mix-blend-screen"
-            style={{ opacity: getRadioactivityOpacity(radioactivity) }}
+            style={{ opacity: lost ? 0 : getRadioactivityOpacity(radioactivity) }}
           />
+
+          {/* Heavy static through the flicker, then no signal: the same dead screen as the end screen after an explosion */}
+          {signal === "flicker" && (
+            <div className={`absolute inset-0 z-20 overflow-hidden pointer-events-none ${flicker}`} style={{ opacity: 0.45 }} aria-hidden="true">
+              <div className="ws3-cam-static absolute -inset-1/2" />
+            </div>
+          )}
+          {snow && (
+            <div className="absolute inset-0 z-20 bg-neutral-900 pointer-events-none">
+              <div className="absolute inset-0 overflow-hidden opacity-80" aria-hidden="true">
+                <div className="ws3-cam-static absolute -inset-1/2" />
+              </div>
+              {!reducedMotion && <div className="cr-cam-roll absolute inset-0" aria-hidden="true" />}
+              <div className="ws3-cam-osd absolute inset-0 flex flex-col items-center justify-center gap-1 font-mono uppercase text-white">
+                <span className="ws3-cam-signal text-base @xs:text-xl @md:text-3xl font-bold tracking-[0.3em]">No Signal</span>
+                <span className="text-[10px] @md:text-xs opacity-80">CAM 04 – Reactor hall</span>
+              </div>
+            </div>
+          )}
 
           {/* --- CCTV treatment (all pointer-events-none, above the picture) --- */}
           <div className="absolute inset-0 z-30 pointer-events-none">
@@ -247,8 +273,8 @@ export default function ReactorCamera({
               />
             </svg>
 
-            {/* On-screen display */}
-            <div className="ws3-cam-osd absolute inset-0 p-[3.5%] flex flex-col justify-between font-mono uppercase text-white text-[9px] @xs:text-[11px] @md:text-sm @3xl:text-lg leading-tight">
+            {/* On-screen display, from the camera itself, so it goes with the feed */}
+            <div className={`${snow ? "invisible" : ""} ws3-cam-osd absolute inset-0 p-[3.5%] flex flex-col justify-between font-mono uppercase text-white text-[9px] @xs:text-[11px] @md:text-sm @3xl:text-lg leading-tight`}>
               <div className="flex items-start justify-between gap-2">
                 <span className="min-w-0 truncate">CAM 04 – REACTOR HALL – UNIT 4</span>
                 <span className="flex items-center gap-1.5 shrink-0">

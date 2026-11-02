@@ -1,6 +1,7 @@
 "use client"
 
 import { ArrowLeft, XIcon } from "lucide-react"
+import type { HallSignal } from "@/lib/game-utils"
 import ReactorCamera, { getInterferenceIntensity } from "./reactor-camera"
 
 // The full reactor camera view: the CCTV monitor set in its own control panel (owner, 2026-10-27: prototype A, and C
@@ -10,6 +11,7 @@ import ReactorCamera, { getInterferenceIntensity } from "./reactor-camera"
 interface ReactorCameraViewProps {
   radioactivity: number
   reactorTemp: number
+  signal?: HallSignal // the reactor hall's signal; lost, the screen shows snow and the meter drops to 0
   elapsedSeconds: number
   clockStartMs: number
   onBack: () => void
@@ -45,10 +47,10 @@ function SignalMeter({ signal, className = "" }: { signal: number; className?: s
   )
 }
 
-function StatusLamps({ interference, column }: { interference: number; column: boolean }) {
+function StatusLamps({ interference, recording, column }: { interference: number; recording: boolean; column: boolean }) {
   const lamps = [
     { caption: "Pwr", className: "cr-jewel-green on" },
-    { caption: "Rec", className: "cr-jewel-red cr-jewel-steady on" },
+    { caption: "Rec", className: `cr-jewel-red cr-jewel-steady ${recording ? "on" : ""}` },
     { caption: "Interf.", className: `cr-jewel-amber ${interference > 0 ? "on" : ""}` },
   ]
   return (
@@ -84,9 +86,11 @@ function Louvres({ count, className = "" }: { count: number; className?: string 
   )
 }
 
-export default function ReactorCameraView({ radioactivity, reactorTemp, elapsedSeconds, clockStartMs, onBack }: ReactorCameraViewProps) {
-  const interference = getInterferenceIntensity(radioactivity)
-  const signal = signalStrength(interference)
+export default function ReactorCameraView({ radioactivity, reactorTemp, signal: hall = "live", elapsedSeconds, clockStartMs, onBack }: ReactorCameraViewProps) {
+  // With the reactor hall's signal lost there is no picture to interfere with, so nothing here gives radioactivity away
+  const lost = hall !== "live"
+  const interference = lost ? 0 : getInterferenceIntensity(radioactivity)
+  const signal = lost ? 0 : signalStrength(interference)
 
   // Panel kit classes set their own display, which beats Tailwind's hidden, so a wrapper shows or hides each Back
   const back = (wrapper: string, height: string) => (
@@ -118,9 +122,9 @@ export default function ReactorCameraView({ radioactivity, reactorTemp, elapsedS
 
         <div className="flex-1 flex flex-col lg:flex-row gap-3.5 lg:gap-6 min-h-0">
           {/* Left (large screen): read-only status */}
-          <div className="cr-module hidden lg:flex w-[200px] xl:w-[220px] shrink-0 px-3.5 py-4 flex-col items-center gap-[18px]">
+          <div className="cr-module cr-bay-screws hidden lg:flex w-[200px] xl:w-[220px] shrink-0 px-3.5 py-4 flex-col items-center gap-[18px]">
             <span className="cr-plate self-stretch">Status</span>
-            <StatusLamps interference={interference} column={false} />
+            <StatusLamps interference={interference} recording={!lost} column={false} />
             <SignalMeter signal={signal} className="w-[170px] h-auto" />
             <span className="flex-1" />
             <span className="cr-grille w-[120px] h-[120px]" aria-hidden="true" />
@@ -131,19 +135,19 @@ export default function ReactorCameraView({ radioactivity, reactorTemp, elapsedS
               is shorter; on a phone it is as wide as the panel. */}
           <div className="cr-monitor-wall lg:flex-1 lg:min-h-[16rem] rounded-md p-2.5 lg:p-0 flex items-center justify-center lg:[container-type:size] shadow-[inset_0_3px_10px_#000,0_1px_0_rgba(255,255,255,0.45)]">
             <div className="w-full max-w-[34rem] lg:max-w-none lg:w-[min(100cqw_-_1.25rem,100cqh_-_3.5rem)]">
-              <ReactorCamera radioactivity={radioactivity} reactorTemp={reactorTemp} elapsedSeconds={elapsedSeconds} clockStartMs={clockStartMs} />
+              <ReactorCamera radioactivity={radioactivity} reactorTemp={reactorTemp} signal={hall} elapsedSeconds={elapsedSeconds} clockStartMs={clockStartMs} />
             </div>
           </div>
 
           {/* Phone: the status lamps, meter and grille in one module under the monitor */}
-          <div className="cr-module lg:hidden p-3 flex items-center gap-3">
-            <StatusLamps interference={interference} column={true} />
+          <div className="cr-module cr-bay-screws lg:hidden p-3 flex items-center gap-3">
+            <StatusLamps interference={interference} recording={!lost} column={true} />
             <SignalMeter signal={signal} className="w-[140px] h-auto shrink-0" />
             <span className="cr-grille w-[66px] h-[66px] shrink-0 ml-auto mr-1 [background-size:8px_8px,auto]" aria-hidden="true" />
           </div>
 
           {/* Right (large screen): no controls, only the panel's furniture */}
-          <div className="cr-module hidden lg:flex w-[200px] xl:w-[220px] shrink-0 px-3.5 py-4 flex-col gap-4">
+          <div className="cr-module cr-bay-screws hidden lg:flex w-[200px] xl:w-[220px] shrink-0 px-3.5 py-4 flex-col gap-4">
             <span className="cr-plate">Unit 4 · Hall</span>
             <Louvres count={7} className="px-2.5 py-1" />
             <ServiceNote className="mx-1.5 mt-2" />

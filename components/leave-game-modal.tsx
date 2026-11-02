@@ -14,7 +14,7 @@ export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModal
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="cr-dialog sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="cr-dialog-title cr-dialog-title-danger">
+          <DialogTitle className="cr-dialog-title">
             <AlertTriangle className="h-5 w-5 shrink-0" />
             End Simulation?
           </DialogTitle>

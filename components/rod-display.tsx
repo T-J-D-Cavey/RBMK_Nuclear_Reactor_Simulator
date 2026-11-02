@@ -40,7 +40,7 @@ export default function RodDisplay({ gameState, className = "" }: { gameState: G
         <div className="cr-plate">Control Rod Positions</div>
       </div>
 
-      <div className="cr-rod-face p-3 sm:p-4 flex flex-col gap-3">
+      <div className="cr-rod-face cr-bay-screws p-3 sm:p-4 flex flex-col gap-3">
         <ul className="cr-rod-ring" aria-label="Control rod positions">
           {rods.map((rod, i) => {
             const view = views[i]

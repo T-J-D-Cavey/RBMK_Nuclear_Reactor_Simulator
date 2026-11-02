@@ -9,7 +9,7 @@ import { SuccessScreen } from "@/components/success-screen"
 import { LeaveGameModal } from "@/components/leave-game-modal"
 import { useAudioManager } from "@/hooks/use-audio-manager"
 import { useShiftLogLamp } from "@/hooks/use-shift-log-lamp"
-import { getAlarms, getEventWarnings, getReactorWarnings } from "@/lib/game-utils"
+import { getAlarms, getEventWarnings, getHallSignal, getReactorWarnings } from "@/lib/game-utils"
 import { rodsMoving } from "@/lib/sound-cues"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import SoundModal from "@/components/sound-modal"
@@ -148,10 +148,13 @@ export default function GamePage() {
       wide={dashboard}
     />
   )
+  // The reactor hall's readings go dark while its signal is lost (owner, 2026-10-30)
+  const signal = getHallSignal(gameState)
   const camera = (
     <ReactorCamera
       radioactivity={gameState.radioactivity}
       reactorTemp={gameState.reactorTemp}
+      signal={signal}
       elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
       clockStartMs={getCameraClockStartMs(gameState.mode)}
       fitHeight={sideFit}
@@ -164,6 +167,7 @@ export default function GamePage() {
       steamVolume={gameState.steamVolume}
       gameTime={gameState.gameTime}
       isPaused={gameState.isPaused}
+      signal={signal}
       fitHeight={sideFit}
     />
   )
@@ -171,12 +175,23 @@ export default function GamePage() {
   const cards = <ReactivityCards gameState={gameState} height={dashboard ? rodsHeight : chartHeight} />
   const rods = <RodDisplay gameState={gameState} />
 
+  // The emergency beacon on the ceiling, as on the home page and the end screen, turns while any alarm is due (with the
+  // alarm sound off too). It lights the room behind the panels, so it shows in the gaps between them (owner, 2026-10-30).
+  const beacon = alarms.general || alarms.event || alarms.highRadioactivity || alarms.highReactorTemp || alarms.highSteamOrXenon
+  const beaconStill = gameState.isPaused ? "cr-beacon-still" : ""
+
   return (
     <div
       className="min-h-screen bg-background flex flex-col relative"
       onClick={handleInteraction}
       onTouchStart={handleInteraction}
     >
+      {beacon && (
+        <>
+          <div className={`cr-beacon cr-beacon-ceiling cr-beacon-room ${beaconStill}`} aria-hidden="true" />
+          <div className={`cr-beacon-glow cr-beacon-room ${beaconStill}`} aria-hidden="true" />
+        </>
+      )}
       {briefing && <Tutorial steps={briefingSteps} onFinish={handleBriefingDone} />}
 
       {/* MODALS */}

@@ -935,6 +935,31 @@
     var(--screw) right bottom / 8px 8px no-repeat;
 }
 
+/* The same screws, smaller, in the corners of each bay inside a console or dialog: the control panel's readout and
+   machine bays, the side panels' instrument bays, and the bays of the pumps, rods, turbine, sound and camera views
+   (owner, 2026-11-02) */
+.cr-bay-screws {
+  position: relative;
+}
+
+.cr-bay-screws::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  pointer-events: none;
+  --screw: radial-gradient(circle at 40% 35%, #b9b6ab 0 0.8px, #6c6a62 1.7px, #2e2d29 2.5px, rgba(0, 0, 0, 0) 3px);
+  background:
+    var(--screw) left top / 6px 6px no-repeat,
+    var(--screw) right top / 6px 6px no-repeat,
+    var(--screw) left bottom / 6px 6px no-repeat,
+    var(--screw) right bottom / 6px 6px no-repeat;
+}
+
+/* A control panel bay has only 6px of padding, so its screws sit right in the corners, clear of the nameplate */
+.cr-module.cr-bay-screws::after {
+  inset: 0;
+}
+
 /* ---- Recessed bay that holds one instrument ---- */
 .cr-module {
   position: relative;
@@ -1071,24 +1096,21 @@
   }
 }
 
-/* Brushed aluminium title plate, black engraving */
+/* Title plate: white letters cut through black laminate, the same as every dialog title (owner, 2026-11-02) */
 .cr-nameplate {
   position: relative;
   font-family: var(--font-plate), "Arial Narrow", sans-serif;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: #1d1d1b;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    linear-gradient(180deg, #e3e3df 0%, #b9bab5 48%, #a6a7a2 52%, #c9cac5 100%);
-  border-radius: 3px;
+  color: #ebe8de;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.7);
+  background: linear-gradient(180deg, #2f2e2b 0%, #1c1b19 100%);
+  border-radius: 2px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
-    0 0 0 1px #2a2926,
-    0 2px 4px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 1px 0 1px rgba(255, 255, 255, 0.35);
 }
 
 /* Chrome ring around an indicator lamp: lit from straight above so it reads evenly, with a dark socket behind a
@@ -1799,6 +1821,7 @@
   animation-play-state: paused;
 }
 
+
 .cr-dialog-title {
   display: flex;
   align-items: center;
@@ -1821,11 +1844,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 0 0 1px rgba(0, 0, 0, 0.55),
     0 1px 0 1px rgba(255, 255, 255, 0.35);
-}
-
-.cr-dialog-title-danger {
-  color: #fee2e2;
-  background: linear-gradient(180deg, #8f1d1d 0%, #5f1010 100%);
 }
 
 /* Volume fader */
@@ -2276,6 +2294,29 @@
 @keyframes cr-beacon-glow {
   0%, 100% { opacity: 0.45; }
   50% { opacity: 1; }
+}
+
+/* On the game page the beacon lights the room behind the panels, with no vignette to set it off, so its beams are
+   brighter and it holds still while the game is paused (owner, 2026-10-30) */
+.cr-beacon.cr-beacon-room {
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 30, 20, 0) 0deg,
+    rgba(255, 30, 20, 0.55) 22deg,
+    rgba(255, 30, 20, 0) 50deg,
+    rgba(255, 30, 20, 0) 180deg,
+    rgba(255, 30, 20, 0.55) 202deg,
+    rgba(255, 30, 20, 0) 230deg
+  );
+}
+
+.cr-beacon-glow.cr-beacon-room {
+  background: radial-gradient(ellipse 45% 60% at 50% 0%, rgba(255, 40, 30, 0.6) 0%, rgba(255, 40, 30, 0) 100%);
+}
+
+.cr-beacon.cr-beacon-still,
+.cr-beacon-glow.cr-beacon-still {
+  animation-play-state: paused;
 }
 
 /* The room shakes as the core goes */
@@ -2942,6 +2983,53 @@
   .cr-eng-blink,
   .cr-eng-talk,
   .cr-eng-wave {
+    animation: none;
+  }
+}
+
+/* ---- Signal lost from the reactor hall (owner, 2026-10-30): each reading from the hall flickers, shows ERR, then goes
+   dark; the camera loses its picture and the chart recorder's paper stops ---- */
+.cr-signal-flicker {
+  animation: cr-signal-flicker 0.7s steps(1, end) infinite;
+}
+
+@keyframes cr-signal-flicker {
+  0%, 100% { opacity: 1; }
+  12% { opacity: 0.15; }
+  24% { opacity: 0.9; }
+  36% { opacity: 0.05; }
+  50% { opacity: 1; }
+  62% { opacity: 0.3; }
+  78% { opacity: 0.85; }
+  88% { opacity: 0.1; }
+}
+
+.cr-signal-err {
+  letter-spacing: 0.2em;
+  animation: cr-signal-blink 0.9s steps(1, end) infinite;
+}
+
+@keyframes cr-signal-blink {
+  50% { opacity: 0.3; }
+}
+
+/* An unlit vacuum-fluorescent display: the glass with nothing behind it */
+.vfd-display.cr-vfd-dark {
+  background: oklch(0.32 0.04 130);
+  color: transparent;
+}
+
+/* The radioactivity balance's fault screen */
+.cr-signal-screen {
+  background: #050605;
+  color: #5cff9a;
+  font-family: var(--font-terminal), ui-monospace, monospace;
+  text-shadow: 0 0 6px rgba(92, 255, 154, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-signal-flicker,
+  .cr-signal-err {
     animation: none;
   }
 }

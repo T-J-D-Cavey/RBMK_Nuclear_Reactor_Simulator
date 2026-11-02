@@ -1,5 +1,5 @@
-// Shift events and power targets (bible §12–§13): the shift's plan, advance warnings, emergencies, smaller
-// events, announced target changes and the turbine trip. Pure: randomness is injected, so the scenario
+// Shift events and power targets (bible §12–§13): the shift's plan of events and their advance warnings, the target
+// changes and holds that run alongside them, and the turbine trip. Pure: randomness is injected, so the scenario
 // harness can replay whole shifts (scripts/sim). Numbers live in EVENT_TUNING (lib/sim/tuning.ts).
 import {
   type EventKind,
@@ -7,16 +7,19 @@ import {
   type GameMode,
   type GameState,
   type LogSource,
-  type PlannedKind,
   type ScheduledEvent,
+  type ShiftEventKind,
+  type TargetTrack,
   GAME_MODE_CONFIGS,
   MAJOR_EVENT_KINDS,
+  SHIFT_EVENT_KINDS,
   THRESHOLDS,
   getPowerTolerance,
   getShiftTime,
 } from "./types"
 import { EVENT_TUNING, type ShiftEventTuning } from "./sim/tuning"
 import { FIRST_LOG_AT, addLog, formatMW } from "./game-utils"
+import { isPowerOnTarget } from "./game-mechanics"
 import type { Rng } from "./sim/rng"
 
 type Range = readonly [number, number]
@@ -33,6 +36,7 @@ export const isMajorEvent = (kind: EventKind) => MAJOR_EVENT_KINDS.includes(kind
 
 const between = (rng: Rng, [lo, hi]: Range) => lo + rng() * (hi - lo)
 const wholeBetween = (rng: Rng, [lo, hi]: Range) => Math.min(hi, lo + Math.floor(rng() * (hi - lo + 1)))
+const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
 
 function pickDistinct(rng: Rng, n: number, count: number): number[] {
   const pool = Array.from({ length: n }, (_, i) => i)
@@ -40,16 +44,6 @@ function pickDistinct(rng: Rng, n: number, count: number): number[] {
   while (picked.length < Math.min(n, count)) picked.push(pool.splice(Math.floor(rng() * pool.length), 1)[0])
   return picked.sort((a, b) => a - b)
 }
-
-export function shiftEventTuning(mode: GameMode): ShiftEventTuning | null {
-  if (!GAME_MODE_CONFIGS[mode]?.hasRandomEvents) return null
-  return mode === "hard" ? EVENT_TUNING.hard : EVENT_TUNING.easy
-}
-
-// --- The shift's plan ---
-
-const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
-const isMajorKind = (kind: PlannedKind) => kind !== "target-change" && isMajorEvent(kind)
 
 function shuffle<T>(rng: Rng, items: readonly T[]): T[] {
   const out = [...items]
@@ -60,90 +54,45 @@ function shuffle<T>(rng: Rng, items: readonly T[]): T[] {
   return out
 }
 
-// How long a planned thing keeps the player busy: an event's length, or a target change's notice.
-function plannedDuration(kind: PlannedKind, tuning: ShiftEventTuning, rng: Rng): number {
-  switch (kind) {
-    case "power-cut":
-      return Math.round(between(rng, tuning.powerCutSeconds))
-    case "pump-trip":
-      return Math.round(between(rng, tuning.pumpTripSeconds))
-    case "grid-hold":
-      return Math.round(between(rng, tuning.gridHoldSeconds))
-    case "rod-stuck":
-      return 0 // the jam is instant; its warning stays on the alarm screen
-    case "target-change":
-      return EVENT_TUNING.targetNotice
-  }
+export function shiftEventTuning(mode: GameMode): ShiftEventTuning | null {
+  if (!GAME_MODE_CONFIGS[mode]?.hasRandomEvents) return null
+  return mode === "hard" ? EVENT_TUNING.hard : EVENT_TUNING.easy
 }
 
-// The least time from the start of `a` to the start of `b` when `b` comes next. One event at a time, each with
-// a pause after it (longer after a major emergency). The grid can announce a change during a pump trip, but not
-// during a hold or a power cut. A change is in force before the next is announced, a hold is requested or a major
-// emergency is warned of. A major emergency's advance warning also comes after `a` is over.
-function separation(a: ScheduledEvent, b: ScheduledEvent, tuning: ShiftEventTuning): number {
-  const lasts = a.duration ?? 0
-  let busy = 0
-  if (a.kind === "target-change") {
-    if (b.kind === "grid-hold") busy = lasts + EVENT_TUNING.holdAfterTargetChange
-    else if (b.kind === "target-change") busy = lasts + EVENT_TUNING.eventGap
-    else if (isMajorKind(b.kind)) busy = lasts
-  } else if (!(a.kind === "pump-trip" && b.kind === "target-change")) {
-    busy = lasts + (isMajorKind(a.kind) ? EVENT_TUNING.majorQuiet : EVENT_TUNING.eventGap)
-  }
-  return Math.max(tuning.minGap, busy + (EVENT_TUNING.warningLead[b.kind] ?? 0))
+// --- The shift's events ---
+
+function eventDuration(kind: ShiftEventKind, tuning: ShiftEventTuning, rng: Rng): number {
+  const range = { "power-cut": tuning.powerCutSeconds, "signal-loss": tuning.signalLossSeconds, "pump-trip": tuning.pumpTripSeconds, "rod-stuck": tuning.rodJamSeconds }[kind]
+  return Math.round(between(rng, range))
 }
 
-// The shift's plan (owner, 2026-10-19): always the same number of things, made of the major emergencies (at most one
-// of each kind, as a rod jam is permanent), a random number of smaller events (pump trips, hold requests) and target
-// changes for the rest. The first is always a target change (owner, 2026-10-29); after it the order is random. Spare
-// time is shared out almost evenly between them, so the shift neither clusters nor goes quiet for long, and nothing
-// is ever dropped. Major emergencies keep out of the first few minutes and apart from each other; nothing starts in
-// the last couple of minutes.
+// The shift's events (owner, 2026-11-02): one of each kind (two on Hard) and a few more of any kind, in a random
+// order at random times, but never two at once. The free time is shared out at random points and the events laid
+// end to end between them, so every arrangement is as likely as any other. The first starts a minute in at the
+// earliest, the last two minutes before the end at the latest. Target changes run separately (runTargetTrack).
 export function planShiftEvents(tuning: ShiftEventTuning, shiftLength: number, rng: Rng): ScheduledEvent[] {
-  const from = tuning.firstAfter
-  const to = shiftLength - tuning.lastStartBefore
-  const majors = shuffle(rng, ["power-cut", "rod-stuck"] as EventKind[]).slice(0, tuning.majors)
-  const minors = wholeBetween(rng, tuning.minorCounts)
-  const targets = Math.max(1, tuning.totalEvents - majors.length - minors)
-  let best: { items: ScheduledEvent[]; slack: number } | null = null
-  for (let tries = 0; tries < 500; tries++) {
-    const minorKinds = Array.from({ length: minors }, (): EventKind => (rng() < 0.5 ? "pump-trip" : "grid-hold"))
-    const rest = shuffle<PlannedKind>(rng, [...majors, ...minorKinds, ...Array<PlannedKind>(targets - 1).fill("target-change")])
-    const kinds: PlannedKind[] = ["target-change", ...rest]
-    const items: ScheduledEvent[] = kinds.map((kind) => ({ at: 0, kind, warned: false, duration: plannedDuration(kind, tuning, rng) }))
-    const gaps = items.slice(1).map((b, i) => separation(items[i], b, tuning))
-    const slack = to - from - sum(gaps)
-    // One share of the spare time before each thing and one after the last, each share 1–2 parts
-    const shares = Array.from({ length: items.length + 1 }, () => 1 + rng())
-    const unit = Math.max(0, slack) / sum(shares)
-    let t = from
-    items.forEach((item, i) => {
-      t += shares[i] * unit + (i ? gaps[i - 1] : 0)
-      item.at = Math.round(t)
-    })
-    const m = items.filter((e) => isMajorKind(e.kind))
-    const placed = m.every((e, i) => e.at >= tuning.firstMajorAfter && (i === 0 || e.at - m[i - 1].at >= tuning.majorSpacing))
-    if (slack >= 0 && placed) return items
-    // Never reached in practice (scripts/sim checks thousands of shifts); keeps the roomiest plan just in case
-    if (!best || slack > best.slack) best = { items, slack }
-  }
-  return best!.items
+  const kinds = shuffle(rng, [
+    ...SHIFT_EVENT_KINDS.flatMap((kind) => Array<ShiftEventKind>(tuning.eachKind).fill(kind)),
+    ...Array.from({ length: tuning.extraEvents }, () => SHIFT_EVENT_KINDS[Math.floor(rng() * SHIFT_EVENT_KINDS.length)]),
+  ])
+  const durations = kinds.map((kind) => eventDuration(kind, tuning, rng))
+  const free = Math.max(0, shiftLength - tuning.lastStartBefore - tuning.firstEventAfter - sum(durations.slice(0, -1)))
+  const points = kinds.map(() => rng() * free).sort((a, b) => a - b)
+  let laid = 0
+  return kinds.map((kind, i) => {
+    const at = Math.round(tuning.firstEventAfter + points[i] + laid)
+    laid += durations[i]
+    return { at, kind, warned: false, duration: durations[i] }
+  })
 }
 
 // --- Per-second driver (Easy and Hard) ---
-
-// The plan spaces everything out, so a planned thing normally starts on time. As a safety net, an event waits while
-// another runs, and a target change waits while one is pending or a hold or power cut runs.
-function canStart(state: GameState, item: ScheduledEvent): boolean {
-  if (item.kind !== "target-change") return state.activeEvents.length === 0
-  return !state.pendingTarget && !state.activeEvents.some((e) => e.type === "grid-hold" || e.type === "power-cut")
-}
 
 export function runShiftEvents(state: GameState, rng: Rng): GameState {
   const tuning = shiftEventTuning(state.mode)
   if (!tuning || state.timeLimit === null) return state
   const now = getShiftTime(state)
-  let s = state.eventPlan ? state : startShift(state, tuning, now, rng)
+  let s = state.eventPlan && state.targetTrack ? state : startShift(state, tuning, now, rng)
 
   // The shift's opening order, a few seconds into play
   if (s.log.length === 0 && now >= FIRST_LOG_AT && s.powerTarget !== null) {
@@ -155,42 +104,98 @@ export function runShiftEvents(state: GameState, rng: Rng): GameState {
     )
   }
 
-  // Brief warning before a major emergency (bible §12), e.g. grid instability before a power cut, and a grid hold's
-  // notice. A hold's notice sets its target, so it waits until the hold is next and no target change is pending.
-  let plan = (s.eventPlan ?? []).map((e, i) => {
+  s = runEvents(s, tuning, now, rng)
+  return runTargetTrack(s, tuning, now, rng)
+}
+
+function startShift(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
+  const eventPlan = state.eventPlan ?? planShiftEvents(tuning, state.timeLimit ?? 0, rng).filter((e) => e.at > now)
+  const targetTrack: TargetTrack = state.targetTrack ?? {
+    phase: "waiting",
+    noticeAt: Math.max(now, Math.round(between(rng, tuning.firstNotice))),
+    takesEffectAt: 0,
+    since: 0,
+    steady: 0,
+    need: 0,
+    hold: false,
+    changes: 0,
+    holdsLeft: tuning.holds,
+  }
+  return { ...state, eventPlan, targetTrack, nextTargetChangeAt: null }
+}
+
+// Each event is warned of in advance where it has a warning (bible §12), e.g. grid instability before a power cut,
+// and starts on time. The plan never overlaps two; as a safety net, one waits while another runs.
+function runEvents(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
+  let s = state
+  let plan = (s.eventPlan ?? []).map((e) => {
     const lead = EVENT_TUNING.warningLead[e.kind]
     if (!lead || e.warned || now < e.at - lead) return e
-    if (e.kind === "grid-hold") {
-      if (i > 0 || s.pendingTarget || s.powerTarget === null || s.activeEvents.length) return e
-      const target = nextTarget(s.powerTarget, tuning, rng, EVENT_TUNING.holdStepFactor)
-      s = addLog({ ...s, powerTarget: target }, "grid", holdRequest(target, e.duration ?? 0, true), GRID_CONTROLLER)
-      return { ...e, warned: true, target }
-    }
-    const warning = e.kind === "target-change" ? undefined : WARNINGS[e.kind]
+    const warning = WARNINGS[e.kind]
     if (warning) s = addLog(s, warning.source, warning.text, warning.from)
     return { ...e, warned: true }
   })
-
   const [next, ...rest] = plan
-  if (next && next.at <= now && canStart(s, next)) {
+  if (next && next.at <= now && !s.activeEvents.some((event) => event.type !== "grid-hold")) {
     plan = rest
-    s = next.kind === "target-change" ? announceTargetChange(s, tuning, now, rng) : startEvent(s, next.kind, tuning, rng, next.duration, next.target)
+    s = startEvent(s, next.kind, tuning, rng, next.duration)
   }
   return { ...s, eventPlan: plan }
 }
 
-// The grid's hold request: with notice (the narrow window starts in a minute) or at once
-function holdRequest(target: number, duration: number, notice: boolean): string {
-  const minutes = Math.max(1, Math.round(duration / 60))
-  const hold = `within ±${formatMW(getPowerTolerance(target, true))} for about ${minutes} minute${minutes > 1 ? "s" : ""}`
-  return notice
-    ? `We need you to bring power to ${formatMW(target)} within the next minute, then hold it ${hold}.`
-    : `We need you to bring power to ${formatMW(target)} and hold it ${hold}.`
+// --- Target changes (bible §13, owner 2026-11-02) ---
+
+// The grid's target changes run on their own track, whatever the events are doing. Each gives the same notice, with
+// no number, then takes effect; a hold also narrows the window until it is lifted, once the player has held it. The
+// next notice waits until the player has been on target for the settle time, so a target never moves just as it is
+// reached, and never sits unchanged for long. One never reached is moved on after giveUpSeconds, a clock that stops
+// while a power cut or signal loss puts the target out of reach or out of sight. Nothing is announced in the last
+// couple of minutes.
+function runTargetTrack(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
+  if (!state.targetTrack || state.powerTarget === null) return state
+  const end = (state.timeLimit ?? 0) - tuning.lastStartBefore
+  let s = state
+  let t: TargetTrack = { ...state.targetTrack }
+  switch (t.phase) {
+    case "waiting": {
+      if (now < t.noticeAt || now > end || s.pendingTarget) break
+      t.hold = t.changes > 0 && holdNext(t, tuning, now, end, rng)
+      if (t.hold) t.holdsLeft--
+      t.changes++
+      s = t.hold ? addLog(s, "grid", TARGET_NOTICE, GRID_CONTROLLER) : announceTargetChange(s, tuning, now, rng)
+      t = { ...t, phase: "notice", takesEffectAt: now + EVENT_TUNING.targetNotice }
+      break
+    }
+    case "notice": {
+      // A plain change has just taken effect (applyPendingTarget runs first); a hold brings its target now
+      if (now < t.takesEffectAt) break
+      if (t.hold) s = startEvent(s, "grid-hold", tuning, rng)
+      t = { ...t, phase: t.hold ? "holding" : "settling", since: now, steady: 0, need: Math.round(between(rng, t.hold ? tuning.holdForSeconds : tuning.settleSeconds)) }
+      break
+    }
+    case "settling":
+    case "holding": {
+      if (s.activeEvents.some((event) => event.type === "power-cut" || event.type === "signal-loss")) t.since++
+      t.steady = isPowerOnTarget(s) ? t.steady + 1 : 0
+      if (t.steady < t.need && now - t.since < tuning.giveUpSeconds) break
+      if (t.phase === "settling") {
+        t = { ...t, phase: "waiting", noticeAt: now + 1 }
+        break
+      }
+      s = addLog({ ...s, activeEvents: s.activeEvents.filter((event) => event.type !== "grid-hold") }, "grid", "Hold lifted. Normal tolerance restored.", GRID_CONTROLLER)
+      t = { ...t, phase: "settling", since: now, steady: 0, need: Math.round(between(rng, tuning.settleSeconds)) }
+      break
+    }
+  }
+  return { ...s, targetTrack: t }
 }
 
-function startShift(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
-  const plan = planShiftEvents(tuning, state.timeLimit ?? 0, rng).filter((e) => e.at > now)
-  return { ...state, eventPlan: plan, nextTargetChangeAt: null }
+// The shift's holds are spread over the changes still likely to come: each change is a hold with a chance of the
+// holds left over the changes left, and certainly once there are no more changes than holds left
+function holdNext(t: TargetTrack, tuning: ShiftEventTuning, now: number, end: number, rng: Rng): boolean {
+  if (t.holdsLeft <= 0) return false
+  const changesLeft = 1 + Math.floor(Math.max(0, end - now) / tuning.changeEverySeconds)
+  return t.holdsLeft >= changesLeft || rng() < t.holdsLeft / changesLeft
 }
 
 const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; text: string }>> = {
@@ -204,11 +209,15 @@ const WARNINGS: Partial<Record<EventKind, { source: LogSource; from: string; tex
     from: REACTOR_TECHNICIAN,
     text: "Detected pressure fluctuations in the fuel channels. Control rod movement may be impacted.",
   },
+  "signal-loss": {
+    source: "engineer",
+    from: SHIFT_FOREMAN,
+    text: "Electricians are reporting faults on the cabling to the reactor hall. Our instrument readings may be affected.",
+  },
 }
 
-// Start an event now, lasting as long as planned (or a fresh draw). A grid hold given notice brings the target it set
-// then (noticed). Exported so tests can trigger one directly.
-export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEventTuning, rng: Rng, planned?: number, noticed?: number): GameState {
+// Start an event now, lasting as long as planned (or a fresh draw). Exported so tests can trigger one directly.
+export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEventTuning, rng: Rng, planned?: number): GameState {
   const now = getShiftTime(state)
   const base = { id: `event-${kind}-${now}`, type: kind, timestamp: state.gameTime }
   let s = state
@@ -218,17 +227,23 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
       s = addLog({ ...s, mainsPower: false }, "engineer", "We've lost grid mains power to the pumps!", HEAD_ENGINEER)
       return begin(s, { ...base, duration: planned ?? Math.round(between(rng, tuning.powerCutSeconds)) })
     }
+    case "signal-loss": {
+      // The link to the reactor hall is down (owner, 2026-10-30): every reading taken there goes dark, so the player
+      // has only power output to go on. The reactor itself runs on as usual (getHallSignal, lib/game-utils).
+      s = addLog(s, "engineer", "I think we've lost the electrics to the reactor hall. None of the reactor instruments are reaching the control room.", HEAD_ENGINEER)
+      return begin(s, { ...base, duration: planned ?? Math.round(between(rng, tuning.signalLossSeconds)) })
+    }
     case "rod-stuck": {
       // Only rods that still move: one the player has already jammed can't jam again.
       const free = s.controlRods.flatMap((rod, i) => (rod.stuck ? [] : [i]))
       if (!free.length) return s
       const rods = pickDistinct(rng, free.length, wholeBetween(rng, tuning.rodJamRods)).map((k) => free[k])
       const names = rods.map((i) => i + 1).join(", ")
-      // A jammed rod stops wherever it is, including mid-travel, for the rest of the shift (owner, 2026-10-16).
-      // The event itself is over at once: the warning on the alarm screen stays while the rods are jammed.
+      // A jammed rod stops wherever it is, including mid-travel, until the jam ends (owner, 2026-10-30). The warning
+      // on the alarm screen stays while the rods are jammed.
       s = { ...s, controlRods: s.controlRods.map((rod, i) => (rods.includes(i) ? { ...rod, stuck: true, target: rod.insertion } : rod)) }
       s = addLog(s, "engineer", `Control rods ${names} are stuck in position and can't be moved due to a ruptured fuel channel.`, HEAD_ENGINEER)
-      return begin(s, { ...base, duration: 0, data: { affectedRods: rods } })
+      return begin(s, { ...base, duration: planned ?? Math.round(between(rng, tuning.rodJamSeconds)), data: { affectedRods: rods } })
     }
     case "pump-trip": {
       const running = s.waterPumps.filter((p) => p.on && !p.tripped)
@@ -241,16 +256,18 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
     }
     case "grid-hold": {
       if (s.powerTarget === null) return s
-      // Every hold is at a new target, so the target doesn't sit unchanged through several events (owner, 2026-10-29).
-      // It is named with its window, so the step is half a target change's: different, but quick to reach.
-      const duration = planned ?? Math.round(between(rng, tuning.gridHoldSeconds))
-      if (noticed !== undefined) {
-        s = addLog(s, "grid", `Hold now in force: ${formatMW(noticed)}, within ±${formatMW(getPowerTolerance(noticed, true))}.`, GRID_CONTROLLER)
-      } else {
-        const target = nextTarget(s.powerTarget, tuning, rng, EVENT_TUNING.holdStepFactor)
-        s = addLog({ ...s, powerTarget: target }, "grid", holdRequest(target, duration, false), GRID_CONTROLLER)
-      }
-      return begin(s, { ...base, duration })
+      // A hold is a target change with a narrower window (owner, 2026-10-30): after the usual notice, the new target
+      // and the narrow window come in together, and the grid says what the hold means. The step is half a target
+      // change's, so it is quick to reach (owner, 2026-10-29). It lasts until the target track lifts it.
+      const target = nextTarget(s.powerTarget, tuning, rng, EVENT_TUNING.holdStepFactor)
+      s = addLog({ ...s, powerTarget: target }, "grid", targetConfirmation(target), GRID_CONTROLLER)
+      s = addLog(
+        s,
+        "grid",
+        `This is a hold request: keep output within ±${formatMW(getPowerTolerance(target, true))}, half the usual margin, until we lift the hold.`,
+        GRID_CONTROLLER,
+      )
+      return begin(s, { ...base, duration: 0 })
     }
   }
 }
@@ -261,8 +278,9 @@ function begin(s: GameState, event: GameEvent): GameState {
 
 // --- Ending events (every mode) ---
 
+// A grid hold has no set length: the target track lifts it once it has been held (runTargetTrack)
 export function expireEvents(state: GameState): GameState {
-  const ended = state.activeEvents.filter((event) => Math.abs(event.timestamp - state.gameTime) >= event.duration)
+  const ended = state.activeEvents.filter((event) => event.type !== "grid-hold" && Math.abs(event.timestamp - state.gameTime) >= event.duration)
   if (!ended.length) return state
   let s: GameState = { ...state, activeEvents: state.activeEvents.filter((event) => !ended.includes(event)) }
   for (const event of ended) s = endEvent(s, event)
@@ -282,16 +300,22 @@ function endEvent(state: GameState, event: GameEvent): GameState {
         HEAD_ENGINEER,
       )
       break
-    case "rod-stuck":
-      break // the rods stay jammed (owner, 2026-10-16)
+    case "rod-stuck": {
+      // Only the jam's own rods free, where they stopped; a rod jammed by high steam stays jammed
+      const rods = event.data?.affectedRods ?? []
+      s = { ...s, controlRods: s.controlRods.map((rod, i) => (rods.includes(i) ? { ...rod, stuck: false } : rod)) }
+      const names = rods.map((i) => i + 1).join(", ")
+      s = addLog(s, "engineer", `The ruptured fuel channel has been repaired. Control rods ${names} can be moved again.`, HEAD_ENGINEER)
+      break
+    }
     case "pump-trip": {
       const pumps = event.data?.affectedPumps ?? []
       s = { ...s, waterPumps: s.waterPumps.map((p) => (pumps.includes(p.id) ? { ...p, tripped: false } : p)) }
       s = addLog(s, "engineer", `Pump ${pumps.join(", ")} is back in service.`, PUMP_OPERATOR)
       break
     }
-    case "grid-hold":
-      s = addLog(s, "grid", "Hold lifted. Normal tolerance restored.", GRID_CONTROLLER)
+    case "signal-loss":
+      s = addLog(s, "engineer", "Electrics to the reactor hall are back. Reactor instruments are reading again.", REACTOR_TECHNICIAN)
       break
   }
   if (isMajorEvent(event.type)) s = { ...s, stats: { ...s.stats, emergenciesHandled: s.stats.emergenciesHandled + 1 } }
@@ -335,24 +359,23 @@ export function nextTarget(current: number, tuning: ShiftEventTuning, rng: Rng, 
 }
 
 // The grid warns that demand has changed and confirms the new target when it takes effect, 60 s later (owner
-// wording, 2026-10-12: the warning doesn't give the number). When it happens is up to the shift's plan.
+// wording, 2026-10-12: the warning doesn't give the number). When it happens is up to the shift's plan. A grid
+// hold gives the same notice and confirmation.
+const TARGET_NOTICE = "We may soon require an adjustment in your power output."
+const targetConfirmation = (target: number) => `New power output requested to be ${formatMW(target)}.`
+
 function announceTargetChange(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
   if (state.powerTarget === null) return state
   const target = nextTarget(state.powerTarget, tuning, rng)
   const s: GameState = { ...state, pendingTarget: { target, at: now + EVENT_TUNING.targetNotice, source: "grid", from: GRID_CONTROLLER } }
-  return addLog(s, "grid", "We may soon require an adjustment in your power output.", GRID_CONTROLLER)
+  return addLog(s, "grid", TARGET_NOTICE, GRID_CONTROLLER)
 }
 
 // An announced change takes effect when its notice runs out (every mode with targets, incl. the Safety Test).
 export function applyPendingTarget(state: GameState): GameState {
   const pending = state.pendingTarget
   if (!pending || getShiftTime(state) < pending.at) return state
-  return addLog(
-    { ...state, powerTarget: pending.target, pendingTarget: null },
-    pending.source,
-    `New power output requested to be ${formatMW(pending.target)}.`,
-    pending.from,
-  )
+  return addLog({ ...state, powerTarget: pending.target, pendingTarget: null }, pending.source, targetConfirmation(pending.target), pending.from)
 }
 
 // --- Turbine trip (bible §12): a consequence of sustained over-pressure, never random ---

@@ -41,9 +41,13 @@ export interface GameStats {
   secondsInDanger: number
 }
 
-// Shift events (bible §12). Power cuts and rod jams are the major emergencies; a rod jam is permanent.
-export type EventKind = "power-cut" | "rod-stuck" | "pump-trip" | "grid-hold"
-export const MAJOR_EVENT_KINDS: readonly EventKind[] = ["power-cut", "rod-stuck"]
+// Shift events (bible §12): power cuts, signal losses from the reactor hall, pump trips and rod jams. Power cuts and
+// signal losses are the major emergencies. A grid hold is a kind of target change (owner, 2026-10-30), kept here
+// because it runs as an active event while its narrow window lasts.
+export type EventKind = "power-cut" | "signal-loss" | "rod-stuck" | "pump-trip" | "grid-hold"
+export type ShiftEventKind = Exclude<EventKind, "grid-hold">
+export const SHIFT_EVENT_KINDS: readonly ShiftEventKind[] = ["power-cut", "signal-loss", "pump-trip", "rod-stuck"]
+export const MAJOR_EVENT_KINDS: readonly EventKind[] = ["power-cut", "signal-loss"]
 
 export interface GameEvent {
   id: string
@@ -56,16 +60,26 @@ export interface GameEvent {
   }
 }
 
-// One thing in this shift's plan (shift time = seconds since the shift started): an event, or the grid announcing
-// a target change.
-export type PlannedKind = EventKind | "target-change"
-
+// One event in this shift's plan (shift time = seconds since the shift started)
 export interface ScheduledEvent {
   at: number
-  kind: PlannedKind
+  kind: ShiftEventKind
   warned: boolean // advance warning already given
-  duration?: number // drawn when the shift is planned, so the plan can space everything out
-  target?: number // a grid hold's target, named and set at its advance notice
+  duration: number // drawn when the shift is planned, so no two events overlap
+}
+
+// Where the grid's target changes have got to (bible §13, owner 2026-11-02). They run on their own, alongside the
+// events: the next notice comes once the player has been on target for a while, or when the grid gives up waiting.
+export interface TargetTrack {
+  phase: "waiting" | "notice" | "settling" | "holding"
+  noticeAt: number // waiting: shift time the next notice is due
+  takesEffectAt: number // notice: when the change takes effect
+  since: number // settling/holding: when the give-up clock started (it stops during a power cut or signal loss)
+  steady: number // settling/holding: seconds on target without a break
+  need: number // settling: the settle time drawn; holding: how long the hold must be held
+  hold: boolean // the change in hand (or the last one) is a hold
+  changes: number // announced so far
+  holdsLeft: number
 }
 
 // A target change the grid (or the Safety Test script) has announced but which is not yet in force.
@@ -195,6 +209,7 @@ export interface GameState {
   activeEvents: GameEvent[]
   eventHistory: GameEvent[]
   eventPlan: ScheduledEvent[] | null // this shift's upcoming events; planned on the first tick (Easy/Hard)
+  targetTrack: TargetTrack | null // this shift's target changes (Easy/Hard); started on the first tick
   nextTargetChangeAt: number | null // unused since target changes joined the event plan (2026-10-19); kept for old saves
   pendingTarget: PendingTargetChange | null // announced, not yet in force
   scriptStep: number // Safety Test: index of the next script step to run
@@ -266,6 +281,7 @@ export const INITIAL_GAME_STATE: GameState = {
   activeEvents: [],
   eventHistory: [],
   eventPlan: null,
+  targetTrack: null,
   nextTargetChangeAt: null,
   pendingTarget: null,
   scriptStep: 0,

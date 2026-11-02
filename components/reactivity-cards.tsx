@@ -5,6 +5,7 @@ import type { GameState } from "@/lib/types"
 import { getReactivityCards } from "@/lib/sim/reactor"
 import { BOARD_CARDS, type Board, type BoardSide, readBoard } from "@/lib/reactivity-board"
 import { useElementSize } from "@/hooks/use-element-height"
+import { getHallSignal } from "@/lib/game-utils"
 
 // The radioactivity balance, Legasov's board from the show (owner, 2026-10-13; renamed 2026-10-14): red cards push
 // radioactivity up, blue cards push it down, and the reactor is steady while the two columns are level. Every card
@@ -138,17 +139,32 @@ export default function ReactivityCards({ gameState, height, className = "" }: {
     )
   }
 
+  // The balance is worked out from the reactor hall's readings, so it fails with their signal (owner, 2026-10-30)
+  const signal = getHallSignal(gameState)
+  const fault = signal === "error" || signal === "dark"
+
   return (
     <div className={`cr-panel cr-screws p-3 sm:p-4 flex flex-col gap-2 ${className}`} style={height ? { height } : undefined}>
       <div className="flex items-center justify-between gap-2">
         <div className="cr-plate">Radioactivity Balance</div>
       </div>
 
-      <div className="cr-card-rack p-2 sm:p-2.5 flex-1 min-h-0 flex flex-col" role="group" aria-label="Red and blue cards. Every card is the same push.">
-        <div ref={stackRef} className="grid grid-cols-2 flex-1 min-h-[12rem]" style={{ "--tag-font": `${fontPx}px` } as CSSProperties}>
+      <div className="cr-card-rack cr-bay-screws relative p-2 sm:p-2.5 flex-1 min-h-0 flex flex-col" role="group" aria-label="Red and blue cards. Every card is the same push.">
+        {/* Kept in place under a fault, so the rack keeps its size */}
+        <div
+          ref={stackRef}
+          className={`grid grid-cols-2 flex-1 min-h-[12rem] ${signal === "flicker" ? "cr-signal-flicker" : ""} ${fault ? "invisible" : ""}`}
+          style={{ "--tag-font": `${fontPx}px` } as CSSProperties}
+        >
           {column("red")}
           {column("blue")}
         </div>
+        {fault && (
+          <div className="cr-signal-screen absolute inset-2 sm:inset-2.5 flex flex-col items-center justify-center gap-1 text-center rounded-sm" role="status">
+            <span className={`text-4xl ${signal === "error" ? "cr-signal-err" : ""}`}>ERR</span>
+            <span className="text-lg uppercase tracking-[0.12em] px-3">No signal from reactor hall</span>
+          </div>
+        )}
       </div>
     </div>
   )

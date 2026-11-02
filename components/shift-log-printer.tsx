@@ -64,7 +64,7 @@ export default function ShiftLogPrinter({
   const lit = visible ? lamp : "off"
 
   return (
-    <section ref={section} id="shift-log" className="ws3-cam-bezel rounded-md p-2 sm:p-2.5">
+    <section ref={section} id="shift-log" className="ws3-cam-bezel cr-bay-screws rounded-md p-2 sm:p-2.5">
       <button
         onClick={() => setVisible(!visible)}
         aria-expanded={visible}

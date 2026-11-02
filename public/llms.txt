@@ -7,8 +7,8 @@ The reactor model is a simplified, game-sized version of Valery Legasov's courtr
 The player controls ten control rods, the AZ-5 emergency button, four water pumps and the turbine. The game ends in a meltdown (reactor temperature reaches 1,200°), a core explosion (steam reaches 600), dismissal (performance falls to 0%) or a completed shift.
 
 Game modes:
-- Easy: 15-minute shift, 7 events including one major emergency.
-- Hard: 30-minute shift, 14 events including both major emergencies and larger target changes.
+- Easy: 15-minute shift with 5 emergencies (power cuts, lost instrument signals, pump trips and jammed control rods) and frequent power target changes, including grid holds.
+- Hard: 30-minute shift with 10 longer emergencies and bigger power target changes over a wider range.
 - Free: unlimited sandbox with no targets or events.
 - Safety Test: a 20-minute scripted recreation of the Unit 4 turbine rundown test of 25–26 April 1986.
 

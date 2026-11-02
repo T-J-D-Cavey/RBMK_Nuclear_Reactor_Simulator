@@ -2,13 +2,34 @@
 // §12–§14), run through the real game loop (lib/game-loop). Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { type GameMode, type GameState, GAME_MODE_CONFIGS, MAJOR_EVENT_KINDS, THRESHOLDS, getPowerTolerance, getShiftTime } from "../../lib/types"
+import {
+  type GameMode,
+  type GameState,
+  type TargetTrack,
+  GAME_MODE_CONFIGS,
+  MAJOR_EVENT_KINDS,
+  SHIFT_EVENT_KINDS,
+  THRESHOLDS,
+  getPowerTolerance,
+  getShiftTime,
+  isGridHoldActive,
+} from "../../lib/types"
 import { EVENT_TUNING } from "../../lib/sim/tuning"
 import { seededRng } from "../../lib/sim/rng"
 import { getRodMargin } from "../../lib/sim/reactor"
 import { advanceGame, createNewGame } from "../../lib/game-loop"
 import { isPowerOnTarget } from "../../lib/game-mechanics"
-import { AZ5_LAMP_SECONDS, checkEventWarnings, formatMW, getAlarms, getWarningFlags, isAz5LampLit } from "../../lib/game-utils"
+import {
+  AZ5_LAMP_SECONDS,
+  SIGNAL_DARK_AFTER,
+  checkEventWarnings,
+  formatMW,
+  getAlarms,
+  getHallSignal,
+  getReactorWarnings,
+  getWarningFlags,
+  isAz5LampLit,
+} from "../../lib/game-utils"
 import { applyPendingTarget, checkTurbineTrip, planShiftEvents, runShiftEvents, startEvent } from "../../lib/game-events"
 import {
   AZ5_ORDER,
@@ -31,7 +52,8 @@ const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 function quietGame(mode: GameMode): GameState {
   const s = createNewGame(mode)
   const rods = s.controlRods.map((r, i) => ({ ...r, insertion: REFERENCE_STATE.rods[i], target: REFERENCE_STATE.rods[i] }))
-  return { ...s, controlRods: rods, eventPlan: [], nextTargetChangeAt: null }
+  const parked: TargetTrack = { phase: "waiting", noticeAt: Number.MAX_SAFE_INTEGER, takesEffectAt: 0, since: 0, steady: 0, need: 0, hold: false, changes: 0, holdsLeft: 0 }
+  return { ...s, controlRods: rods, eventPlan: [], targetTrack: parked, nextTargetChangeAt: null }
 }
 
 const step = (s: GameState, seconds: number, rng = seededRng(1)) => {
@@ -64,58 +86,58 @@ function targetChanges(run: GameRun, which: "announced" | "hold" | "all" = "anno
 
 // ---------- §12 Random emergency events ----------
 
-test("§12 the shift's plan: always the same number of things, one major emergency on Easy, one of each on Hard, sensibly spaced", () => {
+test("§12 the shift's events: one of each kind (two on Hard) and a few more, random order and times, never two at once", () => {
   for (const mode of ["easy", "hard"] as const) {
     const tuning = EVENT_TUNING[mode]
     const length = GAME_MODE_CONFIGS[mode].timeLimit!
-    const minorCounts = new Set<number>()
     const firstKinds = new Set<string>()
+    const extraKinds = new Set<string>()
+    const gaps: number[] = []
     for (let seed = 1; seed <= 2000; seed++) {
       const plan = planShiftEvents(tuning, length, seededRng(seed))
-      const why = `${mode} seed ${seed}: ${plan.map((e) => `${e.kind}@${e.at}`).join(" ")}`
-      assert.equal(plan.length, tuning.totalEvents, why)
-      // The shift opens with a target change (owner, 2026-10-29)
-      assert.equal(plan[0].kind, "target-change", why)
-      const m = plan.filter((e) => isMajor(e.kind))
-      // At most one of each kind (owner, 2026-10-16): Easy draws one, Hard both
-      assert.equal(m.length, tuning.majors, why)
-      assert.equal(new Set(m.map((e) => e.kind)).size, m.length, why)
-      firstKinds.add(m[0].kind)
-      const minors = plan.filter((e) => e.kind === "pump-trip" || e.kind === "grid-hold").length
-      assert.ok(minors >= tuning.minorCounts[0] && minors <= tuning.minorCounts[1], why)
-      minorCounts.add(minors)
-      for (const e of m) assert.ok(e.at >= tuning.firstMajorAfter, why)
-      for (let i = 1; i < m.length; i++) assert.ok(m[i].at - m[i - 1].at >= tuning.majorSpacing, why)
-      for (const e of plan) assert.ok(e.at >= tuning.firstAfter && e.at <= length - tuning.lastStartBefore, why)
+      const why = `${mode} seed ${seed}: ${plan.map((e) => `${e.kind}@${e.at}+${e.duration}`).join(" ")}`
+      assert.equal(plan.length, 4 * tuning.eachKind + tuning.extraEvents, why)
+      for (const kind of SHIFT_EVENT_KINDS) {
+        const n = plan.filter((e) => e.kind === kind).length
+        assert.ok(n >= tuning.eachKind && n <= tuning.eachKind + tuning.extraEvents, why)
+        if (n > tuning.eachKind) extraKinds.add(kind)
+      }
+      firstKinds.add(plan[0].kind)
+      // None in the first minute or the last two, each as long as its kind lasts, and never two at once
+      assert.ok(plan[0].at >= tuning.firstEventAfter && plan.at(-1)!.at <= length - tuning.lastStartBefore, why)
       for (let i = 1; i < plan.length; i++) {
-        const [a, b] = [plan[i - 1], plan[i]]
-        assert.ok(b.at - a.at >= tuning.minGap, `${why}: ${b.at - a.at}s apart`)
-        // One event at a time, and a major emergency's warning comes after the thing before it is over
-        if (a.kind !== "target-change" && b.kind !== "target-change") assert.ok(b.at >= a.at + a.duration!, why)
-        if (isMajor(b.kind)) assert.ok(b.at - EVENT_TUNING.warningLead[b.kind]! >= a.at + a.duration!, why)
-        if (a.kind === "target-change" && b.kind === "grid-hold") assert.ok(b.at - a.at >= a.duration! + EVENT_TUNING.holdAfterTargetChange, why)
+        assert.ok(plan[i].at >= plan[i - 1].at + plan[i - 1].duration, why)
+        gaps.push(plan[i].at - plan[i - 1].at - plan[i - 1].duration)
       }
     }
-    assert.equal(firstKinds.size, 2, `${mode}: either kind can come first`)
-    assert.equal(minorCounts.size, 2, `${mode}: both numbers of smaller events occur`)
+    assert.equal(firstKinds.size, 4, `${mode}: any kind can come first`)
+    assert.equal(extraKinds.size, 4, `${mode}: the extras can be of any kind`)
+    // Random times: some events come back to back, others with minutes between
+    assert.ok(Math.min(...gaps) < 5 && Math.max(...gaps) > 240, `${mode}: gaps ${Math.min(...gaps)}–${Math.max(...gaps)} s`)
   }
 })
 
-test("§12 a typical shift shows every planned thing, each major warned of in advance", () => {
+test("§12 a typical shift: every planned event happens, warned of in advance where it has a warning, never two at once", () => {
+  const warnings: Record<string, string> = {
+    "power-cut": "Reports of power cable damage",
+    "signal-loss": "Electricians are reporting faults",
+    "rod-stuck": "Detected pressure fluctuations",
+  }
   for (const mode of ["easy", "hard"] as const) {
+    const tuning = EVENT_TUNING[mode]
     for (const run of shifts(mode).filter((r) => r.final.hasWon)) {
-      // Nothing is dropped: every planned event happens, and every planned target change is announced and in force
-      const tuning = EVENT_TUNING[mode]
-      const changes = targetChanges(run).length
-      assert.equal(run.final.eventHistory.length + changes, tuning.totalEvents, `${mode}: ${run.final.eventHistory.length} events, ${changes} changes`)
-      const fired = run.final.eventHistory.filter((e) => isMajor(e.type))
-      assert.equal(fired.length, tuning.majors, `${mode}: ${fired.length} majors`)
-      for (const event of fired) {
+      const events = run.final.eventHistory.filter((e) => e.type !== "grid-hold")
+      assert.equal(events.length, 4 * tuning.eachKind + tuning.extraEvents, `${mode}: ${events.length} events`)
+      const majors = events.filter((e) => isMajor(e.type)).length
+      assert.equal(run.final.stats.emergenciesHandled, majors, "power cuts and signal losses count as emergencies handled")
+      for (const event of events.filter((e) => e.type in warnings)) {
         const startedAt = (run.final.timeLimit ?? 0) - event.timestamp
-        const warning = run.final.log.find((l) =>
-          event.type === "power-cut" ? l.text.startsWith("Reports of power cable damage") : l.text.startsWith("Detected pressure fluctuations"),
-        )
+        const warning = run.final.log.findLast((l) => l.time <= startedAt && l.text.startsWith(warnings[event.type]))
         assert.ok(warning && startedAt - warning.time >= EVENT_TUNING.warningLead[event.type]!, `${mode}: ${event.type} at ${startedAt}s warned at ${warning?.time}s`)
+      }
+      for (const s of run.states) {
+        const running = s.activeEvents.filter((e) => e.type !== "grid-hold").map((e) => e.type)
+        assert.ok(running.length <= 1, `${mode}: ${running.join(", ")} at once`)
       }
     }
   }
@@ -160,19 +182,26 @@ test("alarms: a warning with its own alarm doesn't also sound the general alarm;
     assert.equal(getAlarms({ ...calm, ...other }).general, true, JSON.stringify(other))
   }
   assert.equal(getAlarms({ ...calm, controlRods: calm.controlRods.map((r) => ({ ...r, insertion: 10, target: 10 })) }).general, true, "low rod margin")
-  // Power cuts and pump trips sound the event alarm while they last; grid holds and target changes don't
+  // Power cuts, pump trips and signal losses sound the event alarm while they last; grid holds and target changes don't
   const rng = seededRng(1)
-  for (const kind of ["power-cut", "pump-trip", "grid-hold"] as const) {
+  for (const kind of ["power-cut", "pump-trip", "signal-loss"] as const) {
     let s = startEvent(calm, kind, EVENT_TUNING.easy, rng)
-    assert.equal(getAlarms(s).event, kind !== "grid-hold", kind)
+    assert.equal(getAlarms(s).event, true, kind)
     s = step(s, s.activeEvents[0].duration + 1, rng)
     assert.equal(getAlarms(s).event, false, `${kind} over`)
   }
-  // A rod jam never ends, so it sounds the general alarm through its warning instead (owner, 2026-10-16)
+  assert.equal(getAlarms(startEvent(calm, "grid-hold", EVENT_TUNING.easy, rng)).event, false, "grid hold")
+  // A rod jam sounds the event alarm too, and its jammed-rods warning doesn't also sound the general alarm
   const jam = step(startEvent(calm, "rod-stuck", EVENT_TUNING.easy, rng), 1, rng)
-  assert.equal(getAlarms(jam).event, false, "rod jam: no event alarm")
-  assert.equal(getAlarms(jam).general, true, "rod jam: general alarm")
-  assert.equal(getAlarms(step(jam, 300, rng)).general, true, "rod jam: still sounding later")
+  assert.equal(getAlarms(jam).event, true, "rod jam: event alarm")
+  assert.equal(getAlarms(jam).general, false, "rod jam: no general alarm")
+  assert.equal(getAlarms(step(jam, jam.activeEvents[0].duration - 2, rng)).event, true, "rod jam: still sounding while it lasts")
+  assert.equal(getAlarms(step(jam, jam.activeEvents[0].duration, rng)).event, false, "rod jam over")
+  // A rod jammed by high steam sounds the general alarm, during a rod jam too
+  const steamJam = { ...calm, controlRods: calm.controlRods.map((r, i) => (i === 0 ? { ...r, stuck: true } : r)) }
+  assert.deepEqual([getAlarms(steamJam).general, getAlarms(steamJam).event], [true, false], "steam jam: general alarm")
+  const both = startEvent(steamJam, "rod-stuck", EVENT_TUNING.easy, rng)
+  assert.deepEqual([getAlarms(both).general, getAlarms(both).event], [true, true], "steam jam during a rod jam: both")
   const announced = applyPendingTarget({ ...calm, pendingTarget: { target: 6000, at: 0, source: "grid", from: "GRID CONTROLLER" } })
   assert.equal(announced.powerTarget, 6000)
   assert.equal(getAlarms(announced).event, false, "target change")
@@ -186,7 +215,7 @@ test("alarms: a warning with its own alarm doesn't also sound the general alarm;
   assert.equal(getAlarms(trip).event, false, "reset by the player")
 })
 
-test("§12 a rod jam is permanent: rods stop where they are, even mid-travel, and never free again", () => {
+test("§12 a rod jam stops rods where they are, even mid-travel, until it ends; then they move again", () => {
   const rng = seededRng(3)
   let s = quietGame("easy")
   s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: 100 })) }
@@ -194,21 +223,40 @@ test("§12 a rod jam is permanent: rods stop where they are, even mid-travel, an
   const logged = s.log.length
   s = startEvent(s, "rod-stuck", EVENT_TUNING.easy, rng)
   assert.equal(s.log.length, logged + 1, "the head engineer reports the jam")
-  const jammed = s.activeEvents[0].data!.affectedRods!
+  const jam = s.activeEvents[0]
+  const [lo, hi] = EVENT_TUNING.easy.rodJamSeconds
+  assert.ok(jam.duration >= lo && jam.duration <= hi, `lasts ${jam.duration} s`)
+  const jammed = jam.data!.affectedRods!
   const stoppedAt = jammed.map((i) => s.controlRods[i].insertion)
   assert.ok(stoppedAt.every((p) => p > 0 && p < 100), `stopped mid-travel at ${stoppedAt}`)
-  s = step(s, 1, rng)
-  assert.equal(s.activeEvents.length, 0, "the event itself is over at once")
-  assert.equal(s.stats.emergenciesHandled, 1)
-  s = step(s, 300, rng)
+  s = step(s, jam.duration - 1, rng)
   jammed.forEach((i, k) => {
     assert.ok(s.controlRods[i].stuck, "still jammed")
     assert.equal(s.controlRods[i].insertion, stoppedAt[k], "still where it stopped")
   })
   assert.ok(s.controlRods.filter((_, i) => !jammed.includes(i)).every((r) => r.insertion === 100))
-  assert.equal(s.log.length, logged + 1, "no all-clear message")
   const warning = checkEventWarnings(s).find((w) => w.startsWith("WARNING: Issue detected with control rods"))
   assert.ok(warning && jammed.every((i) => warning.includes(String(i + 1))), `warning names the rods: ${warning}`)
+  // It ends: the rods are free where they stopped, the head engineer says so, and the warning clears
+  s = step(s, 1, rng)
+  assert.equal(s.activeEvents.length, 0)
+  jammed.forEach((i, k) => assert.deepEqual([s.controlRods[i].stuck, s.controlRods[i].insertion], [false, stoppedAt[k]]))
+  assert.equal(s.log.length, logged + 2)
+  assert.ok(s.log.at(-1)!.text.startsWith("The ruptured fuel channel has been repaired") && jammed.every((i) => s.log.at(-1)!.text.includes(String(i + 1))))
+  assert.ok(!checkEventWarnings(s).some((w) => w.includes("control rod")), "the warning clears")
+  assert.equal(s.stats.emergenciesHandled, 0, "a smaller event is not a major emergency")
+  // ...and they answer the levers again
+  s = step({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: 100 })) }, 20, rng)
+  assert.ok(s.controlRods.every((r) => r.insertion === 100))
+})
+
+test("§12 a rod jam frees only its own rods: one jammed by high steam stays jammed", () => {
+  const base = quietGame("easy")
+  const pre = { ...base, controlRods: base.controlRods.map((r, i) => (i === 0 ? { ...r, stuck: true } : r)) }
+  let s = startEvent(pre, "rod-stuck", EVENT_TUNING.easy, seededRng(2))
+  assert.ok(!s.activeEvents[0].data!.affectedRods!.includes(0))
+  s = step(s, s.activeEvents[0].duration + 1)
+  assert.deepEqual(s.controlRods.map((r) => r.stuck), [true, false, false, false, false, false, false, false, false, false])
 })
 
 test("§12 a rod jam takes 3–4 rods on Easy, 4–5 on Hard, never one already jammed", () => {
@@ -286,6 +334,37 @@ test("§12 a power cut takes the pumps' mains supply; the turbine can supply the
   assert.ok(s.log.some((l) => l.text.startsWith("Incoming power restored")))
 })
 
+test("§12 a signal loss darkens every reactor-hall reading and the alarms on them, then they return; it counts as handled", () => {
+  const rng = seededRng(6)
+  // A hot, high reactor: its warnings and alarms show until the signal goes
+  const hot: GameState = { ...quietGame("hard"), radioactivity: 400, reactorTemp: 850 }
+  assert.ok(getAlarms(hot).highRadioactivity && getAlarms(hot).highReactorTemp)
+  let s = startEvent(hot, "signal-loss", EVENT_TUNING.hard, rng)
+  const loss = s.activeEvents[0]
+  const [lo, hi] = EVENT_TUNING.hard.signalLossSeconds
+  assert.ok(loss.duration >= lo && loss.duration <= hi, `lasts ${loss.duration} s`)
+  assert.ok(s.log.at(-1)!.text.startsWith("I think we've lost the electrics to the reactor hall"))
+  // A flicker, then ERR, then dark
+  const phases: string[] = []
+  for (let i = 0; i < SIGNAL_DARK_AFTER + 2; i++) {
+    phases.push(getHallSignal(s))
+    s = advanceGame({ ...s, radioactivity: 400, reactorTemp: 850 }, rng)
+  }
+  assert.deepEqual([...new Set(phases)], ["flicker", "error", "dark"])
+  // The alarm computer can't see the reactor either: only the signal loss itself, on the event alarm
+  const reactorKeys = ["highRadioactivity", "lowRadioactivity", "highReactorTemp", "lowFuelTemp", "highSteam", "lowSteam", "highXenon"]
+  assert.ok(!getReactorWarnings(s).some((w) => reactorKeys.includes(w.key)), getReactorWarnings(s).map((w) => w.key).join())
+  assert.ok(checkEventWarnings(s).some((w) => w.startsWith("WARNING: Signal from reactor hall lost")))
+  const alarms = getAlarms(s)
+  assert.deepEqual([alarms.event, alarms.highRadioactivity, alarms.highReactorTemp], [true, false, false])
+  // It ends: readings and warnings back, the technician says so
+  s = step({ ...s, radioactivity: 100, reactorTemp: 600 }, loss.duration, rng)
+  assert.equal(getHallSignal(s), "live")
+  assert.ok(!checkEventWarnings(s).some((w) => w.includes("reactor hall")))
+  assert.ok(s.log.some((l) => l.text.startsWith("Electrics to the reactor hall are back")))
+  assert.equal(s.stats.emergenciesHandled, 1)
+})
+
 test("§12 a pump trip takes one running pump out for a while", () => {
   const rng = seededRng(7)
   let s = startEvent(quietGame("hard"), "pump-trip", EVENT_TUNING.hard, rng)
@@ -304,26 +383,144 @@ test("§12 a pump trip takes one running pump out for a while", () => {
   assert.equal(s.stats.emergenciesHandled, 0, "a smaller event is not a major emergency")
 })
 
-test("§12 a grid hold request sets a new target, half a change's step away, halves the tolerance, and the grid announces nothing new meanwhile", () => {
+test("§12 a grid hold request sets a new target, half a change's step away, and halves the tolerance", () => {
   assert.equal(getPowerTolerance(5000, true), 250)
   const before = quietGame("hard")
-  let s = startEvent({ ...before, powerOutput: before.powerTarget! }, "grid-hold", EVENT_TUNING.hard, seededRng(1))
+  const s = startEvent({ ...before, powerOutput: before.powerTarget! }, "grid-hold", EVENT_TUNING.hard, seededRng(1))
   const target = s.powerTarget!
-  const step = Math.abs(target - before.powerTarget!)
-  assert.ok(step >= EVENT_TUNING.hard.targetMinStep * EVENT_TUNING.holdStepFactor, `hold step ${step} MW`)
-  assert.ok(step <= EVENT_TUNING.hard.targetMaxStep * EVENT_TUNING.holdStepFactor, `hold step ${step} MW`)
-  assert.ok(s.log.at(-1)!.text.includes(formatMW(target)), s.log.at(-1)!.text)
+  const size = Math.abs(target - before.powerTarget!)
+  assert.ok(size >= EVENT_TUNING.hard.targetMinStep * EVENT_TUNING.holdStepFactor, `hold step ${size} MW`)
+  assert.ok(size <= EVENT_TUNING.hard.targetMaxStep * EVENT_TUNING.holdStepFactor, `hold step ${size} MW`)
   const tolerance = getPowerTolerance(target, true)
+  // The new target as any change confirms it, then what the hold means (owner, 2026-10-30)
+  assert.equal(s.log.at(-2)!.text, `New power output requested to be ${formatMW(target)}.`)
+  assert.ok(s.log.at(-1)!.text.startsWith("This is a hold request") && s.log.at(-1)!.text.includes(formatMW(tolerance)), s.log.at(-1)!.text)
   assert.equal(isPowerOnTarget({ ...s, powerOutput: target + tolerance + 10 }), false)
   assert.equal(isPowerOnTarget({ ...s, powerOutput: target + tolerance - 10 }), true)
-  s = runShiftEvents({ ...s, eventPlan: [{ at: 0, kind: "target-change", warned: false }] }, seededRng(1))
-  assert.equal(s.pendingTarget, null)
+  // It has no set length: only the target track lifts it
+  assert.equal(isGridHoldActive(step(s, 10)), true)
 })
 
-test("§12 every grid hold in a shift is at a new target, half a target change's step at most", () => {
+// ---------- §13 Power targets ----------
+
+// The target track on its own, second by second, with output held on target or at nothing (no physics, no events)
+function trackTick(state: GameState, seconds: number, onTarget: boolean, rng = seededRng(1)): GameState {
+  let s = state
+  for (let i = 0; i < seconds; i++) {
+    s = applyPendingTarget({ ...s, gameTime: s.gameTime - 1 })
+    s = runShiftEvents({ ...s, powerOutput: onTarget && s.powerTarget !== null ? s.powerTarget : 0 }, rng)
+  }
+  return s
+}
+const trackOf = (s: GameState) => s.targetTrack!
+const freshTrack = (mode: GameMode): GameState => ({ ...quietGame(mode), targetTrack: null })
+const NOTICE = "We may soon require an adjustment in your power output."
+
+test("§13 the first change comes early and is plain: a minute's notice with no number, then the new target", () => {
   for (const mode of ["easy", "hard"] as const) {
     const tuning = EVENT_TUNING[mode]
-    for (const run of shifts(mode)) {
+    const firsts = new Set<number>()
+    for (let seed = 1; seed <= 20; seed++) {
+      const rng = seededRng(seed)
+      let s = freshTrack(mode)
+      const before = s.powerTarget
+      while (!s.pendingTarget && getShiftTime(s) < 200) s = trackTick(s, 1, true, rng)
+      const at = getShiftTime(s)
+      firsts.add(at)
+      assert.ok(at >= tuning.firstNotice[0] && at <= tuning.firstNotice[1], `${mode}: first notice at ${at} s`)
+      assert.equal(s.log.at(-1)!.text, NOTICE)
+      assert.equal(s.powerTarget, before, "the notice gives no number")
+      s = trackTick(s, EVENT_TUNING.targetNotice, true, rng)
+      assert.notEqual(s.powerTarget, before)
+      assert.equal(isGridHoldActive(s), false, "the first change is never a hold")
+      assert.equal(s.log.at(-1)!.text, `New power output requested to be ${formatMW(s.powerTarget!)}.`)
+    }
+    assert.ok(firsts.size > 5, `${mode}: the first notice comes at different times`)
+  }
+})
+
+test("§13 the next change waits until output has been on target for the settle time, or the grid gives up waiting", () => {
+  const tuning = EVENT_TUNING.easy
+  let s = freshTrack("easy")
+  while (s.targetTrack?.phase !== "settling") s = trackTick(s, 1, true)
+  const need = trackOf(s).need
+  assert.ok(need >= tuning.settleSeconds[0] && need <= tuning.settleSeconds[1], `settle ${need} s`)
+
+  // On target, but not without a break: no notice yet
+  let broken = trackTick(s, need - 1, true)
+  broken = trackTick(broken, 1, false)
+  broken = trackTick(broken, need - 1, true)
+  assert.equal(trackOf(broken).phase, "settling")
+  // On target for the whole settle time: the notice follows
+  broken = trackTick(broken, 2, true)
+  assert.equal(trackOf(broken).phase, "notice")
+  assert.equal(broken.log.at(-1)!.text, NOTICE)
+
+  // Never on target: the grid moves on after the give-up time
+  let off = trackTick(s, tuning.giveUpSeconds - 1, false)
+  assert.equal(trackOf(off).phase, "settling")
+  off = trackTick(off, 2, false)
+  assert.equal(trackOf(off).phase, "notice")
+
+  // ...a clock that stops while a power cut (or signal loss) is on
+  const cut: GameState = { ...s, activeEvents: [{ id: "cut", type: "power-cut", timestamp: s.gameTime, duration: 100000 }] }
+  let paused = trackTick(cut, tuning.giveUpSeconds + 60, false)
+  assert.equal(trackOf(paused).phase, "settling", "no notice while the power cut is on")
+  paused = trackTick({ ...paused, activeEvents: [] }, tuning.giveUpSeconds - 1, false)
+  assert.equal(trackOf(paused).phase, "settling")
+  paused = trackTick(paused, 2, false)
+  assert.equal(trackOf(paused).phase, "notice")
+})
+
+test("§13 a hold: the usual notice, then the new target and the narrow window together; lifted once it has been held", () => {
+  const tuning = EVENT_TUNING.hard
+  let s = freshTrack("hard")
+  while (s.targetTrack?.phase !== "settling") s = trackTick(s, 1, true)
+  s = { ...s, targetTrack: { ...trackOf(s), holdsLeft: 99 } } // so the next change is a hold
+  while (trackOf(s).phase !== "notice") s = trackTick(s, 1, true)
+  const before = s.powerTarget!
+  assert.ok(trackOf(s).hold)
+  assert.equal(s.log.at(-1)!.text, NOTICE, "the same notice as any change")
+  assert.equal(s.pendingTarget, null)
+  assert.equal(s.powerTarget, before, "the target stays until the hold starts")
+
+  s = trackTick(s, EVENT_TUNING.targetNotice, false)
+  const target = s.powerTarget!
+  const size = Math.abs(target - before)
+  assert.ok(size >= tuning.targetMinStep * EVENT_TUNING.holdStepFactor && size <= tuning.targetMaxStep * EVENT_TUNING.holdStepFactor, `hold step ${size} MW`)
+  assert.equal(isGridHoldActive(s), true, "the narrow window comes with the new target")
+  assert.equal(s.log.at(-2)!.text, `New power output requested to be ${formatMW(target)}.`)
+  assert.ok(s.log.at(-1)!.text.startsWith("This is a hold request"))
+  const need = trackOf(s).need
+  assert.ok(need >= tuning.holdForSeconds[0] && need <= tuning.holdForSeconds[1], `held for ${need} s`)
+
+  // Not lifted while output is outside the narrow window; lifted once it has been inside for the hold time
+  s = trackTick(s, 100, false)
+  assert.equal(isGridHoldActive(s), true)
+  s = trackTick(s, need - 1, true)
+  assert.equal(isGridHoldActive(s), true)
+  s = trackTick(s, 1, true)
+  assert.equal(isGridHoldActive(s), false)
+  assert.equal(s.log.at(-1)!.text, "Hold lifted. Normal tolerance restored.")
+  assert.equal(trackOf(s).phase, "settling", "the settle time then runs before the next notice")
+})
+
+test("§13 nothing is announced in the last two minutes", () => {
+  const last = EVENT_TUNING.easy.lastStartBefore
+  // Due just inside the last two minutes: never announced
+  const late = trackTick({ ...freshTrack("easy"), gameTime: last - 1 }, 60, true)
+  assert.equal(late.pendingTarget, null)
+  assert.ok(!late.log.some((l) => l.text === NOTICE))
+  // Due just before them: announced
+  const inTime = trackTick({ ...freshTrack("easy"), gameTime: last + 3 }, 2, true)
+  assert.ok(inTime.pendingTarget)
+})
+
+test("§13 a typical shift has its holds, each at a new target half a target change's step away", () => {
+  for (const mode of ["easy", "hard"] as const) {
+    const tuning = EVENT_TUNING[mode]
+    const counts: number[] = []
+    for (const run of shifts(mode).filter((r) => r.final.hasWon)) {
       for (const c of targetChanges(run, "hold")) {
         const size = Math.abs(c.to - c.from)
         assert.ok(size >= tuning.targetMinStep * EVENT_TUNING.holdStepFactor && size <= tuning.targetMaxStep * EVENT_TUNING.holdStepFactor, `${mode}: hold step ${size} MW`)
@@ -331,11 +528,13 @@ test("§12 every grid hold in a shift is at a new target, half a target change's
       }
       const holds = run.states.filter((s, i) => i > 0 && s.activeEvents.some((e) => e.type === "grid-hold") && !run.states[i - 1].activeEvents.some((e) => e.type === "grid-hold")).length
       assert.equal(targetChanges(run, "hold").length, holds, `${mode}: every hold changes the target`)
+      // Spread across the shift, they nearly always all fit in (2 on Easy, 4 on Hard; owner, 2026-11-02)
+      assert.ok(holds >= tuning.holds - 1 && holds <= tuning.holds, `${mode}: ${holds} holds`)
+      counts.push(holds)
     }
+    assert.ok(mean(counts) >= tuning.holds - 0.3, `${mode}: ${mean(counts).toFixed(2)} holds a shift`)
   }
 })
-
-// ---------- §13 Power targets ----------
 
 test("§13 tolerance is ±10% of the target, never tighter than ±200 MW, in every mode", () => {
   assert.equal(getPowerTolerance(5000), 500)
@@ -345,7 +544,7 @@ test("§13 tolerance is ±10% of the target, never tighter than ±200 MW, in eve
   assert.equal(isPowerOnTarget({ powerOutput: 5510, powerTarget: 5000, activeEvents: [] }), false)
 })
 
-test("§13 target changes are warned 60 s ahead, smaller than before, within range; Hard's are bigger", () => {
+test("§13 target changes are warned 60 s ahead, within range, never right after the last; Hard's are bigger", () => {
   const sizes: Record<string, number[]> = { easy: [], hard: [] }
   for (const mode of ["easy", "hard"] as const) {
     const tuning = EVENT_TUNING[mode]
@@ -360,7 +559,7 @@ test("§13 target changes are warned 60 s ahead, smaller than before, within ran
         sizes[mode].push(size)
         if (i > 0) {
           const gap = c.effective - changes[i - 1].effective
-          assert.ok(gap >= EVENT_TUNING.targetNotice + EVENT_TUNING.eventGap, `${mode}: changes ${gap}s apart`)
+          assert.ok(gap >= EVENT_TUNING.targetNotice + tuning.settleSeconds[0], `${mode}: changes ${gap}s apart`)
         }
       })
     }
@@ -369,11 +568,17 @@ test("§13 target changes are warned 60 s ahead, smaller than before, within ran
 })
 
 test("§13 a competent player meets the targets on Easy and Hard, and Hard is harder", () => {
-  // The bot survives every Easy shift. On Hard it is fired in about 15% of shifts (6 of 40 seeds, both before and
-  // after rod jams became permanent, 2026-10-16), so it must survive at least 8 of the 10.
-  assert.ok(shifts("easy").every((run) => run.final.hasWon), "easy: the bot did not survive")
-  const lost = shifts("hard").filter((run) => !run.final.hasWon)
-  assert.ok(lost.length <= 2, `hard: the bot lost ${lost.length} of ${SEEDS.length} (${lost.map((run) => run.final.gameOverCause)})`)
+  // Survival over 40 seeds (ten can hold several losses by chance). With the events and target changes of 2026-11-02
+  // the bot survives about 99% of Easy shifts and about 70% of Hard ones (200 seeds each; the owner accepted ~74% in
+  // the trial), so at most 2 of 40 may be lost on Easy and 14 of 40 on Hard.
+  const lost = (mode: GameMode) =>
+    Array.from({ length: 40 }, (_, i) => i + 1)
+      .map((seed) => (seed <= SEEDS.length ? shifts(mode)[seed - 1] : playGame(createNewGame(mode), makeBot(), seed)))
+      .filter((run) => !run.final.hasWon)
+  for (const [mode, most] of [["easy", 2], ["hard", 14]] as const) {
+    const l = lost(mode)
+    assert.ok(l.length <= most, `${mode}: the bot lost ${l.length} of 40 (${l.map((run) => run.final.gameOverCause)})`)
+  }
   const onTarget = (mode: GameMode) =>
     shifts(mode).map((run) => {
       const timed = run.states.filter((s) => s.powerTarget !== null)
@@ -381,9 +586,10 @@ test("§13 a competent player meets the targets on Easy and Hard, and Hard is ha
     })
   const easy = mean(onTarget("easy"))
   const hard = mean(onTarget("hard"))
-  // 73% over 40 seeds before every hold moved the target and the shift opened with a change (owner, 2026-10-29); 71% after
-  assert.ok(easy >= 0.7, `easy on target ${(100 * easy).toFixed(0)}%`)
-  assert.ok(hard >= 0.5 && hard < easy, `hard on target ${(100 * hard).toFixed(0)}% (easy ${(100 * easy).toFixed(0)}%)`)
+  // 73% over 40 seeds before every hold moved the target and the shift opened with a change (owner, 2026-10-29); 71% after.
+  // With a change every 3 minutes or so on Easy (2026-11-02) there is more to chase: 70% over 200 seeds, 67% over these ten.
+  assert.ok(easy >= 0.65, `easy on target ${(100 * easy).toFixed(0)}%`)
+  assert.ok(hard >= 0.45 && hard < easy, `hard on target ${(100 * hard).toFixed(0)}% (easy ${(100 * easy).toFixed(0)}%)`)
   // Nearly every target that stays in force for two minutes is reached.
   for (const mode of ["easy", "hard"] as const) {
     let held = 0

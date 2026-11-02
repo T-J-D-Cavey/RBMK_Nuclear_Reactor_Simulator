@@ -26,7 +26,7 @@ function SoundSwitch({ id, name, hint, covers, on, onToggle, edge }: {
   onToggle: () => void
 }) {
   return (
-    <div className={`cr-sound-bay cr-module cr-module-${edge} p-2 sm:p-3 flex flex-col items-center gap-2 sm:gap-3`}>
+    <div className={`cr-sound-bay cr-module cr-module-${edge} cr-bay-screws p-2 sm:p-3 flex flex-col items-center gap-2 sm:gap-3`}>
       <Label htmlFor={id} className="cr-dymo">
         {name}
       </Label>
@@ -74,7 +74,7 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
           </div>
 
           {/* VOLUME FADER */}
-          <div className="cr-module p-2.5 sm:p-3 space-y-3 sm:space-y-4">
+          <div className="cr-module cr-bay-screws p-2.5 sm:p-3 space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="volume-slider" className="cr-plate">
                 Volume

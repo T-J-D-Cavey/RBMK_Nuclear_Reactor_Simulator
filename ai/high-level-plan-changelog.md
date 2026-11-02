@@ -2,6 +2,56 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.28 – 2026-11-02 (Events and target changes on separate tracks; the next change waits for the player)
+
+- **Events are now a fixed set in a random order at random times, never two at once** (Section 12, owner).
+  - Easy has one of each of the four kinds and one more of any kind: 5 in 15 minutes.
+  - Hard has two of each and two more: 10 in 30 minutes, so about as many per minute as Easy.
+  - None starts in the first minute or the last two.
+  - **What it replaces:** the old shift plan, which interleaved a fixed number of events and target changes with spacing rules: no major in the first 3 minutes, 5 minutes between majors, and quiet gaps after each event.
+  - **Gaps:** there is no minimum gap between events now. The quiet time between them is 0 to about 7 minutes, about 70 s on average.
+- **Target changes run on their own track** (Section 13, owner, from Claude's proposal of 2026-11-02).
+  - The first notice comes 30–60 s in (Easy) or 20–40 s in (Hard).
+  - The next notice comes once output has been on target without a break for a settle time: Easy 20–45 s, Hard 30–60 s.
+  - The grid gives up waiting after 4 minutes, a clock that stops during a power cut or signal loss.
+  - **Holds:** a hold ends once it has been held inside its narrow window for 60–90 s, rather than after a set time. There are now a set number per shift (Easy 2, Hard 4), spread across the shift.
+  - **Steps:** Easy changes are 500–1,500 MW (was up to 2,000), and Hard's are 750–2,000 MW (was 500–2,500).
+  - **Why:** with fixed timings a big step can't be reached before the next change while a small one leaves the player idle. Measured with the bot, reaching a new target takes about 15 s for 500 MW, 55 s for 1,000 MW, 105 s for 2,000 MW and 130 s for 3,000 MW, plus about 40 s more for a hold's narrow window. The old plan gave Easy only 3–4 changes, and over half of Easy shifts had no hold.
+  - **Why Easy's settle time is shorter than Hard's:** Easy's small steps are reached quickly, so the settle time sets its pace and keeps it from going quiet. Hard's challenge is the time spent reaching bigger targets.
+- **Bot results (200 shifts each), against the old plan:**
+
+  | | Old plan | New rules |
+  |---|---|---|
+  | Easy survival | 100% | 99% |
+  | Easy time on target | 75% | 70% |
+  | Easy target changes per shift | 3.5 | mostly 4–5 |
+  | Easy holds | 0.5 | 2 in 94% of shifts |
+  | Hard survival | 92% | 71% |
+  | Hard time on target | 65% | 55% |
+  | Hard target changes per shift | 8.5 | mostly 6–8 |
+  | Hard holds | 1.0 | 4 in 87%, 3 in 13% |
+
+  The owner accepted Hard at about 74% in the trial.
+  - **Checks:** the §13 survival check now allows 2 of 40 lost on Easy and 14 of 40 on Hard, and the Easy on-target bar drops from 70% to 65%.
+  - **Trials behind these choices:**
+    - With events allowed to overlap, Hard survival was 62%.
+    - A fixed-timetable target track with today's averages gave Hard 64%.
+    - In that version, Easy's event lengths would lift Hard to 79%, and Easy's target sizes to 76%.
+
+## v2.27 – 2026-10-30 (Rod jams end and become smaller events; holds run as target changes; signal loss from the reactor hall)
+
+- **A rod jam ends again** (Section 12, owner). Rod jams were made permanent on 2026-10-16. Now a jam lasts Easy 60–120 s and Hard 90–180 s (Claude's starting values, for the owner's events review). When it ends, the head engineer says the fuel channel is repaired and names the rods. Only the jam's own rods free; a rod jammed by high steam stays jammed.
+- **Rod jams are smaller events**, drawn alongside pump trips in any mix, so a shift can have more than one (owner). Target changes, holds and pump trips can come while rods are jammed. A major emergency, or another jam, waits until the jam is over. The plan now spaces each item from everything before it, not just the item before, because a jam can still be on when the item after next starts.
+- **A grid hold is a kind of target change** (owner). After the opening change, each target change is a hold with a chance of 0.4 on Easy and 0.2 on Hard, so holds stay about as common as before.
+- **A hold now runs exactly like a target change** (owner, replacing v2.26's notice). The notice is the usual "we may soon require an adjustment", with no number. A minute later the new target is confirmed as usual, the grid says it is a hold and gives the window, and the narrow window is in force at once. It ends with "Hold lifted". Nothing says when or for how long. **Cost, as measured for v2.26:** during holds the bot is on target only about 46% of the time (88% with the old notice), because it spends the climb to the new target outside the narrow window.
+- **New major emergency: signal lost from the reactor hall** (owner). The owner's idea is that operators once steered by power output alone. It lasts Easy 45–75 s and Hard 75–120 s, with a 30 s warning (Claude's starting values and wording, for the events review). Easy draws a power cut or a signal loss; Hard has both again.
+  - The alarm monitor and the reactor alarms go quiet with the readings. The alarm computer reads the same instruments, and anything else would give the readings away.
+  - The turbine's OVR-P lamp and its trip countdown keep working, as the turbine hall's own instruments.
+  - The dosimeter, the rod positions and the pump lamps also keep working (Claude, for the owner to review).
+  - The bot leaves the rods alone while the signal is lost.
+- Bot over 40 seeds, everything above together: on target Easy 71% → 75%, Hard 63% → 63%; Hard survival 36 of 40 before and after. The 10-seed survival check happened to draw 3 of those 4 losses, so it now counts survival over all 40 seeds (at most 6 lost, the 15% it was set for).
+- **The emergency beacon** now sits on the ceiling on the end screen too, as on the home page. On the game page it turns behind the panels whenever an alarm is due, brighter than on the home page as there is no vignette to set it off, and it holds still while the game is paused (owner).
+
 ## v2.26 – 2026-10-29 (Grid holds move the target; every shift opens with a target change)
 
 - **A grid hold now asks for a new target** (Section 12, owner). Before, the target could stay the same through a target change and one or two holds, with only the window changing. The new target is drawn like a normal change, at half the step (Easy 300–1,000 MW, Hard 300–1,200 MW), and it keeps the same range and the same rarity of low targets.

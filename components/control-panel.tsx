@@ -3,9 +3,9 @@
 import { useState, type ReactNode } from "react"
 import { Cctv, Home, Pause, Play, Volume2, VolumeX } from "lucide-react"
 
-import { type GameState, getShiftTime } from "@/lib/types"
+import { type GameState, THRESHOLDS, getShiftTime } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
-import { formatTime, checkEventWarnings, checkWarnings, getWarningFlags } from "@/lib/game-utils"
+import { type HallSignal, formatTime, checkEventWarnings, checkWarnings, getHallSignal, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import { useRodDisplay } from "@/hooks/use-rod-display"
 import { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
@@ -50,7 +50,7 @@ function LampKey({ lit, colour, label, ariaLabel, onClick, className = "" }: { l
 function Bay({ label, warn, tutorial, className = "", children }: { label: string; warn?: boolean; tutorial: string; className?: string; children: ReactNode }) {
   const lamp = warn !== undefined
   return (
-    <div className={`cr-module min-w-0 p-1.5 flex flex-col gap-1.5 ${className}`} data-tutorial={tutorial}>
+    <div className={`cr-module cr-bay-screws min-w-0 p-1.5 flex flex-col gap-1.5 ${className}`} data-tutorial={tutorial}>
       <div className={`cr-plate cr-plate-compact ${lamp ? `cr-plate-lens ${warn ? "on" : ""}` : ""}`}>
         {label}
         {/* Always mounted, so every lamp's flasher keeps time with the others; a warning only shows it */}
@@ -65,10 +65,18 @@ function Bay({ label, warn, tutorial, className = "", children }: { label: strin
   )
 }
 
+// A reading taken in the reactor hall. With the hall's signal lost it flickers, shows ERR, then goes dark (owner,
+// 2026-10-30).
+function HallReading({ signal, className, children }: { signal: HallSignal; className: string; children: ReactNode }) {
+  if (signal === "dark") return <div className={`${className} cr-vfd-dark`} aria-label="No signal">–</div>
+  if (signal === "error") return <div className={className}><span className="cr-signal-err">ERR</span></div>
+  return <div className={`${className} ${signal === "flicker" ? "cr-signal-flicker" : ""}`}>{children}</div>
+}
+
 // One machine: its status window above, and a key with its name that opens its controls
 function Machine({ label, ariaLabel, disabled, tutorial, onOpen, children }: { label: string; ariaLabel: string; disabled: boolean; tutorial: string; onOpen: () => void; children: ReactNode }) {
   return (
-    <div className="cr-module min-w-0 p-1.5 flex flex-col gap-1.5" data-tutorial={tutorial}>
+    <div className="cr-module cr-bay-screws min-w-0 p-1.5 flex flex-col gap-1.5" data-tutorial={tutorial}>
       {children}
       <span className="cr-bezel w-full">
         <button onClick={onOpen} disabled={disabled} aria-label={ariaLabel} className="cr-key w-full h-8 px-1 !text-[0.8rem] !tracking-[0.12em]">
@@ -89,7 +97,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const isOnTarget = isPowerOnTarget(gameState)
 
   const hasWarnings = checkWarnings(gameState).length > 0 || checkEventWarnings(gameState).length > 0
-  // A rod jam never ends, so its lamp comes from the jammed-rods warning instead (owner, 2026-10-16)
+  // A rod jam's lamp comes from the jammed-rods warning instead, which also covers rods jammed by high steam
   const majorEvent = gameState.activeEvents.some((event) => event.type === "power-cut" || event.type === "pump-trip")
 
   // Same thresholds as the warning list in the message area
@@ -101,6 +109,9 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const lowSteamWarning = flags.lowSteam
   const highXenonWarning = flags.highXenon
   const lowFuelTempWarning = flags.lowFuelTemp
+  // The reactor hall's readings, and their nameplate lamps, go with its signal; the turbine's OVR-P lamp is its own
+  const signal = getHallSignal(gameState)
+  const overPressure = gameState.steamVolume >= THRESHOLDS.steamVolume.highWarning
 
   const paused = gameState.isPaused
   const keysOff = paused && !briefing
@@ -202,23 +213,23 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             </Bay>
 
             <Bay label="Radioactivity" tutorial="radioactivity" warn={lowRadioactivityWarning || highRadioactivityWarning}>
-              <div className={vfd}>{Math.round(gameState.radioactivity)}</div>
+              <HallReading signal={signal} className={vfd}>{Math.round(gameState.radioactivity)}</HallReading>
             </Bay>
 
             <Bay label="Reactor Temp" tutorial="reactor-temp" warn={highReactorTempWarning}>
-              <div className={vfd}>{Math.round(gameState.reactorTemp)}°</div>
+              <HallReading signal={signal} className={vfd}>{Math.round(gameState.reactorTemp)}°</HallReading>
             </Bay>
 
             <Bay label="Fuel Temp" tutorial="fuel-temp" warn={lowFuelTempWarning}>
-              <div className={vfd}>{Math.round(gameState.fuelTemp)}°</div>
+              <HallReading signal={signal} className={vfd}>{Math.round(gameState.fuelTemp)}°</HallReading>
             </Bay>
 
             <Bay label="Steam" tutorial="steam" warn={highSteamWarning || lowSteamWarning}>
-              <div className={vfd}>{Math.round(gameState.steamVolume)}</div>
+              <HallReading signal={signal} className={vfd}>{Math.round(gameState.steamVolume)}</HallReading>
             </Bay>
 
             <Bay label="Xenon" tutorial="xenon" warn={highXenonWarning}>
-              <div className={vfd}>{Math.round(gameState.xenon)}%</div>
+              <HallReading signal={signal} className={vfd}>{Math.round(gameState.xenon)}%</HallReading>
             </Bay>
 
             <Bay label="Time" tutorial="time">
@@ -279,7 +290,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                 <div className="flex flex-col gap-1 items-center">
                   <div
                     className={`retro-lamp w-2.5 h-2.5 rounded-full transition-all ${
-                      highSteamWarning ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/20"
+                      overPressure ? "bg-red-500 text-red-500 on animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_currentColor]" : "bg-red-950/20"
                     }`}
                   />
                   <span className="text-[7.5px] font-mono text-neutral-500 leading-none">OVR-P</span>
@@ -329,6 +340,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         <ReactorCameraView
           radioactivity={gameState.radioactivity}
           reactorTemp={gameState.reactorTemp}
+          signal={signal}
           elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
           clockStartMs={getCameraClockStartMs(gameState.mode)}
           onBack={() => setShowReactorView(false)}

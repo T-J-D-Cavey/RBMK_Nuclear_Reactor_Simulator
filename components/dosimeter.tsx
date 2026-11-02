@@ -63,7 +63,7 @@ export default function Dosimeter({
         </div>
       </div>
 
-      <div className="cr-dose-bezel flex-1 flex items-center justify-center p-2 sm:p-3">
+      <div className="cr-dose-bezel cr-bay-screws flex-1 flex items-center justify-center p-2 sm:p-3">
         <div className="cr-dose-face w-full max-w-[30rem]">
           <svg viewBox="0 0 240 160" className="block w-full h-auto" role="img" aria-label={`Dosimeter: ${rPerHour.toFixed(1)} roentgen per hour${reading.pegged ? ", at the end of its scale" : ""}`}>
             {/* Red band at the top of the scale */}

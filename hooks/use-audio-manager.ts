@@ -8,7 +8,7 @@ const HUM_VOICES = 3;
 
 // Alarm clips. The file names don't match the alarms: the general alarm plays alarm_high_rad_full.mp3 and high
 // radioactivity plays the more urgent alarm_backup_full.mp3 (owner, 2026-10-23); the event alarm's clip is named for
-// rod jams, which now sound the general alarm instead.
+// rod jams, but every event now sounds it.
 const BLOB = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr";
 const GENERAL_ALARM_FILE = `${BLOB}/w11O2GBJNi4hmwrAnLDkDo/public/alarm_high_rad_full.mp3`;
 const EVENT_ALARM_FILE = `${BLOB}/56DSNdysYjjBozGYYRqcym/public/alarm_rod_stuck_full.mp3`;
@@ -98,7 +98,7 @@ export function useAudioManager({
     generalAlarmAudioRef.current.loop = true;
     generalAlarmAudioRef.current.preload = "auto";
 
-    // Event alarm (power cuts, pump trips, turbine trips)
+    // Event alarm (power cuts, pump trips, signal losses, rod jams, turbine trips)
     eventAlarmRef.current = new Audio(EVENT_ALARM_FILE);
     eventAlarmRef.current.loop = true;
     eventAlarmRef.current.preload = "auto";
@@ -161,7 +161,7 @@ export function useAudioManager({
     }
   }, [alarmsOn, generalAlarmIsNeeded]);
 
-  // Event alarm: power cuts, pump trips and turbine trips
+  // Event alarm: power cuts, pump trips, signal losses, rod jams and turbine trips
   useEffect(() => {
     if (!eventAlarmRef.current) return;
 

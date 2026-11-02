@@ -1,7 +1,7 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
-import { ArrowLeft } from "lucide-react"
+import { XIcon } from "lucide-react"
 import { THRESHOLDS } from "@/lib/types"
 import { MODE_MENU, MODE_MENU_TAGLINE } from "@/lib/mode-menu"
 import { BASE_OPEN_GRAPH } from "@/lib/site"
@@ -34,14 +34,16 @@ export default function InstructionsPage() {
 
       <div className="relative max-w-[960px] mx-auto">
         <div className="cr-panel cr-screws p-4 sm:p-6 md:p-7 flex flex-col gap-[22px]">
-          {/* Header */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <span className="cr-bezel shrink-0">
-              <Link href="/" className="cr-key cr-key-black size-10" aria-label="Back to the main menu">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </span>
-            <h1 className="cr-nameplate flex-1 text-center px-3 py-2.5 text-xl sm:text-3xl md:text-4xl">Operating Manual</h1>
+          {/* Header: the same dark title strip and close key as every dialog (owner, 2026-10-30) */}
+          <div className="relative">
+            <h1 className="cr-dialog-title">Operating Manual</h1>
+            <Link
+              href="/"
+              className="cr-key cr-key-black !absolute top-1.5 right-1.5 size-7 !tracking-normal [&_svg]:size-4"
+              aria-label="Close the manual and return to the main menu"
+            >
+              <XIcon />
+            </Link>
           </div>
 
           {/* The monitor */}

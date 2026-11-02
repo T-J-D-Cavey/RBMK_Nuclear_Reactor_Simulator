@@ -290,7 +290,9 @@ export default function EndScreen({ kind, gameState, title, message, lead, repor
       className="cr-end-room relative min-h-screen overflow-hidden bg-black"
       style={{ backgroundImage: "url(control_room_background.jpg)", "--end-tint": look.tint } as CSSProperties}
     >
-      {disaster && <div className="cr-beacon" aria-hidden="true" />}
+      {/* On the ceiling, as on the home page and the game page: a lamp turning above the engineer's head (owner, 2026-10-30) */}
+      {disaster && <div className="cr-beacon cr-beacon-ceiling" aria-hidden="true" />}
+      {disaster && <div className="cr-beacon-glow" aria-hidden="true" />}
       {/* Embers burst up after an explosion; glowing fallout drifts after a meltdown */}
       {disaster && <RisingParticles kind={kind === "explosion" ? "embers" : "fallout"} start={kind === "explosion" ? "burst" : "drifting"} />}
       {kind === "explosion" && <div className="ws5-flash pointer-events-none fixed inset-0 z-50 bg-white" aria-hidden="true" />}

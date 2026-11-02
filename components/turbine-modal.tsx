@@ -93,7 +93,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, onUpdate
             </p>
           </div>
 
-          <div className="cr-module p-2.5 flex flex-col items-center gap-2.5">
+          <div className="cr-module cr-bay-screws p-2.5 flex flex-col items-center gap-2.5">
             <span className="cr-plate">Mode Selector</span>
 
             <div className="cr-selector">
