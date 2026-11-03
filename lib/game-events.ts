@@ -66,22 +66,23 @@ function eventDuration(kind: ShiftEventKind, tuning: ShiftEventTuning, rng: Rng)
   return Math.round(between(rng, range))
 }
 
-// The shift's events (owner, 2026-11-02): one of each kind (two on Hard) and a few more of any kind, in a random
-// order at random times, but never two at once. The free time is shared out at random points and the events laid
-// end to end between them, so every arrangement is as likely as any other. The first starts a minute in at the
-// earliest. They run right up to the end of the shift, with the last one over by then (owner, 2026-11-02). Target
-// changes run separately (runTargetTrack).
+// The shift's events (owner, 2026-11-03): a few different kinds (Easy 3 of the 4, Hard all 4) and a few more of any
+// kind (Hard 2), in a random order at random times, never two at once and at least minEventGap apart. The free time
+// is shared out at random points and the events laid end to end between them, each gap topped up to the minimum, so
+// every arrangement is as likely as any other. The first starts a minute in at the earliest. They run right up to the
+// end of the shift, with the last one over by then (owner, 2026-11-02). Target changes run separately (runTargetTrack).
 export function planShiftEvents(tuning: ShiftEventTuning, shiftLength: number, rng: Rng): ScheduledEvent[] {
   const kinds = shuffle(rng, [
-    ...SHIFT_EVENT_KINDS.flatMap((kind) => Array<ShiftEventKind>(tuning.eachKind).fill(kind)),
+    ...shuffle(rng, SHIFT_EVENT_KINDS).slice(0, tuning.differentKinds),
     ...Array.from({ length: tuning.extraEvents }, () => SHIFT_EVENT_KINDS[Math.floor(rng() * SHIFT_EVENT_KINDS.length)]),
   ])
   const durations = kinds.map((kind) => eventDuration(kind, tuning, rng))
-  const free = Math.max(0, shiftLength - tuning.firstEventAfter - sum(durations))
+  const gap = EVENT_TUNING.minEventGap
+  const free = Math.max(0, shiftLength - tuning.firstEventAfter - sum(durations) - gap * (kinds.length - 1))
   const points = kinds.map(() => rng() * free).sort((a, b) => a - b)
   let laid = 0
   return kinds.map((kind, i) => {
-    const at = Math.round(tuning.firstEventAfter + points[i] + laid)
+    const at = Math.round(tuning.firstEventAfter + points[i] + laid + gap * i)
     laid += durations[i]
     return { at, kind, warned: false, duration: durations[i] }
   })
@@ -340,8 +341,9 @@ export function jamRodsInHighSteam(state: GameState): GameState {
 
 // --- Power targets (bible §13) ---
 
-// Smaller steps than before, within the mode's range, never trivially small; low targets are kept rarely. A grid
-// hold scales the step range down (stepFactor).
+// A step within the mode's range, never trivially small. Every target in the range is as likely as any other, low ones
+// included (owner, 2026-11-03): big swings are the heart of the game. A grid hold scales the step range down
+// (stepFactor).
 export function nextTarget(current: number, tuning: ShiftEventTuning, rng: Rng, stepFactor = 1): number {
   const [min, max] = tuning.targetRange
   const maxStep = tuning.targetMaxStep * stepFactor
@@ -350,10 +352,7 @@ export function nextTarget(current: number, tuning: ShiftEventTuning, rng: Rng, 
   const hi = Math.min(max, current + maxStep)
   for (let tries = 0; tries < 50; tries++) {
     const target = Math.min(max, Math.max(min, Math.round(between(rng, [lo, hi]) / 100) * 100))
-    if (Math.abs(target - current) < minStep) continue
-    // A low target is a xenon trap: good tension, used sparingly.
-    if (target < tuning.lowTargetBelow && rng() >= tuning.lowTargetChance) continue
-    return target
+    if (Math.abs(target - current) >= minStep) return target
   }
   const towardMiddle = current < (min + max) / 2 ? 1 : -1
   return Math.min(max, Math.max(min, current + towardMiddle * Math.ceil(minStep / 100) * 100))

@@ -41,6 +41,7 @@ This document is the source of truth for *what* we are changing and *what the pl
 3. The panel's rod display shows each rod's real position as it travels (Section 10).
 4. AZ-5 takes effect with a single press; no Apply step (Section 10). The modal closes when AZ-5 is selected. 
 5. Legasov's red and blue cards are shown on a board beside the reactor camera (Section 15, owner). They show the engine's own cards; no new gauge or control.
+6. Button style (owner's choices, 2026-11-02 and 2026-11-03): the confirm, cancel and menu keys are sculpted keycaps on a screwed plate, and the panel's three machine keys (Pumps, Rods, Turbine) are the same sculpted keycap in their own colour, in their usual collar, with no plate. Colours are unchanged.
 
 ---
 
@@ -288,9 +289,9 @@ Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, p
 | | Easy | Hard |
 |---|---|---|
 | Shift | 15 min | 30 min |
-| Major emergencies | ≈1 per shift (on average but randomised, so it might be possible to have more) | ≈3 per shift (on average but randomised, so it might be possible to have more) |
+| Events | 3 per shift, all different (Section 12) | 6 per shift: one of each kind and two more (Section 12) |
 | Emergency severity | shorter power cuts, smaller rod jams (Section 12) | longer power cuts, bigger rod jams (Section 12) |
-| Power target changes | smaller, less frequent (Section 13) | larger, more frequent (Section 13) |
+| Power target changes | big swings over a wide range (Section 13) | bigger swings over a wider range (Section 13) |
 
 Free mode: same physics, no targets, no events. Safety Test: same physics, scripted targets and disruptions (Section 14). The mode-select menu and How to Play describe this workload difference, not "more stable" / "challenging" reactor mechanics.
 
@@ -311,8 +312,8 @@ Each ending gets its own game-over presentation.
 ## 12. Random emergency events
 
 **Change:**
-- **Four kinds of event, about as many per minute on Easy and Hard.** Easy has one of each kind and one more of any kind: 5 in 15 minutes. Hard has two of each and two more of any kind: 10 in 30 minutes. Hard's are harder because they last longer and its rod jams take more rods.
-- **Random order and random times, but never two events at once.** No event starts in the first minute. They run right up to the end of the shift, with the last one over by the end. Between those, the time is shared out at random, so two events can come back to back or minutes apart.
+- **Four kinds of event, the occasional crisis to navigate; the power targets are the heart of the game** (owner, 2026-11-03). Easy has three different kinds, never the same kind twice: 3 in 15 minutes. Hard has one of each kind and two more of any kind: 6 in 30 minutes. Hard's are harder because they last longer and its rod jams take more rods.
+- **Random order and random times, never two events at once, and at least 70 s apart** (from the end of one to the start of the next). No event starts in the first minute. They run right up to the end of the shift, with the last one over by the end. Between those, the time is shared out at random, so two events can come 70 s apart or many minutes apart.
 - **Target changes run separately** (Section 13), and can happen during any event.
 - **Brief warning in the shift log before an event where it fits** (e.g. "grid instability reported" shortly before a power cut) so the player can prepare. A pump trip comes unannounced.
 - **The events:**
@@ -325,7 +326,8 @@ Each ending gets its own game-over presentation.
 **Starting values by mode** (tune in playtests):
 | | Easy (15 min) | Hard (30 min) |
 |---|---|---|
-| Events | 1 of each kind + 1 more (5) | 2 of each kind + 2 more (10) |
+| Events | 3 different kinds (3) | 1 of each kind + 2 more (6) |
+| Gap between events | 70 s or more | the same |
 | Power cut length | 20–45 s | 45–75 s |
 | Signal loss length | 45–75 s | 75–120 s |
 | Pump trip length | 60–90 s | 60–120 s |
@@ -334,7 +336,7 @@ Each ending gets its own game-over presentation.
 
 **Player outcome:** the shift feels like running a reactor, punctuated by memorable crises, while the grid keeps asking for changes.
 
-**Acceptance checks:** every planned event happens, never two at once, none in the first minute, and the last one over by the end of the shift. A turbine trip only happens after visible over-pressure warning. A rod jammed mid-travel stays where it stopped until the jam clears, then answers the levers again. During a signal loss, nothing on screen gives away a reading from the reactor hall.
+**Acceptance checks:** every planned event happens, never two at once and never less than 70 s apart, none in the first minute, and the last one over by the end of the shift. An Easy shift never has the same kind twice. A turbine trip only happens after visible over-pressure warning. A rod jammed mid-travel stays where it stopped until the jam clears, then answers the levers again. During a signal loss, nothing on screen gives away a reading from the reactor hall.
 
 ---
 
@@ -347,22 +349,24 @@ Each ending gets its own game-over presentation.
   - **A plain change:** the grid confirms the new target.
   - **A hold** (Kiev's request in the show): the grid confirms the new target and says it is a hold, giving the window, which is 50% narrower from that moment. The hold is lifted ("Hold lifted. Normal tolerance restored.") once output has been inside the narrow window for 60–90 s without a break. A hold's new target is at most half as far from the current one as a plain change's.
 - **The next notice waits until the player has settled:** it comes once output has been on target without a break for the settle time (Easy 20–45 s, Hard 30–60 s), or after a hold is lifted and the settle time has passed. So a target never moves just as it is reached (it stays at least a settle time plus the 60 s notice), and a player on target is never left idle for long.
-- **The grid gives up waiting after 4 minutes:** a target (or hold) not reached and held by then is moved on anyway, so a struggling player isn't stuck. That clock stops while a power cut or signal loss is on.
+- **The grid gives up waiting after 3 minutes** (owner, 2026-11-03; was 4): a target (or hold) not reached and held by then is moved on anyway, so a struggling player isn't stuck. A player swinging from too low to too high keeps restarting the settle count, so this backstop is often what moves a target on. The clock runs from when the target takes effect, and stops while a power cut or signal loss is on.
 - **A set number of holds per shift,** never the first change, spread across the shift.
 - **No notice in the last two minutes of the shift.**
 - **Tolerance proportional to target:** ±10%, never tighter than about ±200 MW, the same in every mode; half that during a hold.
-- **Keep low targets as a deliberate danger, but rarer.** A low target is a xenon trap; that is good tension, used sparingly.
-- **Hard is harder through bigger changes over a wider range.** Easy's small steps are reached quickly, so its pace is set by the settle time; Hard's take longer to reach, and that chasing is the challenge.
+- **Big power swings are the heart of the game** (owner, 2026-11-03): using rods and pumps to chase large changes up and down a wide range, with the occasional event to navigate (Section 12).
+- **Every target in the range is as likely as any other.** A low target is a xenon trap and stays in as a real danger; nothing makes it rarer (owner, 2026-11-03).
+- **Hard is harder through bigger changes over a wider range.** Its changes take longer to reach, and that chasing is the challenge.
+- **The top of the range stops short of steam 240 (12,000 MW).** At that point, on two pumps, radioactivity swings by hundreds every minute however it is steered. From about 10,000 MW the reactor is already twitchy, which suits Hard.
 
 | | Easy | Hard |
 |---|---|---|
-| Target range | 1,500–8,000 MW | 500–10,000 MW |
-| Plain change | 500–1,500 MW | 750–2,000 MW |
-| Hold change | 250–750 MW | 375–1,000 MW |
+| Target range | 1,000–10,000 MW | 300–11,000 MW |
+| Plain change | 750–3,000 MW | 1,000–4,000 MW |
+| Hold change | 375–1,500 MW | 500–2,000 MW |
 | Holds per shift | 2 | 4 |
 | Settle time | 20–45 s | 30–60 s |
 | Hold held for | 60–90 s | 60–90 s |
-| Target changes per shift (bot, typical) | 4–5 | 6–8 |
+| Target changes per shift (bot, typical) | 3–4 | 5–7 |
 
 - Final values are tuned together with Sections 5–12, not independently.
 

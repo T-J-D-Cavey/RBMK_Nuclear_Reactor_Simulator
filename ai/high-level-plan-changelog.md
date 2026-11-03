@@ -2,6 +2,46 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.30 – 2026-11-03 (Big power swings at the heart of the game; fewer events, 70 s apart)
+
+- **Fewer events, spaced out** (Section 12, owner). Easy now has 3 events, all of different kinds (it was one of each plus one more, 5 in all). Hard has one of each kind plus two more of any kind, 6 in all (it was 10). There are always at least 70 s from the end of one event to the start of the next; before, events could come back to back.
+- **Power targets are the heart of the game** (Section 13, owner): bigger swings over a wider range, with no rule making low targets rarer.
+  - Easy is 1,000–10,000 MW with changes of 750–3,000 MW (was 1,500–8,000 and 500–1,500).
+  - Hard is 300–11,000 MW with changes of 1,000–4,000 MW (was 500–10,000 and 750–2,000).
+  - Holds still move half as far.
+  - The numbers are Claude's, chosen with the bot (200 shifts each, one combination per trial).
+  - **Why Hard stops at 11,000 MW:** a 12,000 MW top was tried. At steam around 240, on two pumps, radioactivity swung between about 50 and 650 every minute and the bot lost the shift. Ceilings of 10,500–12,000 MW gave the same survival (72–74%), so the cap costs nothing. Hard's losses come from long spells off target, mostly after low targets have filled the core with xenon.
+  - **Bot results** (200 shifts each):
+
+    | | Before (v2.29) | Events only | Now |
+    |---|---|---|---|
+    | Easy survival / on target | 99% / 70% | 100% / 70% | 99% / 58% |
+    | Hard survival / on target | 71% / 55% | 93% / 60% | 73% / 49% |
+    | Target changes per shift (Easy / Hard) | 4.6 / 7.3 | 4.6 / 7.3 | 3.7 / 5.9 |
+
+    Bigger steps take longer to reach, so there are fewer changes. Each one is a bigger chase. Shortening the settle times would bring back more changes if wanted.
+- **The grid gives up waiting after 3 minutes** (Section 13, owner; was 4). The owner's reasoning: a player who swings from too low to too high keeps restarting the settle count, so the backstop moves targets on more often than it seems. Bot model (200 shifts each, same seeds):
+
+  | | Backstop 4 min | Backstop 3 min |
+  |---|---|---|
+  | Easy survival / on target | 99% / 57.9% | 99% / 57.2% |
+  | Hard survival / on target | 73% / 49.2% | 68% / 48.0% |
+  | Notices per shift (Easy / Hard) | 3.67 / 5.88 | 3.77 / 6.09 |
+  | Plain targets moved on by the backstop (Easy / Hard) | 1% / 5% | 6% / 13% |
+  | Holds moved on by the backstop (Easy / Hard) | 6% / 12% | 33% / 39% |
+
+  Most targets the backstop moved on had been reached at some point (Hard: 67%), but were never held for the whole settle time. Moving them on sooner brings the next big step while the player is still chasing, which is why Hard survival falls. Holds feel it most: the step, then 60–90 s inside the narrow window, often takes more than 3 minutes. A hold moved on still ends with "Hold lifted".
+- **Low radioactivity warning at 20** (owner; was 50). The chart recorder's dashed line moved with it. Its "0" label now hides, because the two numbers are too close to show both. The Safety Test deputy still steps in below 50, so in the test he acts before the warning shows.
+- **Machine keys** (Section 2, owner): the Pumps, Rods and Turbine keys are sculpted keycaps, like the lens keys but in their own slate colour, in their usual collar and without the plate.
+- **How to Play reviewed** (Section 15):
+  - New sections: Power Targets (the ±10% window, the 60 s notice with no number, holds, and low targets as a xenon trap) and Shift Emergencies (the four events).
+  - The rods card now covers rod travel and the graphite tip at 0%, as Section 10 asked.
+  - The pumps card says more pumps need more radioactivity for the same output.
+  - The turbine card now says "switch the turbine to the pumps" rather than "disconnect from the grid".
+  - Warning Signs gives the low warning's number. The Xenon Pit gives the turnover at 80.
+  - The control-room briefing's radioactivity step no longer says xenon starts at 50.
+- **Board test:** the check that card counts hold near rounding points now covers only shifts the bot keeps under control. In the one it loses (Hard seed 3), the reactor swings every few seconds, so its cards change just as often.
+
 ## v2.29 – 2026-11-02 (Events up to the end of the shift; signal-loss wording)
 
 - **Events can now happen in the last two minutes** (Section 12, owner: events felt too close together). The plan spreads them from the first minute to the end of the shift, with the last one over by the end, so it still counts as handled. Target notices keep their two quiet minutes at the end.

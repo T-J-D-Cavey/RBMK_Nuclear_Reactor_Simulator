@@ -86,34 +86,40 @@ function targetChanges(run: GameRun, which: "announced" | "hold" | "all" = "anno
 
 // ---------- §12 Random emergency events ----------
 
-test("§12 the shift's events: one of each kind (two on Hard) and a few more, random order and times, never two at once", () => {
+test("§12 the shift's events: 3 different kinds on Easy, one of each and two more on Hard, random order and times, 70 s apart", () => {
+  const counts = { easy: [3, 0], hard: [4, 2] } as const // different kinds, extras (owner, 2026-11-03)
   for (const mode of ["easy", "hard"] as const) {
     const tuning = EVENT_TUNING[mode]
+    const [different, extra] = counts[mode]
     const length = GAME_MODE_CONFIGS[mode].timeLimit!
     const firstKinds = new Set<string>()
+    const missing = new Set<string>()
     const extraKinds = new Set<string>()
     const gaps: number[] = []
     for (let seed = 1; seed <= 2000; seed++) {
       const plan = planShiftEvents(tuning, length, seededRng(seed))
       const why = `${mode} seed ${seed}: ${plan.map((e) => `${e.kind}@${e.at}+${e.duration}`).join(" ")}`
-      assert.equal(plan.length, 4 * tuning.eachKind + tuning.extraEvents, why)
+      assert.equal(plan.length, different + extra, why)
+      const n = (kind: string) => plan.filter((e) => e.kind === kind).length
+      assert.equal(SHIFT_EVENT_KINDS.filter((kind) => n(kind) > 0).length, different, why)
       for (const kind of SHIFT_EVENT_KINDS) {
-        const n = plan.filter((e) => e.kind === kind).length
-        assert.ok(n >= tuning.eachKind && n <= tuning.eachKind + tuning.extraEvents, why)
-        if (n > tuning.eachKind) extraKinds.add(kind)
+        assert.ok(n(kind) <= 1 + extra, why)
+        if (n(kind) === 0) missing.add(kind)
+        if (n(kind) > 1) extraKinds.add(kind)
       }
       firstKinds.add(plan[0].kind)
-      // None in the first minute, the last over by the end, each as long as its kind lasts, and never two at once
+      // None in the first minute, the last over by the end, each as long as its kind lasts, and at least 70 s apart
       assert.ok(plan[0].at >= tuning.firstEventAfter && plan.at(-1)!.at + plan.at(-1)!.duration <= length, why)
       for (let i = 1; i < plan.length; i++) {
-        assert.ok(plan[i].at >= plan[i - 1].at + plan[i - 1].duration, why)
+        assert.ok(plan[i].at >= plan[i - 1].at + plan[i - 1].duration + EVENT_TUNING.minEventGap, why)
         gaps.push(plan[i].at - plan[i - 1].at - plan[i - 1].duration)
       }
     }
     assert.equal(firstKinds.size, 4, `${mode}: any kind can come first`)
-    assert.equal(extraKinds.size, 4, `${mode}: the extras can be of any kind`)
-    // Random times: some events come back to back, others with minutes between
-    assert.ok(Math.min(...gaps) < 5 && Math.max(...gaps) > 240, `${mode}: gaps ${Math.min(...gaps)}–${Math.max(...gaps)} s`)
+    if (mode === "easy") assert.equal(missing.size, 4, "easy: any kind can be the one left out")
+    else assert.equal(extraKinds.size, 4, "hard: the extras can be of any kind")
+    // Random times: some events come as close as allowed, others with minutes between
+    assert.ok(Math.min(...gaps) < EVENT_TUNING.minEventGap + 5 && Math.max(...gaps) > 240, `${mode}: gaps ${Math.min(...gaps)}–${Math.max(...gaps)} s`)
   }
 })
 
@@ -127,7 +133,7 @@ test("§12 a typical shift: every planned event happens, warned of in advance wh
     const tuning = EVENT_TUNING[mode]
     for (const run of shifts(mode).filter((r) => r.final.hasWon)) {
       const events = run.final.eventHistory.filter((e) => e.type !== "grid-hold")
-      assert.equal(events.length, 4 * tuning.eachKind + tuning.extraEvents, `${mode}: ${events.length} events`)
+      assert.equal(events.length, tuning.differentKinds + tuning.extraEvents, `${mode}: ${events.length} events`)
       const majors = events.filter((e) => isMajor(e.type)).length
       assert.equal(run.final.stats.emergenciesHandled, majors, "power cuts and signal losses count as emergencies handled")
       for (const event of events.filter((e) => e.type in warnings)) {
@@ -568,9 +574,10 @@ test("§13 target changes are warned 60 s ahead, within range, never right after
 })
 
 test("§13 a competent player meets the targets on Easy and Hard, and Hard is harder", () => {
-  // Survival over 40 seeds (ten can hold several losses by chance). With the events and target changes of 2026-11-02
-  // the bot survives about 99% of Easy shifts and about 70% of Hard ones (200 seeds each; the owner accepted ~74% in
-  // the trial), so at most 2 of 40 may be lost on Easy and 14 of 40 on Hard.
+  // Survival over 40 seeds (ten can hold several losses by chance). With the events and target changes of 2026-11-03
+  // the bot survives about 99% of Easy shifts and about 68% of Hard ones (200 seeds each, with the grid giving up after
+  // 3 minutes; 73% after 4; the owner accepted ~74% in the 2026-11-02 trial), so at most 2 of 40 may be lost on Easy
+  // and 14 of 40 on Hard.
   const lost = (mode: GameMode) =>
     Array.from({ length: 40 }, (_, i) => i + 1)
       .map((seed) => (seed <= SEEDS.length ? shifts(mode)[seed - 1] : playGame(createNewGame(mode), makeBot(), seed)))
@@ -588,8 +595,10 @@ test("§13 a competent player meets the targets on Easy and Hard, and Hard is ha
   const hard = mean(onTarget("hard"))
   // 73% over 40 seeds before every hold moved the target and the shift opened with a change (owner, 2026-10-29); 71% after.
   // With a change every 3 minutes or so on Easy (2026-11-02) there is more to chase: 70% over 200 seeds, 67% over these ten.
-  assert.ok(easy >= 0.65, `easy on target ${(100 * easy).toFixed(0)}%`)
-  assert.ok(hard >= 0.45 && hard < easy, `hard on target ${(100 * hard).toFixed(0)}% (easy ${(100 * easy).toFixed(0)}%)`)
+  // With big swings at the heart of the game (owner, 2026-11-03) there is far more chasing: Easy 57% and Hard 48% over
+  // 200 seeds.
+  assert.ok(easy >= 0.5, `easy on target ${(100 * easy).toFixed(0)}%`)
+  assert.ok(hard >= 0.4 && hard < easy, `hard on target ${(100 * hard).toFixed(0)}% (easy ${(100 * easy).toFixed(0)}%)`)
   // Nearly every target that stays in force for two minutes is reached.
   for (const mode of ["easy", "hard"] as const) {
     let held = 0

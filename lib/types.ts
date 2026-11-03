@@ -313,7 +313,7 @@ export const INITIAL_GAME_STATE: GameState = {
 export const THRESHOLDS = {
   radioactivity: {
     highWarning: 350,
-    lowWarning: 50,
+    lowWarning: 20, // owner, 2026-11-03 (was 50)
   },
   reactorTemp: {
     warning: 800,

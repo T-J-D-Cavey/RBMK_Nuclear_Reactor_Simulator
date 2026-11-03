@@ -73,13 +73,14 @@ function HallReading({ signal, className, children }: { signal: HallSignal; clas
   return <div className={`${className} ${signal === "flicker" ? "cr-vfd-flicker" : ""}`}>{children}</div>
 }
 
-// One machine: its status window above, and a key with its name that opens its controls
+// One machine: its status window above, and a key with its name that opens its controls. The key is a sculpted
+// keycap, like the lens keys but in its own colour and without their plate (owner, 2026-11-03).
 function Machine({ label, ariaLabel, disabled, tutorial, onOpen, children }: { label: string; ariaLabel: string; disabled: boolean; tutorial: string; onOpen: () => void; children: ReactNode }) {
   return (
     <div className="cr-module cr-bay-screws min-w-0 p-1.5 flex flex-col gap-1.5" data-tutorial={tutorial}>
       {children}
       <span className="cr-bezel w-full">
-        <button onClick={onOpen} disabled={disabled} aria-label={ariaLabel} className="cr-key w-full h-8 px-1 !text-[0.8rem] !tracking-[0.12em]">
+        <button onClick={onOpen} disabled={disabled} aria-label={ariaLabel} className="cr-key cr-key-sculpted w-full h-8 !text-[0.8rem] !tracking-[0.12em]">
           {label}
         </button>
       </span>

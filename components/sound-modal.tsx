@@ -79,7 +79,15 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
               <Label htmlFor="volume-slider" className="cr-plate">
                 Volume
               </Label>
-              <span className="font-mono font-bold text-sm tabular-nums">{Math.round(soundVolume * 100)}%</span>
+              {/* A small fixed-width screen, as the chart recorder's; the figure sits to the right like a readout */}
+              <div className="cr-screen-bezel">
+                <div
+                  className="ws5-crt-screen ws5-crt-text w-[6ch] px-1.5 py-px text-right text-[15px] leading-none tabular-nums"
+                  style={{ borderRadius: "4px / 3px" }}
+                >
+                  <span className="relative z-[1]">{Math.round(soundVolume * 100)}%</span>
+                </div>
+              </div>
             </div>
             <input
               id="volume-slider"

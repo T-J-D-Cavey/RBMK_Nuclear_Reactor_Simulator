@@ -60,7 +60,10 @@ test("whole bot shifts: columns add up, cards track each contributor's size, and
         }
         if (Math.abs(cards.total - cards.noise) < 4) assert.equal(board.lead, 0, `${mode} ${seed} t${t}: balanced but columns differ`)
       })
-      // Counts hold near a rounding point: a contributor changes count at most once every few seconds on average.
+      // Counts hold near a rounding point: a contributor changes count at most once every few seconds on average. Only
+      // in a shift kept under control: one lost to a reactor swinging by hundreds every few seconds (Hard seed 3, at
+      // 10,000 MW and above, since 2026-11-03) changes its cards as often as it swings.
+      if (!run.final.hasWon) continue
       const changes = all.slice(1).reduce((n, board, i) => n + BOARD_CARDS.filter((c) => board.cards[c.key] !== all[i].cards[c.key]).length, 0)
       assert.ok(changes / all.length < 0.25, `${mode} ${seed}: ${changes} count changes in ${all.length} s`)
     }

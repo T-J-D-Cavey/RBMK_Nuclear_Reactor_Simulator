@@ -22,8 +22,8 @@ function segmentsFor(text: string): Segment[] {
 
 // The plant computer's alarm monitor (owner, 2026-10-12): an 80s green-phosphor screen the controller glances
 // at. The warnings are computer-generated, so each types itself out like a command line. A warning keeps its
-// line while it lasts and new ones are added at the bottom. The header counts the warnings, so a hidden screen
-// still shows how many there are. The header's "See Warning" key (revealSignal) opens it and scrolls it into view.
+// line while it lasts and new ones are added at the bottom. The header's lamps (All systems stable / Warnings) still show,
+// on a hidden screen, whether there are any. The header's "See Warning" key (revealSignal) opens it and scrolls it into view.
 export default function AlarmScreen({ warnings, revealSignal = 0 }: { warnings: Warning[]; revealSignal?: number }) {
   const [visible, setVisible] = useState(true)
   const reduced = usePrefersReducedMotion()
@@ -53,14 +53,20 @@ export default function AlarmScreen({ warnings, revealSignal = 0 }: { warnings: 
         className="w-full flex items-center justify-between gap-2 px-1 pb-2 text-left"
       >
         <span className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-200 truncate">
-          SKALA · Alarm Monitor
+          <span className="hidden sm:inline">SKALA · </span>Alarm Monitor
         </span>
+        {/* Two printed legends, each with its lamp: one is lit at a time, as the shift log's Printing lamp */}
         <span className="flex items-center gap-1.5 shrink-0">
-          <span
-            className={`retro-lamp inline-block w-2.5 h-2.5 shrink-0 ${count ? "bg-red-500 text-red-500 on" : "bg-green-500 text-green-500 on"}`}
-          />
-          <span className={`font-mono text-[10px] sm:text-xs font-bold uppercase ${count ? "text-red-400" : "text-green-400"}`}>
-            {count ? `${count} Warning${count > 1 ? "s" : ""}` : "All systems stable"}
+          <span className="sr-only">{count ? "Warnings" : "All systems stable"}</span>
+          <span className="flex items-center gap-1.5" aria-hidden="true">
+            <span className={`retro-lamp inline-block w-2.5 h-2.5 shrink-0 ${count ? "bg-green-900" : "bg-green-500 text-green-500 on"}`} />
+            <span className={`font-mono text-[10px] sm:text-xs font-bold uppercase ${count ? "text-neutral-400" : "text-green-400"}`}>
+              <span className="hidden sm:inline">All systems </span>stable
+            </span>
+            <span className={`retro-lamp inline-block w-2.5 h-2.5 shrink-0 ml-1.5 ${count ? "bg-red-500 text-red-500 on" : "bg-red-950"}`} />
+            <span className={`font-mono text-[10px] sm:text-xs font-bold uppercase ${count ? "text-red-400" : "text-neutral-400"}`}>
+              Warnings
+            </span>
           </span>
           <Chevron className="h-5 w-5 ml-1 text-neutral-300" />
         </span>

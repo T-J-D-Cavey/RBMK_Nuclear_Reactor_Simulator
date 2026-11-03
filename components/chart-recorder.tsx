@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useElementSize } from "@/hooks/use-element-height"
 import type { HallSignal } from "@/lib/game-utils"
+import { THRESHOLDS } from "@/lib/types"
 
 /* ------------------------------------------------------------------ */
 /* Types and scales                                                    */
@@ -76,8 +77,8 @@ const BANDS: Band[] = [
     max: RAD_LOG_MAX,
     ticks: [
       { v: 0, label: "0" },
-      { v: 50, label: "50", warn: true },
-      { v: 350, label: "350", warn: true },
+      { v: THRESHOLDS.radioactivity.lowWarning, label: `${THRESHOLDS.radioactivity.lowWarning}`, warn: true },
+      { v: THRESHOLDS.radioactivity.highWarning, label: `${THRESHOLDS.radioactivity.highWarning}`, warn: true },
       { v: 500, label: "500" },
       { v: 1000, label: "1k" },
       { v: 5000, label: "5k" },
@@ -240,13 +241,23 @@ export default function ChartRecorder({
     <div ref={panelRef} className={`cr-panel cr-screws p-3 sm:p-4 space-y-2 ${className}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="cr-plate">Chart Recorder</div>
-        <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase text-muted-foreground">
+        <div className="flex items-center gap-2">
           <span
             className={`retro-lamp inline-block w-2.5 h-2.5 ${
               isPaused || stopped ? "bg-amber-500 text-amber-500 on" : "bg-green-500 text-green-500 on"
             }`}
           />
-          {isPaused || stopped ? "Paper stopped" : `Last ${Math.round(windowSamples / 60)} min`}
+          {/* The recorder's status screen: a fixed width, sized for the longer message */}
+          <div className="cr-screen-bezel">
+            <div
+              className="ws5-crt-screen ws5-crt-text w-[15ch] px-1 py-px text-center text-[15px] leading-none uppercase"
+              style={{ borderRadius: "4px / 3px" }}
+            >
+              <span className="relative z-[1]">
+                {isPaused || stopped ? "Paper stopped" : `Last ${Math.round(windowSamples / 60)} min`}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

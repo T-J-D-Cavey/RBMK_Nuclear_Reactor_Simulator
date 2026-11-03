@@ -3,13 +3,14 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { XIcon } from "lucide-react"
 import { THRESHOLDS } from "@/lib/types"
+import { EVENT_TUNING, TUNING } from "@/lib/sim/tuning"
 import { MODE_MENU, MODE_MENU_TAGLINE } from "@/lib/mode-menu"
 import { BASE_OPEN_GRAPH } from "@/lib/site"
 
 // The tab reads "How to Play | RBMK Nuclear Reactor Simulation"; link previews get the longer title
 const MANUAL_TITLE = "How to Play: RBMK Reactor Operating Manual"
 const MANUAL_DESCRIPTION =
-  "How to play the RBMK reactor simulation: the game modes, the red and blue reactivity cards, control rods, AZ-5, pumps and turbine, warning signs, the xenon pit and the 1986 safety test."
+  "How to play the RBMK reactor simulation: the game modes, the red and blue reactivity cards, control rods, AZ-5, pumps and turbine, the grid's power targets, shift emergencies, warning signs, the xenon pit and the 1986 safety test."
 
 export const metadata: Metadata = {
   title: "How to Play",
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
 export default function InstructionsPage() {
   const controlRoomBackground = "control_room_background.jpg"
   const t = THRESHOLDS
+  const margin = Math.round(t.powerTolerance.fraction * 100)
 
   return (
     <div className="relative min-h-screen px-3 py-5 sm:p-4 md:p-8 bg-black">
@@ -100,24 +102,70 @@ export default function InstructionsPage() {
                 <Section number="04" title="Controls">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card title="Control Rods (×10)">
-                      More insertion → radioactivity down. Less insertion → radioactivity up.
+                      More insertion → radioactivity down. Less insertion → radioactivity up. Rods take a few seconds to travel, so
+                      make a move and wait for it. Keep each rod at least 1% in: a rod pushed in from fully out (0%) first adds
+                      radioactivity through its graphite tip, and jams if steam is high.
                     </Card>
                     <Card title="AZ-5">
                       Inserts every control rod at once, except any that have jammed. Use it to stop a radioactivity spike.
                     </Card>
                     <Card title="Water Pumps (×4)">
-                      The more pumps powered and running, the cooler the reactor and the less steam. With no pumps running, the
-                      reactor boils off the remaining water. Beware.
+                      The more pumps powered and running, the cooler the reactor and the less steam, so the more radioactivity you
+                      need for the same power output. With no pumps running, the reactor boils off the remaining water. Beware.
                     </Card>
                     <Card title="Turbine">
-                      Converts steam into electricity. The water pumps run on power from the grid. In a power cut, disconnect the
-                      turbine from the grid and use the electricity it produces to power the pumps. Running at high steam for too long
-                      can trip the turbine.
+                      Converts steam into electricity for the grid: more steam, more power output. The water pumps normally run on
+                      mains power. In a power cut, switch the turbine to the pumps and the electricity it makes keeps them running,
+                      though none reaches the grid. Running at high steam for too long trips the turbine off the grid.
                     </Card>
                   </div>
                 </Section>
 
-                <Section number="05" title="Warning Signs">
+                <Section number="05" title="Power Targets">
+                  <p>
+                    On Easy and Hard the grid controller sets the power output you must deliver. Stay within ±{margin}% of the
+                    target and your performance climbs; miss it and performance falls. Demand swings a long way up and down
+                    during a shift, so expect to drive the reactor hard with the rods and pumps to keep up.
+                  </p>
+                  <ul className="ws5-manual-list ws5-manual-prompt flex flex-col gap-2.5">
+                    <li>
+                      <Inverse>Notice:</Inverse> the grid warns you a change is coming, then sets the new target{" "}
+                      {EVENT_TUNING.targetNotice} seconds later. You won&apos;t know how big it is, or which way, until then.
+                    </li>
+                    <li>
+                      <Inverse>Hold request:</Inverse> the margin halves to ±{margin * t.powerTolerance.holdFactor}% until
+                      you&apos;ve held output steady inside it for a while and the grid lifts the hold.
+                    </li>
+                    <li>
+                      <Inverse>Low targets:</Inverse> low output means low radioactivity, where xenon builds up. See The Xenon Pit.
+                    </li>
+                  </ul>
+                </Section>
+
+                <Section number="06" title="Shift Emergencies">
+                  <p>
+                    On Easy and Hard things go wrong during the shift, one at a time. The shift log often warns you shortly
+                    before, and each one clears by itself after a while.
+                  </p>
+                  <ul className="ws5-manual-list ws5-manual-prompt flex flex-col gap-2.5">
+                    <li>
+                      <Inverse>Power cut:</Inverse> the pumps lose their mains supply. Switch the turbine to the pumps to keep the
+                      water flowing.
+                    </li>
+                    <li>
+                      <Inverse>Signal loss:</Inverse> the reactor hall&apos;s instruments go dark. Steer by power output until they
+                      come back.
+                    </li>
+                    <li>
+                      <Inverse>Pump trip:</Inverse> one pump fails for a while.
+                    </li>
+                    <li>
+                      <Inverse>Rod jam:</Inverse> some control rods freeze where they are until the fuel channel is repaired.
+                    </li>
+                  </ul>
+                </Section>
+
+                <Section number="07" title="Warning Signs">
                   <ul className="ws5-manual-list ws5-manual-prompt flex flex-col gap-2.5">
                     <li>
                       <Inverse>Alarm monitor:</Inverse> this computer warns you when the reactor is out of balance and recommends how to
@@ -128,8 +176,9 @@ export default function InstructionsPage() {
                       {t.steamVolume.highWarning} or radioactivity over {t.radioactivity.highWarning}.
                     </li>
                     <li>
-                      <Inverse>Watch:</Inverse> low radioactivity, xenon building up, cold fuel, a low rod margin (most of your control
-                      rods withdrawn from the core) and low performance (long periods missing the grid&apos;s power demand).
+                      <Inverse>Watch:</Inverse> radioactivity down to {t.radioactivity.lowWarning}, xenon building up, cold fuel, a low
+                      rod margin (most of your control rods withdrawn from the core) and low performance (long periods missing the
+                      grid&apos;s power target).
                     </li>
                     <li>
                       <Inverse>Shift log:</Inverse> messages from colleagues and outside contacts arrive here: the local grid controller,
@@ -138,16 +187,16 @@ export default function InstructionsPage() {
                   </ul>
                 </Section>
 
-                <Section number="06" title="The Xenon Pit">
+                <Section number="08" title="The Xenon Pit">
                   <p>
-                    At low radioactivity the core can&apos;t burn off xenon, a byproduct of fission. Xenon builds up and drags
+                    Below radioactivity {TUNING.xenonTurnover} the core can&apos;t burn off xenon, a byproduct of fission. Xenon builds up and drags
                     radioactivity down further, which lets even more xenon build up. Withdrawing control rods and cooling the fuel can
                     counter this, but be cautious: once radioactivity rises, the xenon (and the brake it was providing) can burn off
                     quickly. It&apos;s best to avoid high xenon levels.
                   </p>
                 </Section>
 
-                <Section number="07" title="The Safety Test">
+                <Section number="09" title="The Safety Test">
                   <p>
                     We need to complete a safety test, a box-ticking exercise for the executives. It involves lowering power output,
                     disconnecting the turbine from the grid and measuring how much power the coasting turbine can supply to the water
@@ -156,7 +205,7 @@ export default function InstructionsPage() {
                   </p>
                 </Section>
 
-                <Section number="08" title="Game Over" danger>
+                <Section number="10" title="Game Over" danger>
                   <ul className="ws5-manual-list ws5-manual-prompt flex flex-col gap-2.5">
                     <li>
                       <Inverse>Meltdown:</Inverse> reactor temperature reaches {t.reactorTemp.meltdown}°.

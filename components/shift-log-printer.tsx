@@ -72,7 +72,7 @@ export default function ShiftLogPrinter({
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-200 truncate">
-            SKALA · Shift Log
+            <span className="hidden sm:inline">SKALA · </span>Shift Log
           </span>
           {hasUnread && <span className="ws5-unread font-mono text-[10px] font-bold uppercase">New</span>}
         </span>

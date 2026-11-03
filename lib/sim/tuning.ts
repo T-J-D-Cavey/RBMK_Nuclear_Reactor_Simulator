@@ -176,9 +176,9 @@ export { fuelEffect, pumpEffect }
 type Range = readonly [number, number]
 
 export interface ShiftEventTuning {
-  // Events (owner, 2026-11-02): one of each kind (two on Hard) plus a few of any kind drawn at random, in a random
-  // order at random times, never two at once. Easy and Hard have about the same number per minute; Hard's are longer.
-  eachKind: number // of every kind: power cut, signal loss, pump trip, rod jam
+  // Events (owner, 2026-11-03): a few different kinds (every kind on Hard) plus a few of any kind drawn at random, in
+  // a random order at random times, never two at once and never closer than EVENT_TUNING.minEventGap. Hard's are longer.
+  differentKinds: number // this many of the four kinds, once each: power cut, signal loss, pump trip, rod jam
   extraEvents: number // more, each of any kind
   firstEventAfter: number // no event starts before this; the last ends by the end of the shift (owner, 2026-11-02)
   lastNoticeBefore: number // no target change is announced this close to the end of the shift
@@ -199,13 +199,11 @@ export interface ShiftEventTuning {
   targetRange: Range // MW
   targetMaxStep: number // largest single change, MW (a hold moves half as far)
   targetMinStep: number // smallest change worth announcing, MW
-  lowTargetBelow: number // targets below this risk the xenon pit, so they are rarer (§13)
-  lowTargetChance: number // chance a low target is kept when one is drawn
 }
 
 const EASY_EVENTS: ShiftEventTuning = {
-  eachKind: 1,
-  extraEvents: 1, // 5 in 15 minutes (owner, 2026-11-02)
+  differentKinds: 3,
+  extraEvents: 0, // 3 in 15 minutes, never the same kind twice (owner, 2026-11-03)
   firstEventAfter: 60,
   lastNoticeBefore: 120,
   powerCutSeconds: [20, 45],
@@ -218,18 +216,17 @@ const EASY_EVENTS: ShiftEventTuning = {
   settleSeconds: [20, 45], // small steps are reached quickly, so the settle time sets Easy's pace
   holds: 2, // owner, 2026-11-02
   holdForSeconds: [60, 90],
-  giveUpSeconds: 240,
-  changeEverySeconds: 183,
-  targetRange: [1500, 8000],
-  targetMaxStep: 1500,
-  targetMinStep: 500,
-  lowTargetBelow: 3000,
-  lowTargetChance: 0.3,
+  giveUpSeconds: 180, // owner, 2026-11-03 (was 240)
+  changeEverySeconds: 218, // measured with the bot, 2026-11-03
+  // Big swings are the heart of the game (owner, 2026-11-03): a wider range and bigger steps, every target as likely
+  targetRange: [1000, 10000],
+  targetMaxStep: 3000,
+  targetMinStep: 750,
 }
 
 const HARD_EVENTS: ShiftEventTuning = {
-  eachKind: 2,
-  extraEvents: 2, // 10 in 30 minutes: as many per minute as Easy (owner, 2026-11-02)
+  differentKinds: 4,
+  extraEvents: 2, // 6 in 30 minutes: one of each kind and two more (owner, 2026-11-03)
   firstEventAfter: 60,
   lastNoticeBefore: 120,
   powerCutSeconds: [45, 75],
@@ -242,18 +239,18 @@ const HARD_EVENTS: ShiftEventTuning = {
   settleSeconds: [30, 60], // bigger steps take longer to reach, which is where Hard's difficulty comes from
   holds: 4, // owner, 2026-11-02
   holdForSeconds: [60, 90],
-  giveUpSeconds: 240,
-  changeEverySeconds: 241,
-  targetRange: [500, 10000],
-  targetMaxStep: 2000,
-  targetMinStep: 750,
-  lowTargetBelow: 2000,
-  lowTargetChance: 0.3,
+  giveUpSeconds: 180, // owner, 2026-11-03 (was 240)
+  changeEverySeconds: 267, // measured with the bot, 2026-11-03
+  // At 12,000 MW (steam 240) radioactivity swings by hundreds every minute however it is steered (bot, 2026-11-03)
+  targetRange: [300, 11000],
+  targetMaxStep: 4000,
+  targetMinStep: 1000,
 }
 
 export const EVENT_TUNING = {
   easy: EASY_EVENTS,
   hard: HARD_EVENTS,
+  minEventGap: 70, // seconds from the end of one event to the start of the next, at the least (owner, 2026-11-03)
   targetNotice: 60, // the grid announces a target change, or a hold, this long before it takes effect (§13)
   holdStepFactor: 0.5, // a hold request's new target is at most half a target change's step away (owner, 2026-10-29)
   // Advance warning in the shift log (§12); a pump trip comes unannounced

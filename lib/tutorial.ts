@@ -2,7 +2,7 @@
 // same SHIFT FOREMAN who signs the shift log), walks the player round
 // the desk, each reading followed by the control that moves it. A step lights every element on the game page marked
 // data-tutorial="<target>". Pure, so the order and the guide's placement can be checked without a browser.
-import type { GameMode } from "./types"
+import { type GameMode, THRESHOLDS } from "./types"
 
 // Set by the home page when a game starts; the game page shows the briefing while it is set, paused at second zero
 export const TUTORIAL_KEY = "rbmk-briefing-due"
@@ -32,7 +32,7 @@ export function tutorialSteps(mode: GameMode): TutorialStep[] {
     step(
       "radioactivity",
       "Radioactivity",
-      "How hard the core is working. Everything you do is about keeping this steady: above 350 is dangerous, and below 50 xenon starts to poison the core.",
+      `How hard the core is working, and what makes the steam for your power. Above ${THRESHOLDS.radioactivity.highWarning} is dangerous, and below ${THRESHOLDS.radioactivity.lowWarning} the core is close to stalling.`,
       ["radioactivity"],
     ),
     step(

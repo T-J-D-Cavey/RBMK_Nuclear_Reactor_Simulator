@@ -1239,6 +1239,47 @@
 .cr-key-maroon { --cap: #8a1d1d; --cap-hi: #b13232; --cap-side: #430c0c; --cap-ink: #ffe8e3; }
 .cr-key-mustard { --cap: #c69a1e; --cap-hi: #e4bd43; --cap-side: #66500d; --cap-ink: #241c04; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); }
 
+/* A sculpted keycap (owner, 2026-11-03: the machine keys): the lens keys' sloped sidewalls and concave dish in the
+   key's own colours, in its usual collar, with no escutcheon. Slimmer walls than a lens key's, to fit the narrow
+   machine bays, and the same 4px of travel as every panel key. */
+.cr-key.cr-key-sculpted {
+  /* A stacking context, so the dish sits under the legend */
+  isolation: isolate;
+  padding: 2px 5px 7px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cap-hi) 70%, #fff) 0%, var(--cap-hi) 25%, var(--cap-side) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 1px 0 0 rgba(255, 255, 255, 0.1),
+    inset -1px 0 0 rgba(0, 0, 0, 0.15),
+    0 4px 0 color-mix(in srgb, var(--cap-side) 70%, #000),
+    0 5px 6px rgba(0, 0, 0, 0.5),
+    0 0 18px var(--cap-glow);
+}
+
+/* The dish, under the legend */
+.cr-key.cr-key-sculpted::before {
+  content: "";
+  position: absolute;
+  inset: 2px 5px 7px;
+  z-index: -1;
+  border-radius: 4px;
+  background: radial-gradient(ellipse 90% 120% at 50% 110%, var(--cap-hi) 0%, var(--cap) 70%);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.25),
+    inset 0 -2px 3px rgba(255, 255, 255, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.cr-key.cr-key-sculpted:active:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 0 color-mix(in srgb, var(--cap-side) 70%, #000),
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    0 0 12px var(--cap-glow);
+}
+
 /* Round illuminated push button (pumps, turbine, sound); lit with .on */
 .cr-round-key {
   --cap: #3a3a37;
