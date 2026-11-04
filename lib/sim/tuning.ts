@@ -213,11 +213,11 @@ const EASY_EVENTS: ShiftEventTuning = {
   pumpTripSeconds: [60, 90],
 
   firstNotice: [30, 60],
-  settleSeconds: [20, 45], // small steps are reached quickly, so the settle time sets Easy's pace
+  settleSeconds: [10, 30], // owner, 2026-11-04 (was 20–45)
   holds: 2, // owner, 2026-11-02
   holdForSeconds: [60, 90],
   giveUpSeconds: 180, // owner, 2026-11-03 (was 240)
-  changeEverySeconds: 218, // measured with the bot, 2026-11-03
+  changeEverySeconds: 202, // measured with the bot, 2026-11-04
   // Big swings are the heart of the game (owner, 2026-11-03): a wider range and bigger steps, every target as likely
   targetRange: [1000, 10000],
   targetMaxStep: 3000,
@@ -236,15 +236,22 @@ const HARD_EVENTS: ShiftEventTuning = {
   pumpTripSeconds: [60, 120],
 
   firstNotice: [20, 40],
-  settleSeconds: [30, 60], // bigger steps take longer to reach, which is where Hard's difficulty comes from
+  settleSeconds: [10, 30], // owner, 2026-11-04 (was 30–60)
   holds: 4, // owner, 2026-11-02
   holdForSeconds: [60, 90],
   giveUpSeconds: 180, // owner, 2026-11-03 (was 240)
-  changeEverySeconds: 267, // measured with the bot, 2026-11-03
+  changeEverySeconds: 227, // measured with the bot, 2026-11-04
   // At 12,000 MW (steam 240) radioactivity swings by hundreds every minute however it is steered (bot, 2026-11-03)
   targetRange: [300, 11000],
   targetMaxStep: 4000,
   targetMinStep: 1000,
+}
+
+// The machines' maintenance jobs (ai/machine-maintenance-plan.md). Starting values, for tuning at playtest.
+export const MAINTENANCE_TUNING = {
+  vacuumFallSeconds: 360, // full vacuum to worst, in a straight line, in every turbine mode (§3)
+  vacuumOutputLoss: 0.12, // of output, at worst vacuum
+  ejectorRecoverySeconds: 20, // back to full vacuum from any reading
 }
 
 export const EVENT_TUNING = {

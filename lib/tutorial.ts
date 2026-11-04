@@ -125,8 +125,8 @@ export function tutorialSteps(mode: GameMode): TutorialStep[] {
     step(
       "instruments",
       "More instruments",
-      "The balance shows what's pushing radioactivity up or down, the rod display shows where each rod sits, and the dosimeter reads the radiation dose.",
-      ["balance", "rod-display", "dosimeter"],
+      "The balance shows what's pushing radioactivity up or down, the rod display shows where each rod sits, and the plant gauges show the turbine's vacuum and the pumps' balance.",
+      ["balance", "rod-display", "plant-gauges"],
     ),
     {
       ...step(
@@ -142,6 +142,34 @@ export function tutorialSteps(mode: GameMode): TutorialStep[] {
     },
   ]
 }
+
+// --- The machine modals' guide ---
+
+// The rods at the edges of the core, which swing the balance most
+export const EDGE_RODS: readonly number[] = [1, 2, 9, 10]
+
+// The same foreman talks through a machine's modal when its ? key is pressed (owner, 2026-11-04: Guide A). The modals'
+// hint text moved here. The wording is a draft for the owner to settle. A step's targets carry the machine's name, as
+// "pumps", "rods" and "turbine" are the panel's keys.
+export const MACHINE_GUIDES = {
+  turbine: [
+    step("selector", "Mode selector", "Grid: steam volume sets power output. Pumps: steam volume sets how many pumps have power, and output to the grid is 0.", ["turbine-selector"]),
+    step("vacuum", "Vacuum dial", "Air leaks into the condenser over time. As the vacuum falls, you lose output for the same steam.", ["turbine-vacuum"]),
+    step("ejector", "Air ejector", "This clears the air. You can run it any time, but your output climbs as the vacuum returns, so pick your moment.", ["turbine-ejector"]),
+  ],
+  pumps: [
+    step("bays", "Pump bays", "A pump cools the core only when it's on and powered.", ["pumps-bays"]),
+    step("needle", "Balance needle", "Circulation drifts out of balance. The further the needle goes, the hotter your fuel runs.", ["pumps-needle"]),
+    step("balancer", "Balance button", "This rebalances the flow, but the pump switches lock for a few seconds and flow dips. For a small reading, it may not be worth it yet.", ["pumps-balancer"]),
+  ],
+  rods: [
+    step("levers", "Levers", "Drag a lever to set insertion. Deeper rods, less radioactivity.", ["rods-levers"]),
+    step("az5", "AZ-5", "Emergency insertion of every rod.", ["rods-az5"]),
+    step("channels", "Yellow channels", "A rod left parked too long goes sluggish and glows yellow. Move it a little and it frees up.", ["rods-channel"], true),
+    step("needle", "Balance needle", "This shows whether one side of the core has more rod in it. It moves as the rods move. Rods on the heavy side count for less, and rods on the light side for more.", ["rods-needle"]),
+    step("edge", "Edge rods", "Rods 1, 2, 9 and 10 are at the edges of the core, so they swing the balance most.", ["rods-edge"]),
+  ],
+} satisfies Record<string, TutorialStep[]>
 
 // --- Where the guide goes ---
 

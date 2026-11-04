@@ -9,6 +9,7 @@ import { useReveal } from "@/hooks/use-reveal"
 
 const FULL_MESSAGES = 2 // messages wholly in view (owner); older ones are on the roll below
 const PEEK_LINES = 0.5 // the top half of the next line down shows at the roller, so the roll looks like it goes on
+const ROLLER_PX = 32 // the paper fades as it rolls under, this far up from the bottom (.ws5-printer-roller)
 const TYPICAL_CHARS = 110 // a typical message with its time and sender (the median is about 107), for sizing the window
 const FLASH_MS = 1200 // the Printing lamp flashes three times as the message starts printing
 const PRINT_MS = 800 // then shines steadily while it finishes
@@ -151,12 +152,11 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
   const drag = useRef<{ y: number; from: number } | null>(null)
   const [height, setHeight] = useState<number | null>(null)
   const [canReadBack, setCanReadBack] = useState(false)
-  const [readingBack, setReadingBack] = useState(false)
 
-  // Reading back stops a line below the oldest message, not at the end of the blank paper under it.
+  // Reading back stops a line above the roller's fade, not at the end of the blank paper under it.
   const printedEnd = () => {
     const last = paperRef.current?.querySelector<HTMLElement>("[data-entry]:last-child")
-    return last ? last.offsetTop + last.offsetHeight + lineHeight.current : 0
+    return last ? last.offsetTop + last.offsetHeight + lineHeight.current + ROLLER_PX : 0
   }
   const lowest = () => (hasEarlier.current ? Math.min(0, windowHeight.current - printedEnd()) : 0)
 
@@ -167,11 +167,10 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
       paper.style.transition = animate ? `transform ${FEED_MS}ms ${FEED_EASING}` : "none"
       paper.style.transform = `translateY(${y}px)`
     }
-    setReadingBack(y < -1)
   }, [])
 
   // The window is a fixed height for the paper's width, so it never changes as messages come and go (owner): room
-  // for two messages of typical length and half of the first line of the next. Only the paper moves.
+  // for two messages of typical length and half of the first line of the next, clear of the roller. Only the paper moves.
   const measure = useCallback(() => {
     const paper = paperRef.current
     const probe = probeRef.current
@@ -184,10 +183,10 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
     const textWidth = paper.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0)
     const linesPerMessage = Math.max(1, Math.round(TYPICAL_CHARS / Math.max(1, Math.floor(textWidth / charWidth))))
     const message = probe.offsetHeight + (linesPerMessage - 1) * lh
-    const next = Math.round(top + FULL_MESSAGES * message + gap + PEEK_LINES * lh)
+    const next = Math.round(top + FULL_MESSAGES * message + gap + PEEK_LINES * lh + ROLLER_PX)
     windowHeight.current = next
     const last = paper.querySelector<HTMLElement>("[data-entry]:last-child")
-    hasEarlier.current = !!last && last.offsetTop + last.offsetHeight > next + 1 // some printed text is out of sight
+    hasEarlier.current = !!last && last.offsetTop + last.offsetHeight > next - ROLLER_PX + 1 // some printed text is at or past the roller
     setHeight(next)
     setCanReadBack(hasEarlier.current)
     if (offset.current < lowest()) moveTo(lowest(), false)
@@ -204,11 +203,12 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
   }, [measure])
 
   // A message has been printed: it starts out of sight above the window, and the paper feeds down by its height
-  // to show it.
+  // to show it. Wherever the player had read back to, even mid-drag, the paper goes back to the top (owner, 2026-11-04).
   const lastNewest = useRef(newest)
   useLayoutEffect(() => {
     if (newest === lastNewest.current) return
     lastNewest.current = newest
+    drag.current = null
     const paper = paperRef.current
     const row = paper?.querySelector<HTMLElement>("[data-entry]")
     if (!paper || !row || reduced) return moveTo(0, false)
@@ -288,17 +288,6 @@ function Paper({ gameState, onLamp }: { gameState: GameState; onLamp: (lamp: Lam
         {/* Print head above the newest line, roller below the oldest */}
         <div className="ws5-print-head" />
         <div className="ws5-printer-roller" />
-      </div>
-
-      {/* The printer's base plate: how to read back, or the way back to the newest message */}
-      <div className="flex items-center justify-end gap-2 px-1 pt-1 h-5 font-mono text-[10px] uppercase tracking-wider text-neutral-400">
-        {readingBack ? (
-          <button type="button" className="font-bold uppercase tracking-wider text-neutral-200 hover:text-white" onClick={() => moveTo(0, !reduced)}>
-            ▲ Back to latest
-          </button>
-        ) : (
-          canReadBack && <span>Drag paper ▲ to read back</span>
-        )}
       </div>
 
       <ol className="sr-only" role="log" aria-live="polite">

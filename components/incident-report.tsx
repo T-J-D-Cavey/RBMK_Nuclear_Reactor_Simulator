@@ -1,5 +1,5 @@
 import { type GameState, GAME_MODE_CONFIGS, THRESHOLDS, getShiftTime } from "@/lib/types"
-import { SAFETY_TEST_CLOCK_START, formatMinutes, formatTime } from "@/lib/game-utils"
+import { SAFETY_TEST_CLOCK_START, formatMW, formatMinutes, formatTime } from "@/lib/game-utils"
 
 interface IncidentReportProps {
   gameState: GameState
@@ -8,7 +8,8 @@ interface IncidentReportProps {
   stampClassName: string
 }
 
-// The end-of-game report (bible §15): peak values, lowest rod margin, emergencies handled, time in danger.
+// The end-of-game report (bible §15): output and target changes, peak values, lowest rod margin, emergencies handled,
+// time in danger.
 export default function IncidentReport({ gameState, title, stamp, stampClassName }: IncidentReportProps) {
   const config = GAME_MODE_CONFIGS[gameState.mode] ?? GAME_MODE_CONFIGS.easy
   const shiftTime = getShiftTime(gameState)
@@ -27,6 +28,9 @@ export default function IncidentReport({ gameState, title, stamp, stampClassName
             : formatTime(gameState.gameTime),
     },
     ...(config.hasPowerTarget ? [{ label: "Final performance", value: `${Math.round(gameState.performance)}%` }] : []),
+    { label: "Highest output", value: formatMW(stats.highestOutput) },
+    { label: "Lowest output", value: formatMW(stats.lowestOutput) },
+    ...(config.hasPowerTarget ? [{ label: "Target changes", value: `${stats.targetChanges}` }] : []),
     { label: "Peak radioactivity", value: `${Math.round(stats.peakRadioactivity)}` },
     {
       label: "Peak reactor temp",

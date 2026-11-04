@@ -11,7 +11,6 @@ import {
   type ShiftEventKind,
   type TargetTrack,
   GAME_MODE_CONFIGS,
-  MAJOR_EVENT_KINDS,
   SHIFT_EVENT_KINDS,
   THRESHOLDS,
   getPowerTolerance,
@@ -31,8 +30,6 @@ const SHIFT_FOREMAN = "SHIFT FOREMAN"
 const PUMP_OPERATOR = "PUMP OPERATOR"
 const TURBINE_OPERATOR = "TURBINE OPERATOR"
 const REACTOR_TECHNICIAN = "REACTOR TECHNICIAN"
-
-export const isMajorEvent = (kind: EventKind) => MAJOR_EVENT_KINDS.includes(kind)
 
 const between = (rng: Rng, [lo, hi]: Range) => lo + rng() * (hi - lo)
 const wholeBetween = (rng: Rng, [lo, hi]: Range) => Math.min(hi, lo + Math.floor(rng() * (hi - lo + 1)))
@@ -262,7 +259,7 @@ export function startEvent(state: GameState, kind: EventKind, tuning: ShiftEvent
       // and the narrow window come in together, and the grid says what the hold means. The step is half a target
       // change's, so it is quick to reach (owner, 2026-10-29). It lasts until the target track lifts it.
       const target = nextTarget(s.powerTarget, tuning, rng, EVENT_TUNING.holdStepFactor)
-      s = addLog({ ...s, powerTarget: target }, "grid", targetConfirmation(target), GRID_CONTROLLER)
+      s = addLog(countTargetChange({ ...s, powerTarget: target }), "grid", targetConfirmation(target), GRID_CONTROLLER)
       s = addLog(
         s,
         "grid",
@@ -320,8 +317,8 @@ function endEvent(state: GameState, event: GameEvent): GameState {
       s = addLog(s, "engineer", "Electrics to the reactor hall are back. Reactor instruments are reading again.", REACTOR_TECHNICIAN)
       break
   }
-  if (isMajorEvent(event.type)) s = { ...s, stats: { ...s.stats, emergenciesHandled: s.stats.emergenciesHandled + 1 } }
-  return s
+  // Every event counts, smaller ones too (owner, 2026-11-04). A grid hold never comes here: it counts as a target change.
+  return { ...s, stats: { ...s.stats, emergenciesHandled: s.stats.emergenciesHandled + 1 } }
 }
 
 // --- Rods jammed by high steam (every mode) ---
@@ -363,6 +360,7 @@ export function nextTarget(current: number, tuning: ShiftEventTuning, rng: Rng, 
 // hold gives the same notice and confirmation.
 const TARGET_NOTICE = "We may soon require an adjustment in your power output."
 const targetConfirmation = (target: number) => `New power output requested to be ${formatMW(target)}.`
+const countTargetChange = (s: GameState): GameState => ({ ...s, stats: { ...s.stats, targetChanges: s.stats.targetChanges + 1 } })
 
 function announceTargetChange(state: GameState, tuning: ShiftEventTuning, now: number, rng: Rng): GameState {
   if (state.powerTarget === null) return state
@@ -375,7 +373,7 @@ function announceTargetChange(state: GameState, tuning: ShiftEventTuning, now: n
 export function applyPendingTarget(state: GameState): GameState {
   const pending = state.pendingTarget
   if (!pending || getShiftTime(state) < pending.at) return state
-  return addLog({ ...state, powerTarget: pending.target, pendingTarget: null }, pending.source, targetConfirmation(pending.target), pending.from)
+  return addLog(countTargetChange({ ...state, powerTarget: pending.target, pendingTarget: null }), pending.source, targetConfirmation(pending.target), pending.from)
 }
 
 // --- Turbine trip (bible §12): a consequence of sustained over-pressure, never random ---

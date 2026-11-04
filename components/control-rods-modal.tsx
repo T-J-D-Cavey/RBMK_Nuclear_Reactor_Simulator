@@ -4,6 +4,9 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { StripDial } from "@/components/machine-dials"
+import MachineGuide from "@/components/machine-guide"
+import { EDGE_RODS, MACHINE_GUIDES } from "@/lib/tutorial"
 import type { ControlRod } from "@/lib/types"
 
 interface ControlRodsModalProps {
@@ -11,9 +14,10 @@ interface ControlRodsModalProps {
   onOpenChange: (open: boolean) => void
   controlRods: ControlRod[]
   onUpdate: (rods: ControlRod[], az5: boolean) => void
+  onGuideChange: (open: boolean) => void // the shift foreman has come or gone: the game pauses while he talks
 }
 
-export default function ControlRodsModal({ open, onOpenChange, controlRods, onUpdate }: ControlRodsModalProps) {
+export default function ControlRodsModal({ open, onOpenChange, controlRods, onUpdate, onGuideChange }: ControlRodsModalProps) {
   const [tempValues, setTempValues] = useState<number[]>([])
   const [isDragging, setIsDragging] = useState<number | null>(null)
 
@@ -105,13 +109,13 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
 
         <div className="space-y-4">
           <div className="flex items-stretch gap-3">
-            <div className="cr-note flex-1 px-3 py-2 !text-[11px] sm:!text-xs uppercase flex flex-col justify-center gap-1">
-              <p>Drag a lever to set insertion. Deeper rods, less radioactivity.</p>
-              <p className="font-bold">AZ-5: emergency insertion of every rod.</p>
+            {/* The needle holds at balanced until the rod balance is built (plan §9.1) */}
+            <div className="cr-module cr-bay-screws flex-1 min-w-0 p-2 flex items-center" data-tutorial="rods-needle">
+              <StripDial value={0} />
             </div>
 
             {/* AZ-5: a red button inside a hazard-striped guard */}
-            <div className="cr-hazard shrink-0 rounded-[3px] p-2 flex flex-col items-center justify-center gap-1.5">
+            <div className="cr-hazard shrink-0 rounded-[3px] p-2 flex flex-col items-center justify-center gap-1.5" data-tutorial="rods-az5">
               <span className="cr-round-bezel">
                 <button onClick={handleAZ5} className="cr-round-key cr-az5 w-14 h-14 sm:w-16 sm:h-16" aria-label="AZ-5 emergency insertion">
                   AZ-5
@@ -120,24 +124,25 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
             </div>
           </div>
 
-          {/* The levers in backlit channels, with one SKALA strip under the bank for the set positions (owner,
-              2026-10-27: prototype A). A jammed rod's channel glows red; the lever and its plate are hardware and
-              never change. */}
+          {/* The levers in fabric-lined channels (owner, 2026-11-04: Rods A2), with one SKALA strip under the bank for
+              the set positions (owner, 2026-10-27: prototype A). A jammed rod's lamp glows red through the channel's
+              gap; the lever and its plate are hardware and never change. */}
           <div className="cr-module cr-bay-screws p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
-            <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center">
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center" data-tutorial="rods-levers">
               {controlRods.map((rod, idx) => {
                 const currentInsertion = tempValues[idx] ?? rod.insertion
                 return (
-                  <div key={rod.id} className="flex flex-col items-center gap-1 w-full">
+                  <div key={rod.id} className="flex flex-col items-center gap-1 w-full" data-tutorial={EDGE_RODS.includes(rod.id) ? "rods-edge" : undefined}>
                     <Label className="cr-plate !px-1.5 !py-1 !text-[0.7rem] !tracking-[0.1em]">R{rod.id}</Label>
 
                     {/* Top Cap: the drive housing */}
-                    <div className="w-8 sm:w-6 h-2 sm:h-3 rounded-t-sm bg-gradient-to-b from-neutral-500 to-neutral-800 border border-black/70" />
+                    <div className="w-8 sm:w-[30px] h-2 sm:h-3 rounded-t-sm bg-gradient-to-b from-neutral-500 to-neutral-800 border border-black/70" />
 
                     {/* Rod Track */}
                     <div
                       id={`rod-container-${idx}`}
-                      className={`cr-rod-slot relative w-8 sm:w-6 h-36 sm:h-48 rounded-b-sm touch-none ${
+                      data-tutorial="rods-channel"
+                      className={`cr-rod-slot relative w-8 sm:w-[30px] h-36 sm:h-48 rounded-b-sm touch-none ${
                         rod.stuck ? "cr-rod-slot-jammed cursor-not-allowed" : "cursor-grab"
                       }`}
                       onMouseDown={(e) => handleStart(idx, e)}
@@ -145,7 +150,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                     >
                       {/* Draggable Lever Handle, inside a transparent fingertip-sized grab area */}
                       <div
-                        className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-11 flex items-center justify-center touch-none ${
+                        className={`absolute z-[1] left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-11 flex items-center justify-center touch-none ${
                           rod.stuck ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"
                         }`}
                         style={{
@@ -194,6 +199,8 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
             </span>
           </div>
         </div>
+
+        <MachineGuide steps={MACHINE_GUIDES.rods} onOpenChange={onGuideChange} />
       </DialogContent>
     </Dialog>
   )

@@ -7,6 +7,7 @@ import { type GameState, THRESHOLDS, getShiftTime } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
 import { type HallSignal, formatTime, checkEventWarnings, checkWarnings, getHallSignal, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
+import { canRunEjector, runEjector } from "@/lib/maintenance"
 import { useRodDisplay } from "@/hooks/use-rod-display"
 import { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
 import ReactorCameraView from "./reactor-camera-view"
@@ -92,6 +93,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
   const rodDisplay = useRodDisplay(gameState.controlRods)
   const [showReactorView, setShowReactorView] = useState(false)
 
@@ -115,8 +117,15 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const overPressure = gameState.steamVolume >= THRESHOLDS.steamVolume.highWarning
 
   const paused = gameState.isPaused
-  const keysOff = paused && !briefing
-  const vfd = "font-mono font-bold vfd-display !px-1 !py-0.5 text-center text-sm"
+  // The shift foreman pauses the game too, but only to talk: behind him the desk looks as it does in play
+  const keysOff = paused && !briefing && !guideOpen
+  const handleGuideChange = (open: boolean) => {
+    setGuideOpen(open)
+    updateGameState({ isPaused: open })
+  }
+  // The green screens are right-justified, as on a real numeric readout: each digit keeps its place as the value rises
+  // and falls. The LED meters stay centred (owner, 2026-11-04).
+  const vfd = "font-mono font-bold vfd-display !pl-1 !pr-2 !py-0.5 text-right text-sm"
   const led = "led-display !px-0 !py-1 text-center text-sm"
   const unit = <span className="text-[0.6rem] tracking-[0.1em] opacity-75 ml-1">MW</span>
 
@@ -265,7 +274,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
                       <div
                         className={`
                           absolute left-[10%] right-[10%] h-[2px] bg-black transition-all duration-1000 ease-linear
-                          ${rod.stuck ? "animate-[pulse_0.5s_ease-in-out_infinite]" : ""}
+                          ${rod.stuck ? "cr-rod-bar-jammed" : ""}
                         `}
                         style={{
                           // Position based on the rod's actual (travelling) insertion %, held back until the drive sound starts.
@@ -314,6 +323,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           updateGameState(az5 ? { controlRods: rods, az5PressedAt: getShiftTime(gameState) } : { controlRods: rods })
           onSoundEffect(az5 ? "az5" : "rodConfirm")
         }}
+        onGuideChange={handleGuideChange}
       />
 
       <WaterPumpsModal
@@ -324,16 +334,24 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           updateGameState({ waterPumps: pumps })
           onSoundEffect("pumpConfirm")
         }}
+        onGuideChange={handleGuideChange}
       />
 
       <TurbineModal
         open={turbineModalOpen}
         onOpenChange={setTurbineModalOpen}
         turbineMode={gameState.turbineMode}
+        vacuum={gameState.vacuum}
+        ejectorReady={canRunEjector(gameState)}
+        onRunEjector={() => {
+          const started = runEjector(gameState)
+          if (started) updateGameState(started)
+        }}
         onUpdate={(mode) => {
           updateGameState({ turbineMode: mode, turbineConnected: mode === "grid" })
           onSoundEffect("turbineConfirm")
         }}
+        onGuideChange={handleGuideChange}
       />
 
       {/* Fullscreen reactor view: the camera in its own control panel */}

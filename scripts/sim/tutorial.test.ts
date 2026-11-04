@@ -1,7 +1,7 @@
 // The control-room briefing (lib/tutorial): its order in every mode, and where the guide goes. Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { GUIDE_EDGE, planGuide, tutorialSteps } from "../../lib/tutorial"
+import { EDGE_RODS, GUIDE_EDGE, MACHINE_GUIDES, planGuide, tutorialSteps } from "../../lib/tutorial"
 
 test("briefing: every mode opens with the welcome and ends with Begin; each reading comes before the control that moves it", () => {
   for (const mode of ["easy", "hard", "safety_test", "free"] as const) {
@@ -16,6 +16,30 @@ test("briefing: every mode opens with the welcome and ends with Begin; each read
   assert.equal(tutorialSteps("easy").length, 16)
   // Free mode has no target, so its performance never moves and the step is left out
   assert.ok(!tutorialSteps("free").some((s) => s.id === "performance"))
+})
+
+test("machine guides: the turbine, pumps and rods each have their own steps, on targets the briefing doesn't use", () => {
+  const briefing = new Set(tutorialSteps("easy").flatMap((s) => s.targets))
+  for (const [machine, steps] of Object.entries(MACHINE_GUIDES)) {
+    assert.equal(new Set(steps.map((s) => s.id)).size, steps.length, `${machine}: no step twice`)
+    for (const s of steps) {
+      assert.ok(s.text && s.title, `${machine}/${s.id}: has words`)
+      assert.ok(s.targets.length, `${machine}/${s.id}: frames something`)
+      for (const target of s.targets) {
+        assert.ok(target.startsWith(`${machine}-`), `${target}: carries its machine's name`)
+        assert.ok(!briefing.has(target), `${target}: not one of the briefing's`)
+      }
+    }
+  }
+  assert.deepEqual([MACHINE_GUIDES.turbine.length, MACHINE_GUIDES.pumps.length, MACHINE_GUIDES.rods.length], [3, 3, 5])
+  assert.deepEqual(EDGE_RODS, [1, 2, 9, 10])
+})
+
+test("machine guides: every piece of the modals' old hint text is kept", () => {
+  const words = Object.values(MACHINE_GUIDES).flat().map((s) => s.text).join(" ")
+  for (const hint of ["steam volume sets power output", "steam volume sets how many pumps have power", "on and powered", "Drag a lever to set insertion. Deeper rods, less radioactivity.", "Emergency insertion of every rod."]) {
+    assert.ok(words.includes(hint), hint)
+  }
 })
 
 const phone = { width: 390, height: 844, scrollY: 0, maxScroll: 1800 }

@@ -4,6 +4,7 @@ import { type GameMode, type GameState, GAME_MODE_CONFIGS, INITIAL_GAME_STATE, g
 import { calculateGameTick } from "./game-mechanics"
 import { FIRST_LOG_AT, addLog, checkEventWarnings, checkGameOver, checkWarnings } from "./game-utils"
 import { applyPendingTarget, checkTurbineTrip, expireEvents, jamRodsInHighSteam, runShiftEvents } from "./game-events"
+import { advanceMaintenance } from "./maintenance"
 import { runSafetyTest } from "./safety-test"
 import type { Rng } from "./sim/rng"
 
@@ -50,6 +51,7 @@ export function advanceGame(prev: GameState, rng: Rng = Math.random): GameState 
   s = applyPendingTarget(s)
   s = s.mode === "safety_test" ? runSafetyTest(s) : runShiftEvents(s, rng)
   s = welcomeToFreeMode(s)
+  s = advanceMaintenance(s)
 
   // Both kinds of warning, so the general alarm sounds for either
   s = { ...s, warnings: [...checkWarnings(s), ...checkEventWarnings(s)] }

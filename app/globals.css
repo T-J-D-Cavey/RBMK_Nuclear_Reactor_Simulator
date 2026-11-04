@@ -354,6 +354,11 @@
   animation: ws3-rec-blink 1s steps(1, end) infinite;
 }
 
+/* A jammed rod's bar on the desk: right off and fully on, slow enough to catch the eye (owner, 2026-11-04) */
+.cr-rod-bar-jammed {
+  animation: ws3-rec-blink 1.2s steps(1, end) infinite;
+}
+
 /* ---- Homepage CRT title ---- */
 .ws3-crt-panel {
   position: relative;
@@ -745,14 +750,16 @@
   position: relative;
   /* Blank paper fills the window, with spare below the roller so a feed never shows a gap under a short log */
   min-height: calc(100% + 4 * var(--lh));
-  padding: 0.25rem 1.6rem var(--lh);
+  padding: 0.25rem 1.6rem calc(var(--lh) + 2rem); /* the 2rem is the roller's fade, so the oldest line can clear it */
   font-size: 0.9375rem;
   line-height: var(--lh);
   color: #2b2a24; /* one ribbon, all capitals: a teleprinter (owner) */
   text-transform: uppercase;
   user-select: none;
+  /* Ruled paper (owner, 2026-11-04): one rule under every line of print, evenly down the whole roll and moving with it */
   background:
     linear-gradient(to right, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0) 95%, rgba(0, 0, 0, 0.12)),
+    linear-gradient(to top, rgba(85, 96, 74, 0.2) 1px, rgba(85, 96, 74, 0) 1px) 0 calc(0.25rem + var(--lh) / 2) / 100% var(--lh),
     #efe7cf;
 }
 
@@ -763,10 +770,9 @@
   }
 }
 
-/* One message: a gap above and below, with a faint rule between messages instead of one under every line */
+/* One message: half a line above and below, so every message is a whole number of lines and its print sits on the rules */
 .ws5-printer-entry {
-  padding: 0.45rem 0;
-  border-bottom: 1px solid rgba(85, 96, 74, 0.2);
+  padding: calc(var(--lh) / 2) 0;
 }
 
 /* Sprocket holes down both edges, moving with the paper like the chart recorder's */
@@ -802,13 +808,21 @@
   background: linear-gradient(to bottom, #1c1c1b 0 3px, rgba(0, 0, 0, 0.45) 3px, rgba(0, 0, 0, 0));
 }
 
-/* The paper curves away over the roller and out of sight */
+/* The paper rolls under the roller and out of sight (owner, 2026-11-04): the print washes out as the sheet turns away,
+   then it falls into the roller's shadow. ROLLER_PX in shift-log-printer.tsx is this height. */
 .ws5-printer-roller {
   position: absolute;
   inset: auto 0 0 0;
-  height: 0.4rem; /* short, so the half line of the next message still shows above it */
+  height: 2rem;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.3) 60%, #1c1c1b 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(239, 231, 207, 0) 0%,
+    rgba(214, 206, 184, 0.6) 38%,
+    rgba(120, 113, 98, 0.86) 68%,
+    rgba(44, 42, 37, 0.97) 88%,
+    #141413 100%
+  );
 }
 
 /* "New message" marker on a collapsed log */
@@ -862,6 +876,7 @@
   .ws3-cam-signal,
   .ws3-cam-static,
   .ws3-chart-offscale,
+  .cr-rod-bar-jammed,
   .ws3-crt-title,
   .ws3-crt-subtitle,
   .ws5-crt-text,
@@ -1902,6 +1917,15 @@
   scrollbar-color: #6b6a64 transparent;
 }
 
+/* A machine modal slides up the screen to clear the shift foreman (components/tutorial.tsx) */
+.cr-dialog {
+  transition: top 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-dialog { transition: none; }
+}
+
 /* Select Mode: 2×2 on a medium screen, four across on a wide one (components/difficulty-modal.tsx). In rem, like
    Tailwind's sm and lg, so the width changes at the same point as the grid. */
 @media (min-width: 40rem) {
@@ -2116,7 +2140,7 @@
   font-size: 0.8em;
 }
 
-/* ---- Rod position display: the ring of rods from the show's mimic panel (components/rod-display.tsx) ----
+/* ---- Rod position display: a map of the core seen from above (components/rod-display.tsx) ----
    A painted steel wall with backlit plastic lenses set into it, each lit in its rod's colour. */
 .cr-rod-face {
   background:
@@ -2127,8 +2151,8 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45), inset 0 6px 12px rgba(0, 0, 0, 0.35);
 }
 
-.cr-rod-ring {
-  container-type: inline-size; /* the lenses' type scales with the ring */
+.cr-rod-map {
+  container-type: inline-size; /* the lenses' type scales with the map */
   position: relative;
   width: min(100%, 24rem);
   aspect-ratio: 1;
@@ -2165,7 +2189,7 @@
 
 .cr-rod-cell {
   position: absolute;
-  width: 14%; /* never overlapping a neighbour: see RING_RADIUS in components/rod-display.tsx */
+  width: 14%; /* never overlapping a neighbour: see CORE_MAP in components/rod-display.tsx */
   aspect-ratio: 1;
   translate: -50% -50%;
   display: flex;
@@ -2198,20 +2222,17 @@
   font-weight: 800;
 }
 
-/* AZ-5 in the middle of the ring: a dull red lens until pressed, then lit for a few seconds */
+/* AZ-5 by the nameplate: a dull red lens until pressed, then lit for a few seconds */
 .cr-rod-az5 {
   --lamp: #ef4444;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 22%;
-  aspect-ratio: 1;
-  translate: -50% -50%;
+  flex-shrink: 0;
+  margin-right: 4px; /* its socket stands 4px proud */
+  padding: 0.3rem 0.55rem;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: "Geist Mono", monospace;
-  font-size: max(10px, 4.4cqw);
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.06em;
   color: rgba(255, 190, 190, 0.28);
@@ -2262,24 +2283,24 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 0 2px #1b1e1c;
 }
 
-/* ---- Dosimeter: a needle meter in a black bakelite case (components/dosimeter.tsx) ---- */
-.cr-dose-bezel {
+/* ---- Machine dials (components/machine-dials.tsx): cream paper in a black case ---- */
+.cr-dial-case {
+  padding: 3px;
   background: linear-gradient(160deg, #2c2c2a 0%, #1b1b1a 55%, #111110 100%);
-  border: 4px solid #3a3a37;
-  border-top-width: 6px;
+  border: 3px solid #3a3a37;
   border-radius: 6px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 6px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-.cr-dose-face {
+.cr-dial-paper {
   position: relative;
-  border-radius: 10px 10px 4px 4px;
+  border-radius: 3px;
   background: radial-gradient(ellipse at 50% 85%, #f4eedb 0%, #e8dfc4 60%, #d3c9ab 100%);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 3px 10px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 /* The glass over the face */
-.cr-dose-face::after {
+.cr-dial-paper::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -2287,47 +2308,100 @@
   pointer-events: none;
 }
 
-.cr-dose-num {
+.cr-dial-strip {
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f4eedb, #e0d7bc);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 3px 8px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.cr-dial-number {
   font-family: "Geist Mono", monospace;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   fill: #1c1b18;
 }
-.cr-dose-num.is-small {
-  font-size: 8px;
-  font-weight: 600;
-}
-.cr-dose-num.is-red {
-  fill: #b42318;
-  font-weight: 800;
-}
-.cr-dose-unit,
-.cr-dose-legend {
-  font-family: "Geist Mono", monospace;
-  font-size: 6.5px;
-  letter-spacing: 0.12em;
+
+.cr-dial-word {
+  font-family: var(--font-plate), "Arial Narrow", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   fill: #3b3a35;
 }
-.cr-dose-legend {
-  font-size: 6px;
-  letter-spacing: 0.2em;
-  fill: #6b685e;
+
+.cr-dial-name {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  fill: #1c1b18;
 }
 
-.cr-dose-needle {
+.cr-dial-name.is-few {
+  font-size: 16px;
+}
+
+.cr-dial-needle {
   transition: transform 1s linear; /* one game second per reading */
 }
-/* Pinned against the stop at the end of the scale, the needle trembles */
-.cr-dose-pegged {
-  animation: cr-dose-tremble 0.18s ease-in-out infinite alternate;
-}
-@keyframes cr-dose-tremble {
-  from { transform: rotate(-0.8deg); }
-  to { transform: rotate(0.4deg); }
-}
+
 @media (prefers-reduced-motion: reduce) {
-  .cr-dose-needle { transition: none; }
-  .cr-dose-pegged { animation: none; }
+  .cr-dial-needle { transition: none; }
+}
+
+/* A maintenance job's key and its Ready tile, one width. The tile's ring stands 3px proud and the plate's 1px, so the
+   tile sits in 2px a side. */
+.cr-job-key {
+  flex: none;
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cr-job-key .cr-lens-bezel {
+  display: flex;
+  width: 100%;
+  padding-inline: 16px;
+}
+.cr-job-key .cr-lens-bezel::before {
+  inset-inline: 11px;
+}
+.cr-job-key .cr-lens-bezel::after {
+  inset-inline: 2px;
+}
+
+.cr-job-key .cr-lens {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  padding-inline: 12px;
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
+}
+
+.cr-job-key .cr-mode-tile {
+  margin-inline: 2px;
+}
+
+@media (min-width: 40rem) {
+  .cr-job-key {
+    width: 120px;
+  }
+
+  .cr-job-key .cr-lens-bezel {
+    padding-inline: 25px;
+  }
+  .cr-job-key .cr-lens-bezel::before {
+    inset-inline: 20px;
+  }
+  .cr-job-key .cr-lens-bezel::after {
+    inset-inline: 6px;
+  }
+
+  .cr-job-key .cr-lens {
+    font-size: 1.05rem;
+    letter-spacing: 0.22em;
+  }
 }
 
 /* ---- End screens ---- */
@@ -2704,22 +2778,51 @@
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
 }
 
-/* The slot a rod's lever travels in, with a scale every 10%. It is a backlit strip (owner, 2026-10-27: prototype A):
-   dark while its lamp is off, glowing red through the plastic when the rod jams. The lever never changes. */
+/* The channel a rod's lever travels in, like a real slide lever (owner, 2026-11-04: Rods A2): black woven fabric either
+   side, meeting at a 5px gap. The gap is dark until a lamp behind it lights, yellow for a sluggish rod and red for a
+   jam, and the lamp lightly catches the fabric's inner edges (--lit). The lever never changes. */
 .cr-rod-slot {
-  background:
-    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.18) 0 1px, rgba(0, 0, 0, 0) 1px 10%),
-    linear-gradient(90deg, #0c0c0b, #24231f 50%, #0c0c0b);
+  --lit: rgba(0, 0, 0, 0);
+  background: #060605;
   border: 2px solid #0a0a09;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
+.cr-rod-slot::before,
+.cr-rod-slot::after {
+  --weave:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.075) 0 1px, rgba(0, 0, 0, 0) 1px 2px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0 1px, rgba(0, 0, 0, 0) 1px 2px);
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(50% - 2.5px);
+  pointer-events: none;
+}
+
+.cr-rod-slot::before {
+  left: 0;
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.75);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 45%, var(--lit) 100%), var(--weave), linear-gradient(90deg, #0f0f0e 0%, #2b2b28 60%, #191917 100%);
+}
+
+.cr-rod-slot::after {
+  right: 0;
+  box-shadow: -1px 0 2px rgba(0, 0, 0, 0.75);
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0) 45%, var(--lit) 100%), var(--weave), linear-gradient(270deg, #0f0f0e 0%, #2b2b28 60%, #191917 100%);
+}
+
+.cr-rod-slot-sluggish {
+  --lit: rgba(242, 215, 15, 0.34);
+  background: radial-gradient(ellipse 100% 55% at 50% 50%, #fff7b0 0%, #f2d70f 55%, #a08c05 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px 1px rgba(242, 215, 15, 0.32), 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
 .cr-rod-slot-jammed {
-  background:
-    repeating-linear-gradient(to bottom, rgba(60, 0, 0, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 10%),
-    radial-gradient(ellipse 60% 50% at 50% 50%, #ffb39a 0%, rgba(255, 106, 61, 0) 70%),
-    linear-gradient(90deg, #6e0f09, #e5261b 50%, #6e0f09);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px 1px rgba(255, 60, 30, 0.55), 0 1px 0 rgba(255, 255, 255, 0.45);
+  --lit: rgba(255, 60, 30, 0.36);
+  background: radial-gradient(ellipse 100% 55% at 50% 50%, #ffb39a 0%, #e5261b 55%, #8a120b 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px 1px rgba(255, 60, 30, 0.34), 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 /* T-handle of the lever */

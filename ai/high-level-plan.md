@@ -12,7 +12,7 @@ This document is the source of truth for *what* we are changing and *what the pl
 - Each section has: **Change** → **Player outcome** → **Must preserve** → **Acceptance checks**. Acceptance checks describe observable behaviour, not code. Numbers given are *initial tuning targets*, not hard requirements.
 - If a change in one area forces a change in another (the reactor is one coupled system), note it and check the other section's acceptance checks still hold. Do not silently change behaviour owned by another section.
 - Rules marked *Deliberate* are intentional simplifications. Do not "correct" them towards more realistic physics.
-- **Radioactivity vs power output.** *Radioactivity* is the reactor's fission level: it is what the red and blue cards push up or down, and it makes the heat. *Power output* is only the electricity the turbine makes from steam (steam × 50 MW while connected). Radioactivity affects power output indirectly, through heat and steam, and with a lag. This plan never uses "power" on its own for either.
+- **Radioactivity vs power output.** *Radioactivity* is the reactor's fission level: it is what the red and blue cards push up or down, and it makes the heat. *Power output* is only the electricity the turbine makes from steam (steam × 50 MW while connected, less what a poor condenser vacuum costs: Section 8). Radioactivity affects power output indirectly, through heat and steam, and with a lag. This plan never uses "power" on its own for either.
 - Anything not described here is out of scope. If you think something else should change, flag it rather than doing it.
 
 ---
@@ -42,6 +42,7 @@ This document is the source of truth for *what* we are changing and *what the pl
 4. AZ-5 takes effect with a single press; no Apply step (Section 10). The modal closes when AZ-5 is selected. 
 5. Legasov's red and blue cards are shown on a board beside the reactor camera (Section 15, owner). They show the engine's own cards; no new gauge or control.
 6. Button style (owner's choices, 2026-11-02 and 2026-11-03): the confirm, cancel and menu keys are sculpted keycaps on a screwed plate, and the panel's three machine keys (Pumps, Rods, Turbine) are the same sculpted keycap in their own colour, in their usual collar, with no plate. Colours are unchanged.
+7. Machine maintenance (owner, 2026-11-04; [machine-maintenance-plan.md](machine-maintenance-plan.md)). The turbine, pumps and rods gain gauges in their modals and on the main page. These are machine readings, not reactor variables. Each of the three modals gains a ? key that brings back the shift foreman, and their hint text moves to him. The rod levers keep their handles, but their channels become black fabric with a lamp behind the gap, replacing the "same look" of exception 2. The rod display's lenses move closer together to make room for its needle.
 
 ---
 
@@ -205,6 +206,8 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 - **No flicker:** when steam hovers right at the level where the turbine could supply one pump more or one fewer, the supply holds steady until steam has clearly moved, rather than cutting a pump's power on and off every second. (This concerns the turbine's supply, never the player's switches.)
 - The existing PWR lamps on the pump panel show which pumps are receiving power, whatever the source. The turbine panel may gain one small indicator lamp for "supplying pumps", matching the existing lamp style. No other control changes.
 
+**Change (condenser vacuum, owner, 2026-11-04):** air slowly leaks into the turbine's condenser, and that costs output. Power output = steam × 50 × (1 − 0.12 × vacuum lost, from 0 to 1), only while on the grid. The vacuum falls from full to worst in about 6 minutes in every turbine mode, then stops: a player who never touches it loses 12% of their output and nothing else. It doesn't change the pumps the turbine can power. The air ejector, in the turbine modal, restores full vacuum in about 20 s from any reading. It runs at once with no Apply, and carries on if the modal closes. Pressing at full vacuum or during a recovery does nothing. The Turbine Operator reports the worst vacuum once on the shift log, and can report it again only after the ejector has run. There is no alarm.
+
 **Player outcome:** a power cut becomes a decision rather than just a wait. Do I sacrifice my grid output to keep cooling going? It's self-balancing but imperfect: more pumps reduce steam, which reduces turbine power, which powers fewer pumps. The player must nurse it. This is exactly the turbine-rundown concept from the real test and ties directly into Safety Test.
 
 **Acceptance checks:**
@@ -215,6 +218,9 @@ For surges to stay dangerous, heat must flow from fuel to reactor in proportion 
 - With the normal supply available, a turbine supplying the pumps still powers them only as steam allows.
 - Steam never changes ahead of reactor temperature: a fuel temperature rise only shows in steam once reactor temperature has risen.
 - In a violent radioactivity spike, reactor temperature and steam both climb within seconds.
+- At worst vacuum, output is 12% lower for the same steam, and steam and the pumps the turbine can power are unchanged.
+- From worst vacuum the ejector raises output by 13.6%, more than the ±10% target band, so when to run it is a real decision.
+- A player who never runs the ejector still survives okay.
 
 ---
 
@@ -318,7 +324,7 @@ Each ending gets its own game-over presentation.
 - **Brief warning in the shift log before an event where it fits** (e.g. "grid instability reported" shortly before a power cut) so the player can prepare. A pump trip comes unannounced.
 - **The events:**
   - **Power cut** (major emergency): the pumps lose their normal supply for a period. The turbine-to-pumps option makes it a decision.
-  - **Signal lost from the reactor hall** (major emergency): the link between the control room and the reactor hall goes down, so every reading taken in the hall is lost for a period: radioactivity, reactor and fuel temperature, steam, xenon, the camera, the chart recorder and the radioactivity balance. Each display's screen flickers between lit and unlit, shows ERR, then goes dark. The camera turns to snow and NO SIGNAL, the chart recorder's paper stops, and the balance shows NO SIGNAL. The alarm monitor can't see the reactor either: only the signal-loss warning shows, on the event alarm. Power output, the target, the time, the rods, the pumps, the dosimeter and the turbine are read elsewhere and keep working, so the player steers by power output, as operators once did. The reactor itself runs on as usual. A shift foreman warns of cabling faults shortly before; the head engineer reports the loss, and a technician reports when the readings are back.
+  - **Signal lost from the reactor hall** (major emergency): the link between the control room and the reactor hall goes down, so every reading taken in the hall is lost for a period: radioactivity, reactor and fuel temperature, steam, xenon, the camera, the chart recorder and the radioactivity balance. Each display's screen flickers between lit and unlit, shows ERR, then goes dark. The camera turns to snow and NO SIGNAL, the chart recorder's paper stops, and the balance shows NO SIGNAL. The alarm monitor can't see the reactor either: only the signal-loss warning shows, on the event alarm. Power output, the target, the time, the rods, the pumps, the plant gauges and the turbine are read elsewhere and keep working, so the player steers by power output, as operators once did. The reactor itself runs on as usual. A shift foreman warns of cabling faults shortly before; the head engineer reports the loss, and a technician reports when the readings are back.
   - **Single pump trip:** one pump fails for a period.
   - **Rod jam:** with rod travel (Section 10), a jam freezes each affected rod wherever it is, including mid-travel, for a period. The head engineer reports when the fuel channel is repaired and the rods can move again.
 - **Not events, and possible any time:** sustained over-pressure (the existing OVR-P lamp) trips the turbine off the grid, which gives the high-steam warning a real consequence. A rod sent in from 0% while steam is high jams for the rest of the shift (Section 10).
@@ -348,7 +354,7 @@ Each ending gets its own game-over presentation.
 - **Every change is warned the same way:** the grid controller says "We may soon require an adjustment in your power output", with no number, and the change takes effect 60 seconds later. The player knows a change is coming, but not its size or direction until it takes effect. (The Safety Test's orders still state the new target with their notice.)
   - **A plain change:** the grid confirms the new target.
   - **A hold** (Kiev's request in the show): the grid confirms the new target and says it is a hold, giving the window, which is 50% narrower from that moment. The hold is lifted ("Hold lifted. Normal tolerance restored.") once output has been inside the narrow window for 60–90 s without a break. A hold's new target is at most half as far from the current one as a plain change's.
-- **The next notice waits until the player has settled:** it comes once output has been on target without a break for the settle time (Easy 20–45 s, Hard 30–60 s), or after a hold is lifted and the settle time has passed. So a target never moves just as it is reached (it stays at least a settle time plus the 60 s notice), and a player on target is never left idle for long.
+- **The next notice waits until the player has settled:** it comes once output has been on target without a break for the settle time (10–30 s), or after a hold is lifted and the settle time has passed. So a target never moves just as it is reached (it stays at least a settle time plus the 60 s notice), and a player on target is never left idle for long.
 - **The grid gives up waiting after 3 minutes** (owner, 2026-11-03; was 4): a target (or hold) not reached and held by then is moved on anyway, so a struggling player isn't stuck. A player swinging from too low to too high keeps restarting the settle count, so this backstop is often what moves a target on. The clock runs from when the target takes effect, and stops while a power cut or signal loss is on.
 - **A set number of holds per shift,** never the first change, spread across the shift.
 - **No notice in the last two minutes of the shift.**
@@ -364,7 +370,7 @@ Each ending gets its own game-over presentation.
 | Plain change | 750–3,000 MW | 1,000–4,000 MW |
 | Hold change | 375–1,500 MW | 500–2,000 MW |
 | Holds per shift | 2 | 4 |
-| Settle time | 20–45 s | 30–60 s |
+| Settle time | 10–30 s | 10–30 s |
 | Hold held for | 60–90 s | 60–90 s |
 | Target changes per shift (bot, typical) | 3–4 | 5–7 |
 
@@ -420,7 +426,7 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 
 **Homepage and menus:** stronger atmosphere (CRT title treatment, subtle flicker, and the disaster end screens' red emergency beacon, mounted on the ceiling and sweeping down through the room, with embers drifting up). The mode selection includes Safety Test as a visually distinct "historical scenario" card. The Easy and Hard cards describe workload (shift length, targets, emergencies), not different reactor mechanics (Section 11).
 
-**End screens:** separate presentations for meltdown, core explosion, removed from post and success. Add a short "incident report" with peak values, lowest rod margin, emergencies handled and time in danger.
+**End screens:** separate presentations for meltdown, core explosion, removed from post and success. Add a short "incident report" with highest and lowest output, target changes, peak values, lowest rod margin, emergencies handled (every event, whatever its size; a grid hold counts as a target change) and time in danger.
 
 **How to Play:** rewrite the physics section around the red-card / blue-card explanation so the manual teaches the same model the game uses. Include: removing a blue card raises radioactivity; power output only follows through heat and steam; rods take time to move; the graphite tips, and why rods shouldn't be parked at 0%; xenon burn-off speeding up as radioactivity rises; the ±10% tolerance; identical physics in every mode.
 
@@ -458,7 +464,7 @@ A one-page summary of Sections 5–10.
 | Fuel temperature effect | **Continuous curve, 0 at normal running temperature**: a mild brake when hotter than normal, firming a little when very hot but always weaker than the steam that comes with it, and levelling off beyond ~2,000°; a push when cooler, strongest when very cold | Slows a runaway without ever stopping it (only rods and pumps do); restart lever; a healthy reactor reads 0. |
 | Fuel / reactor temperature | **Lagged heat balance** (not exponential) | Fast only because radioactivity is fast. |
 | Pump cooling | **Proportional** to flow and temperature, diminishing per extra pump; flow ramps over a few seconds | Physical, readable. |
-| Power output from steam | **Linear** | Keeps targets predictable. |
+| Power output from steam | **Linear**, scaled down by up to 12% by a poor condenser vacuum | Keeps targets predictable. |
 
 ---
 

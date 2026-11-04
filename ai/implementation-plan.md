@@ -761,7 +761,7 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
 - A countdown warning shows in the events box the whole time.
 - There is no lockout: the player can reconnect at once.
 
-**Emergencies handled** counts major emergencies that ran their course.
+**Emergencies handled** counts every event that ran its course, whatever its size (owner, 2026-11-04). A grid hold counts as a target change instead.
 
 **Bot yardstick** (`scripts/sim/bot.ts`). A scripted player that reads only the panel and acts every 3 s:
 - It uses a rule of thumb for which radioactivity gives which output, and watches the output trend, easing off as output closes in.
@@ -781,7 +781,7 @@ The React hook and the harness both call it, so `sim:test` and `sim:shift` exerc
   - **Safety Test:** the box is a typed procedure sheet headed by "Phase n of 6" and the standing orders, with night-clock timestamps.
 - **End screens:**
   - Meltdown, core explosion (white flash and shock ring), removed from post, and success, each with its own title, text and stamp.
-  - All share a typed **incident report** (`components/incident-report.tsx`): mode, shift time, final performance, peak radioactivity, reactor temperature and steam, lowest rod margin (flagged below 200), emergencies handled and time in danger.
+  - All share a typed **incident report** (`components/incident-report.tsx`): mode, shift time, final performance, highest and lowest output, target changes, peak radioactivity, reactor temperature and steam, lowest rod margin (flagged below 200), emergencies handled and time in danger.
 - **How to Play** (`app/instructions/page.tsx`) is rewritten around the red and blue cards, covering every item bible §15 lists, plus events, the Safety Test and endings. Numbers come from `THRESHOLDS`, `TUNING` and `EVENT_TUNING`, so they track tuning.
 - **README:** rewritten to match the game.
 - **Small fixes:**
@@ -869,12 +869,12 @@ Source: the owner's Easy-mode playtest (test two in `ai/manual-test-results.MD`)
 
 - **Two machines, one per kind of message** (`components/message-area.tsx`). They always stack, the alarm monitor above the shift log (owner). Each still collapses on its own.
   - **Alarm monitor** (`components/alarm-screen.tsx`): the plant computer's screen, "SKALA" after the footer's "© 1986 SKALA CONTROL SYSTEMS". It has green phosphor, scanlines and the VT323 terminal font (`next/font`, no new npm package). Every computer-generated warning types itself out like a command line, with "WARNING" in inverse video. A warning keeps its line while it lasts, new ones are added at the bottom, and the turbine countdown updates in place. With no warnings it reads "ALL SYSTEMS STABLE." The header's status lamp reads "All systems stable" in green, or "N Warnings" in red (owner, restored after it was briefly removed).
-  - **Shift log teleprinter** (`components/shift-log-printer.tsx`): printed on the chart recorder's paper, with sprocket holes. Every message is in one ink and in capitals, in a larger type (owner: no colour printers then). The lines of one message sit close together, with a gap and a faint rule between messages (owner). Blank paper always fills the window.
+  - **Shift log teleprinter** (`components/shift-log-printer.tsx`): printed on the chart recorder's paper, with sprocket holes. Every message is in one ink and in capitals, in a larger type (owner: no colour printers then). The paper is ruled, one rule under every line of print, evenly down the whole roll (owner, 2026-11-04), with a blank ruled line between messages. Blank paper always fills the window.
     - **Housing** is the alarm monitor's dark bezel, headed "SKALA · Shift Log" in every mode, the Safety Test included (owner, test five: the phase and orders card is gone and its instructions are in the messages). Its yellow "Printing" lamp is dark when idle. The old ink key and the "Teleprinter · Unit 4" plate label are gone (owner).
     - **No typing effect** (owner): a new message is printed out of sight under the print head while the lamp flashes three times (1.2 s) and then shines (0.8 s). Then the paper feeds down by the message's height (0.45 s) to show it whole. Messages that arrive together print one after another.
     - Two messages are in view, with the top half of the next line showing at the roller (owner: less clutter, and it looks like a roll that goes on). A new message feeds the line that was on top down to about halfway. Older ones are on the roll below.
     - The window's height is fixed for the paper's width and never changes as messages arrive (owner): only the paper moves. It is sized for two messages of typical length (110 characters with time and sender; the median is about 107) plus the half line. A longer message takes more of the window, as it would on a real roll.
-    - To read back, drag the paper (mouse or finger), use the mouse wheel, or focus it and use the arrow keys. There is no scrollbar. "Back to latest" returns to the top, and a new message rolls the paper back anyway. Read-back only works once there are more than two messages.
+    - To read back, drag the paper (mouse or finger), use the mouse wheel, or focus it and use the arrow keys. There is no scrollbar or on-screen hint (owner, 2026-11-04): the paper fills its window and fades as it rolls under the roller. A new message brings the paper back to the top, even mid-drag. Read-back only works once there are more than two messages.
     - Screen readers get the latest messages as plain text.
   - The alarm monitor's typing: `hooks/use-typewriter.ts` and `components/typed-text.tsx`. Reduced motion shows everything at once, on both machines.
 - **No more pinned lines.** The running-event summaries, the grid-hold countdown, "NEW TARGET: … in N s" and the "N ACTIVE" count are gone. Everything on the paper is a message someone sent. `getStatusLines` and `GameEvent.message` were removed.

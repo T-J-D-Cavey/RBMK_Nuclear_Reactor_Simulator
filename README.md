@@ -73,7 +73,7 @@ A Next.js 16 / React 19 app (Tailwind, shadcn/ui), deployed on Vercel. The key d
 
 - **`app/`**: the home page with mode selection, the game (`/game`) and How to Play (`/instructions`).
 - **`hooks/use-game-state.ts`**: ticks `advanceGame` once a second and saves the game to `localStorage`, so a refresh resumes the shift.
-- **`components/`**: the control panel and its modals (rods, pumps, turbine), the chart recorder, the red/blue card board, the rod position display, the dosimeter, the alarm monitor, the shift log teleprinter, the reactor camera and the end screens. The incident report is styled as a paper end-of-shift report.
+- **`components/`**: the control panel and its modals (rods, pumps, turbine), the chart recorder, the red/blue card board, the rod position display, the plant gauges, the alarm monitor, the shift log teleprinter, the reactor camera and the end screens. The incident report is styled as a paper end-of-shift report.
 - **`hooks/use-audio-manager.ts`**: alarms, the reactor hum and sound effects, driven by the pure cue logic in `lib/`.
 
 ### Design documents (`ai/`)

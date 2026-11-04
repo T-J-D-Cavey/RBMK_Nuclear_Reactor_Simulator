@@ -1,4 +1,5 @@
 import { type GameOverCause, type GameState, THRESHOLDS, getPowerTolerance, isGridHoldActive } from "./types"
+import { vacuumOutputFactor } from "./maintenance"
 import { advanceReactor, getRodMargin } from "./sim/reactor"
 import type { Rng } from "./sim/rng"
 
@@ -24,8 +25,8 @@ export function calculateGameTick(state: GameState, rng: Rng = Math.random): Tic
 }
 
 function calculatePower(state: GameState): GameState {
-  // Power Output = Steam Volume × 50, only while the turbine feeds the grid (bible §8)
-  const newPowerOutput = state.turbineMode === "grid" ? state.steamVolume * 50 : 0
+  // Power Output = Steam Volume × 50, less what the vacuum costs, only while the turbine feeds the grid (bible §8)
+  const newPowerOutput = state.turbineMode === "grid" ? state.steamVolume * 50 * vacuumOutputFactor(state.vacuum) : 0
 
   return { ...state, powerOutput: newPowerOutput, turbineConnected: state.turbineMode === "grid" }
 }
@@ -69,6 +70,8 @@ function updateStats(state: GameState): GameState {
       peakRadioactivity: Math.max(stats.peakRadioactivity, state.radioactivity),
       peakReactorTemp: Math.max(stats.peakReactorTemp, state.reactorTemp),
       peakSteam: Math.max(stats.peakSteam, state.steamVolume),
+      highestOutput: Math.max(stats.highestOutput, state.powerOutput),
+      lowestOutput: Math.min(stats.lowestOutput, state.powerOutput),
       lowestRodMargin: Math.min(stats.lowestRodMargin, getRodMargin(state.controlRods)),
       secondsInDanger: stats.secondsInDanger + (isInDanger(state) ? 1 : 0),
     },

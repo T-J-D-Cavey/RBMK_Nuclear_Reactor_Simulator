@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { GripSwitch, JewelLamp } from "@/components/switchgear"
+import { ArcDial } from "@/components/machine-dials"
+import MachineGuide from "@/components/machine-guide"
+import { GripSwitch, JewelLamp, JobKey } from "@/components/switchgear"
+import { MACHINE_GUIDES } from "@/lib/tutorial"
 import type { WaterPump } from "@/lib/types"
 
 interface WaterPumpsModalProps {
@@ -11,9 +14,10 @@ interface WaterPumpsModalProps {
   onOpenChange: (open: boolean) => void
   waterPumps: WaterPump[]
   onUpdate: (pumps: WaterPump[]) => void
+  onGuideChange: (open: boolean) => void // the shift foreman has come or gone: the game pauses while he talks
 }
 
-export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpdate }: WaterPumpsModalProps) {
+export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpdate, onGuideChange }: WaterPumpsModalProps) {
   const [tempStates, setTempStates] = useState<boolean[]>([])
 
   // Initialise only when the modal opens: pump flow changes every second and must not reset choices.
@@ -41,10 +45,16 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="cr-note px-3 py-2 uppercase text-center">A pump cools the core only when ON and POWERED.</div>
+          {/* The needle holds at centre until the balancer is built, so its key has nothing to do yet (plan §9.1) */}
+          <div className="cr-module cr-bay-screws p-2.5 flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex-1 min-w-0 max-w-60" data-tutorial="pumps-needle">
+              <ArcDial kind="pumps" value={0} />
+            </div>
+            <JobKey ready={false} ariaLabel="Run the circulation balancer" tutorial="pumps-balancer" />
+          </div>
 
           {/* One switchgear bay per pump: ON lights when the switch is on and the pump has power */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3" data-tutorial="pumps-bays">
             {waterPumps.map((pump, idx) => {
               const on = tempStates[idx] ?? pump.on
               return (
@@ -93,6 +103,8 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
             </span>
           </div>
         </div>
+
+        <MachineGuide steps={MACHINE_GUIDES.pumps} onOpenChange={onGuideChange} />
       </DialogContent>
     </Dialog>
   )

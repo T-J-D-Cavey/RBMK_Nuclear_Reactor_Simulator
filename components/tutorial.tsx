@@ -39,8 +39,9 @@ function readHoles(step: TutorialStep): Hole[] {
 
 // The control-room briefing (owner, 2026-10-29), given by the shift foreman, Aleksandr Akimov. The room goes dark but
 // for what he is talking about, framed in amber; he stands on an edge of the screen with his words on a typed sheet, and the page scrolls each subject into
-// view clear of him. Close, or Begin shift on the last sheet, ends it.
-export default function Tutorial({ steps, onFinish }: { steps: TutorialStep[]; onFinish: () => void }) {
+// view clear of him. Close, or Begin shift on the last sheet, ends it. With inModal he is talking through a machine's
+// modal instead (components/machine-guide): the modal moves rather than the page, and the end goes back to it.
+export default function Tutorial({ steps, onFinish, inModal = false }: { steps: TutorialStep[]; onFinish: () => void; inModal?: boolean }) {
   const [index, setIndex] = useState(0)
   const [chars, setChars] = useState(0)
   const [holes, setHoles] = useState<Hole[]>([])
@@ -50,14 +51,15 @@ export default function Tutorial({ steps, onFinish }: { steps: TutorialStep[]; o
   const reduced = usePrefersReducedMotion()
   const guideRef = useRef<HTMLDivElement>(null)
   const nextRef = useRef<HTMLButtonElement>(null)
+  const modalRef = useRef<HTMLElement | null>(null)
   const step = steps[index]
   const last = index === steps.length - 1
 
   // However the briefing ends, the shift starts at the top of the page, where the desk is
   const finish = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" })
+    if (!inModal) window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" })
     onFinish()
-  }, [onFinish, reduced])
+  }, [onFinish, reduced, inModal])
   const next = useCallback(() => (last ? finish() : setIndex((i) => i + 1)), [last, finish])
   const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), [])
 
@@ -88,22 +90,38 @@ export default function Tutorial({ steps, onFinish }: { steps: TutorialStep[]; o
   // A group too tall to clear him (the instruments, stacked on a phone) is shown from its first member.
   useLayoutEffect(() => {
     const guide = guideRef.current
-    const boxes = targetsOf(step).map((element) => element.getBoundingClientRect())
+    const targets = targetsOf(step)
+    const boxes = targets.map((element) => element.getBoundingClientRect())
     if (!guide || !boxes.length) {
       setPlan((p) => ({ ...p, dock: "bottom", corner: "left" }))
       if (step.atTop && window.scrollY > 0) window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" })
       return
     }
-    const scrollY = window.scrollY
+    // A modal that fits the screen has nothing to scroll, so past its own scroll it slides up the screen, as far as it
+    // has to: on a phone that is the only way to clear him
+    const modal = inModal ? targets[0].closest<HTMLElement>('[data-slot="dialog-content"]') : null
+    modalRef.current = modal
+    const inside = modal ? modal.scrollHeight - modal.clientHeight : 0
+    const slid = modal ? window.innerHeight / 2 - parseFloat(getComputedStyle(modal).top) : 0
+    const scrollY = modal ? modal.scrollTop + slid : window.scrollY
     const inPage = (b: Box): Box => ({ top: b.top + scrollY - RING_PAD, bottom: b.bottom + scrollY + RING_PAD, left: b.left - RING_PAD, right: b.right + RING_PAD })
     const size = { width: guide.offsetWidth, height: guide.offsetHeight }
-    const view = { width: window.innerWidth, height: window.innerHeight, scrollY, maxScroll: document.documentElement.scrollHeight - window.innerHeight }
+    const maxScroll = modal ? inside + modal.offsetHeight : document.documentElement.scrollHeight - window.innerHeight
+    const view = { width: window.innerWidth, height: window.innerHeight, scrollY, maxScroll }
     const all = inPage(union(boxes))
     const subject = all.bottom - all.top <= view.height - size.height - 3 * GUIDE_EDGE ? all : inPage(boxes[0])
     const placed = planGuide(subject, view, size, phone)
     setPlan(placed)
-    if (Math.abs(placed.scrollY - scrollY) > 1) window.scrollTo({ top: placed.scrollY, behavior: reduced ? "auto" : "smooth" })
-  }, [step, phone, reduced, resizes])
+    const behavior = reduced ? "auto" : "smooth"
+    if (modal) {
+      const scrolled = Math.min(placed.scrollY, inside)
+      modal.scrollTo({ top: scrolled, behavior })
+      modal.style.top = `calc(50% - ${placed.scrollY - scrolled}px)`
+    } else if (Math.abs(placed.scrollY - scrollY) > 1) window.scrollTo({ top: placed.scrollY, behavior })
+  }, [step, phone, reduced, resizes, inModal])
+
+  // The modal slides back when he goes
+  useEffect(() => () => void modalRef.current?.style.removeProperty("top"), [])
 
   // The frames follow their subjects while the page scrolls or the layout moves
   useEffect(() => {
@@ -185,9 +203,9 @@ export default function Tutorial({ steps, onFinish }: { steps: TutorialStep[]; o
         <div className={`cr-tut-card pointer-events-auto ${phone ? "ml-[74px] mr-2 mt-2" : left ? "ml-[140px] w-[390px]" : "mr-[140px] w-[390px] self-end"}`}>
           <div className="flex items-center justify-between gap-2">
             <span className="cr-tut-meta">
-              Shift foreman · {String(index + 1).padStart(2, "0")} / {steps.length}
+              Shift foreman · {String(index + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
             </span>
-            <button className="cr-tut-close" onClick={finish} aria-label="Close the briefing and start the shift">
+            <button className="cr-tut-close" onClick={finish} aria-label={inModal ? "Close the guide and return to the panel" : "Close the briefing and start the shift"}>
               <X className="size-4" />
             </button>
           </div>
@@ -209,7 +227,7 @@ export default function Tutorial({ steps, onFinish }: { steps: TutorialStep[]; o
               ‹ Previous
             </button>
             <button ref={nextRef} className="cr-tut-btn" onClick={next}>
-              {last ? "Begin shift ›" : "Next ›"}
+              {!last ? "Next ›" : inModal ? "Back to the panel ›" : "Begin shift ›"}
             </button>
           </div>
           <span className={`cr-tut-tail ${left ? "cr-tut-tail-left" : "cr-tut-tail-right"}`} aria-hidden="true" />

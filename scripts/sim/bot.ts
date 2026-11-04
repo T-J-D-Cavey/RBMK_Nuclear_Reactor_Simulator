@@ -7,6 +7,7 @@ import { AZ5_ORDER, DEPUTY_WITHDRAWAL, SAFETY_TEST_SCRIPT } from "../../lib/safe
 import { seededRng, type Rng } from "../../lib/sim/rng"
 import { TUNING } from "../../lib/sim/tuning"
 import { isHallSignalLost } from "../../lib/game-utils"
+import { runEjector, vacuumOutputFactor } from "../../lib/maintenance"
 
 // Safety Test: from the first test step (all pumps on) a careful operator stops chasing output.
 const TEST_PREP_AT = SAFETY_TEST_SCRIPT.find((step) => step.action === "pumps-on")?.at ?? Infinity
@@ -17,9 +18,10 @@ export interface BotOptions {
   pumps: number // pumps to keep running
   allocation: "even" | "pull-out" // "pull-out": withdraws the shallowest rods all the way first (reckless)
   testResponse: "insert" | "az5" | "late-az5" | "none" // Safety Test: what to do when the test begins
+  jobs: boolean // does the machines' maintenance. Off, it is the novice who doesn't know the jobs exist (plan §9.4)
 }
 
-const DEFAULTS: BotOptions = { cadence: 3, minRod: 1, pumps: 2, allocation: "even", testResponse: "insert" }
+const DEFAULTS: BotOptions = { cadence: 3, minRod: 1, pumps: 2, allocation: "even", testResponse: "insert", jobs: true }
 
 export interface Bot {
   act: (s: GameState) => GameState
@@ -47,10 +49,14 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
     const blind = isHallSignalLost(s)
     if (blind) history.length = 0
     else history.push(Math.max(1e-3, s.radioactivity))
-    outputs.push(s.powerOutput)
+    // The output the reactor is making: a player reading the dial doesn't take the vacuum returning for the reactor rising
+    outputs.push(s.powerOutput / vacuumOutputFactor(s.vacuum))
     const now = getShiftTime(s)
     if (now % o.cadence !== 0) return s
     const testPrep = s.mode === "safety_test" && now >= TEST_PREP_AT
+
+    // --- The turbine's vacuum: output climbs as it returns, so run the ejector while output is short of the target ---
+    if (o.jobs && s.vacuum < 0.5 && (s.powerTarget === null || s.powerOutput <= s.powerTarget)) s = { ...s, ...runEjector(s) }
 
     // --- Housekeeping: power cuts, trips, the turbine ---
     if (s.mode === "safety_test" && !s.mainsPower && !survival) {

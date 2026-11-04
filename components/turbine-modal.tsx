@@ -3,13 +3,21 @@
 import type React from "react"
 import { Fragment, useState, useEffect, useRef } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ArcDial } from "@/components/machine-dials"
+import MachineGuide from "@/components/machine-guide"
+import { JobKey } from "@/components/switchgear"
+import { MACHINE_GUIDES } from "@/lib/tutorial"
 import type { TurbineMode } from "@/lib/types"
 
 interface TurbineModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   turbineMode: TurbineMode
+  vacuum: number
+  ejectorReady: boolean // a press of the air ejector's key would do something
+  onRunEjector: () => void
   onUpdate: (mode: TurbineMode) => void
+  onGuideChange: (open: boolean) => void // the shift foreman has come or gone: the game pauses while he talks
 }
 
 // The rotary selector's three positions (owner, 2026-10-26: prototype D). One knob makes the modes exclusive.
@@ -34,7 +42,7 @@ const TILES: { mode: TurbineMode; label: string; lit: "green" | "amber" | "red" 
   { mode: "idle", label: "Idle", lit: "red" },
 ]
 
-export default function TurbineModal({ open, onOpenChange, turbineMode, onUpdate }: TurbineModalProps) {
+export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, ejectorReady, onRunEjector, onUpdate, onGuideChange }: TurbineModalProps) {
   const [mode, setMode] = useState<TurbineMode>("idle")
 
   useEffect(() => {
@@ -54,6 +62,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, onUpdate
 
   // Press and drag left or right to turn the knob through its detents; it stops at Pumps and Grid.
   // A drag swallows the click that follows it, so only a plain click turns the knob one step clockwise.
+  const knob = useRef<HTMLButtonElement>(null)
   const drag = useRef<{ x: number; from: number; moved: boolean } | null>(null)
   const dragged = useRef(false)
 
@@ -78,22 +87,29 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, onUpdate
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cr-dialog sm:max-w-md max-h-[90vh] overflow-y-auto">
+      {/* Opens on the knob, not the first key in the page: the ejector runs at once, so Enter mustn't press it by accident */}
+      <DialogContent
+        className="cr-dialog sm:max-w-md max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          knob.current?.focus()
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="cr-dialog-title">Turbine</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="cr-note px-3 py-2 uppercase space-y-1">
-            <p>
-              <span className="font-bold">Grid:</span> steam volume sets power output.
-            </p>
-            <p>
-              <span className="font-bold">Pumps:</span> steam volume sets how many pumps have power. Output to grid is 0.
-            </p>
+          {/* The ejector runs at once, like AZ-5, with no Apply, and carries on if the modal closes. The rising needle and
+              the grey tile are all that shows it running. */}
+          <div className="cr-module cr-bay-screws p-2.5 flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex-1 min-w-0 max-w-60" data-tutorial="turbine-vacuum">
+              <ArcDial kind="vacuum" value={vacuum} />
+            </div>
+            <JobKey ready={ejectorReady} ariaLabel="Run the air ejector" tutorial="turbine-ejector" onRun={onRunEjector} />
           </div>
 
-          <div className="cr-module cr-bay-screws p-2.5 flex flex-col items-center gap-2.5">
+          <div className="cr-module cr-bay-screws p-2.5 flex flex-col items-center gap-2.5" data-tutorial="turbine-selector">
             <span className="cr-plate">Mode Selector</span>
 
             <div className="cr-selector">
@@ -124,6 +140,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, onUpdate
                 )
               })}
               <button
+                ref={knob}
                 onClick={handleKnobClick}
                 onKeyDown={handleKnobKey}
                 onPointerDown={(e) => {
@@ -176,6 +193,8 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, onUpdate
             </span>
           </div>
         </div>
+
+        <MachineGuide steps={MACHINE_GUIDES.turbine} onOpenChange={onGuideChange} />
       </DialogContent>
     </Dialog>
   )

@@ -116,7 +116,9 @@ export default function InstructionsPage() {
                     <Card title="Turbine">
                       Converts steam into electricity for the grid: more steam, more power output. The water pumps normally run on
                       mains power. In a power cut, switch the turbine to the pumps and the electricity it makes keeps them running,
-                      though none reaches the grid. Running at high steam for too long trips the turbine off the grid.
+                      though none reaches the grid. Running at high steam for too long trips the turbine off the grid. Air
+                      slowly leaks into its condenser, which costs output for the same steam, up to 12%. The air ejector clears
+                      it, but output climbs as the vacuum returns, so pick your moment.
                     </Card>
                   </div>
                 </Section>

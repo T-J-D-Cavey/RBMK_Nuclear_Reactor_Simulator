@@ -7,7 +7,6 @@ import {
   type GameState,
   type TargetTrack,
   GAME_MODE_CONFIGS,
-  MAJOR_EVENT_KINDS,
   SHIFT_EVENT_KINDS,
   THRESHOLDS,
   getPowerTolerance,
@@ -18,7 +17,7 @@ import { EVENT_TUNING } from "../../lib/sim/tuning"
 import { seededRng } from "../../lib/sim/rng"
 import { getRodMargin } from "../../lib/sim/reactor"
 import { advanceGame, createNewGame } from "../../lib/game-loop"
-import { isPowerOnTarget } from "../../lib/game-mechanics"
+import { calculateGameTick, isPowerOnTarget } from "../../lib/game-mechanics"
 import {
   AZ5_LAMP_SECONDS,
   SIGNAL_DARK_AFTER,
@@ -40,11 +39,11 @@ import {
   RODS_OUT_BELOW,
   SAFETY_TEST_SCRIPT,
 } from "../../lib/safety-test"
+import { canRunEjector, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
 import { REFERENCE_STATE } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
 import { az5 } from "./harness"
 
-const isMajor = (kind: string) => (MAJOR_EVENT_KINDS as readonly string[]).includes(kind)
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -134,8 +133,7 @@ test("§12 a typical shift: every planned event happens, warned of in advance wh
     for (const run of shifts(mode).filter((r) => r.final.hasWon)) {
       const events = run.final.eventHistory.filter((e) => e.type !== "grid-hold")
       assert.equal(events.length, tuning.differentKinds + tuning.extraEvents, `${mode}: ${events.length} events`)
-      const majors = events.filter((e) => isMajor(e.type)).length
-      assert.equal(run.final.stats.emergenciesHandled, majors, "power cuts and signal losses count as emergencies handled")
+      assert.equal(run.final.stats.emergenciesHandled, events.length, "every event counts as an emergency handled")
       for (const event of events.filter((e) => e.type in warnings)) {
         const startedAt = (run.final.timeLimit ?? 0) - event.timestamp
         const warning = run.final.log.findLast((l) => l.time <= startedAt && l.text.startsWith(warnings[event.type]))
@@ -250,7 +248,7 @@ test("§12 a rod jam stops rods where they are, even mid-travel, until it ends; 
   assert.equal(s.log.length, logged + 2)
   assert.ok(s.log.at(-1)!.text.startsWith("The ruptured fuel channel has been repaired") && jammed.every((i) => s.log.at(-1)!.text.includes(String(i + 1))))
   assert.ok(!checkEventWarnings(s).some((w) => w.includes("control rod")), "the warning clears")
-  assert.equal(s.stats.emergenciesHandled, 0, "a smaller event is not a major emergency")
+  assert.equal(s.stats.emergenciesHandled, 1, "a rod jam counts as an emergency handled")
   // ...and they answer the levers again
   s = step({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: 100 })) }, 20, rng)
   assert.ok(s.controlRods.every((r) => r.insertion === 100))
@@ -386,7 +384,28 @@ test("§12 a pump trip takes one running pump out for a while", () => {
   const back = s.waterPumps.find((p) => p.id === id)!
   assert.ok(!back.tripped && back.powered && back.flow === 1, "back in service")
   assert.ok(!checkEventWarnings(s).some((w) => w.includes("water pump")), "the warning clears with the event")
-  assert.equal(s.stats.emergenciesHandled, 0, "a smaller event is not a major emergency")
+  assert.equal(s.stats.emergenciesHandled, 1, "a pump trip counts as an emergency handled")
+})
+
+test("§15 the report counts every target change, holds included, and the highest and lowest output", () => {
+  for (const mode of ["easy", "hard"] as const) {
+    for (const run of shifts(mode).filter((r) => r.final.hasWon)) {
+      let changes = 0
+      let last = 5000
+      for (const s of run.states) {
+        if (s.powerTarget !== last) changes++
+        last = s.powerTarget ?? last
+      }
+      const outputs = run.states.map((s) => s.powerOutput)
+      assert.equal(run.final.stats.targetChanges, changes, `${mode}: target changes`)
+      assert.ok(changes > 0, `${mode}: a shift has target changes`)
+      assert.equal(run.final.stats.highestOutput, Math.max(5000, ...outputs), `${mode}: highest output`)
+      assert.equal(run.final.stats.lowestOutput, Math.min(5000, ...outputs), `${mode}: lowest output`)
+    }
+  }
+  // A hold is not an emergency: it goes on the target changes
+  const hold = startEvent(quietGame("easy"), "grid-hold", EVENT_TUNING.easy, seededRng(1))
+  assert.deepEqual([hold.stats.targetChanges, hold.stats.emergenciesHandled], [1, 0])
 })
 
 test("§12 a grid hold request sets a new target, half a change's step away, and halves the tolerance", () => {
@@ -574,15 +593,15 @@ test("§13 target changes are warned 60 s ahead, within range, never right after
 })
 
 test("§13 a competent player meets the targets on Easy and Hard, and Hard is harder", () => {
-  // Survival over 40 seeds (ten can hold several losses by chance). With the events and target changes of 2026-11-03
-  // the bot survives about 99% of Easy shifts and about 68% of Hard ones (200 seeds each, with the grid giving up after
-  // 3 minutes; 73% after 4; the owner accepted ~74% in the 2026-11-02 trial), so at most 2 of 40 may be lost on Easy
-  // and 14 of 40 on Hard.
+  // Survival over 40 seeds (ten can hold several losses by chance). With a settle time of 10–30 s (owner, 2026-11-04)
+  // the bot survives about 100% of Easy shifts and about 60% of Hard ones (200 seeds each). It was 68% with Hard's settle
+  // time at 30–60 s, the owner accepted 62%, and the turbine's vacuum took it from 61.5% to 59.5%, within Hard's noise
+  // (2026-11-04). So at most 2 of 40 may be lost on Easy and 19 of 40 on Hard; blocks of 40 run from 13 to 19.
   const lost = (mode: GameMode) =>
     Array.from({ length: 40 }, (_, i) => i + 1)
       .map((seed) => (seed <= SEEDS.length ? shifts(mode)[seed - 1] : playGame(createNewGame(mode), makeBot(), seed)))
       .filter((run) => !run.final.hasWon)
-  for (const [mode, most] of [["easy", 2], ["hard", 14]] as const) {
+  for (const [mode, most] of [["easy", 2], ["hard", 19]] as const) {
     const l = lost(mode)
     assert.ok(l.length <= most, `${mode}: the bot lost ${l.length} of 40 (${l.map((run) => run.final.gameOverCause)})`)
   }
@@ -596,7 +615,7 @@ test("§13 a competent player meets the targets on Easy and Hard, and Hard is ha
   // 73% over 40 seeds before every hold moved the target and the shift opened with a change (owner, 2026-10-29); 71% after.
   // With a change every 3 minutes or so on Easy (2026-11-02) there is more to chase: 70% over 200 seeds, 67% over these ten.
   // With big swings at the heart of the game (owner, 2026-11-03) there is far more chasing: Easy 57% and Hard 48% over
-  // 200 seeds.
+  // 200 seeds. With the shorter settle time (owner, 2026-11-04): Easy 55% and Hard 43%.
   assert.ok(easy >= 0.5, `easy on target ${(100 * easy).toFixed(0)}%`)
   assert.ok(hard >= 0.4 && hard < easy, `hard on target ${(100 * hard).toFixed(0)}% (easy ${(100 * easy).toFixed(0)}%)`)
   // Nearly every target that stays in force for two minutes is reached.
@@ -625,6 +644,93 @@ test("§13 a low target visibly risks xenon build-up", () => {
 // ---------- §14 Safety Test ----------
 
 const safety = (opts = {}) => playGame(createNewGame("safety_test"), makeBot(opts), 1)
+
+// ---------- Machine maintenance (lib/maintenance.ts; ai/machine-maintenance-plan.md) ----------
+
+const ticks = (s: GameState, seconds: number) => {
+  const rng = seededRng(1)
+  let state = s
+  for (let t = 0; t < seconds; t++) state = advanceGame(state, rng)
+  return state
+}
+
+test("maintenance: the vacuum falls from full to worst in 6 minutes in every turbine mode, then stops, and the turbine still works", () => {
+  for (const turbineMode of ["grid", "pumps", "idle"] as const) {
+    let s: GameState = { ...quietGame("free"), turbineMode }
+    assert.equal(s.vacuum, 1, "starts perfect")
+    s = ticks(s, 180)
+    assert.ok(Math.abs(s.vacuum - 0.5) < 1e-9, `${turbineMode}: half way at 3 minutes (${s.vacuum})`)
+    s = ticks(s, 180)
+    assert.ok(s.vacuum < 1e-9, `${turbineMode}: worst at 6 minutes (${s.vacuum})`)
+    assert.equal(ticks(s, 60).vacuum, 0, `${turbineMode}: stops at its limit`)
+  }
+})
+
+test("maintenance: the vacuum costs output and nothing else, 12% at worst, scaling with what is lost", () => {
+  const state = (vacuum: number, turbineMode: GameState["turbineMode"] = "grid"): GameState => ({ ...quietGame("free"), vacuum, turbineMode })
+  const output = (s: GameState) => calculateGameTick(s, () => 0.25).updates.steamVolume! * 50
+  const full = calculateGameTick(state(1), () => 0.25).updates
+  const worst = calculateGameTick(state(0), () => 0.25).updates
+  const half = calculateGameTick(state(0.5), () => 0.25).updates
+  assert.ok(Math.abs(full.powerOutput! - output(state(1))) < 1e-6)
+  assert.ok(Math.abs(worst.powerOutput! / full.powerOutput! - 0.88) < 1e-9)
+  assert.ok(Math.abs(half.powerOutput! / full.powerOutput! - 0.94) < 1e-9)
+  assert.equal(worst.steamVolume, full.steamVolume, "the reactor doesn't notice")
+  assert.equal(worst.turbinePumpCapacity, full.turbinePumpCapacity, "nor do the pumps it can power")
+  assert.equal(calculateGameTick(state(0, "pumps"), () => 0.25).updates.powerOutput, 0, "off the grid, output is 0 anyway")
+})
+
+test("maintenance: the air ejector restores full vacuum in 20 s from any reading, and output rises 13.6% from worst", () => {
+  for (const from of [0, 0.4, 0.9]) {
+    const s = ticks({ ...quietGame("free"), vacuum: from, ...runEjector({ vacuum: from, ejectorSeconds: 0 }) }, 20)
+    assert.ok(Math.abs(s.vacuum - 1) < 1e-9, `from ${from}: ${s.vacuum}`)
+    assert.equal(s.ejectorSeconds, 0)
+    assert.ok(s.vacuum > 0.999 && ticks(s, 1).vacuum < s.vacuum, "and the air starts leaking back in")
+  }
+  assert.ok(Math.abs(vacuumOutputFactor(1) / vacuumOutputFactor(0) - 1.136) < 0.001)
+  // It rises evenly, not in one jump
+  const part = ticks({ ...quietGame("free"), vacuum: 0, ejectorSeconds: 20 }, 5)
+  assert.ok(Math.abs(part.vacuum - 0.25) < 1e-9, `${part.vacuum}`)
+})
+
+test("maintenance: pressing at full vacuum or during a recovery does nothing, and the Ready tile says so", () => {
+  assert.equal(runEjector({ vacuum: 1, ejectorSeconds: 0 }), null)
+  assert.equal(runEjector({ vacuum: 0.5, ejectorSeconds: 12 }), null)
+  assert.equal(canRunEjector({ vacuum: 1, ejectorSeconds: 0 }), false)
+  assert.equal(canRunEjector({ vacuum: 0.5, ejectorSeconds: 12 }), false)
+  assert.equal(canRunEjector({ vacuum: 0.99, ejectorSeconds: 0 }), true)
+  for (const turbineMode of ["grid", "pumps", "idle"] as const) {
+    const s = ticks({ ...quietGame("free"), turbineMode, vacuum: 0.5, ejectorSeconds: 20 }, 20)
+    assert.ok(Math.abs(s.vacuum - 1) < 1e-9, `${turbineMode}: runs in any mode`)
+  }
+})
+
+test("maintenance: the turbine operator reports the worst vacuum once, and again only after the ejector has run", () => {
+  const reports = (s: GameState) => s.log.filter((l) => l.from === "TURBINE OPERATOR" && l.text.includes("vacuum")).length
+  let s = ticks(quietGame("free"), 355)
+  assert.equal(reports(s), 0, "not before it reaches the limit")
+  s = ticks(s, 120)
+  assert.equal(reports(s), 1, "once, however long it stays there")
+  s = ticks({ ...s, ...runEjector(s) }, 30)
+  assert.equal(reports(s), 1, "the fix sends nothing")
+  s = ticks(s, 360)
+  assert.equal(reports(s), 2, "and it can report again")
+  assert.ok(s.warnings.every((w) => !w.toLowerCase().includes("vacuum")), "no alarm monitor line")
+})
+
+test("maintenance: every clock stops while the game is paused", () => {
+  const s = { ...quietGame("free"), vacuum: 0.5, ejectorSeconds: 10, isPaused: true }
+  assert.equal(advanceGame(s, seededRng(1)), s)
+})
+
+test("maintenance: a novice who never runs the ejector still survives okay", () => {
+  const seeds = Array.from({ length: 20 }, (_, i) => i + 1)
+  for (const [mode, most] of [["easy", 2], ["hard", 11]] as const) {
+    const lost = seeds.map((seed) => playGame(createNewGame(mode), makeBot({ jobs: false }), seed)).filter((run) => !run.final.hasWon)
+    assert.ok(lost.length <= most, `${mode}: the novice lost ${lost.length} of 20 (${lost.map((run) => run.final.gameOverCause)})`)
+  }
+  assert.ok(safety({ jobs: false }).final.hasWon, "the Safety Test too")
+})
 const stepAt = (action: string) => SAFETY_TEST_SCRIPT.find((step) => step.action === action)!.at
 const PUMPS_ON = stepAt("pumps-on")
 const TURBINE_SWITCH = stepAt("turbine-to-pumps")

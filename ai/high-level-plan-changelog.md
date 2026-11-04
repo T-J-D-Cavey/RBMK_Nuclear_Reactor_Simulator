@@ -2,6 +2,52 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.33 – 2026-11-04 (Machine maintenance, stage 2: the turbine's vacuum; Plant Gauges replace the dosimeter)
+
+- **The condenser vacuum** (Section 8, owner). It falls over 6 minutes and costs up to 12% of output. The air ejector restores it in 20 s, and from worst vacuum that lifts output 13.6%, past the ±10% band, so when to run it matters. The Turbine Operator reports the worst vacuum once. Applies in every mode.
+- **Plant Gauges replace the dosimeter** (owner), in its slot on every screen size. The pump dial rests at centre until stage 5. This removes the show's "3.6 roentgen" reference from the game.
+- **The turbine modal opens with focus on the selector knob** (Claude). The Run key is now the first key in the modal and acts at once, so Enter could otherwise have run the ejector by accident.
+- **The bot runs the ejector**, below half vacuum while output is short of its target, and doesn't read the vacuum's return as the reactor rising. Without that second part it wrecked its steering after a press. A `jobs: false` bot stays as the owner's novice check.
+- **The Hard survival check allows 19 losses in 40, for the owner to confirm** (it was 18). Bot model, 200 shifts each, same seeds:
+
+  | | Today's game | Bot runs the ejector | Novice ignores it |
+  |---|---|---|---|
+  | Easy survival / on target | 99.5% / 55.0% | 98.5% / 55.8% | 98.5% / 51.4% |
+  | Hard survival / on target | 61.5% / 46.2% | 59.5% / 46.2% | 55.5% / 43.9% |
+  | Hard meltdowns | 5 | 5 | 4 |
+
+  Today's game already lost exactly 18 on the check's seeds, so it had no room. Blocks of 40 run from 13 to 19 with the ejector, and from 14 to 18 without the vacuum. Two points is within Hard's noise of about ±4.
+
+## v2.32 – 2026-11-04 (Machine maintenance, stage 1: the modals and the foreman's guide)
+
+The first of the five stages in [machine-maintenance-plan.md](machine-maintenance-plan.md). No mechanics yet, so nothing about the reactor or the shift changes. The gauges rest at full vacuum, centre and balanced until their stages.
+
+- **New guardrail exception 7** (Section 2, owner) covers the whole maintenance work's gauges, ? key, moved hint text, fabric channels and closer rod display lenses.
+- **The hint boxes are gone from the three machine modals** (owner). Their place holds the approved dials (Turbine B2, Pumps B2, Rods A2), and the turbine and pumps get a Run key with a Ready tile. Both keys do nothing until their mechanics are built, and their tiles stay grey.
+- **A ? key beside each modal's title brings back Akimov** (owner: Guide A), who talks through that panel like the start-of-game briefing. The hint text moved to him unchanged in meaning. The game pauses until he goes (owner), and closing him returns to the modal with focus on the ? key.
+- **The rod levers run in black fabric channels** with a lamp behind the gap (owner: Rods A2). The channel's 10% ticks went, as the SKALA strip is the numeric readout.
+- **The rod display's lenses sit closer together** (owner: Rod widget A2), leaving the top of the map for the balance needle in stage 4.
+- **On a phone, a modal slides up the screen to clear the foreman** (Claude). A modal that fits the screen has nothing to scroll, so it couldn't move a low subject out from behind him. The briefing's placement rule still applies: a subject too tall to clear him is shown from its top.
+
+## v2.31 – 2026-11-04 (Shift report counts every event; paper feed lever; right-justified readouts)
+
+- **Every event is an emergency on the report** (Section 15, owner). "Emergencies handled" counted only power cuts and signal losses, so a shift's rod jams and pump trips went unrecorded. It now counts all four kinds. Grid holds stay out: a hold is a kind of target change (v2.27) and counts there.
+- **New rows on the report** (Section 15, owner): highest output, lowest output and target changes. Target changes count each change as it takes effect, holds included, and show in the modes with a target. Lowest output reads 0 MW if the turbine ever left the grid: that is what the grid received.
+- **The shift log paper is ruled** (Section 15, owner). The rules were a line under each message, so they stopped at the last message and blank paper had none. Now they are on the paper itself: one under every line of print, evenly spaced down the whole roll, and moving with it. Each message is a whole number of lines tall so its print sits on them.
+- **The shift log paper fills its window** (Section 15, owner). The base plate's "Drag paper to read back" and "Back to latest" text is gone, and the paper takes that space, fading as it rolls under the roller at the bottom. Read-back is by dragging (or the mouse wheel and arrow keys). Any new message brings the paper back to the top, even mid-drag. Eight physical feed controls were prototyped first, beside and below the paper, and the owner chose none of them: beside the paper costs too much width on a phone, and the paper alone is cleaner.
+- **The green screens are right-justified** (owner). Radioactivity, reactor temperature, fuel temperature, steam and xenon now fill from the right, as real numeric displays do, with the units digit in a fixed place. The owner first suggested left-aligned; Claude proposed right, and the owner agreed for these five only. The LED meters (output, target, performance, time) stay centred.
+- **A jammed rod's bar on the desk blinks harder** (owner): right off and fully on, 0.6 s each. It was a 0.5 s pulse down to half brightness, which was easy to miss.
+
+- **Settle time is 10–30 s in both modes** (Section 13, owner; was Easy 20–45 s, Hard 30–60 s). A player who stays on target now sees a change every 71–91 s, or 131–181 s after a hold. The holds' spacing was re-measured to match (`changeEverySeconds`: Easy 202, Hard 227). Bot model (200 shifts each, same seeds):
+
+  | | Before | Now |
+  |---|---|---|
+  | Easy survival / on target | 99% / 57.2% | 100% / 55.0% |
+  | Hard survival / on target | 68% / 48.0% | 62% / 43.4% |
+  | Notices per shift (Easy / Hard) | 3.77 / 6.09 | 4.04 / 6.58 |
+
+  Hard's losses are nearly all removal from post, not disasters: the next big step arrives before performance has recovered. The owner accepted Hard's 62%, so the survival check in `scripts/sim/events.test.ts` now allows 18 losses in 40 (it was 14).
+
 ## v2.30 – 2026-11-03 (Big power swings at the heart of the game; fewer events, 70 s apart)
 
 - **Fewer events, spaced out** (Section 12, owner). Easy now has 3 events, all of different kinds (it was one of each plus one more, 5 in all). Hard has one of each kind plus two more of any kind, 6 in all (it was 10). There are always at least 70 s from the end of one event to the start of the next; before, events could come back to back.

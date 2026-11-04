@@ -18,14 +18,14 @@ import ReactorCamera, { getCameraClockStartMs, getShiftElapsedSeconds } from "@/
 import ChartRecorder from "@/components/chart-recorder"
 import ReactivityCards from "@/components/reactivity-cards"
 import RodDisplay from "@/components/rod-display"
-import Dosimeter from "@/components/dosimeter"
+import PlantGauges from "@/components/plant-gauges"
 import { useElementHeight, useMediaQuery } from "@/hooks/use-element-height"
 import Tutorial from "@/components/tutorial"
 import { TUTORIAL_KEY, tutorialSteps } from "@/lib/tutorial"
 
 // From here up the page is a dashboard (owner, 2026-10-23): the chart recorder and the reactor camera either side of the
 // control panel, the alarm monitor and shift log across the full width below them, then the radioactivity balance, the
-// rod display and the dosimeter in one row. Narrower, everything stacks below the panel.
+// rod display and the plant gauges in one row. Narrower, everything stacks below the panel.
 const DASHBOARD_QUERY = "(min-width: 1024px)" // Tailwind lg
 
 export default function GamePage() {
@@ -36,7 +36,7 @@ export default function GamePage() {
   const router = useRouter()
   // The radioactivity balance is as tall as the chart recorder beside it on medium screens (owner, 2026-10-14)
   const [chartRef, chartHeight] = useElementHeight<HTMLElement>()
-  // ...and the dosimeter as tall as the rod display beside it (on the dashboard, the balance too)
+  // ...and the plant gauges as tall as the rod display beside them (on the dashboard, the balance too)
   const [rodsRef, rodsHeight] = useElementHeight<HTMLElement>()
   const dashboard = useMediaQuery(DASHBOARD_QUERY)
   // On the dashboard the chart recorder (by shortening its bands, down to half) and the camera (by widening its screen)
@@ -171,7 +171,7 @@ export default function GamePage() {
       fitHeight={sideFit}
     />
   )
-  const dosimeter = <Dosimeter radioactivity={gameState.radioactivity} second={gameState.gameTime} matchHeight={rodsHeight} />
+  const plantGauges = <PlantGauges vacuum={gameState.vacuum} matchHeight={rodsHeight} />
   const cards = <ReactivityCards gameState={gameState} height={dashboard ? rodsHeight : chartHeight} />
   const rods = <RodDisplay gameState={gameState} />
 
@@ -212,7 +212,7 @@ export default function GamePage() {
         /* Dashboard (lg up). The panel keeps its narrow phone size (at most 28rem) between the chart recorder and the
            camera, which share what is left, at least 17rem each; the panel gives way first, down to the breakpoint.
            Below them the alarm monitor and shift log run the full width, then the balance, the rod display and the
-           dosimeter share one row. All of it stops growing at 1,400px and stays centred, so log lines stay short enough to
+           plant gauges share one row. All of it stops growing at 1,400px and stays centred, so log lines stay short enough to
            scan and the side widgets stay no taller than the panel (owner, 2026-10-23). */
         <div className="flex-1 p-6 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${controlRoomBackground})` }}>
           <div className="mx-auto max-w-[87.5rem] space-y-4">
@@ -225,7 +225,7 @@ export default function GamePage() {
             <div className="grid grid-cols-3 gap-4 items-start">
               <aside className="min-w-0" data-tutorial="balance">{cards}</aside>
               <aside className="min-w-0" ref={rodsRef} data-tutorial="rod-display">{rods}</aside>
-              <aside className="min-w-0" data-tutorial="dosimeter">{dosimeter}</aside>
+              <aside className="min-w-0" data-tutorial="plant-gauges">{plantGauges}</aside>
             </div>
           </div>
         </div>
@@ -241,8 +241,8 @@ export default function GamePage() {
           <div className="cr-rail" aria-hidden="true" />
 
           {/* Reactor camera + side panels (WS3 presentation). Medium (md): the camera on top, then the cards and the
-              chart recorder side by side, the rod display below the cards and the dosimeter below the chart recorder.
-              Phones: stacked, the cards below the chart and the dosimeter last (owner, 2026-10-16). */}
+              chart recorder side by side, the rod display below the cards and the plant gauges below the chart recorder.
+              Phones: stacked, the cards below the chart and the plant gauges last (owner, 2026-10-16). */}
           <div className="w-full cr-monitor-wall px-3 py-5 sm:px-4 md:py-8">
             <div className="mx-auto w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <div className="w-full min-w-0 md:col-span-2 md:row-start-1" data-tutorial="camera">
@@ -251,8 +251,8 @@ export default function GamePage() {
               <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-2 md:row-start-2" ref={chartRef} data-tutorial="chart">
                 {chart}
               </aside>
-              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto order-last md:order-none md:col-start-2 md:row-start-3" data-tutorial="dosimeter">
-                {dosimeter}
+              <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto order-last md:order-none md:col-start-2 md:row-start-3" data-tutorial="plant-gauges">
+                {plantGauges}
               </aside>
               {/* Legasov's red and blue cards (owner, 2026-10-13), then the rod display */}
               <aside className="w-full min-w-0 max-w-xl md:max-w-none mx-auto md:col-start-1 md:row-start-2" data-tutorial="balance">

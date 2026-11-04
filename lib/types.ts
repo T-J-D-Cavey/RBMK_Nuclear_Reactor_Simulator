@@ -38,6 +38,9 @@ export interface GameStats {
   peakSteam: number
   lowestRodMargin: number
   emergenciesHandled: number
+  targetChanges: number
+  highestOutput: number
+  lowestOutput: number
   secondsInDanger: number
 }
 
@@ -47,7 +50,6 @@ export interface GameStats {
 export type EventKind = "power-cut" | "signal-loss" | "rod-stuck" | "pump-trip" | "grid-hold"
 export type ShiftEventKind = Exclude<EventKind, "grid-hold">
 export const SHIFT_EVENT_KINDS: readonly ShiftEventKind[] = ["power-cut", "signal-loss", "pump-trip", "rod-stuck"]
-export const MAJOR_EVENT_KINDS: readonly EventKind[] = ["power-cut", "signal-loss"]
 
 export interface GameEvent {
   id: string
@@ -192,6 +194,9 @@ export interface GameState {
   turbineCoast: number | null
   overpressureSeconds: number // internal: consecutive seconds of high steam while connected to the grid
   turbineTripped: boolean // the turbine tripped off the grid and the player hasn't set it since (sounds the event alarm)
+  vacuum: number // the condenser's vacuum, 1 (full) to 0 (worst): air leaking in costs output (lib/maintenance)
+  ejectorSeconds: number // internal: seconds of the air ejector's run left, 0 while it isn't running
+  vacuumReported: boolean // internal: the turbine operator has reported the worst vacuum since it last rose
   reactivityNoise: number // internal: slow random drift in the reactivity balance
 
   // Game state
@@ -266,6 +271,9 @@ export const INITIAL_GAME_STATE: GameState = {
   turbineCoast: null,
   overpressureSeconds: 0,
   turbineTripped: false,
+  vacuum: 1,
+  ejectorSeconds: 0,
+  vacuumReported: false,
   reactivityNoise: 0,
 
   mode: "easy",
@@ -299,6 +307,9 @@ export const INITIAL_GAME_STATE: GameState = {
     peakSteam: REFERENCE_STATE.steam,
     lowestRodMargin: STARTING_RODS.reduce((a, b) => a + b, 0),
     emergenciesHandled: 0,
+    targetChanges: 0,
+    highestOutput: 5000,
+    lowestOutput: 5000,
     secondsInDanger: 0,
   },
 

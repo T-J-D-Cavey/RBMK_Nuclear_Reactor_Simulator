@@ -115,7 +115,7 @@ const BANDS: Band[] = [
 
 // Window height: the three bands (full heights below) plus fixed margins: the housing strips above and below the
 // paper, and the paper's own margins (the sprocket holes) and the blank paper between bands. On wide screens the
-// bands shrink, down to half, so the recorder and the dosimeter below it come to the camera's height (owner,
+// bands shrink, down to half, so the recorder and the plant gauges below it come to the camera's height (owner,
 // 2026-10-16); the type and the pens keep their size. At full height the window is as tall as it was when the band
 // labels were on the paper, so the bands took over the room the labels left.
 const BAND_HEIGHTS: Record<Key, number> = { rad: 148, temp: 81, steam: 81 }
