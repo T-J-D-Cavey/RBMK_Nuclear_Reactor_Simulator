@@ -8,7 +8,7 @@ import { seededRng, type Rng } from "../../lib/sim/rng"
 import { rodBalance } from "../../lib/sim/reactor"
 import { MAINTENANCE_TUNING, TUNING } from "../../lib/sim/tuning"
 import { isHallSignalLost } from "../../lib/game-utils"
-import { runEjector, vacuumOutputFactor } from "../../lib/maintenance"
+import { runBalancer, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
 
 // Safety Test: from the first test step (all pumps on) a careful operator stops chasing output.
 const TEST_PREP_AT = SAFETY_TEST_SCRIPT.find((step) => step.action === "pumps-on")?.at ?? Infinity
@@ -76,6 +76,9 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
     }
 
     if (o.jobs && !survival && !testPrep) s = evenUpRods(freeSluggishRod(s))
+
+    // --- The pump needle: past the green band it's worth the lock, unless the reactor needs the switches or the cooling ---
+    if (o.jobs && !survival && !testPrep && Math.abs(s.pumpBalance) >= 0.5 && s.mainsPower && s.reactorTemp < 700) s = { ...s, ...runBalancer(s) }
 
     // None of the readings below can be seen, so a careful operator leaves the rods where they are until they return
     if (blind) return s
@@ -154,7 +157,7 @@ function az5(s: GameState): GameState {
 
 function keepPumps(s: GameState, wanted: number): GameState {
   const running = s.waterPumps.filter((p) => p.on && !p.tripped).length
-  if (running === wanted) return s
+  if (running === wanted || s.balancerLock > 0) return s
   let toChange = wanted - running
   return {
     ...s,

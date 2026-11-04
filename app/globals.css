@@ -1584,8 +1584,12 @@
   background: #f4f1e8;
 }
 
-.cr-grip:hover {
+.cr-grip:hover:not(:disabled) {
   filter: brightness(1.15);
+}
+
+.cr-grip:disabled {
+  cursor: default;
 }
 
 .cr-grip:focus-visible {

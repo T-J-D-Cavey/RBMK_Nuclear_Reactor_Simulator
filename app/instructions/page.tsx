@@ -115,6 +115,8 @@ export default function InstructionsPage() {
                     <Card title="Water Pumps (×4)">
                       The more pumps powered and running, the cooler the reactor and the less steam, so the more radioactivity you
                       need for the same power output. With no pumps running, the reactor boils off the remaining water. Beware.
+                      Circulation slowly drifts out of balance, which runs your fuel hotter. The balancer fixes it, but it locks
+                      the pump switches for a few seconds and flow dips, so for a small reading it may not be worth it yet.
                     </Card>
                     <Card title="Turbine">
                       Converts steam into electricity for the grid: more steam, more power output. The water pumps normally run on

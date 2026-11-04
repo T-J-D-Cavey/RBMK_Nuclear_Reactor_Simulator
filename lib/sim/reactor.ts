@@ -157,12 +157,15 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
     s.radioactivity = Math.min(T.maxRadioactivity, R * Math.exp(growthRate(rho) * dt) + T.source * dt)
 
     // Fuel heated by radioactivity; heat flows to the reactor in proportion to the gap (bible §6).
-    const transfer = T.fuelToReactorRate * (flow > 0.5 ? 1 : T.dryOutTransfer + (1 - T.dryOutTransfer) * (flow / 0.5))
+    // Starved channels pass heat out of the fuel less well, on top of any dry-out (plan §4)
+    const dryOut = flow > 0.5 ? 1 : T.dryOutTransfer + (1 - T.dryOutTransfer) * (flow / 0.5)
+    const transfer = T.fuelToReactorRate * dryOut * (1 - MAINTENANCE_TUNING.pumpTransferLoss * Math.abs(s.pumpBalance))
     const fuelToReactor = transfer * (s.fuelTemp - s.reactorTemp)
     const heatIn = T.reactorShare * fuelToReactor
+    const balancerDip = s.balancerLock > 0 ? 1 - MAINTENANCE_TUNING.balancerFlowDip : 1 // the lamps and pump.flow stay as they were
     const cooling =
       flow > 0
-        ? pumpEffect(flow) * (T.pumpTempCoeff * Math.max(0, s.reactorTemp - T.coolantInletTemp) + T.pumpHeatInShare * Math.max(0, heatIn))
+        ? balancerDip * pumpEffect(flow) * (T.pumpTempCoeff * Math.max(0, s.reactorTemp - T.coolantInletTemp) + T.pumpHeatInShare * Math.max(0, heatIn))
         : 0
     const passive = Math.min(Math.max(0, s.reactorTemp - T.ambientTemp) * T.passiveCooling, T.passiveCoolingMax)
     s.fuelTemp = Math.max(T.minTemp, s.fuelTemp + (T.fuelHeatPerRadioactivity * R - fuelToReactor) * dt)

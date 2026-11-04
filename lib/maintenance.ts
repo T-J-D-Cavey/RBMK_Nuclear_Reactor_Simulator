@@ -7,6 +7,7 @@ import { MAINTENANCE_TUNING } from "./sim/tuning"
 
 const TURBINE_OPERATOR = "TURBINE OPERATOR"
 const REACTOR_TECHNICIAN = "REACTOR TECHNICIAN"
+const PUMP_OPERATOR = "PUMP OPERATOR"
 const BALANCE_FIXED_BELOW = 0.9 // the needle has properly left its limit, so a rod hovering there can't send a message a second
 
 // What the turbine makes of its steam: air in the condenser costs output, not the pumps it can power (plan §3)
@@ -57,7 +58,36 @@ function reportRodBalance(s: GameState): GameState {
   return addLog({ ...s, rodBalanceReported: true }, "engineer", "The rod banks are badly out of balance. Even up the two sides and the rods will answer properly.", REACTOR_TECHNICIAN)
 }
 
+// The balancer can't start during its own run, or with no pump running. It can at dead centre, for the usual cost.
+export const canRunBalancer = (s: Pick<GameState, "balancerLock" | "balancerGlide" | "waterPumps">) =>
+  s.balancerLock === 0 && s.balancerGlide === 0 && s.waterPumps.some((pump) => pump.on && pump.powered)
+
+export const runBalancer = (s: Pick<GameState, "balancerLock" | "balancerGlide" | "waterPumps">): Pick<GameState, "balancerLock"> | null =>
+  canRunBalancer(s) ? { balancerLock: MAINTENANCE_TUNING.balancerLockSeconds } : null
+
+// The needle drifts to its limit and stops. The balancer locks the switches, then glides it back to centre, and a power
+// cut part way through doesn't stop it.
+function advancePumpBalance(s: GameState): GameState {
+  if (s.balancerLock > 0) {
+    const balancerLock = s.balancerLock - 1
+    return { ...s, balancerLock, balancerGlide: balancerLock === 0 ? MAINTENANCE_TUNING.balancerGlideSeconds : 0 }
+  }
+  if (s.balancerGlide > 0) {
+    const pumpBalance = s.pumpBalance - s.pumpBalance / s.balancerGlide
+    const balancerGlide = s.balancerGlide - 1
+    return { ...s, pumpBalance, balancerGlide, pumpDrift: balancerGlide === 0 ? (s.pumpDrift === 1 ? -1 : 1) : s.pumpDrift }
+  }
+  return { ...s, pumpBalance: Math.max(-1, Math.min(1, s.pumpBalance + s.pumpDrift / MAINTENANCE_TUNING.pumpDriftSeconds)) }
+}
+
+// One message with the needle at its limit, and another only after it has been balanced
+function reportPumpBalance(s: GameState): GameState {
+  if (Math.abs(s.pumpBalance) < 1) return s.pumpBalanceReported ? { ...s, pumpBalanceReported: false } : s
+  if (s.pumpBalanceReported) return s
+  return addLog({ ...s, pumpBalanceReported: true }, "engineer", "Circulation is as far out of balance as it gets. The fuel will run hot until it's rebalanced.", PUMP_OPERATOR)
+}
+
 // One second of the machines' clocks
 export function advanceMaintenance(s: GameState): GameState {
-  return reportRodBalance(exerciseRods(reportVacuum(advanceVacuum(s))))
+  return reportPumpBalance(advancePumpBalance(reportRodBalance(exerciseRods(reportVacuum(advanceVacuum(s))))))
 }

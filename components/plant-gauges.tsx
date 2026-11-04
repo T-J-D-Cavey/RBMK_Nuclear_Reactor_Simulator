@@ -7,7 +7,7 @@ import { ArcDial } from "@/components/machine-dials"
 // 2026-11-04: Plant Gauges A2). It sits below the chart recorder, at the same width, and from medium screens up is at
 // least as tall as the rod display beside it (matchHeight). Neither reading comes from the reactor hall, so both keep
 // working while its signal is lost. Each dial names itself.
-export default function PlantGauges({ vacuum, matchHeight, className = "" }: { vacuum: number; matchHeight?: number | null; className?: string }) {
+export default function PlantGauges({ vacuum, pumpBalance, matchHeight, className = "" }: { vacuum: number; pumpBalance: number; matchHeight?: number | null; className?: string }) {
   return (
     <div
       className={`cr-panel cr-screws p-3 sm:p-4 flex flex-col gap-2 md:min-h-[var(--match-height)] ${className}`}
@@ -17,10 +17,9 @@ export default function PlantGauges({ vacuum, matchHeight, className = "" }: { v
         <div className="cr-plate">Plant Gauges</div>
       </div>
 
-      {/* The pump needle holds at centre until the balancer is built (plan §9.1) */}
       <div className="cr-module cr-bay-screws flex-1 p-2.5 flex flex-col items-center justify-evenly gap-3">
         <ArcDial kind="vacuum" value={vacuum} className="w-full max-w-[300px] md:max-w-[392px]" />
-        <ArcDial kind="pumps" value={0} className="w-full max-w-[300px] md:max-w-[392px]" />
+        <ArcDial kind="pumps" value={pumpBalance} className="w-full max-w-[300px] md:max-w-[392px]" />
       </div>
     </div>
   )

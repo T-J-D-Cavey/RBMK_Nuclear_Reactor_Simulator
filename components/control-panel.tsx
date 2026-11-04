@@ -7,7 +7,7 @@ import { type GameState, THRESHOLDS, getShiftTime } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
 import { type HallSignal, formatTime, checkEventWarnings, checkWarnings, getHallSignal, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
-import { canRunEjector, runEjector } from "@/lib/maintenance"
+import { canRunBalancer, canRunEjector, runBalancer, runEjector } from "@/lib/maintenance"
 import { useRodDisplay } from "@/hooks/use-rod-display"
 import { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
 import ReactorCameraView from "./reactor-camera-view"
@@ -330,6 +330,13 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         open={pumpsModalOpen}
         onOpenChange={setPumpsModalOpen}
         waterPumps={gameState.waterPumps}
+        balance={gameState.pumpBalance}
+        balancerReady={canRunBalancer(gameState)}
+        locked={gameState.balancerLock > 0}
+        onRunBalancer={() => {
+          const started = runBalancer(gameState)
+          if (started) updateGameState(started)
+        }}
         onUpdate={(pumps) => {
           updateGameState({ waterPumps: pumps })
           onSoundEffect("pumpConfirm")

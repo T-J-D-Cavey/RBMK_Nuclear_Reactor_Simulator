@@ -39,11 +39,11 @@ import {
   RODS_OUT_BELOW,
   SAFETY_TEST_SCRIPT,
 } from "../../lib/safety-test"
-import { canRunEjector, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
-import { effectiveBoron, getReactivityCards, rodBalance, rodBoron, rodStrokeSeconds } from "../../lib/sim/reactor"
+import { canRunBalancer, canRunEjector, runBalancer, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
+import { advanceReactor, effectiveBoron, getReactivityCards, rodBalance, rodBoron, rodStrokeSeconds } from "../../lib/sim/reactor"
 import { MAINTENANCE_TUNING, REFERENCE_STATE, TUNING } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
-import { az5 } from "./harness"
+import { az5, baseState } from "./harness"
 
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -913,6 +913,133 @@ test("maintenance: AZ-5 from a normal state still shuts down with every rod slug
   assert.ok(s.controlRods.every((r) => r.insertion === 100))
   assert.equal(rodBalance(s.controlRods), 0)
   assert.ok(s.radioactivity < 40, `radioactivity ${s.radioactivity}`)
+})
+
+// Radioactivity held by balancing the cards each second, so only the temperatures and steam can settle
+function heldAt(radioactivity: number, pumpBalance: number) {
+  let s: GameState = { ...baseState(), radioactivity, pumpBalance }
+  for (let t = 0; t < 1200; t++) {
+    const cards = getReactivityCards(s)
+    s = { ...advanceReactor({ ...s, radioactivity, reactivityNoise: cards.noise - cards.total }, () => 0.25).state, radioactivity }
+  }
+  return s
+}
+
+test("maintenance: the pump needle drifts to its limit in 8 minutes and stops, and the pumps still work there", () => {
+  let s = quietGame("free")
+  assert.equal(s.pumpBalance, 0, "starts perfect")
+  s = ticks(s, 240)
+  assert.ok(Math.abs(Math.abs(s.pumpBalance) - 0.5) < 1e-9, `half way at 4 minutes (${s.pumpBalance})`)
+  s = { ...s, pumpBalance: s.pumpDrift * 0.999 }
+  s = ticks(s, 60)
+  assert.equal(Math.abs(s.pumpBalance), 1, "stops at its limit")
+  assert.ok(s.waterPumps.filter((p) => p.on).every((p) => p.powered && p.flow === 1), "and the pumps run on")
+})
+
+test("maintenance: at steady radioactivity, imbalance heats the fuel and nothing else, up to the plan's figures", () => {
+  for (const [R, fuel0, fuel20] of [[100, 530, 580], [180, 946, 1036]]) {
+    const level = heldAt(R, 0)
+    const half = heldAt(R, 0.5)
+    const limit = heldAt(R, 1)
+    assert.ok(Math.abs(level.fuelTemp - fuel0) < 2, `R${R}: ${level.fuelTemp}`)
+    assert.ok(Math.abs(limit.fuelTemp - fuel20) < 3, `R${R}, limit: ${limit.fuelTemp}`)
+    assert.ok(level.fuelTemp < half.fuelTemp && half.fuelTemp < limit.fuelTemp, "it scales with the needle")
+    assert.ok(Math.abs(limit.reactorTemp - level.reactorTemp) < 0.5, `reactor ${limit.reactorTemp} vs ${level.reactorTemp}`)
+    assert.ok(Math.abs(limit.steamVolume - level.steamVolume) < 0.5, `steam ${limit.steamVolume} vs ${level.steamVolume}`)
+  }
+  // Direction is cosmetic
+  assert.equal(heldAt(100, -1).fuelTemp, heldAt(100, 1).fuelTemp)
+})
+
+test("maintenance: the balancer locks the switches for 8 s with a 10% cooling dip, then glides the needle to centre over 25 s", () => {
+  const start: GameState = { ...quietGame("free"), pumpBalance: 0.8 }
+  let s = { ...start, ...runBalancer(start) }
+  assert.equal(s.balancerLock, 8)
+  const flows = s.waterPumps.map((p) => p.flow)
+  for (let t = 1; t <= 7; t++) {
+    s = ticks(s, 1)
+    assert.ok(s.balancerLock > 0, `locked at ${t} s`)
+    assert.equal(canRunBalancer(s), false)
+    assert.deepEqual(s.waterPumps.map((p) => p.flow), flows, "flow and lamps are untouched")
+  }
+  assert.equal(s.pumpBalance, 0.8, "the needle waits for the lock")
+  s = ticks(s, 1)
+  assert.equal(s.balancerLock, 0, "free at 8 s")
+  assert.equal(s.balancerGlide, 25)
+  s = ticks(s, 12)
+  assert.ok(Math.abs(s.pumpBalance - (0.8 * 13) / 25) < 1e-9, `gliding evenly (${s.pumpBalance})`)
+  assert.equal(canRunBalancer(s), false, "can't be pressed during the glide")
+  s = ticks(s, 13)
+  assert.ok(Math.abs(s.pumpBalance) < 1e-9, `centre at 33 s (${s.pumpBalance})`)
+  assert.equal(s.balancerGlide, 0)
+  assert.equal(canRunBalancer(s), true, "ready again")
+  assert.ok(ticks(s, 10).pumpBalance < 0, "and it drifts the other way next")
+})
+
+test("maintenance: the cooling dip nudges steam and output up, and is gone with the lock", () => {
+  const base = quietGame("free")
+  const plain = ticks(base, 8)
+  const dipped = ticks({ ...base, balancerLock: 8 }, 8)
+  assert.ok(dipped.reactorTemp > plain.reactorTemp, `${dipped.reactorTemp} vs ${plain.reactorTemp}`)
+  assert.ok(dipped.steamVolume > plain.steamVolume, `${dipped.steamVolume} vs ${plain.steamVolume}`)
+  assert.ok(dipped.steamVolume < plain.steamVolume * 1.15, "a nudge, not a jolt")
+})
+
+test("maintenance: the balancer can't start with no pump running, works at dead centre, and finishes through a power cut", () => {
+  const off = (s: GameState) => ({ ...s, waterPumps: s.waterPumps.map((p) => ({ ...p, on: false })) })
+  const unpowered = (s: GameState) => ({ ...s, waterPumps: s.waterPumps.map((p) => ({ ...p, powered: false })) })
+  const s = quietGame("free")
+  assert.equal(runBalancer(off(s)), null, "all switched off")
+  assert.equal(runBalancer(unpowered(s)), null, "no power")
+  assert.deepEqual(runBalancer(s), { balancerLock: 8 }, "at dead centre it still runs")
+
+  let cut: GameState = { ...s, pumpBalance: 0.6, balancerLock: 4 }
+  cut = ticks({ ...cut, mainsPower: false }, 28)
+  assert.equal(cut.balancerLock, 0)
+  assert.equal(cut.balancerGlide, 1, "a power cut part way through doesn't stop it")
+})
+
+test("maintenance: the pump operator reports the limit once, and again only after balancing", () => {
+  const reports = (s: GameState) => s.log.filter((l) => l.from === "PUMP OPERATOR" && l.text.includes("balance")).length
+  let s = ticks({ ...quietGame("free"), pumpBalance: 0.99 }, 3)
+  assert.equal(reports(s), 0, "not short of the limit")
+  s = ticks(s, 10)
+  assert.equal(reports(s), 1, "at the limit")
+  s = ticks(s, 120)
+  assert.equal(reports(s), 1, "once")
+  s = ticks({ ...s, ...runBalancer(s) }, 40)
+  assert.equal(reports(s), 1, "the fix sends nothing")
+  s = ticks({ ...s, pumpBalance: s.pumpDrift * 0.99 }, 10)
+  assert.equal(reports(s), 2, "and it can report again")
+  assert.ok(s.warnings.every((w) => !/circulation|balance/i.test(w)), "no alarm monitor line")
+})
+
+// Play the Safety Test to just before its pumps step, then start the balancer and let the step run
+function toPumpsOnStep() {
+  const at = SAFETY_TEST_SCRIPT.find((step) => step.action === "pumps-on")!.at
+  const rng = seededRng(1)
+  const bot = makeBot({ jobs: false })
+  let s = createNewGame("safety_test")
+  while (getShiftTime(s) < at - 2) s = advanceGame(bot.act(s), rng)
+  s = { ...s, ...runBalancer(s) }
+  for (let t = 0; t < 4; t++) s = advanceGame(s, rng)
+  return s
+}
+
+test("maintenance: the Safety Test's order to start the pumps wins over a lock", () => {
+  const s = toPumpsOnStep()
+  assert.ok(s.waterPumps.every((p) => p.on), "all four on, through the lock")
+  assert.ok(s.balancerLock > 0, "and the lock carries on")
+})
+
+test("maintenance: every gauge at its limit together still leaves a playable reactor", () => {
+  let s: GameState = { ...quietGame("free"), vacuum: 0, pumpBalance: 1, rodBalanceReported: true }
+  s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, sluggish: true })) }
+  const bot = makeBot({ jobs: false })
+  const rng = seededRng(1)
+  for (let t = 0; t < 600; t++) s = advanceGame(bot.act(s), rng)
+  assert.ok(!s.isGameOver, `${s.gameOverCause}`)
+  assert.ok(s.reactorTemp < 700 && s.steamVolume < 250, `T ${s.reactorTemp}, steam ${s.steamVolume}`)
 })
 
 test("maintenance: a novice who never runs the ejector still survives okay", () => {

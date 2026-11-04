@@ -261,6 +261,11 @@ export const MAINTENANCE_TUNING = {
   middleRodPull: 0.4, // of an edge rod's pull on the balance needle
   balanceFullTravel: 100, // weighted % of difference between the sides that puts the needle hard over
   balanceEffect: 0.15, // with the needle hard over, the heavy side counts this much less and the light side more
+  pumpDriftSeconds: 480, // the pump needle, centre to limit (§4)
+  pumpTransferLoss: 0.2, // fuel-to-reactor heat transfer lost at the limit. Never a cut in cooling: that makes more steam, so more output (§10)
+  balancerLockSeconds: 8, // the pump switches can't be used, and flow dips, for this long
+  balancerFlowDip: 0.1, // of the pumps' cooling, during the lock
+  balancerGlideSeconds: 25, // then the needle glides back to centre
 }
 
 export const EVENT_TUNING = {

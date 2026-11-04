@@ -201,6 +201,11 @@ export interface GameState {
   ejectorSeconds: number // internal: seconds of the air ejector's run left, 0 while it isn't running
   vacuumReported: boolean // internal: the turbine operator has reported the worst vacuum since it last rose
   rodBalanceReported: boolean // internal: the reactor technician has reported the needle hard over since it came back
+  pumpBalance: number // the circulation balance needle, -1 (towards loop 1) to 1 (loop 2), 0 at centre: only its size matters
+  pumpDrift: 1 | -1 // internal: which way the needle is drifting, changing each time it is balanced
+  balancerLock: number // internal: seconds left of the balancer's lock on the pump switches, 0 while it isn't running
+  balancerGlide: number // internal: seconds left of the needle's glide back to centre, after the lock
+  pumpBalanceReported: boolean // internal: the pump operator has reported the needle at its limit since it left it
   reactivityNoise: number // internal: slow random drift in the reactivity balance
 
   // Game state
@@ -282,6 +287,11 @@ export const INITIAL_GAME_STATE: GameState = {
   ejectorSeconds: 0,
   vacuumReported: false,
   rodBalanceReported: false,
+  pumpBalance: 0,
+  pumpDrift: 1,
+  balancerLock: 0,
+  balancerGlide: 0,
+  pumpBalanceReported: false,
   reactivityNoise: 0,
 
   mode: "easy",

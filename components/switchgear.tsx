@@ -2,13 +2,15 @@
 // turbine and pump dialogs run their maintenance jobs with
 
 // Pistol-grip control switch: the grip turns left to the off legend and right to the on legend
-export function GripSwitch({ id, on, offLegend, onLegend, label, describedBy, onToggle }: {
+// `locked` shows nothing at all: the switch looks the same and simply can't be turned (owner, 2026-11-04: Pumps B2)
+export function GripSwitch({ id, on, offLegend, onLegend, label, describedBy, locked = false, onToggle }: {
   id: string
   on: boolean
   offLegend: string
   onLegend: string
   label: string
   describedBy?: string
+  locked?: boolean
   onToggle: () => void
 }) {
   return (
@@ -22,6 +24,7 @@ export function GripSwitch({ id, on, offLegend, onLegend, label, describedBy, on
         aria-pressed={on}
         aria-label={label}
         aria-describedby={describedBy}
+        disabled={locked}
         onClick={onToggle}
         className={`cr-grip ${on ? "on" : ""}`}
       />

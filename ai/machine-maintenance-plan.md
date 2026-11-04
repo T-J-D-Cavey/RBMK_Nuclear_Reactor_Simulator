@@ -1,12 +1,14 @@
 # RBMK Simulator – Machine Maintenance Plan
 
-Status: **DESIGN APPROVED BY THE OWNER, 2026-11-04. Stages 1 and 2 of §9.1 are built and committed, and stage 3 is built and uncommitted. The next job is stage 4, rod balance. Difficulty and test limits are reviewed at the end of the build (owner, 2026-11-04).**
+Status: **BUILD COMPLETE, 2026-11-04. All five stages of §9.1 are built and deployed. The owner is playtesting on the live site. The next job is the owner's notes and the questions in §11.1.**
 
 This is the record of what the owner decided for three new maintenance mechanics (turbine, water pumps, control rods), the modal changes that make room for them, and the move of each modal's hint text into the shift foreman guide. All numbers are **starting values for tuning**, not hard requirements.
 
 ---
 
 ## 0. Start here (for a new session)
+
+**The build is finished, so start at §11.1 with the owner's playtest notes.** Tune one thing at a time, as all the numbers are in `MAINTENANCE_TUNING` in `lib/sim/tuning.ts`. The list below is how the build itself was run, and §9.5–§9.8 say what was built.
 
 1. **Read:** this file, then [high-level-plan.md](high-level-plan.md) §0–§2, §7, §8 and §10, then the three modals: `components/turbine-modal.tsx`, `components/water-pumps-modal.tsx`, `components/control-rods-modal.tsx`, then the `next` guide `AGENTS.md` points to.
 2. **Your job is to build §8, the approved design,** in the order of §9.1, from the first stage not ticked there. The design choices are made, so don't offer new options. §8 names the approved prototype boards and what in them not to build.
@@ -397,9 +399,9 @@ Read the relevant guide in `node_modules/next/dist/docs/` before writing code (s
 
 1. Modal layouts, the question mark key and the guide (no mechanics). **Built and committed 2026-11-04, approved by the owner.** See §9.5.
 2. Turbine: it sits outside the reactor physics. **Built and committed 2026-11-04.** See §9.6.
-3. Sluggish rods. **Built 2026-11-04, uncommitted.** See §9.7.
-4. Rod balance, including the new starting order.
-5. Pump balancer: the largest physics change.
+3. Sluggish rods. **Built and committed 2026-11-04.** See §9.7.
+4. Rod balance, including the new starting order. **Built and committed 2026-11-04.** See §9.8.
+5. Pump balancer: the largest physics change. **Built and committed 2026-11-04.** See §9.8.
 
 Each main page gauge (§7.3) goes in with its mechanic. The Plant Gauges widget replaces the dosimeter when the turbine gauge is built. The lever channel redesign (§8.4) and the rod widget's new positions (§8.6) belong to step 1, as they need no mechanics.
 
@@ -477,25 +479,23 @@ New checks to add:
 ### 9.5 Stage 1 as built
 
 **What later stages plug into:**
-- `components/machine-dials.tsx` holds `ArcDial` and `StripDial`. The modals pass fixed resting values (`value={1}`, `value={0}`), to be replaced by real readings. `StripDial` has only the modal version so far: stage 4 adds the widget's shorter version (§8.1).
-- `JobKey` in `components/switchgear.tsx` is the Run key and Ready tile. The pumps modal passes `ready={false}` and no `onRun`, so its key is inert until stage 5.
+- `components/machine-dials.tsx` holds `ArcDial` and `StripDial`, which has a `compact` version for the rod display.
+- `JobKey` in `components/switchgear.tsx` is the Run key and Ready tile.
 - `MACHINE_GUIDES` in `lib/tutorial.ts` holds the guide's steps, and `components/machine-guide.tsx` the ? key.
 - The dials have their own `.cr-dial-*` styles.
 
 **Decisions Claude made in stage 1, for the owner to review:**
-- The pumps Run key looks live but does nothing until stage 5, which goes against §8.10 for now. Its Ready tile stays grey, so the desk is honest about it.
 - The guide already describes the mechanics to come, so the owner can review the wording in place.
 - The guide is a dialog nested inside the modal. Radix then hands it focus and Escape, which answers the focus and closing problems in §9.2 without adding a package.
 - A modal slides up the screen when its own scrolling can't clear the foreman (changelog v2.32).
 - A subject too tall to clear him is shown from its top, as in the briefing. A corner of it can sit behind his sheet: the pump bays, the lever bank and the edge rods on a 360 × 640 phone, and 16 px of the pump bays at 1024 × 768. Every step clears him on 390 × 844, 768 × 1024 and 1440 × 900.
 - The guide frames the lever grid, not the whole bay, because the bay with its SKALA strip is too tall to clear him on a phone.
-- With the keys now first in their modals, keyboard focus opens on the Run key in the pumps modal. Stage 5 must move it off the key, as stage 2 did for the turbine (`onOpenAutoFocus` in `components/turbine-modal.tsx`), or Enter could run the balancer by accident.
+- With the keys now first in their modals, both modals open with focus off the key (`onOpenAutoFocus`), so Enter can't run a job by accident.
 
 ### 9.6 Stage 2 as built
 
 **What later stages plug into:**
 - `lib/maintenance.ts` holds the jobs and `advanceMaintenance`, which `advanceGame` calls each second. Later clocks go there, with their numbers in `MAINTENANCE_TUNING` in `lib/sim/tuning.ts`.
-- `components/plant-gauges.tsx` passes the pump dial a fixed `value={0}`, for stage 5 to replace.
 - The bot has a `jobs` option: on by default, and off for the novice check.
 
 **Measured, 200 bot shifts each** (full table in changelog v2.33):
@@ -509,9 +509,15 @@ New checks to add:
 
 - `exerciseRods` in `lib/maintenance.ts` runs the parked clock. `rodStrokeSeconds` in `lib/sim/reactor.ts` is the one source of a rod's speed, used by the engine and `hooks/use-rod-display.ts`. The rod sounds needed no change, as they stop when a rod arrives.
 - **A rod stays slow for its whole move and recovers on arrival** (Claude's reading of §5). See changelog v2.34.
-- **For stage 4:** the bot's rod pairs ignore the balance. It should switch to matching rods on the same side (§6), so a pair doesn't shift the needle.
-- **Playtest switch:** `/game?fastjobs`, in development only. Stage 5 adds the pump needle's drift to the `Object.assign` in `app/game/page.tsx`.
-- **For the end of the build:** whether sluggish rods are too mild. The bot can't tell (§5).
+- **Playtest switch:** `/game?fastjobs` runs the slow drifts about 20 times faster, in development only (`app/game/page.tsx`). It doesn't work on the live site.
+
+### 9.8 Stages 4 and 5 as built
+
+- **Rod balance:** `rodBalance` and `effectiveBoron` in `lib/sim/reactor.ts`. A positive reading is right-heavy, as on the dial, so the code's sign is the opposite of §6's `n`. The maths is the same.
+- **Starting rods:** `[28, 49, 40, 44, 58, 38, 38, 38, 60, 45]`, not the `STARTING_OFFSETS` order in §6. With 219% a side, effective boron is exactly 438, so the opening climb matches the old game to the decimal. The needle starts 17% right, not the fifth §6 expected. Reference rods are §6's mirrored order.
+- **Pump balancer:** `canRunBalancer`, `runBalancer` and `advancePumpBalance` in `lib/maintenance.ts`, with the transfer loss and cooling dip in `advanceReactor`. Ready, the lock and Apply work from the real pump state.
+- **The lock shows nothing.** A locked switch's computed look is identical to a free one, and applying `disabled` alone changes no pixels.
+- **Checks on the live game code:** `npm run sim:test` (117 tests), a production build, and every stage driven in headless Edge at phone, tablet, laptop and desktop sizes.
 
 ---
 
@@ -575,5 +581,26 @@ Run on 2026-11-04 on a scratch copy, with no changes to the repo. Each row is 10
 **Left to Claude by the owner:**
 - The effective boron guard in §6 stays. It's invisible to the player. It only stops a lopsided core gaining braking by accident.
 
-**Still open:**
-- The guide's final wording (§7.2). The draft steps can be used until the owner settles it.
+### 11.1 Open questions for the owner
+
+Everything here can wait for the owner's playtest. Claude's recommendation is given where there is one.
+
+**Difficulty (the owner said to judge these once the game can be played as a whole):**
+1. **Is Hard's novice result acceptable?** A novice who ignores every job survives 53.5% of Hard shifts, against 61.5% today, with 7 meltdowns against 5 in 200. Easy is fine at 99.0%. The biggest single lever is `pumpTransferLoss`: the plan's test at 20% matches this result, so 15% should give some back.
+2. **Is the Hard check at 19 losses in 40 acceptable?** It was 18. With every job done the bot now survives 63.5%, so it could go back to 18.
+3. **Are the penalties too mild, or too hard to notice?** Sluggish rods and rod balance made no measurable difference to the bot, which keeps rods moving and level. Only a person can judge these (§5).
+4. **Is the timing of each job a real decision?** That was the owner's aim (§1). The bot can't feel it. Try the ejector during a grid hold, and the balancer at a small reading.
+
+**Wording and sounds:**
+5. **The guide's final wording** (§7.2). The draft is live. One step is titled "Balance button", but the key reads Run.
+6. **How to Play's new lines** on all three machines. They are Claude's draft.
+7. **Sounds for the ejector and balancer.** Both are silent. The owner supplies clips, as usual.
+
+**Claude's decisions, for the owner to confirm or change:**
+8. **Starting rods.** They differ from §6, to keep the opening climb exact (§9.8). Do they look right, and is 17% off centre enough for a job at the start?
+9. **A sluggish rod recovers on arrival,** not 5% into its move as on the prototype, so that AZ-5 and the first move stay slow as §5 says.
+10. **Modals slide up the screen on a phone** to clear the foreman. Tall subjects can still sit partly behind his sheet on small phones (§9.5).
+11. **Pressing the pumps' Run drops any switch change not yet applied.** Apply during a lock just closes the modal.
+12. **The pump needle drifts the other way after each balancing.** The direction is cosmetic.
+13. **Needles rest on a number:** the turbine's on 100 and the pump's on 0, for much of a shift. That follows the approved dials, but it's worth a look.
+14. **`/game?fastjobs`** stays in the code for future tuning. It is safe to remove when tuning is done.

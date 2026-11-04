@@ -13,11 +13,15 @@ interface WaterPumpsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   waterPumps: WaterPump[]
+  balance: number // the circulation balance needle
+  balancerReady: boolean // the balancer's key can be pressed
+  locked: boolean // the balancer has the pump switches
+  onRunBalancer: () => void
   onUpdate: (pumps: WaterPump[]) => void
   onGuideChange: (open: boolean) => void // the shift foreman has come or gone: the game pauses while he talks
 }
 
-export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpdate, onGuideChange }: WaterPumpsModalProps) {
+export default function WaterPumpsModal({ open, onOpenChange, waterPumps, balance, balancerReady, locked, onRunBalancer, onUpdate, onGuideChange }: WaterPumpsModalProps) {
   const [tempStates, setTempStates] = useState<boolean[]>([])
 
   // Initialise only when the modal opens: pump flow changes every second and must not reset choices.
@@ -28,29 +32,47 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
+  // The pumps keep running as they were through a lock, so any choice not yet applied is dropped
   const handleApply = () => {
-    const updatedPumps = waterPumps.map((pump, idx) => ({
-      ...pump,
-      on: tempStates[idx],
-    }))
-    onUpdate(updatedPumps)
+    if (!locked) {
+      const updatedPumps = waterPumps.map((pump, idx) => ({
+        ...pump,
+        on: tempStates[idx],
+      }))
+      onUpdate(updatedPumps)
+    }
     onOpenChange(false)
+  }
+
+  const handleRun = () => {
+    if (!balancerReady) return
+    setTempStates(waterPumps.map((pump) => pump.on))
+    onRunBalancer()
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto">
+      {/* Opens on the first switch, not the first key in the page: the balancer runs at once, so Enter mustn't press it by accident */}
+      <DialogContent
+        className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto"
+        onOpenAutoFocus={(e) => {
+          if (locked) return
+          e.preventDefault()
+          document.getElementById(`pump-${waterPumps[0].id}`)?.focus()
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="cr-dialog-title">Water Pumps</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* The needle holds at centre until the balancer is built, so its key has nothing to do yet (plan §9.1) */}
+          {/* The balancer runs at once, like AZ-5, with no Apply, and carries on if the modal closes. Nothing shows the
+              lock (owner, 2026-11-04): the needle and the grey tile are all there is. */}
           <div className="cr-module cr-bay-screws p-2.5 flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex-1 min-w-0 max-w-60" data-tutorial="pumps-needle">
-              <ArcDial kind="pumps" value={0} />
+              <ArcDial kind="pumps" value={balance} />
             </div>
-            <JobKey ready={false} ariaLabel="Run the circulation balancer" tutorial="pumps-balancer" />
+            <JobKey ready={balancerReady} ariaLabel="Run the circulation balancer" tutorial="pumps-balancer" onRun={handleRun} />
           </div>
 
           {/* One switchgear bay per pump: ON lights when the switch is on and the pump has power */}
@@ -79,6 +101,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, onUpda
                     onLegend="On"
                     label={`Pump ${pump.id}`}
                     describedBy={`pump-${pump.id}-status`}
+                    locked={locked}
                     onToggle={() => {
                       const newStates = [...tempStates]
                       newStates[idx] = !newStates[idx]

@@ -137,7 +137,7 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 
 **Acceptance checks:**
 - Starting state with default rods and two pumps climbs from the start: hands-off, radioactivity rises straight away, power output leaves its target band within a minute, and the player feels they need to act within a couple of minutes (owner request; the engine's balance point is a separate, exactly steady reference state).
-- Moving a rod by the same amount always changes its boron effect by the same amount, at any depth (the tip aside). With everything else equal, including current radioactivity, 10%→5% and 50%→45% have the same effect.
+- On a level core (Section 10, item 6), moving a rod by the same amount always changes its boron effect by the same amount, at any depth (the tip aside). With everything else equal, including current radioactivity, 10%→5% and 50%→45% have the same effect.
 - The same push moves radioactivity further and faster when radioactivity is high than when it is low.
 - There exists a reachable state where radioactivity at least doubles within a few seconds with no player input.
 - Radioactivity never sticks permanently at zero.
@@ -175,6 +175,9 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 - **Flow takes a few seconds to change.** The player can switch pumps on or off whenever they like, as now. Water takes a few seconds to start flowing after a pump starts (switched on, or regains power) and a few seconds to stop after it stops, whatever is powering the pump.
 - **Zero pumps (or unpowered pumps) triggers boiling escalation:** steam generation accelerates sharply as the reactor heats, which drives radioactivity up, which drives heat up. This is the deliberate nonlinear loop that replaces today's special-case rule. The outcome must feel the same or stronger.
 
+- **Circulation balance (owner, 2026-11-04).** Flow slowly drifts out of balance between the pump loops: the needle goes from centre to its limit in about 8 minutes, then stops, in every mode. Starved channels pass heat out of the fuel less well, so fuel-to-reactor transfer falls by up to 20%, scaling with the needle. That is the second way transfer can fall, on top of the dry-out with no flow. It is deliberately not a cut in pump cooling, which would make more steam and so more output. At steady radioactivity reactor temperature, steam and output don't change: the fuel runs hotter, which is a stronger blue card, so the player withdraws rod to hold output.
+- **The balancer (owner).** It runs at once from the pumps modal and carries on if the modal closes. The pump switches can't be used for about 8 s, with nothing to show it, and the pumps keep running as they were. Cooling dips about 10% for those 8 s. The needle then glides to centre over about 25 s, and as the fuel's extra heat passes on, radioactivity, steam and output rise a little. It can't start while no pump is running, or during its own run, but works at dead centre. A power cut part way through doesn't stop it. The Pump Operator reports the limit once on the shift log, and again only after balancing. There is no alarm.
+
 **Player outcome:** clear, distinct feel for each pump count:
 | Pumps | Feel |
 |---|---|
@@ -188,6 +191,8 @@ Because radioactivity changes in proportion to its current level, any imbalance 
 - A pump's effect builds over a few seconds after switching, not instantly.
 - Running all four pumps at low radioactivity measurably lowers radioactivity.
 - Losing all pumps at high radioactivity with no player response ends in disaster within about a minute; rapid rod insertion and turbine-to-pumps can save it if acted on quickly.
+- At steady radioactivity, imbalance changes fuel temperature but not reactor temperature, steam or output.
+- The pump switches are locked for about 8 s, and the balancer can't start with no pump running.
 
 ---
 
@@ -272,6 +277,8 @@ Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, p
    - Text in the rod modal (rod labels, percentages) can't be selected, so dragging a lever with a mouse never highlights it.
    - Levers are easier to grab on touch screens: a fingertip-sized grab area around each handle (and/or a drag can start anywhere on the rod's track). The look stays the same.
    - The panel's rod display shows live travel (item 3).
+
+6. **Rod balance (owner, 2026-11-04).** Rods 1–5 are the left of the core and 6–10 the right, and a needle in the rods modal and on the rod display shows which side has more rod in it. It reads the rods' actual positions, so it moves only as they travel. Edge rods (1, 2, 9, 10) shift it 2.5 times as far as middle rods, and every rod has the same basic strength. The needle alone sets the effect: with it hard over, the heavy side's boron counts 15% less and the light side's 15% more, scaling to nothing at centre. A lopsided core can only lose braking, never gain it. Only boron is weighted: the tips and the rod margin are unaffected, and Legasov's board shows the boron that counts. AZ-5 drives every free rod fully in, which rebalances the core. The Reactor Technician reports the needle hard over once, and again only after the sides have been evened up. The game starts slightly off centre, with the same total insertion and the same opening climb as before.
 
 **Player outcome:** rods become the central skill. Keeping rods in the core is safety; pulling them out buys radioactivity (and so, in time, power output) at the cost of brakes, and parking them at 0% sets a trap. AZ-5 is a powerful tool that can kill you if you have let the reactor get into the wrong state, just as in the show.
 
@@ -406,6 +413,8 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 
 **Player outcome:** Safety Test feels unlike the shift modes. It is a slow-burn story where the player is pushed, step by step, into the configuration the show warns about, and some things change without the player doing anything. Then they have to survive the consequences. Surviving should be possible but require skill.
 
+**Machine maintenance (Sections 7, 8, 10) runs in the Safety Test as in every mode.** If the script switches the pumps on during the balancer's lock, the script wins.
+
 **Acceptance checks:** each phase is triggered, any automated changes take place per phase and are announced clearly. The player can reverse any automated change. On two pumps, the xenon from phases 2–3 takes the rod margin below its minimum while holding the test output; with four pumps a skilled player can stay out of the xenon pit. Surviving to the end of the 20 minutes is possible with skilful play.
 
 ---
@@ -429,7 +438,7 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 
 **End screens:** separate presentations for meltdown, core explosion, removed from post and success. Add a short "incident report" with highest and lowest output, target changes, peak values, lowest rod margin, emergencies handled (every event, whatever its size; a grid hold counts as a target change) and time in danger.
 
-**How to Play:** rewrite the physics section around the red-card / blue-card explanation so the manual teaches the same model the game uses. Include: removing a blue card raises radioactivity; power output only follows through heat and steam; rods take time to move; the graphite tips, and why rods shouldn't be parked at 0%; xenon burn-off speeding up as radioactivity rises; the ±10% tolerance; identical physics in every mode.
+**How to Play:** the Controls section covers the maintenance jobs (Sections 7, 8, 10). Rewrite the physics section around the red-card / blue-card explanation so the manual teaches the same model the game uses. Include: removing a blue card raises radioactivity; power output only follows through heat and steam; rods take time to move; the graphite tips, and why rods shouldn't be parked at 0%; xenon burn-off speeding up as radioactivity rises; the ±10% tolerance; identical physics in every mode.
 
 **Sound:** two groups, each with its own on/off switch in the sound modal, and one shared volume:
 - **Alarms**, labelled "Recommended for new operators": the alarms that sound while a warning or an emergency event lasts. These exist today.
@@ -455,7 +464,7 @@ A one-page summary of Sections 5–10.
 | Radioactivity growth/decay | **Exponential** (rate ∝ current level × net red-minus-blue balance); slow for a balance under 10 points, fast for every point beyond (prompt) | This is how reactors behave. It's the source of runaways and collapses; the slow range makes creeps gentle and visible, the fast range keeps AZ-5 and big rod moves dangerous. |
 | Steam's push (void) | **Proportional** to the amount of steam in the core; no hidden amplifiers | Readable. The danger comes from the loop (radioactivity → heat → steam → radioactivity), not from a secret multiplier. |
 | Steam formation | Driven by reactor temperature above boiling, never directly by fuel; flow changes it directly only below one pump, and **sharply nonlinearly** as flow falls toward zero (boiling escalation) | Preserves the all-pumps-off escalation; low flow is what turns a runaway into an explosion rather than a meltdown. |
-| Rod (boron) effect | **Linear** in insertion, the same at every depth | It's the amount of boron that matters; the display reads honestly. |
+| Rod (boron) effect | **Linear** in insertion, the same at every depth, on a level core; a lopsided core weights each side by up to 15% | It's the amount of boron that matters; the display reads honestly. |
 | Graphite tip | **Fixed push** per rod while its tip is in the core, equal to the boron in the first 10% of travel | Spike only from 0%, lasting about 2 s; grows with rods entering together; lethal only in a fragile state. |
 | Rod movement | **Steady travel speed** (~18 s full stroke, ~30 s when sluggish), the same in every mode | Rods are not instant brakes. |
 | Rod margin | **Not a physics rule**: a warning threshold on total insertion | Names the dangerous state without hidden effects. |
@@ -463,7 +472,7 @@ A one-page summary of Sections 5–10.
 | Xenon build-up | **Gradual**: at or below radioactivity 80, minutes to the cap, faster the lower it is; 0% in normal running | Slow, ominous, readable. |
 | Xenon burn-off | **Accelerates with radioactivity** from 80 up to 120 (a full load in ~40 s), then **fastest** from 130 (~10 s, capped) | Removing a brake as radioactivity rises feeds the rise; the escape must be caught early, and can be. The cap keeps the loss visible and within what the rods can answer. |
 | Fuel temperature effect | **Continuous curve, 0 at normal running temperature**: a mild brake when hotter than normal, firming a little when very hot but always weaker than the steam that comes with it, and levelling off beyond ~2,000°; a push when cooler, strongest when very cold | Slows a runaway without ever stopping it (only rods and pumps do); restart lever; a healthy reactor reads 0. |
-| Fuel / reactor temperature | **Lagged heat balance** (not exponential) | Fast only because radioactivity is fast. |
+| Fuel / reactor temperature | **Lagged heat balance** (not exponential); fuel-to-reactor transfer falls up to 20% with circulation imbalance, on top of the dry-out with no flow | Fast only because radioactivity is fast. |
 | Pump cooling | **Proportional** to flow and temperature, diminishing per extra pump; flow ramps over a few seconds | Physical, readable. |
 | Power output from steam | **Linear**, scaled down by up to 12% by a poor condenser vacuum | Keeps targets predictable. |
 

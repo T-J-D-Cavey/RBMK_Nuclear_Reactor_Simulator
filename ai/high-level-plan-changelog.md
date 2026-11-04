@@ -2,6 +2,30 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.35 – 2026-11-04 (Machine maintenance, stages 4 and 5: rod balance and the pump balancer)
+
+The last two stages, built and deployed together at the owner's request, with the playtest to follow.
+
+- **Rod balance** (Section 10, owner). A needle in the rods modal and on the rod display reads the actual rods. The heavy side counts up to 15% less and the light side 15% more, and edge rods shift the needle 2.5 times as far as middle rods. The Reactor Technician reports the needle hard over once.
+- **The starting rods differ from the plan's suggestion** (Claude), for the owner's rule that the opening climb must not change. The plan's order climbed 1–2% faster (171.0 against 168.8 at 60 s). The start is now 28, 49, 40, 44, 58, 38, 38, 38, 60, 45: 219% a side, so the lean costs no boron, and the climb matches the old game to the decimal for all three minutes measured. The needle starts 17% to the right. The reference rods are the plan's mirrored order.
+- **The Reactor Technician's report re-arms below 90% of the needle's travel** (Claude), so a rod hovering at the limit can't send a message every second.
+- **Circulation balance and the balancer** (Section 7, owner). The pump dial goes live in the modal and on Plant Gauges. Fuel at radioactivity 100 runs at 530° level and 580° at the limit, as the plan measured.
+- **The locked switches show nothing** (owner): same look, no hover response, no pointer cursor.
+- **Pressing Run drops any pump choice not yet applied, and Apply during a lock just closes** (Claude), as the pumps keep running as they were.
+- **The pump needle drifts the other way after each balancing** (Claude). The direction is cosmetic.
+- **The pumps modal opens with focus on the first switch**, so Enter can't run the balancer by accident.
+- **Check changes:** the §5/§10 rod checks now use a level core, as the plan expected. The tip spike check allows 1.4% (it was 1.5%): on a level core it measures 1.46%.
+- **Bot model, all mechanics together, 200 shifts each, same seeds:**
+
+  | | Today's game | Bot does every job | Novice ignores every job |
+  |---|---|---|---|
+  | Easy survival / on target | 99.5% / 55.0% | 97.0% / 55.6% | 99.0% / 51.8% |
+  | Hard survival / on target | 61.5% / 46.2% | 63.5% / 47.1% | 53.5% / 43.2% |
+  | Easy meltdowns | 0 | 2 | 0 |
+  | Hard meltdowns | 5 | 3 | 7 |
+
+  Both Easy meltdowns are the bot's old steering wobble, which starts when the turbine reconnects after a power cut, not the balancer: one had last pressed Run 4 minutes earlier. There were no explosions in any shift. A novice who ignores every job also wins the Safety Test on the seed checked.
+
 ## v2.34 – 2026-11-04 (Machine maintenance, stage 3: sluggish rods)
 
 - **Sluggish rods** (Section 10, owner). A rod parked for 5 minutes travels at 60% speed, and a yellow lamp shows through its channel's gap in the rods modal. A move of at least 5% frees it. There is no log message.
