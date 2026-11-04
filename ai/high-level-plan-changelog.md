@@ -2,6 +2,23 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.34 – 2026-11-04 (Machine maintenance, stage 3: sluggish rods)
+
+- **Sluggish rods** (Section 10, owner). A rod parked for 5 minutes travels at 60% speed, and a yellow lamp shows through its channel's gap in the rods modal. A move of at least 5% frees it. There is no log message.
+- **A sluggish rod recovers on arrival, not part way** (Claude). The plan says the first move is still slow and AZ-5 drives a sluggish rod in at the slower speed, which only holds if the rod stays slow for its whole move. The canvas prototype freed it at 5% of travel.
+- **Yellow channels in the guide** now frames each yellow channel, or the whole lever bank when there are none.
+- **The bot frees sluggish rods** in pairs, one in and one out by 5%, so the two cancel.
+- **`/game?fastjobs` is a playtest switch** (owner). In development only, it runs the slow drifts about 20 times faster: the vacuum falls in 18 s and rods park in 15 s. Recovery times stay real.
+- **Bot model, 200 shifts each, same seeds:**
+
+  | | Stage 2 | Bot frees the rods | Novice ignores every job |
+  |---|---|---|---|
+  | Easy survival / on target | 98.5% / 55.7% | 98.5% / 55.9% | 99.0% / 52.0% |
+  | Hard survival / on target | 60.5% / 46.7% | 62.0% / 46.6% | 59.5% / 44.4% |
+  | Hard meltdowns | 5 | 3 | 2 |
+
+  Sluggish rods make no measurable difference to the bot. It also rarely has any: about 2 rods on average for the novice, because its small moves add up to 5% in time. Only a human playtest can judge this one, as the plan warned.
+
 ## v2.33 – 2026-11-04 (Machine maintenance, stage 2: the turbine's vacuum; Plant Gauges replace the dosimeter)
 
 - **The condenser vacuum** (Section 8, owner). It falls over 6 minutes and costs up to 12% of output. The air ejector restores it in 20 s, and from worst vacuum that lifts output 13.6%, past the ±10% band, so when to run it matters. The Turbine Operator reports the worst vacuum once. Applies in every mode.

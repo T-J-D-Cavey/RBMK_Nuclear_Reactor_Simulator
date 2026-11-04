@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from "react"
 import type { ControlRod } from "@/lib/types"
 import { DRIVE_MIN_PLAY_MS, DRIVE_START_DELAY_MS } from "@/lib/rod-drive-voices"
-import { TUNING } from "@/lib/sim/tuning"
+import { rodStrokeSeconds } from "@/lib/sim/reactor"
 
 export interface RodDisplay {
   insertion: number // where to draw the rod, 0-100%
@@ -25,7 +25,7 @@ export function useRodDisplay(rods: ControlRod[]): RodDisplay[] {
     // A new order for a rod that was at rest (not a new game, which moves the rods themselves): hold its marker
     if (before && rod.target !== before.target && before.insertion === before.target && rod.insertion === before.insertion) {
       const until = now + DRIVE_START_DELAY_MS
-      const travelMs = (Math.abs(rod.target - before.insertion) * TUNING.rodFullStrokeSeconds * 1000) / 100
+      const travelMs = (Math.abs(rod.target - before.insertion) * rodStrokeSeconds(rod) * 1000) / 100
       holds.current.set(rod.id, { at: before.insertion, until })
       movingUntil.current.set(rod.id, until + Math.max(DRIVE_MIN_PLAY_MS, travelMs))
     }

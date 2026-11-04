@@ -1,6 +1,6 @@
 # RBMK Simulator – Machine Maintenance Plan
 
-Status: **DESIGN APPROVED BY THE OWNER, 2026-11-04. Stages 1 and 2 of §9.1 are built and committed. The next job is stage 3, sluggish rods. Difficulty and test limits are reviewed at the end of the build (owner, 2026-11-04).**
+Status: **DESIGN APPROVED BY THE OWNER, 2026-11-04. Stages 1 and 2 of §9.1 are built and committed, and stage 3 is built and uncommitted. The next job is stage 4, rod balance. Difficulty and test limits are reviewed at the end of the build (owner, 2026-11-04).**
 
 This is the record of what the owner decided for three new maintenance mechanics (turbine, water pumps, control rods), the modal changes that make room for them, and the move of each modal's hint text into the shift foreman guide. All numbers are **starting values for tuning**, not hard requirements.
 
@@ -397,7 +397,7 @@ Read the relevant guide in `node_modules/next/dist/docs/` before writing code (s
 
 1. Modal layouts, the question mark key and the guide (no mechanics). **Built and committed 2026-11-04, approved by the owner.** See §9.5.
 2. Turbine: it sits outside the reactor physics. **Built and committed 2026-11-04.** See §9.6.
-3. Sluggish rods.
+3. Sluggish rods. **Built 2026-11-04, uncommitted.** See §9.7.
 4. Rod balance, including the new starting order.
 5. Pump balancer: the largest physics change.
 
@@ -479,7 +479,6 @@ New checks to add:
 **What later stages plug into:**
 - `components/machine-dials.tsx` holds `ArcDial` and `StripDial`. The modals pass fixed resting values (`value={1}`, `value={0}`), to be replaced by real readings. `StripDial` has only the modal version so far: stage 4 adds the widget's shorter version (§8.1).
 - `JobKey` in `components/switchgear.tsx` is the Run key and Ready tile. The pumps modal passes `ready={false}` and no `onRun`, so its key is inert until stage 5.
-- `.cr-rod-slot-sluggish` is the yellow lamp, already styled. Stage 3 sets it, and should narrow the guide's Yellow channels step to the sluggish rods, as it frames the whole bank today.
 - `MACHINE_GUIDES` in `lib/tutorial.ts` holds the guide's steps, and `components/machine-guide.tsx` the ? key.
 - The dials have their own `.cr-dial-*` styles.
 
@@ -504,7 +503,15 @@ New checks to add:
 - **Hard:** 61.5% today, 59.5% with the ejector, and 55.5% for the novice. Meltdowns stay at 4 or 5, so the §3 risk at 11,000 MW didn't show up in the bot's results.
 - **The bot's steering wobble is not the vacuum's doing.** Rods swinging ±50 every 3 s for 30 s or more happen in 4% of Easy and 27% of Hard shifts in today's game, and 6% and 22% with the ejector.
 
-**For the end of the build (owner, 2026-11-04):** the owner accepts the Hard check's 19 losses in 40 and the novice's Hard result for now. If the finished game is too hard or too easy, the tests or the mechanics get adjusted then. Whether the ejector's timing is a real decision is also for then. The bot can't feel that. It presses about 3.5 times on Easy and 6 times on Hard.
+**At the end of the build (owner, 2026-11-04):** the owner accepts the Hard check's 19 losses in 40 and the novice's Hard result for now. If the finished game is too hard or too easy, the tests or the mechanics get adjusted then. Whether the ejector's timing is a real decision is also for then. The bot can't feel that. It presses about 3.5 times on Easy and 6 times on Hard.
+
+### 9.7 Stage 3 as built
+
+- `exerciseRods` in `lib/maintenance.ts` runs the parked clock. `rodStrokeSeconds` in `lib/sim/reactor.ts` is the one source of a rod's speed, used by the engine and `hooks/use-rod-display.ts`. The rod sounds needed no change, as they stop when a rod arrives.
+- **A rod stays slow for its whole move and recovers on arrival** (Claude's reading of §5). See changelog v2.34.
+- **For stage 4:** the bot's rod pairs ignore the balance. It should switch to matching rods on the same side (§6), so a pair doesn't shift the needle.
+- **Playtest switch:** `/game?fastjobs`, in development only. Stage 5 adds the pump needle's drift to the `Object.assign` in `app/game/page.tsx`.
+- **For the end of the build:** whether sluggish rods are too mild. The bot can't tell (§5).
 
 ---
 

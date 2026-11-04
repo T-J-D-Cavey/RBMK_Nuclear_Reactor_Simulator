@@ -252,7 +252,7 @@ Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, p
 **Change:**
 1. **A rod's effect depends only on how much boron is in the core.** Moving a rod 5% changes its boron effect by the same amount whether it goes 10%→5% or 50%→45%. Rods are deliberately gentle against the other cards (owner): moving one rod 10% shifts radioactivity by about a fifth at first, so a single small move is never decisive.
 2. **Rod margin.** The total insertion across all ten rods is the rod margin: how much boron is holding the reactor down. It is not an extra physics rule; it names a dangerous state. Below a minimum (the game's version of the "15-rod minimum"), a warning in the existing message area says so. Low margin is dangerous because of what it implies: radioactivity is being held by something less reliable than boron (often xenon, which can vanish).
-3. **Rods travel over time, at the same speed in every mode.** Applying a new setting moves each rod toward it at a steady speed (full stroke about 18 s, as in the real reactor; tune to taste). AZ-5 takes effect the moment it is pressed, with no Apply step (closing the lever modal when AZ-5 button is selected), and drives every rod that isn't jammed toward 100% at the same speed, so it takes seconds to complete. The lever modal shows where each rod has been ordered to go; the panel's rod display shows where each rod actually is, so after closing the modal the player watches the indicators travel. A jammed rod stops wherever it is, including mid-travel.
+3. **Rods travel over time, at the same speed in every mode.** Applying a new setting moves each rod toward it at a steady speed (full stroke about 18 s, as in the real reactor; tune to taste). A rod left parked for about 5 minutes goes sluggish, in every mode: it travels at about 60% speed (a full stroke in about 30 s) and its channel glows yellow in the rods modal. A move of at least 5% from where it was parked frees it on arrival, and that move is still slow. Smaller moves don't count. A jammed rod's clock pauses. There is no message, because ten rods could send ten. AZ-5 takes effect the moment it is pressed, with no Apply step (closing the lever modal when AZ-5 button is selected), and drives every rod that isn't jammed toward 100% at the same speed, so it takes seconds to complete. The lever modal shows where each rod has been ordered to go; the panel's rod display shows where each rod actually is, so after closing the modal the player watches the indicators travel. A jammed rod stops wherever it is, including mid-travel.
 4. **Graphite tips.** Each rod has a graphite tip at its bottom. Graphite is a red card worth +10, the same as 10% of boron. The tip is in the core at 1% insertion or more, and out only at 0%. One rod's net effect, counted in % of one rod's boron (+ pushes radioactivity up, − pushes it down):
 
    | Rod position | Tip | Boron | Net |
@@ -280,7 +280,8 @@ Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, p
 - AZ-5 with every rod at 0% pushes radioactivity up for about 2 seconds before the boron takes over.
 - Pulling a rod from 1% to 0% lowers radioactivity; every other step of withdrawal raises it.
 - AZ-5 starts moving the rods the moment it is pressed, with no Apply step.
-- AZ-5 from a normal state always shuts the reactor down safely.
+- AZ-5 from a normal state always shuts the reactor down safely, with every rod sluggish too.
+- A rod moved less than 5% stays sluggish, and one moved 5% or more recovers.
 - AZ-5 with most rods at 0%, high steam and cold fuel causes a dangerous spike and can be fatal. With gentle rods the tips are gentle too, so this needs eight or more rods at 0% and the spike is modest, about a quarter to a third (owner).
 - After the modal closes, the panel's rod indicators visibly travel to their new positions at rod speed.
 - Rod speed and rod effect are identical in every mode.
@@ -456,7 +457,7 @@ A one-page summary of Sections 5–10.
 | Steam formation | Driven by reactor temperature above boiling, never directly by fuel; flow changes it directly only below one pump, and **sharply nonlinearly** as flow falls toward zero (boiling escalation) | Preserves the all-pumps-off escalation; low flow is what turns a runaway into an explosion rather than a meltdown. |
 | Rod (boron) effect | **Linear** in insertion, the same at every depth | It's the amount of boron that matters; the display reads honestly. |
 | Graphite tip | **Fixed push** per rod while its tip is in the core, equal to the boron in the first 10% of travel | Spike only from 0%, lasting about 2 s; grows with rods entering together; lethal only in a fragile state. |
-| Rod movement | **Constant travel speed** (~18 s full stroke), the same in every mode | Rods are not instant brakes. |
+| Rod movement | **Steady travel speed** (~18 s full stroke, ~30 s when sluggish), the same in every mode | Rods are not instant brakes. |
 | Rod margin | **Not a physics rule**: a warning threshold on total insertion | Names the dangerous state without hidden effects. |
 | Xenon effect | **Proportional** to the xenon level (a blue card) | Simple and readable. |
 | Xenon build-up | **Gradual**: at or below radioactivity 80, minutes to the cap, faster the lower it is; 0% in normal running | Slow, ominous, readable. |

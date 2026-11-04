@@ -22,6 +22,7 @@ import PlantGauges from "@/components/plant-gauges"
 import { useElementHeight, useMediaQuery } from "@/hooks/use-element-height"
 import Tutorial from "@/components/tutorial"
 import { TUTORIAL_KEY, tutorialSteps } from "@/lib/tutorial"
+import { MAINTENANCE_TUNING } from "@/lib/sim/tuning"
 
 // From here up the page is a dashboard (owner, 2026-10-23): the chart recorder and the reactor camera either side of the
 // control panel, the alarm monitor and shift log across the full width below them, then the radioactivity balance, the
@@ -53,6 +54,14 @@ export default function GamePage() {
     logLamp.dismiss()
     setLogRevealSignal((n) => n + 1)
   }
+
+  // For playtesting only: /game?fastjobs runs the machines' slow drifts about 20 times faster, so a job can be tried
+  // in under a minute. It never reaches a production build.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).has("fastjobs")) {
+      Object.assign(MAINTENANCE_TUNING, { vacuumFallSeconds: 18, rodParkSeconds: 15 })
+    }
+  }, [])
 
   // The control-room briefing opens every new game (owner, 2026-10-29). The home page starts the game paused and marks
   // the briefing due; it stays due through a reload until it is closed, and then the shift starts from second zero.

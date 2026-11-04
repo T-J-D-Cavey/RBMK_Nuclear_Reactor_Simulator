@@ -5,7 +5,7 @@ import { type ControlRod, type GameState, getShiftTime } from "../../lib/types"
 import { advanceGame } from "../../lib/game-loop"
 import { AZ5_ORDER, DEPUTY_WITHDRAWAL, SAFETY_TEST_SCRIPT } from "../../lib/safety-test"
 import { seededRng, type Rng } from "../../lib/sim/rng"
-import { TUNING } from "../../lib/sim/tuning"
+import { MAINTENANCE_TUNING, TUNING } from "../../lib/sim/tuning"
 import { isHallSignalLost } from "../../lib/game-utils"
 import { runEjector, vacuumOutputFactor } from "../../lib/maintenance"
 
@@ -73,6 +73,8 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
       }
       s = keepPumps(s, testPrep ? 4 : o.pumps) // follows the procedure: four pumps for the test
     }
+
+    if (o.jobs && !survival && !testPrep) s = freeSluggishRod(s)
 
     // None of the readings below can be seen, so a careful operator leaves the rods where they are until they return
     if (blind) return s
@@ -166,6 +168,22 @@ function keepPumps(s: GameState, wanted: number): GameState {
       }
       return p
     }),
+  }
+}
+
+// A yellow rod moved in, with another moved out by the same amount, so the two cancel and the reactor doesn't notice.
+// One pair at a look, like a person, and only with both at rest.
+function freeSluggishRod(s: GameState): GameState {
+  const move = MAINTENANCE_TUNING.rodFreeingMove
+  const resting = s.controlRods.filter((r) => !r.stuck && r.insertion === r.target)
+  const going = resting.find((r) => r.sluggish && r.target + move <= 100)
+  if (!going) return s
+  const partners = resting.filter((r) => r !== going && r.target >= move + 1)
+  const partner = partners.find((r) => r.sluggish) ?? partners[0]
+  if (!partner) return s
+  return {
+    ...s,
+    controlRods: s.controlRods.map((r) => (r === going ? { ...r, target: r.target + move } : r === partner ? { ...r, target: r.target - move } : r)),
   }
 }
 

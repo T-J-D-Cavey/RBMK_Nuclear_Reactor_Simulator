@@ -40,7 +40,8 @@ import {
   SAFETY_TEST_SCRIPT,
 } from "../../lib/safety-test"
 import { canRunEjector, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
-import { REFERENCE_STATE } from "../../lib/sim/tuning"
+import { rodStrokeSeconds } from "../../lib/sim/reactor"
+import { MAINTENANCE_TUNING, REFERENCE_STATE, TUNING } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
 import { az5 } from "./harness"
 
@@ -721,6 +722,96 @@ test("maintenance: the turbine operator reports the worst vacuum once, and again
 test("maintenance: every clock stops while the game is paused", () => {
   const s = { ...quietGame("free"), vacuum: 0.5, ejectorSeconds: 10, isPaused: true }
   assert.equal(advanceGame(s, seededRng(1)), s)
+})
+
+const park = (s: GameState, seconds = MAINTENANCE_TUNING.rodParkSeconds) =>
+  ({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, parkedAt: r.insertion, parkedSeconds: seconds })) })
+const order = (s: GameState, rod: number, target: number) => ({ ...s, controlRods: s.controlRods.map((r, i) => (i === rod ? { ...r, target } : r)) })
+
+test("maintenance: no rod starts sluggish; every rod left parked goes sluggish after 5 minutes", () => {
+  let s = park(quietGame("free"), 0)
+  assert.ok(s.controlRods.every((r) => !r.sluggish))
+  s = ticks(s, 299)
+  assert.ok(s.controlRods.every((r) => !r.sluggish), "not before 5 minutes")
+  s = ticks(s, 1)
+  assert.ok(s.controlRods.every((r) => r.sluggish), "all ten at 5 minutes")
+  assert.ok(!s.log.some((l) => /sluggish|parked/i.test(l.text)), "no message")
+  assert.ok(s.warnings.every((w) => !/sluggish/i.test(w)), "no warning")
+})
+
+test("maintenance: a sluggish rod travels at 60%, a full stroke in 30 s, in and out", () => {
+  assert.equal(rodStrokeSeconds({ sluggish: false }), TUNING.rodFullStrokeSeconds)
+  assert.ok(Math.abs(rodStrokeSeconds({ sluggish: true }) - 30) < 1e-9)
+  const rods = (s: GameState, insertion: number) => ({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, insertion, target: insertion, parkedAt: insertion, sluggish: true })) })
+  for (const [from, to] of [[0, 100], [100, 0]]) {
+    let s = rods(quietGame("free"), from)
+    s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: to })) }
+    s = ticks(s, 10)
+    const moved = Math.abs(s.controlRods[0].insertion - from)
+    assert.ok(Math.abs(moved - 100 / 3) < 1, `${moved}% in 10 s`)
+  }
+})
+
+test("maintenance: a move of less than 5% leaves a rod sluggish; 5% or more frees it on arrival, and that first move is still slow", () => {
+  const start = ticks(park(quietGame("free")), 1)
+  assert.ok(start.controlRods[2].sluggish)
+  const at = start.controlRods[2].insertion
+
+  // Small wiggles don't count, even several of them
+  let small = ticks(order(start, 2, at + 4), 5)
+  small = ticks(order(small, 2, at - 4), 5)
+  small = ticks(order(small, 2, at + 4), 5)
+  assert.ok(small.controlRods[2].sluggish, "still sluggish after moves within 4%")
+
+  for (const to of [at + 5, at - 5, at + 30]) {
+    let s = order(start, 2, to)
+    const seconds = Math.ceil((Math.abs(to - at) * 30) / 100)
+    s = ticks(s, seconds - 1)
+    assert.ok(s.controlRods[2].sluggish, `to ${to}: stays slow for the whole move`)
+    assert.ok(Math.abs(s.controlRods[2].insertion - at) > ((seconds - 2) * 100) / 30 - 1, `to ${to}: travelling at slow speed`)
+    assert.ok(Math.abs(s.controlRods[2].insertion - at) <= ((seconds - 1) * 100) / 30 + 0.01, `to ${to}: no faster`)
+    s = ticks(s, 2)
+    assert.equal(s.controlRods[2].insertion, to)
+    assert.ok(!s.controlRods[2].sluggish, `to ${to}: freed on arrival`)
+    assert.ok(s.controlRods[2].parkedSeconds <= 2, `to ${to}: clock restarted`)
+  }
+  assert.ok(start.controlRods.every((r, i) => i === 2 || r.sluggish), "the others are untouched")
+})
+
+test("maintenance: a rod in regular use never goes sluggish", () => {
+  let s = quietGame("free")
+  for (let minute = 0; minute < 12; minute++) {
+    s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: r.target + (minute % 2 ? -6 : 6) })) }
+    s = ticks(s, 60)
+    assert.ok(s.controlRods.every((r) => !r.sluggish), `minute ${minute}`)
+  }
+})
+
+test("maintenance: a jammed rod's clock pauses, and red takes priority over yellow in the modal", () => {
+  const parked = park(quietGame("free"), 0)
+  let s = { ...parked, controlRods: parked.controlRods.map((r, i) => ({ ...r, stuck: i === 0 })) }
+  s = ticks(s, 320)
+  assert.ok(!s.controlRods[0].sluggish && s.controlRods[0].parkedSeconds === 0, "jammed: clock paused")
+  assert.ok(s.controlRods[1].sluggish, "free rods carry on")
+  s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, stuck: false })) }
+  assert.equal(ticks(s, 10).controlRods[0].parkedSeconds, 10, "and it resumes when freed")
+})
+
+test("maintenance: AZ-5 drives sluggish rods in at the slower speed, and from a normal state still shuts the reactor down", () => {
+  let s = park(quietGame("easy"))
+  s = ticks(s, 1)
+  assert.ok(s.controlRods.every((r) => r.sluggish))
+  s = az5(s)
+  const steps: GameState[] = []
+  for (let t = 0; t < 60; t++) {
+    s = advanceGame(s, seededRng(t))
+    steps.push(s)
+  }
+  assert.ok(!s.isGameOver, `${s.gameOverCause}`)
+  assert.ok(steps[2].controlRods[0].insertion - steps[1].controlRods[0].insertion < 3.4, "slow")
+  assert.ok(s.controlRods.every((r) => r.insertion === 100), "every free rod ends fully in")
+  assert.ok(s.controlRods.every((r) => !r.sluggish), "which frees them")
+  assert.ok(s.radioactivity < 40, `radioactivity ${s.radioactivity}`)
 })
 
 test("maintenance: a novice who never runs the ejector still survives okay", () => {

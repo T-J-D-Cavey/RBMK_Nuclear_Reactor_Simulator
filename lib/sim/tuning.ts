@@ -252,6 +252,9 @@ export const MAINTENANCE_TUNING = {
   vacuumFallSeconds: 360, // full vacuum to worst, in a straight line, in every turbine mode (§3)
   vacuumOutputLoss: 0.12, // of output, at worst vacuum
   ejectorRecoverySeconds: 20, // back to full vacuum from any reading
+  rodParkSeconds: 300, // a rod left parked this long goes sluggish (§5)
+  rodFreeingMove: 5, // % from where it was parked, in or out: smaller moves don't count
+  sluggishRodSpeed: 0.6, // of normal speed: a full stroke in 30 s, not 18 s
 }
 
 export const EVENT_TUNING = {

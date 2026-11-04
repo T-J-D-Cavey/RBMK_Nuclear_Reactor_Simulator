@@ -30,7 +30,23 @@ function reportVacuum(s: GameState): GameState {
   return addLog({ ...s, vacuumReported: true }, "engineer", "Condenser vacuum is at its worst. We're losing output until the air ejector is run.", TURBINE_OPERATOR)
 }
 
+// A rod left parked goes sluggish, because a drive that never moves can stick (plan §5). Only a move of at least
+// rodFreeingMove from where it was parked restarts its clock, and a sluggish rod stays slow for the whole of that move:
+// it recovers on arrival. A jammed rod's clock waits for it.
+function exerciseRods(s: GameState): GameState {
+  return {
+    ...s,
+    controlRods: s.controlRods.map((rod) => {
+      if (rod.stuck) return rod
+      const moved = Math.abs(rod.insertion - rod.parkedAt) >= MAINTENANCE_TUNING.rodFreeingMove
+      if (moved && (!rod.sluggish || rod.insertion === rod.target)) return { ...rod, sluggish: false, parkedAt: rod.insertion, parkedSeconds: 0 }
+      const parkedSeconds = rod.parkedSeconds + 1
+      return { ...rod, parkedSeconds, sluggish: rod.sluggish || parkedSeconds >= MAINTENANCE_TUNING.rodParkSeconds }
+    }),
+  }
+}
+
 // One second of the machines' clocks
 export function advanceMaintenance(s: GameState): GameState {
-  return reportVacuum(advanceVacuum(s))
+  return exerciseRods(reportVacuum(advanceVacuum(s)))
 }

@@ -1,7 +1,10 @@
 // Pure reactor physics (bible §5–§11, §16). No React, no hidden randomness: callers pass an Rng.
 import { type ControlRod, type GameOverCause, type GameState, type WaterPump, THRESHOLDS } from "../types"
-import { TUNING as T, fuelEffect, pumpEffect } from "./tuning"
+import { MAINTENANCE_TUNING, TUNING as T, fuelEffect, pumpEffect } from "./tuning"
 import { gaussian, type Rng } from "./rng"
+
+// A rod's full stroke: the same for every rod in every mode, until it goes sluggish
+export const rodStrokeSeconds = (rod: Pick<ControlRod, "sluggish">) => T.rodFullStrokeSeconds / (rod.sluggish ? MAINTENANCE_TUNING.sluggishRodSpeed : 1)
 
 export interface ReactivityCards {
   base: number
@@ -109,7 +112,6 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
   s.reactivityNoise += -s.reactivityNoise / T.noise.tau + T.noise.sigma * gaussian(rng)
 
   const dt = 1 / T.substeps
-  const rodStep = (100 / T.rodFullStrokeSeconds) * dt
   const flowStep = dt / T.pumpRampSeconds
   let ending: GameOverCause | null = null
 
@@ -118,6 +120,7 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
     for (const rod of s.controlRods) {
       if (rod.stuck) continue
       const delta = rod.target - rod.insertion
+      const rodStep = (100 / rodStrokeSeconds(rod)) * dt
       rod.insertion = Math.abs(delta) <= rodStep ? rod.target : rod.insertion + Math.sign(delta) * rodStep
     }
 

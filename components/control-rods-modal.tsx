@@ -21,6 +21,8 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
   const [tempValues, setTempValues] = useState<number[]>([])
   const [isDragging, setIsDragging] = useState<number | null>(null)
 
+  const anySluggish = controlRods.some((rod) => rod.sluggish && !rod.stuck)
+
   // Levers show where each rod has been ordered to go (the panel shows where it actually is).
   // Initialise only when the modal opens: rods move every second and must not reset a lever mid-drag.
   useEffect(() => {
@@ -125,9 +127,11 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           </div>
 
           {/* The levers in fabric-lined channels (owner, 2026-11-04: Rods A2), with one SKALA strip under the bank for
-              the set positions (owner, 2026-10-27: prototype A). A jammed rod's lamp glows red through the channel's
-              gap; the lever and its plate are hardware and never change. */}
+              the set positions (owner, 2026-10-27: prototype A). A lamp shows through the channel's gap: yellow for a
+              sluggish rod, red for a jam, which takes priority. The lever and its plate are hardware and never change.
+              The shift foreman frames the yellow channels, or the whole bank if there are none to show. */}
           <div className="cr-module cr-bay-screws p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
+            <div data-tutorial={anySluggish ? undefined : "rods-sluggish"}>
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center" data-tutorial="rods-levers">
               {controlRods.map((rod, idx) => {
                 const currentInsertion = tempValues[idx] ?? rod.insertion
@@ -141,9 +145,9 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                     {/* Rod Track */}
                     <div
                       id={`rod-container-${idx}`}
-                      data-tutorial="rods-channel"
+                      data-tutorial={rod.sluggish && !rod.stuck ? "rods-sluggish" : undefined}
                       className={`cr-rod-slot relative w-8 sm:w-[30px] h-36 sm:h-48 rounded-b-sm touch-none ${
-                        rod.stuck ? "cr-rod-slot-jammed cursor-not-allowed" : "cursor-grab"
+                        rod.stuck ? "cr-rod-slot-jammed cursor-not-allowed" : `cursor-grab ${rod.sluggish ? "cr-rod-slot-sluggish" : ""}`
                       }`}
                       onMouseDown={(e) => handleStart(idx, e)}
                       onTouchStart={(e) => handleStart(idx, e)}
@@ -165,6 +169,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                   </div>
                 )
               })}
+            </div>
             </div>
 
             <div className="ws3-cam-bezel rounded-md px-1.5 pt-1.5 pb-1">

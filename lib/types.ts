@@ -5,6 +5,9 @@ export interface ControlRod {
   insertion: number // actual position, 0-100% (moves toward target at rod speed)
   target: number // ordered position set by the lever modal / AZ-5, 0-100%
   stuck: boolean
+  sluggish: boolean // left parked too long: it travels slower until moved properly (lib/maintenance)
+  parkedAt: number // internal: where it was last moved to, by enough to count
+  parkedSeconds: number // internal: how long since then
 }
 
 export interface WaterPump {
@@ -254,6 +257,9 @@ export const INITIAL_GAME_STATE: GameState = {
     insertion,
     target: insertion,
     stuck: false,
+    sluggish: false,
+    parkedAt: insertion,
+    parkedSeconds: 0,
   })),
 
   waterPumps: Array.from({ length: 4 }, (_, i) => ({

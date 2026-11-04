@@ -165,7 +165,7 @@ export const MACHINE_GUIDES = {
   rods: [
     step("levers", "Levers", "Drag a lever to set insertion. Deeper rods, less radioactivity.", ["rods-levers"]),
     step("az5", "AZ-5", "Emergency insertion of every rod.", ["rods-az5"]),
-    step("channels", "Yellow channels", "A rod left parked too long goes sluggish and glows yellow. Move it a little and it frees up.", ["rods-channel"], true),
+    step("channels", "Yellow channels", "A rod left parked too long goes sluggish and glows yellow. Move it a little and it frees up.", ["rods-sluggish"]),
     step("needle", "Balance needle", "This shows whether one side of the core has more rod in it. It moves as the rods move. Rods on the heavy side count for less, and rods on the light side for more.", ["rods-needle"]),
     step("edge", "Edge rods", "Rods 1, 2, 9 and 10 are at the edges of the core, so they swing the balance most.", ["rods-edge"]),
   ],
