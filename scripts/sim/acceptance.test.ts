@@ -42,12 +42,15 @@ test("§5 a hands-off reactor is never perfectly static (noise present)", () => 
   assert.ok(values.size > 50)
 })
 
-test("§5/§10 the same rod step has the same boron effect at any depth", () => {
+// A rod and its mirror image on the other side, which keeps the core level (rods 1 and 10 match)
+const withPair = (s: GameState, pos: number) => withRod(withRod(s, 0, pos), 9, pos)
+
+test("§5/§10 on a level core the same rod step has the same boron effect at any depth", () => {
   const s = baseState()
-  const shallow = rho(withRod(s, 0, 5)) - rho(withRod(s, 0, 10))
-  const deep = rho(withRod(s, 0, 45)) - rho(withRod(s, 0, 50))
+  const shallow = rho(withPair(s, 5)) - rho(withPair(s, 10))
+  const deep = rho(withPair(s, 45)) - rho(withPair(s, 50))
   assert.ok(Math.abs(shallow - deep) < 1e-9, `${shallow} vs ${deep}`)
-  assert.ok(Math.abs(shallow - 5 * TUNING.rodWorth) < 1e-9) // 5% of boron
+  assert.ok(Math.abs(shallow - 2 * 5 * TUNING.rodWorth) < 1e-9) // 5% of boron, on two rods
 })
 
 test("§5 the same push moves radioactivity further and faster when radioactivity is high", () => {
@@ -255,9 +258,9 @@ test("§9 doing nothing during burn-off with rods fully out overshoots dangerous
 test("§10 a rod moving off 0% causes a short spike; an inserted rod causes none", () => {
   const r = scenarios.tipFromZero.run()
   // One rod's tip (5 points) is under the prompt threshold, so it acts at the slow rate: since the slower
-  // generation time (owner, 2026-10-14) the spike is about 2% over 2 s (was 4% in 1 s). AZ-5 with many rods at 0%
+  // generation time (owner, 2026-10-14) the spike is about 1.5% over 2 s (was 4% in 1 s). AZ-5 with many rods at 0%
   // goes prompt and is unchanged or stronger (checks below).
-  assert.ok(Math.max(r.samples[31].R, r.samples[32].R) > r.samples[30].R * 1.015, "spike when the tip enters")
+  assert.ok(Math.max(r.samples[31].R, r.samples[32].R) > r.samples[30].R * 1.014, "spike when the tip enters")
   assert.ok(r.samples[40].R < r.samples[30].R, "then the boron takes over")
   const inserted = runQuiet(baseState(), 20, { 5: (s) => withRod(s, 0, 70, false) })
   assert.ok(inserted.samples.slice(6).every((x) => x.R <= inserted.samples[5].R + 0.5))
@@ -274,11 +277,11 @@ test("§10 AZ-5 with every rod at 0% pushes radioactivity up for about 2 seconds
 
 test("§10 pulling a rod 1%→0% lowers radioactivity; every other withdrawal step raises it", () => {
   const s = baseState()
-  assert.ok(rho(withRod(s, 0, 0)) < rho(withRod(s, 0, 1)))
+  assert.ok(rho(withPair(s, 0)) < rho(withPair(s, 1)))
   for (const [from, to] of [[2, 1], [10, 8], [50, 45], [100, 90]]) {
-    assert.ok(rho(withRod(s, 0, to)) > rho(withRod(s, 0, from)), `${from}→${to}`)
+    assert.ok(rho(withPair(s, to)) > rho(withPair(s, from)), `${from}→${to}`)
   }
-  assert.ok(Math.abs(rho(withRod(s, 0, 1)) - rho(withRod(s, 0, 0)) - 9 * TUNING.rodWorth) < 1e-9) // tip 10 − 1% boron
+  assert.ok(Math.abs(rho(withPair(s, 1)) - rho(withPair(s, 0)) - 2 * 9 * TUNING.rodWorth) < 1e-9) // tip 10 − 1% boron, on two rods
 })
 
 test("§10 AZ-5 from a normal state always shuts the reactor down safely", () => {

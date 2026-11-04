@@ -105,7 +105,9 @@ export default function InstructionsPage() {
                       More insertion → radioactivity down. Less insertion → radioactivity up. Rods take a few seconds to travel, so
                       make a move and wait for it. Keep each rod at least 1% in: a rod pushed in from fully out (0%) first adds
                       radioactivity through its graphite tip, and jams if steam is high. A rod left parked for about 5 minutes
-                      goes sluggish: it glows yellow in the rods panel and travels slower, until you move it at least 5%.
+                      goes sluggish: it glows yellow in the rods panel and travels slower, until you move it at least 5%. The
+                      rod balance needle shows whether one side of the core has more rod in it. Rods on the heavy side count for
+                      less and rods on the light side for more, and rods 1, 2, 9 and 10, at the core's edges, swing it most.
                     </Card>
                     <Card title="AZ-5">
                       Inserts every control rod at once, except any that have jammed. Use it to stop a radioactivity spike.

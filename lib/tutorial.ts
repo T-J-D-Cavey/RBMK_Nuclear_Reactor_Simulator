@@ -145,9 +145,6 @@ export function tutorialSteps(mode: GameMode): TutorialStep[] {
 
 // --- The machine modals' guide ---
 
-// The rods at the edges of the core, which swing the balance most
-export const EDGE_RODS: readonly number[] = [1, 2, 9, 10]
-
 // The same foreman talks through a machine's modal when its ? key is pressed (owner, 2026-11-04: Guide A). The modals'
 // hint text moved here. The wording is a draft for the owner to settle. A step's targets carry the machine's name, as
 // "pumps", "rods" and "turbine" are the panel's keys.

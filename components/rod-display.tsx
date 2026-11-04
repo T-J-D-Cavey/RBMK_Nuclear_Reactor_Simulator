@@ -2,6 +2,8 @@
 
 import type { ControlRod, GameState } from "@/lib/types"
 import { isAz5LampLit } from "@/lib/game-utils"
+import { rodBalance } from "@/lib/sim/reactor"
+import { StripDial } from "@/components/machine-dials"
 import { type RodDisplay as RodView, useRodDisplay } from "@/hooks/use-rod-display"
 
 // The rod position display: a map of the core seen from above (owner, 2026-11-04, replacing the ring from the show's
@@ -58,7 +60,8 @@ export default function RodDisplay({ gameState, className = "" }: { gameState: G
       </div>
 
       <div className="cr-rod-face cr-bay-screws p-3 sm:p-4 flex flex-col gap-3">
-        <ul className="cr-rod-map" aria-label="Control rod positions">
+        <div className="cr-rod-map">
+          <ul className="absolute inset-0" aria-label="Control rod positions">
           {rods.map((rod, i) => {
             const view = views[i]
             const lamp = lampFor(rod, view)
@@ -78,7 +81,14 @@ export default function RodDisplay({ gameState, className = "" }: { gameState: G
               </li>
             )
           })}
-        </ul>
+          </ul>
+          {/* The balance needle, built into the top of the face, beside the rods that cause it (owner, 2026-11-04) */}
+          <div className="absolute left-1/2 top-0 w-[90%] -translate-x-1/2">
+            <div className="cr-module cr-bay-screws px-3 py-1.5">
+              <StripDial value={rodBalance(rods)} compact />
+            </div>
+          </div>
+        </div>
 
         <ul className="cr-rod-legend" aria-hidden="true">
           {LEGEND.map((entry) => (

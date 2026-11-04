@@ -40,7 +40,7 @@ import {
   SAFETY_TEST_SCRIPT,
 } from "../../lib/safety-test"
 import { canRunEjector, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
-import { rodStrokeSeconds } from "../../lib/sim/reactor"
+import { effectiveBoron, getReactivityCards, rodBalance, rodBoron, rodStrokeSeconds } from "../../lib/sim/reactor"
 import { MAINTENANCE_TUNING, REFERENCE_STATE, TUNING } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
 import { az5 } from "./harness"
@@ -292,7 +292,8 @@ test("a rod sent in from 0% while steam is high jams at 1%, by lever or AZ-5, wi
   })
   const at = [0, 0, 0, 50, 50, 50, 100, 100, 100, 100]
   // Lever: rod 1 ordered in, rod 2 left out, rod 4 ordered further in
-  const lever = rods({ ...base, steamVolume: THRESHOLDS.steamVolume.highWarning }, at, [40, 0, 0, 100, 50, 50, 100, 100, 100, 100])
+  // Set up lopsided, so the technician's report on the rod balance is taken as already made
+  const lever = rods({ ...base, steamVolume: THRESHOLDS.steamVolume.highWarning, rodBalanceReported: true }, at, [40, 0, 0, 100, 50, 50, 100, 100, 100, 100])
   let s = step(lever, 3)
   assert.deepEqual([s.controlRods[0].insertion, s.controlRods[0].stuck], [EVENT_TUNING.steamJamInsertion, true], "rod 1 jammed at 1%")
   assert.deepEqual([s.controlRods[1].insertion, s.controlRods[1].stuck], [0, false], "rod 2 untouched")
@@ -779,7 +780,7 @@ test("maintenance: a move of less than 5% leaves a rod sluggish; 5% or more free
 })
 
 test("maintenance: a rod in regular use never goes sluggish", () => {
-  let s = quietGame("free")
+  let s = park(quietGame("free"), 0)
   for (let minute = 0; minute < 12; minute++) {
     s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: r.target + (minute % 2 ? -6 : 6) })) }
     s = ticks(s, 60)
@@ -811,6 +812,106 @@ test("maintenance: AZ-5 drives sluggish rods in at the slower speed, and from a 
   assert.ok(steps[2].controlRods[0].insertion - steps[1].controlRods[0].insertion < 3.4, "slow")
   assert.ok(s.controlRods.every((r) => r.insertion === 100), "every free rod ends fully in")
   assert.ok(s.controlRods.every((r) => !r.sluggish), "which frees them")
+  assert.ok(s.radioactivity < 40, `radioactivity ${s.radioactivity}`)
+})
+
+const withRods = (s: GameState, rods: number[]) => ({ ...s, controlRods: s.controlRods.map((r, i) => ({ ...r, insertion: rods[i], target: rods[i], parkedAt: rods[i] })) })
+
+test("maintenance: the game starts a little off centre to the right, with the same total, all tips in, on a level reference", () => {
+  const start = createNewGame("easy").controlRods
+  assert.equal(rodBoron(start), 438)
+  assert.ok(start.every((r) => r.insertion > 0), "all ten tips in")
+  assert.ok(rodBalance(start) > 0.1 && rodBalance(start) < 0.25, `needle ${rodBalance(start)}`)
+  // The opening climb comes only from the boron that counts, so it matches the game before the balance existed
+  assert.equal(effectiveBoron(start), 438, "the lean costs nothing at the start")
+  const reference = quietGame("free").controlRods
+  assert.equal(rodBalance(reference), 0)
+  assert.equal(effectiveBoron(reference), REFERENCE_STATE.rodBoron)
+})
+
+test("maintenance: a 30% move shifts the needle 30% on an edge rod and 12% on a middle rod, and every rod is equal on a level core", () => {
+  const level = quietGame("free")
+  const moved = (i: number) => withRods(level, level.controlRods.map((r, k) => r.insertion + (k === i ? 30 : 0))).controlRods
+  for (const i of [0, 1]) assert.ok(Math.abs(rodBalance(moved(i)) + 0.3) < 1e-9, `R${i + 1} left`)
+  for (const i of [8, 9]) assert.ok(Math.abs(rodBalance(moved(i)) - 0.3) < 1e-9, `R${i + 1} right`)
+  for (const i of [2, 3, 4]) assert.ok(Math.abs(rodBalance(moved(i)) + 0.12) < 1e-9, `R${i + 1} left`)
+  for (const i of [5, 6, 7]) assert.ok(Math.abs(rodBalance(moved(i)) - 0.12) < 1e-9, `R${i + 1} right`)
+})
+
+test("maintenance: with the needle hard over, a 10% move counts 8.5% on the heavy side and 11.5% on the light side, in or out", () => {
+  // Hard left, well past the limit, with room for moves that don't change the reading
+  const rods = [80, 80, 30, 30, 30, 30, 30, 30, 20, 20]
+  assert.equal(rodBalance(withRods(quietGame("free"), rods).controlRods), -1)
+  const cards = (changes: Record<number, number>) => {
+    const s = withRods(quietGame("free"), rods.map((v, i) => v + (changes[i] ?? 0)))
+    assert.equal(rodBalance(s.controlRods), -1)
+    return getReactivityCards(s).boron / -TUNING.rodWorth
+  }
+  const at = cards({})
+  assert.ok(Math.abs(cards({ 0: 10 }) - at - 8.5) < 1e-9, "heavy side, in")
+  assert.ok(Math.abs(at - cards({ 0: -10 }) - 8.5) < 1e-9, "heavy side, out")
+  assert.ok(Math.abs(cards({ 7: 10 }) - at - 11.5) < 1e-9, "light side, in")
+  assert.ok(Math.abs(at - cards({ 7: -10 }) - 11.5) < 1e-9, "light side, out")
+})
+
+test("maintenance: the same needle reading gives the same effect whichever rods caused it, and a lopsided core never gains braking", () => {
+  // The same reading and side totals from different rods
+  const byEdge = withRods(quietGame("free"), [50, 65, 40, 40, 35, 35, 40, 40, 45, 50]).controlRods
+  const byMiddle = withRods(quietGame("free"), [57, 58, 30, 45, 40, 30, 45, 40, 50, 45]).controlRods
+  assert.ok(Math.abs(rodBalance(byEdge) - rodBalance(byMiddle)) < 1e-9, `${rodBalance(byEdge)} ${rodBalance(byMiddle)}`)
+  assert.equal(rodBoron(byEdge), rodBoron(byMiddle))
+  assert.ok(Math.abs(effectiveBoron(byEdge) - effectiveBoron(byMiddle)) < 1e-9)
+
+  const rng = seededRng(7)
+  for (let i = 0; i < 5000; i++) {
+    const rods = withRods(quietGame("free"), Array.from({ length: 10 }, () => Math.round(rng() * 100))).controlRods
+    assert.ok(effectiveBoron(rods) <= rodBoron(rods) + 1e-9, rods.map((r) => r.insertion).join(" "))
+  }
+  // Deep on the left edge and the right middle: the sum alone would have gained from being lopsided
+  const trap = withRods(quietGame("free"), [100, 100, 0, 0, 0, 100, 100, 100, 0, 0]).controlRods
+  assert.ok(effectiveBoron(trap) <= rodBoron(trap))
+})
+
+test("maintenance: the needle follows the rods, not the levers, and stops with a rod that jams; the tips and rod margin ignore it", () => {
+  const start = withRods(quietGame("free"), quietGame("free").controlRods.map((r) => r.insertion))
+  const before = rodBalance(start.controlRods)
+  const ordered = { ...start, controlRods: start.controlRods.map((r, i) => (i === 0 ? { ...r, target: r.target + 50 } : r)) }
+  assert.equal(rodBalance(ordered.controlRods), before, "an order alone doesn't move it")
+  const moving = ticks(ordered, 3)
+  assert.ok(rodBalance(moving.controlRods) < before, "it moves as the rod travels")
+  const jammed = { ...moving, controlRods: moving.controlRods.map((r, i) => (i === 0 ? { ...r, stuck: true, target: r.insertion } : r)) }
+  assert.equal(rodBalance(ticks(jammed, 5).controlRods), rodBalance(jammed.controlRods), "and stops if it jams")
+
+  const lopsided = withRods(quietGame("free"), [70, 70, 30, 30, 30, 30, 30, 30, 20, 20])
+  const cards = getReactivityCards(lopsided)
+  assert.equal(cards.tips, TUNING.rodWorth * TUNING.tipWorth * 10, "tips unaffected")
+  assert.equal(getRodMargin(lopsided.controlRods), rodBoron(lopsided.controlRods), "margin stays on real insertion")
+  assert.ok(cards.boron > -TUNING.rodWorth * rodBoron(lopsided.controlRods), "and the board shows the boron that counts")
+})
+
+test("maintenance: the reactor technician reports the needle hard over once, and again only after the sides are evened up", () => {
+  const reports = (s: GameState) => s.log.filter((l) => l.from === "REACTOR TECHNICIAN" && l.text.includes("balance")).length
+  const hard = [70, 70, 30, 30, 30, 30, 30, 30, 20, 20]
+  let s = ticks(withRods(quietGame("free"), [60, 65, 40, 40, 40, 40, 40, 40, 30, 40]), 5)
+  assert.equal(reports(s), 0, "not short of the limit")
+  s = ticks(withRods(s, hard), 30)
+  assert.equal(reports(s), 1, "once, however long it stays there")
+  s = ticks(withRods(s, hard.map((v, i) => v + (i === 8 ? 5 : 0))), 5)
+  assert.equal(reports(s), 1, "and not again while it hovers near the limit")
+  s = ticks(withRods(s, [40, 55, 40, 40, 55, 55, 40, 40, 55, 40]), 5)
+  s = ticks(withRods(s, hard), 5)
+  assert.equal(reports(s), 2, "fixed, it can report again")
+})
+
+test("maintenance: AZ-5 from a normal state still shuts down with every rod sluggish and the needle hard over, and rebalances the core", () => {
+  let s = withRods(quietGame("easy"), [75, 75, 35, 35, 35, 35, 35, 35, 25, 25])
+  s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, sluggish: true })) }
+  assert.equal(rodBalance(s.controlRods), -1)
+  s = az5(s)
+  for (let t = 0; t < 60; t++) s = advanceGame(s, seededRng(t))
+  assert.ok(!s.isGameOver, `${s.gameOverCause}`)
+  assert.ok(s.controlRods.every((r) => r.insertion === 100))
+  assert.equal(rodBalance(s.controlRods), 0)
   assert.ok(s.radioactivity < 40, `radioactivity ${s.radioactivity}`)
 })
 

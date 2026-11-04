@@ -200,6 +200,7 @@ export interface GameState {
   vacuum: number // the condenser's vacuum, 1 (full) to 0 (worst): air leaking in costs output (lib/maintenance)
   ejectorSeconds: number // internal: seconds of the air ejector's run left, 0 while it isn't running
   vacuumReported: boolean // internal: the turbine operator has reported the worst vacuum since it last rose
+  rodBalanceReported: boolean // internal: the reactor technician has reported the needle hard over since it came back
   reactivityNoise: number // internal: slow random drift in the reactivity balance
 
   // Game state
@@ -280,6 +281,7 @@ export const INITIAL_GAME_STATE: GameState = {
   vacuum: 1,
   ejectorSeconds: 0,
   vacuumReported: false,
+  rodBalanceReported: false,
   reactivityNoise: 0,
 
   mode: "easy",

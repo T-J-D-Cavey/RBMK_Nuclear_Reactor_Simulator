@@ -23,6 +23,26 @@ export function rodBoron(rods: ControlRod[]): number {
   return rods.reduce((sum, rod) => sum + rod.insertion, 0)
 }
 
+const sideOf = (rods: ControlRod[], side: "left" | "right") => rods.filter((rod) => (rod.id <= 5) === (side === "left"))
+const rodPull = (rods: ControlRod[]) =>
+  rods.reduce((sum, rod) => sum + rod.insertion * (MAINTENANCE_TUNING.edgeRods.includes(rod.id) ? 1 : MAINTENANCE_TUNING.middleRodPull), 0)
+
+// The rod balance needle, from the rods' actual positions: -1 hard left to 1 hard right, leaning to the heavy side.
+// Rods 1-5 are the left of the core and 6-10 the right, and an edge rod shifts it more than a middle rod (plan §6).
+export function rodBalance(rods: ControlRod[]): number {
+  const lean = (rodPull(sideOf(rods, "right")) - rodPull(sideOf(rods, "left"))) / MAINTENANCE_TUNING.balanceFullTravel
+  return Math.max(-1, Math.min(1, lean))
+}
+
+// The boron that counts: the needle alone sets it, for every rod on a side, however the reading came about. A lopsided
+// core can only lose braking, never gain it. It shrinks to the plain total on a level core.
+export function effectiveBoron(rods: ControlRod[]): number {
+  const left = rodBoron(sideOf(rods, "left"))
+  const right = rodBoron(sideOf(rods, "right"))
+  const tilt = MAINTENANCE_TUNING.balanceEffect * rodBalance(rods)
+  return Math.min(left + right, left * (1 + tilt) + right * (1 - tilt))
+}
+
 // Rod margin = total insertion across all ten rods (bible §10.2). Uses actual positions.
 export const getRodMargin = rodBoron
 
@@ -37,7 +57,7 @@ export function getReactivityCards(state: GameState): ReactivityCards {
     base: T.baseExcess,
     void: T.voidPerSteam * state.steamVolume,
     tips: T.rodWorth * T.tipWorth * tipsInCore(state.controlRods),
-    boron: -T.rodWorth * rodBoron(state.controlRods),
+    boron: -T.rodWorth * effectiveBoron(state.controlRods),
     xenon: -T.xenonWorthPerPercent * state.xenon,
     fuel: fuelEffect(state.fuelTemp),
     noise: state.reactivityNoise,

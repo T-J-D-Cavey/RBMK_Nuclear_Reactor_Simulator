@@ -5,8 +5,9 @@
 // This file must not import anything (lib/types.ts imports it).
 
 // The balanced reference state: exactly steady with these rods and two pumps. The engine is calibrated here.
-// Constants marked "derived" below are solved from this state so it stays balanced when others change.
-const REFERENCE_RODS = [40, 40, 40, 40, 40, 40, 55, 55, 55, 55]
+// Constants marked "derived" below are solved from this state so it stays balanced when others change. The rods mirror
+// each other left and right, so the core is level (MAINTENANCE_TUNING's rod balance).
+const REFERENCE_RODS = [40, 55, 40, 40, 55, 55, 40, 40, 55, 40]
 export const REFERENCE_STATE = {
   radioactivity: 100,
   reactorTemp: 330,
@@ -18,11 +19,12 @@ export const REFERENCE_STATE = {
   flow: 2, // two pumps running
 } as const
 
-// The game starts off balance (owner request, bible §5): rods 1–3 sit 12%, 6% and 4% further out than the
-// reference, so radioactivity climbs from the start and the player soon feels they need to act. (Doubled
-// from 6/3/2 when rods were halved in strength, plan §20, so the start is unchanged.)
-const STARTING_OFFSETS = [12, 6, 4]
-export const STARTING_RODS = REFERENCE_RODS.map((v, i) => v - (STARTING_OFFSETS[i] ?? 0))
+// The game starts off balance (owner request, bible §5): 22% of rod further out than the reference, so radioactivity
+// climbs from the start and the player soon feels they need to act. The rod balance starts a little off centre to the
+// right, a small job the player can do straight away (owner, 2026-11-04). Each side holds 219%, so the lean has no
+// effect on the boron that counts, and the opening climb is exactly what it was before the balance existed: only the
+// edge rods' share of each side leans it. All ten tips are in.
+export const STARTING_RODS = [28, 49, 40, 44, 58, 38, 38, 38, 60, 45]
 
 const TUNING_BASE = {
   // --- Integration ---
@@ -255,6 +257,10 @@ export const MAINTENANCE_TUNING = {
   rodParkSeconds: 300, // a rod left parked this long goes sluggish (§5)
   rodFreeingMove: 5, // % from where it was parked, in or out: smaller moves don't count
   sluggishRodSpeed: 0.6, // of normal speed: a full stroke in 30 s, not 18 s
+  edgeRods: [1, 2, 9, 10] as readonly number[], // far from the core's centre line, so they can tilt it most (§6)
+  middleRodPull: 0.4, // of an edge rod's pull on the balance needle
+  balanceFullTravel: 100, // weighted % of difference between the sides that puts the needle hard over
+  balanceEffect: 0.15, // with the needle hard over, the heavy side counts this much less and the light side more
 }
 
 export const EVENT_TUNING = {

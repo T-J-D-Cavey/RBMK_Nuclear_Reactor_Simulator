@@ -118,37 +118,44 @@ const STRIP_INSET = 14 // the scale's ends, in from the strip's sides
 const STRIP_WIDEST = 440
 const STRIP_NARROWEST = 200
 
+// The modal's strip, and the rod display's shorter one with thinner lines and a single row of words
+const STRIPS = {
+  full: { height: 58, tickTop: 16, tickBottom: 26, railY: 27, railHeight: 5, pointerTop: 13, pointerBottom: 47, arrowTip: 46, arrowBase: 56 },
+  compact: { height: 38, tickTop: 3, tickBottom: 12, railY: 13, railHeight: 1.5, pointerTop: 1, pointerBottom: 29, arrowTip: 28, arrowBase: 37 },
+}
+
 // A cream strip in a black case with a sliding hairline pointer and no colour zones, as the rod balance is plain: a
 // right-heavy core leans right. `value` is -1 (left) to 1 (right). The scale is drawn for the strip's width, so its
 // lines and words keep their weight on a phone.
-export function StripDial({ value }: { value: number }) {
+export function StripDial({ value, compact = false }: { value: number; compact?: boolean }) {
   const [ref, size] = useElementSize<HTMLDivElement>()
+  const strip = compact ? STRIPS.compact : STRIPS.full
   const width = Math.round(Math.max(STRIP_NARROWEST, Math.min(STRIP_WIDEST, (size?.width ?? STRIP_WIDEST) - 12)))
   const x = (along: number) => round(STRIP_INSET + (width - 2 * STRIP_INSET) * along)
   const count = width > 300 ? 40 : 20
   const scale = (major: boolean) =>
     Array.from({ length: count + 1 }, (_, i) => i)
       .filter((i) => (i % (count / 4) === 0) === major)
-      .map((i) => `M${x(i / count)} ${major ? 16 : 20} L${x(i / count)} 26`)
+      .map((i) => `M${x(i / count)} ${major ? strip.tickTop : strip.tickTop + 4} L${x(i / count)} ${strip.tickBottom}`)
       .join(" ")
   const clamped = Math.max(-1, Math.min(1, value))
   const middle = x(0.5)
   const reading = clamped === 0 ? "balanced" : `${Math.round(Math.abs(clamped) * 100)}% to the ${clamped < 0 ? "left" : "right"}`
 
   return (
-    <div ref={ref} className="cr-dial-case w-full">
+    <div ref={ref} className={`cr-dial-case w-full ${compact ? "is-compact" : ""}`}>
       <div className="cr-dial-strip">
-        <svg viewBox={`0 0 ${width} 58`} className="block w-full h-auto" role="img" aria-label={`Rod balance: ${reading}`}>
-          <rect x={STRIP_INSET} y={27} width={width - 2 * STRIP_INSET} height={5} fill="#b9bdb6" />
+        <svg viewBox={`0 0 ${width} ${strip.height}`} className="block w-full h-auto" role="img" aria-label={`Rod balance: ${reading}`}>
+          <rect x={STRIP_INSET} y={strip.railY} width={width - 2 * STRIP_INSET} height={strip.railHeight} fill="#b9bdb6" />
           <path d={scale(false)} fill="none" stroke="#1c1b18" strokeWidth={0.8} />
           <path d={scale(true)} fill="none" stroke="#1c1b18" strokeWidth={1.5} />
-          <text x={x(0)} y={12} className="cr-dial-word" textAnchor="start">LEFT</text>
-          <text x={middle} y={12} className="cr-dial-word" textAnchor="middle">BALANCED</text>
-          <text x={x(1)} y={12} className="cr-dial-word" textAnchor="end">RIGHT</text>
-          <text x={middle} y={45} className="cr-dial-word" textAnchor="middle">ROD BALANCE</text>
+          <text x={x(0)} y={compact ? 26 : 12} className="cr-dial-word" textAnchor="start">LEFT</text>
+          {!compact && <text x={middle} y={12} className="cr-dial-word" textAnchor="middle">BALANCED</text>}
+          <text x={x(1)} y={compact ? 26 : 12} className="cr-dial-word" textAnchor="end">RIGHT</text>
+          <text x={middle} y={compact ? 26 : 45} className="cr-dial-word" textAnchor="middle">ROD BALANCE</text>
           <g className="cr-dial-needle" style={{ transform: `translateX(${round(x((clamped + 1) / 2) - middle)}px)` }}>
-            <line x1={middle} y1={13} x2={middle} y2={47} stroke="#111" strokeWidth={1.5} />
-            <path d={`M${middle - 5} 56 L${middle} 46 L${middle + 5} 56 Z`} fill="#111" />
+            <line x1={middle} y1={strip.pointerTop} x2={middle} y2={strip.pointerBottom} stroke="#111" strokeWidth={1.5} />
+            <path d={`M${middle - 5} ${strip.arrowBase} L${middle} ${strip.arrowTip} L${middle + 5} ${strip.arrowBase} Z`} fill="#111" />
           </g>
         </svg>
       </div>

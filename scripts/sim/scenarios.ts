@@ -51,9 +51,9 @@ export const scenarios: Record<string, Scenario> = {
     run: () => runQuiet(baseState(), 120, { 10: az5 }),
   },
   tipFromZero: {
-    description: "[§10] Rod 1 parked at 0% (others compensate), then inserted to 30% at t=30",
+    description: "[§10] Rods 1 and 10 parked at 0% on a level core (others compensate), then rod 1 inserted to 30% at t=30",
     run: () =>
-      runQuiet(settle(setRods(baseState(), [0, 45, 45, 45, 45, 45, 55, 55, 55, 55], { instant: true }), 300), 90, {
+      runQuiet(settle(setRods(baseState(), [0, 60, 55, 55, 50, 50, 55, 55, 60, 0], { instant: true }), 300), 90, {
         30: (s) => setRods(s, s.controlRods.map((r, i) => (i === 0 ? 30 : r.target))),
       }),
   },

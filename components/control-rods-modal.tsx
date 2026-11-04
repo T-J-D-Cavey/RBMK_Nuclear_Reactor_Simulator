@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label"
 import { StripDial } from "@/components/machine-dials"
 import MachineGuide from "@/components/machine-guide"
-import { EDGE_RODS, MACHINE_GUIDES } from "@/lib/tutorial"
+import { rodBalance } from "@/lib/sim/reactor"
+import { MAINTENANCE_TUNING } from "@/lib/sim/tuning"
+import { MACHINE_GUIDES } from "@/lib/tutorial"
 import type { ControlRod } from "@/lib/types"
 
 interface ControlRodsModalProps {
@@ -111,9 +113,9 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
 
         <div className="space-y-4">
           <div className="flex items-stretch gap-3">
-            {/* The needle holds at balanced until the rod balance is built (plan §9.1) */}
+            {/* The needle follows the rods themselves, not the levers: it moves only once they do, after Apply */}
             <div className="cr-module cr-bay-screws flex-1 min-w-0 p-2 flex items-center" data-tutorial="rods-needle">
-              <StripDial value={0} />
+              <StripDial value={rodBalance(controlRods)} />
             </div>
 
             {/* AZ-5: a red button inside a hazard-striped guard */}
@@ -136,7 +138,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
               {controlRods.map((rod, idx) => {
                 const currentInsertion = tempValues[idx] ?? rod.insertion
                 return (
-                  <div key={rod.id} className="flex flex-col items-center gap-1 w-full" data-tutorial={EDGE_RODS.includes(rod.id) ? "rods-edge" : undefined}>
+                  <div key={rod.id} className="flex flex-col items-center gap-1 w-full" data-tutorial={MAINTENANCE_TUNING.edgeRods.includes(rod.id) ? "rods-edge" : undefined}>
                     <Label className="cr-plate !px-1.5 !py-1 !text-[0.7rem] !tracking-[0.1em]">R{rod.id}</Label>
 
                     {/* Top Cap: the drive housing */}

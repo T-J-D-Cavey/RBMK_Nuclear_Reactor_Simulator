@@ -2,9 +2,12 @@
 // Left alone, each penalty stops at a limit and nothing ever stops working. Pure, so the game and the bot share it.
 import type { GameState } from "./types"
 import { addLog } from "./game-utils"
+import { rodBalance } from "./sim/reactor"
 import { MAINTENANCE_TUNING } from "./sim/tuning"
 
 const TURBINE_OPERATOR = "TURBINE OPERATOR"
+const REACTOR_TECHNICIAN = "REACTOR TECHNICIAN"
+const BALANCE_FIXED_BELOW = 0.9 // the needle has properly left its limit, so a rod hovering there can't send a message a second
 
 // What the turbine makes of its steam: air in the condenser costs output, not the pumps it can power (plan §3)
 export const vacuumOutputFactor = (vacuum: number) => 1 - MAINTENANCE_TUNING.vacuumOutputLoss * (1 - vacuum)
@@ -46,7 +49,15 @@ function exerciseRods(s: GameState): GameState {
   }
 }
 
+// One message with the needle hard over, and another only after the sides have been evened up
+function reportRodBalance(s: GameState): GameState {
+  const reading = Math.abs(rodBalance(s.controlRods))
+  if (reading < BALANCE_FIXED_BELOW) return s.rodBalanceReported ? { ...s, rodBalanceReported: false } : s
+  if (reading < 1 || s.rodBalanceReported) return s
+  return addLog({ ...s, rodBalanceReported: true }, "engineer", "The rod banks are badly out of balance. Even up the two sides and the rods will answer properly.", REACTOR_TECHNICIAN)
+}
+
 // One second of the machines' clocks
 export function advanceMaintenance(s: GameState): GameState {
-  return exerciseRods(reportVacuum(advanceVacuum(s)))
+  return reportRodBalance(exerciseRods(reportVacuum(advanceVacuum(s))))
 }

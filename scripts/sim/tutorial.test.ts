@@ -1,7 +1,7 @@
 // The control-room briefing (lib/tutorial): its order in every mode, and where the guide goes. Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { EDGE_RODS, GUIDE_EDGE, MACHINE_GUIDES, planGuide, tutorialSteps } from "../../lib/tutorial"
+import { GUIDE_EDGE, MACHINE_GUIDES, planGuide, tutorialSteps } from "../../lib/tutorial"
 
 test("briefing: every mode opens with the welcome and ends with Begin; each reading comes before the control that moves it", () => {
   for (const mode of ["easy", "hard", "safety_test", "free"] as const) {
@@ -32,7 +32,6 @@ test("machine guides: the turbine, pumps and rods each have their own steps, on 
     }
   }
   assert.deepEqual([MACHINE_GUIDES.turbine.length, MACHINE_GUIDES.pumps.length, MACHINE_GUIDES.rods.length], [3, 3, 5])
-  assert.deepEqual(EDGE_RODS, [1, 2, 9, 10])
 })
 
 test("machine guides: every piece of the modals' old hint text is kept", () => {
