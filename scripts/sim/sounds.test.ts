@@ -22,11 +22,9 @@ test("sounds: every clip is really in public/sounds, so renaming one can't silen
   for (const file of [...Object.values(SOUND_EFFECT_FILES), ROD_DRIVE_FILE]) assert.ok(existsSync(`public${file}`), file)
 })
 
-test("sounds: Cancel and Close have a clip of their own, and the other keys mix the other four", () => {
-  const presses = Object.entries(SOUND_EFFECT_FILES).filter(([, file]) => file.includes("button-press"))
-  const others = presses.filter(([effect]) => effect !== "cancel").map(([, file]) => file)
-  assert.ok(!others.includes(SOUND_EFFECT_FILES.cancel))
-  assert.equal(new Set(others).size, 4)
+test("sounds: every key without a sound of its own shares one click", () => {
+  const keys = ["cancel", "rodsApply", "turbineApply", "pumpsApply", "quit", "homeKey", "pauseKey", "warningKey", "messageKey", "cameraKey", "soundKey", "machineKey", "guideKey", "screenToggle", "mainMenu"] as const
+  assert.deepEqual(new Set(keys.map((key) => SOUND_EFFECT_FILES[key])), new Set(["/sounds/button-press-5.mp3"]))
 })
 
 test("sounds: the turbine selector has one clip for Idle and Pumps, and another for Grid", () => {

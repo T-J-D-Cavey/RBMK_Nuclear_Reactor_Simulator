@@ -608,11 +608,7 @@ At needle 0.5, radioactivity 100 reaches 116, not 126. Fuel at the limit now sta
 
 | Sound | Plays on |
 |---|---|
-| Button press 5 | Every Cancel, Close and X, including the camera and the foreman's close key |
-| Button press 1 | Rods Apply, Warning key, Pumps, Rods and Turbine keys |
-| Button press 2 | Turbine Apply, Home key, Camera key, alarm monitor and shift log headers |
-| Button press 3 | Pumps Apply, Pause and Play key, Volume key |
-| Button press 4 | Quit, Message key, ? key, foreman's Next and Previous, Main Menu |
+| Button press 5 (one click for all of these, see §9.12) | Every Cancel, Close and X, including the camera and the foreman's close key; every Apply; Quit; the Home, Pause, Play, Volume, Warning, Message, Camera, Pumps, Rods, Turbine and ? keys; the alarm monitor and shift log headers; the foreman's Next and Previous; Main Menu |
 | Pump confirm | Each pump switch as it turns, and no longer Apply |
 | Water balancer run, turbine vacuum run | The Run keys, only when they start a job |
 
@@ -637,12 +633,19 @@ The owner supplied five more clips, all in the same table in `lib/sound-cues.ts`
 | Reactor hall event | The signal from the reactor hall going |
 | Electricity sound 2, again | The turbine tripping off the grid (owner chose to reuse a selector clip, Claude chose which) |
 
-- The selector sounds however it's turned, by click, drag, legend or arrow key, as it reaches a new position. It's silent against an end stop. Applying the mode still plays Button press 2.
+- The selector sounds however it's turned, by click, drag, legend or arrow key, as it reaches a new position. It's silent against an end stop. Applying the mode plays the usual click.
 - Each event clip plays once, as the event starts, with the event alarm, the warning bleep and the printer in that same second. An event already running in a saved game doesn't play it again. The same goes for a turbine trip.
 - **Claude's call: the event clips follow the Sound Effects switch, not Alarms,** as one-off sounds like the warning bleep. The event alarm itself stays on Alarms.
 - The power cut (5.7 s) and reactor hall (2.7 s) clips stop and pick up with the game, like the run clips. The pump trip (1 s) rings out.
-- Rods Apply stays on Button press 1, the owner's renamed old clip, so it sounds as it did (owner, 2026-11-05).
 - A rod jam and a grid hold have no clip. The Safety Test's own mains loss isn't an event, so it plays none.
+
+### 9.12 One click for every key, 2026-11-05
+
+The owner found Button press 5 the best click, as it has the least delay, so every key without a sound of its own now uses it. This replaces the mixture of four in §9.10. Pump switches, the turbine selector, the Run keys, AZ-5 and the event clips keep their own.
+
+- Each key keeps its own name in the table in `lib/sound-cues.ts`, so one can still be given a different clip.
+- Button press 1 to 4 are no longer played, and their files stay in `public/sounds`.
+- The rod drive starts 1.25 s after Rods Apply, a delay set to follow the old 1.9 s clunk. The new click lasts about 0.6 s, so there's now a short gap before the drive (§11.1).
 
 ---
 
@@ -731,5 +734,6 @@ In priority order, as of 2026-11-05. The order runs from what changes how the ga
 12. **The pump needle drifts the other way after each balancing.** The direction is cosmetic. **Claude recommends** keeping it.
 13. **`/game?fastjobs`** stays in the code for future tuning. **Claude recommends** removing it when tuning is done.
 14. **Key sounds Claude added beyond the owner's list** (§9.10): the ? key, the foreman's keys, the alarm monitor and shift log headers, Main Menu, and the click on the three panel keys that open the Pumps, Rods and Turbine modals. Tapping outside a modal, Escape and the home page stay silent.
+15. **The gap before the rod drive** (§9.12). It starts 1.25 s after Rods Apply, which suited the old clunk. With the shorter click, should it start sooner? **Claude recommends** about 0.6 s if the gap sounds wrong in play.
 
 **Waiting on a clip from the owner, not on a decision:** the rod levers and rod jams. Neither has a suitable sound yet (owner, 2026-11-05), so both stay silent for now, and the owner will say if that changes.

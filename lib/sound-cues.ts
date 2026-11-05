@@ -2,28 +2,27 @@
 // hooks/use-audio-manager.ts plays the clips.
 import type { ControlRod, EventKind, GameEvent, TurbineMode } from "./types"
 
-const button = (clip: 1 | 2 | 3 | 4 | 5) => `/sounds/button-press-${clip}.mp3`
+// Every key without a sound of its own: the clip with the least delay (owner, 2026-11-05). Each key keeps its own name
+// in the table, so one can still be given a different clip.
+const CLICK = "/sounds/button-press-5.mp3"
 
 // Clips the owner provided, served from public/sounds. To change what a key sounds like, change it here.
 export const SOUND_EFFECT_FILES = {
-  // Every Cancel and Close, and the X on any modal: always this one (owner, 2026-11-05)
-  cancel: button(5),
-
-  // Every other key: a mixture of the other four (owner, 2026-11-05)
-  rodsApply: button(1),
-  turbineApply: button(2),
-  pumpsApply: button(3),
-  quit: button(4),
-  homeKey: button(2),
-  pauseKey: button(3),
-  warningKey: button(1),
-  messageKey: button(4),
-  cameraKey: button(2),
-  soundKey: button(3),
-  machineKey: button(1),
-  guideKey: button(4),
-  screenToggle: button(2),
-  mainMenu: button(4),
+  cancel: CLICK,
+  rodsApply: CLICK,
+  turbineApply: CLICK,
+  pumpsApply: CLICK,
+  quit: CLICK,
+  homeKey: CLICK,
+  pauseKey: CLICK,
+  warningKey: CLICK,
+  messageKey: CLICK,
+  cameraKey: CLICK,
+  soundKey: CLICK,
+  machineKey: CLICK,
+  guideKey: CLICK,
+  screenToggle: CLICK,
+  mainMenu: CLICK,
 
   pumpSwitch: "/sounds/pump-confirm.mp3", // a pump's switch, as it turns
   turbineSelectIdleOrPumps: "/sounds/electricity sound 1.mp3", // the turbine's mode selector, as it reaches a position

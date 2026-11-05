@@ -2,6 +2,10 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.39 – 2026-11-05 (One click for every key)
+
+- **Every key without a sound of its own now plays the same click** (Section 15, owner). It's the clip with the least delay, and it replaces the mixture of four from v2.37.
+
 ## v2.38 – 2026-11-05 (Turbine selector and event sounds)
 
 - **The turbine's mode selector sounds** (Section 15, owner's clips): one for Idle and Pumps, another for Grid.

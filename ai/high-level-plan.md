@@ -444,7 +444,7 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
 - **Alarms**, labelled "Recommended for new operators": the alarms that sound while a warning or an emergency event lasts. These exist today.
 - **Sound effects**, labelled "Recommended": every other sound:
   - the reactor hum (exists today);
-  - a click on every key the player presses: one clip for every Cancel, Close and X, and a mixture of four others for the rest. The sound modal's own switches are silent, as all they do is turn sound on or off;
+  - one click on every key the player presses that has no sound of its own. The sound modal's own switches are silent, as all they do is turn sound on or off;
   - a sound as each pump switch turns, and one each for the air ejector and the balancer as they start;
   - a sound as the turbine's mode selector reaches a position: one for Idle and Pumps, another for Grid;
   - a one-off sound as a power cut, a pump trip or the signal loss starts, or as the turbine trips, alongside the event alarm;
