@@ -22,6 +22,7 @@ import PlantGauges from "@/components/plant-gauges"
 import { useElementHeight, useMediaQuery } from "@/hooks/use-element-height"
 import Tutorial from "@/components/tutorial"
 import { TUTORIAL_KEY, tutorialSteps } from "@/lib/tutorial"
+import { SoundEffectContext } from "@/hooks/use-sound-effect"
 import { MAINTENANCE_TUNING } from "@/lib/sim/tuning"
 
 // From here up the page is a dashboard (owner, 2026-10-23): the chart recorder and the reactor camera either side of the
@@ -100,9 +101,10 @@ export default function GamePage() {
   const alarms = getAlarms(gameState)
   // Silent while paused and once the shift is over; the player's two switches are kept for when play resumes
   const audioLive = !gameState.isPaused && !gameState.isGameOver && !gameState.hasWon
-  const { initializeAudio, playEffect } = useAudioManager({
+  const { initializeAudio, playPress } = useAudioManager({
     alarmsOn: gameState.alarmsEnabled && audioLive,
     effectsOn: gameState.effectsEnabled && audioLive,
+    pressesOn: gameState.effectsEnabled,
     soundVolume: gameState.soundVolume,
     generalAlarmIsNeeded: alarms.general,
     eventAlarm: alarms.event,
@@ -114,6 +116,8 @@ export default function GamePage() {
     warningKeys: [...getReactorWarnings(gameState), ...getEventWarnings(gameState)].map((warning) => warning.key),
     lastLogId: gameState.log[gameState.log.length - 1]?.id,
     powerOnTarget: gameState.powerTarget === null ? null : isPowerOnTarget(gameState),
+    activeEvents: gameState.activeEvents,
+    turbineTripped: gameState.turbineTripped,
   })
   const handleInteraction = () => {
     initializeAudio();
@@ -126,11 +130,11 @@ export default function GamePage() {
   }
 
   if (gameState.hasWon) {
-    return <SuccessScreen gameState={gameState} onReset={resetGame} />
+    return <SoundEffectContext value={playPress}><SuccessScreen gameState={gameState} onReset={resetGame} /></SoundEffectContext>
   }
 
   if (gameState.isGameOver) {
-    return <GameOverScreen gameState={gameState} onReset={resetGame} />
+    return <SoundEffectContext value={playPress}><GameOverScreen gameState={gameState} onReset={resetGame} /></SoundEffectContext>
   }
 
   const panel = (
@@ -140,7 +144,6 @@ export default function GamePage() {
       updateGameState={updateGameState}
       onHomeClick={handleHomeClick}
       onSoundClick={handleSoundModalToggle}
-      onSoundEffect={playEffect}
       logLampLit={logLamp.lit}
       onSeeWarnings={handleSeeWarnings}
       onSeeLog={handleSeeLog}
@@ -190,6 +193,7 @@ export default function GamePage() {
   const beaconStill = gameState.isPaused ? "cr-beacon-still" : ""
 
   return (
+    <SoundEffectContext value={playPress}>
     <div
       className="min-h-screen bg-background flex flex-col relative"
       onClick={handleInteraction}
@@ -275,5 +279,6 @@ export default function GamePage() {
         </>
       )}
     </div>
+    </SoundEffectContext>
   )
 }

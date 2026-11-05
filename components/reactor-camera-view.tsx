@@ -1,11 +1,12 @@
 "use client"
 
-import { ArrowLeft, XIcon } from "lucide-react"
+import { XIcon } from "lucide-react"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import type { HallSignal } from "@/lib/game-utils"
 import ReactorCamera, { getInterferenceIntensity } from "./reactor-camera"
 
 // The full reactor camera view: the CCTV monitor set in its own control panel (owner, 2026-10-27: prototype A, and C
-// on a phone). Back is the only control on it. Everything else is read-only panel furniture, so the player never
+// on a phone). Close is the only control on it. Everything else is read-only panel furniture, so the player never
 // wonders whether it can be pressed: status lamps, a signal meter, a talkback grille, vents and a service note.
 
 interface ReactorCameraViewProps {
@@ -14,7 +15,7 @@ interface ReactorCameraViewProps {
   signal?: HallSignal // the reactor hall's signal; lost, the screen shows snow and the meter drops to 0
   elapsedSeconds: number
   clockStartMs: number
-  onBack: () => void
+  onClose: () => void
 }
 
 // The signal meter's needle (0–1): steady near the top of the scale, falling into the red as interference builds
@@ -86,19 +87,24 @@ function Louvres({ count, className = "" }: { count: number; className?: string 
   )
 }
 
-export default function ReactorCameraView({ radioactivity, reactorTemp, signal: hall = "live", elapsedSeconds, clockStartMs, onBack }: ReactorCameraViewProps) {
+export default function ReactorCameraView({ radioactivity, reactorTemp, signal: hall = "live", elapsedSeconds, clockStartMs, onClose }: ReactorCameraViewProps) {
+  const playSound = useSoundEffect()
+  const handleClose = () => {
+    playSound("cancel")
+    onClose()
+  }
+
   // With the reactor hall's signal lost there is no picture to interfere with, so nothing here gives radioactivity away
   const lost = hall !== "live"
   const interference = lost ? 0 : getInterferenceIntensity(radioactivity)
   const signal = lost ? 0 : signalStrength(interference)
 
-  // Panel kit classes set their own display, which beats Tailwind's hidden, so a wrapper shows or hides each Back
-  const back = (wrapper: string, height: string) => (
+  // Panel kit classes set their own display, which beats Tailwind's hidden, so a wrapper shows or hides each Close
+  const close = (wrapper: string, height: string) => (
     <div className={wrapper}>
       <span className="cr-lens-bezel flex w-full">
-        <button onClick={onBack} className={`cr-lens w-full ${height} px-5 text-lg lg:text-base`} aria-label="Back to the control panel">
-          <ArrowLeft className="h-5 w-5" />
-          Back
+        <button onClick={handleClose} className={`cr-lens w-full ${height} px-5 text-lg lg:text-base`} aria-label="Close the camera">
+          Close
         </button>
       </span>
     </div>
@@ -107,14 +113,14 @@ export default function ReactorCameraView({ radioactivity, reactorTemp, signal: 
   return (
     <div className="fixed inset-0 z-50 bg-[#0a0a09] p-2.5 lg:p-3.5 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Reactor hall camera">
       <div className="cr-panel cr-screws min-h-full flex flex-col gap-3.5 lg:gap-[18px] px-3.5 pt-[18px] pb-4 lg:px-7 lg:py-[22px]">
-        {/* Header: the dialogs' black title bar with its close key (owner, 2026-10-27). On a phone Back is also at the
+        {/* Header: the dialogs' black title bar with its close key (owner, 2026-10-27). On a phone Close is also at the
             bottom, where a thumb reaches. */}
         <div className="relative">
           <h1 className="cr-dialog-title">Reactor Hall Camera</h1>
           <button
-            onClick={onBack}
+            onClick={handleClose}
             className="cr-key cr-key-black !absolute top-1.5 right-1.5 size-7 !tracking-normal [&_svg]:size-4"
-            aria-label="Back to the control panel"
+            aria-label="Close the camera"
           >
             <XIcon />
           </button>
@@ -156,10 +162,10 @@ export default function ReactorCameraView({ radioactivity, reactorTemp, signal: 
           </div>
         </div>
 
-        {/* Phone: vents, the service note, then Back */}
+        {/* Phone: vents, the service note, then Close */}
         <Louvres count={3} className="lg:hidden px-[60px] !gap-1.5" />
         <ServiceNote className="lg:hidden mx-auto w-[min(100%,15rem)] mt-1" />
-        {back("lg:hidden", "h-[54px]")}
+        {close("lg:hidden", "h-[54px]")}
       </div>
     </div>
   )

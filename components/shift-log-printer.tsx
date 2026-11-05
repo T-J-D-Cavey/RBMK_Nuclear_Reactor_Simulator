@@ -1,5 +1,6 @@
 "use client"
 
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import type { GameState, LogEntry } from "@/lib/types"
@@ -37,6 +38,7 @@ export default function ShiftLogPrinter({
   onInView?: (inView: boolean) => void
 }) {
   const [visible, setVisible] = useState(true)
+  const playSound = useSoundEffect()
   const [lamp, setLamp] = useState<Lamp>("off")
   const section = useRef<HTMLElement>(null)
   useReveal(revealSignal, visible, useCallback(() => setVisible(true), []), section)
@@ -67,7 +69,10 @@ export default function ShiftLogPrinter({
   return (
     <section ref={section} id="shift-log" className="ws3-cam-bezel cr-bay-screws rounded-md p-2 sm:p-2.5">
       <button
-        onClick={() => setVisible(!visible)}
+        onClick={() => {
+          playSound("screenToggle")
+          setVisible(!visible)
+        }}
         aria-expanded={visible}
         className="w-full flex items-center justify-between gap-2 px-1 pb-2 text-left cursor-pointer"
       >

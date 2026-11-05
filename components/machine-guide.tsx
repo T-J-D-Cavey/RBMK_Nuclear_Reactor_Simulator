@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import type { TutorialStep } from "@/lib/tutorial"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import Tutorial from "./tutorial"
 
 // The ? key in a machine modal's top left corner, opposite the X (owner, 2026-11-04: Guide A). It brings back the shift
@@ -13,6 +14,7 @@ import Tutorial from "./tutorial"
 export default function MachineGuide({ steps, onOpenChange }: { steps: TutorialStep[]; onOpenChange: (open: boolean) => void }) {
   const [open, setOpen] = useState(false)
   const keyRef = useRef<HTMLButtonElement>(null)
+  const playSound = useSoundEffect()
   const show = (next: boolean) => {
     setOpen(next)
     onOpenChange(next)
@@ -22,7 +24,10 @@ export default function MachineGuide({ steps, onOpenChange }: { steps: TutorialS
     <>
       <button
         ref={keyRef}
-        onClick={() => show(true)}
+        onClick={() => {
+          playSound("guideKey")
+          show(true)
+        }}
         aria-label="Ask the shift foreman about this panel"
         className="cr-key cr-key-black !absolute top-[calc(var(--dlg-pad,1.5rem)_+_0.375rem)] left-[calc(var(--dlg-pad,1.5rem)_+_0.375rem)] size-7 !text-[1.05rem] !tracking-normal"
       >

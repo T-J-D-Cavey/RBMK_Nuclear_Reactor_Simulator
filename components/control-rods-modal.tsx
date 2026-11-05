@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { StripDial } from "@/components/machine-dials"
 import MachineGuide from "@/components/machine-guide"
 import { rodBalance } from "@/lib/sim/reactor"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { MAINTENANCE_TUNING } from "@/lib/sim/tuning"
 import { MACHINE_GUIDES } from "@/lib/tutorial"
 import type { ControlRod } from "@/lib/types"
@@ -22,6 +23,7 @@ interface ControlRodsModalProps {
 export default function ControlRodsModal({ open, onOpenChange, controlRods, onUpdate, onGuideChange }: ControlRodsModalProps) {
   const [tempValues, setTempValues] = useState<number[]>([])
   const [isDragging, setIsDragging] = useState<number | null>(null)
+  const playSound = useSoundEffect()
 
   const anySlow = controlRods.some((rod) => rod.slow && !rod.stuck)
 
@@ -200,7 +202,13 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
               </button>
             </span>
             <span className="cr-lens-bezel flex-1">
-              <button onClick={() => onOpenChange(false)} className="cr-lens cr-lens-red w-full h-12">
+              <button
+                onClick={() => {
+                  playSound("cancel")
+                  onOpenChange(false)
+                }}
+                className="cr-lens cr-lens-red w-full h-12"
+              >
                 Cancel
               </button>
             </span>

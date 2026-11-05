@@ -4,16 +4,57 @@
 // Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
+import { existsSync } from "node:fs"
 import { DRIVE_MIN_PLAY_MS, DRIVE_STAGGER_MS, DRIVE_START_DELAY_MS, type DriveAudio, type DriveTimers, RodDriveVoices } from "../../lib/rod-drive-voices"
 import { HUM_ENTRY_MS, HUM_GAIN, HUM_PLAY_MS, HumBed } from "../../lib/hum-bed"
-import { newWarningAppeared, ROD_DRIVE_OFFSETS, rodsMoving, targetCue, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
+import { eventCues, newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, rodsMoving, SOUND_EFFECT_FILES, targetCue, TURBINE_SELECT_EFFECTS, turbineTripCue, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
 import { advanceReactor } from "../../lib/sim/reactor"
 import { seededRng } from "../../lib/sim/rng"
 import { createNewGame } from "../../lib/game-loop"
+import { startEvent } from "../../lib/game-events"
+import { EVENT_TUNING } from "../../lib/sim/tuning"
 import { getEventWarnings, getReactorWarnings } from "../../lib/game-utils"
 import type { GameState } from "../../lib/types"
 import { az5, baseState } from "./harness"
 import { makeBot, playGame } from "./bot"
+
+test("sounds: every clip is really in public/sounds, so renaming one can't silently lose it", () => {
+  for (const file of [...Object.values(SOUND_EFFECT_FILES), ROD_DRIVE_FILE]) assert.ok(existsSync(`public${file}`), file)
+})
+
+test("sounds: Cancel and Close have a clip of their own, and the other keys mix the other four", () => {
+  const presses = Object.entries(SOUND_EFFECT_FILES).filter(([, file]) => file.includes("button-press"))
+  const others = presses.filter(([effect]) => effect !== "cancel").map(([, file]) => file)
+  assert.ok(!others.includes(SOUND_EFFECT_FILES.cancel))
+  assert.equal(new Set(others).size, 4)
+})
+
+test("sounds: the turbine selector has one clip for Idle and Pumps, and another for Grid", () => {
+  assert.equal(TURBINE_SELECT_EFFECTS.idle, TURBINE_SELECT_EFFECTS.pumps)
+  assert.notEqual(SOUND_EFFECT_FILES[TURBINE_SELECT_EFFECTS.grid], SOUND_EFFECT_FILES[TURBINE_SELECT_EFFECTS.idle])
+})
+
+test("event sounds: each clip plays once, as the real event starts; a rod jam and a grid hold have none", () => {
+  const rng = seededRng(1)
+  const calm = createNewGame("easy")
+  for (const [kind, cue] of [["power-cut", "powerCutEvent"], ["pump-trip", "pumpTripEvent"], ["signal-loss", "reactorHallEvent"]] as const) {
+    const { activeEvents } = startEvent(calm, kind, EVENT_TUNING.easy, rng)
+    assert.deepEqual(eventCues([], activeEvents), [cue])
+    assert.deepEqual(eventCues(activeEvents.map((event) => event.id), activeEvents), [], "not again while it lasts")
+  }
+  for (const kind of ["rod-stuck", "grid-hold"] as const) {
+    const { activeEvents } = startEvent(calm, kind, EVENT_TUNING.easy, rng)
+    assert.equal(activeEvents.length, 1)
+    assert.deepEqual(eventCues([], activeEvents), [])
+  }
+})
+
+test("event sounds: a turbine trip sounds once as it trips, and not on a saved game that has already tripped", () => {
+  assert.equal(turbineTripCue(false, true), "turbineTrip")
+  assert.equal(turbineTripCue(true, true), null, "not again while the flag stays up")
+  assert.equal(turbineTripCue(true, false), null, "not as the player resets it")
+  assert.equal(turbineTripCue(null, true), null, "not on loading a save")
+})
 
 // A manual clock: timers fire only when the test moves time on
 class Clock implements DriveTimers {

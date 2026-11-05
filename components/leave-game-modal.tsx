@@ -1,6 +1,7 @@
 "use client"
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { AlertTriangle } from "lucide-react"
 
 interface LeaveGameModalProps {
@@ -10,6 +11,7 @@ interface LeaveGameModalProps {
 }
 
 export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModalProps) {
+  const playSound = useSoundEffect()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="cr-dialog sm:max-w-md">
@@ -33,12 +35,24 @@ export function LeaveGameModal({ open, onOpenChange, onConfirm }: LeaveGameModal
             (owner, 2026-10-26) */}
         <div className="flex gap-3">
           <span className="cr-lens-bezel flex-1">
-            <button onClick={onConfirm} className="cr-lens cr-lens-amber w-full h-12">
+            <button
+              onClick={() => {
+                playSound("quit")
+                onConfirm()
+              }}
+              className="cr-lens cr-lens-amber w-full h-12"
+            >
               Quit
             </button>
           </span>
           <span className="cr-lens-bezel flex-1">
-            <button onClick={() => onOpenChange(false)} className="cr-lens cr-lens-red w-full h-12">
+            <button
+              onClick={() => {
+                playSound("cancel")
+                onOpenChange(false)
+              }}
+              className="cr-lens cr-lens-red w-full h-12"
+            >
               Cancel
             </button>
           </span>

@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { GripSwitch, JewelLamp } from "@/components/switchgear"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 
 interface SoundModalProps {
   open: boolean
@@ -42,7 +43,9 @@ function SoundSwitch({ id, name, hint, covers, on, onToggle, edge }: {
   )
 }
 
+// The two switches make no sound of their own: all they do is turn sound on or off (owner, 2026-11-05)
 export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsEnabled, soundVolume, onAlarmsUpdate, onEffectsUpdate, onVolumeUpdate }: SoundModalProps) {
+  const playSound = useSoundEffect()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem]">
@@ -102,7 +105,13 @@ export default function SoundModal({ open, onOpenChange, alarmsEnabled, effectsE
           </div>
 
           <span className="cr-lens-bezel w-full">
-            <button onClick={() => onOpenChange(false)} className="cr-lens w-full h-11 sm:h-12">
+            <button
+              onClick={() => {
+                playSound("cancel")
+                onOpenChange(false)
+              }}
+              className="cr-lens w-full h-11 sm:h-12"
+            >
               Close
             </button>
           </span>

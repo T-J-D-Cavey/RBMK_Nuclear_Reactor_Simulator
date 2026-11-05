@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArcDial } from "@/components/machine-dials"
 import MachineGuide from "@/components/machine-guide"
 import { JobKey } from "@/components/switchgear"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
+import { TURBINE_SELECT_EFFECTS } from "@/lib/sound-cues"
 import { MACHINE_GUIDES } from "@/lib/tutorial"
 import type { TurbineMode } from "@/lib/types"
 
@@ -44,6 +46,7 @@ const TILES: { mode: TurbineMode; label: string; lit: "green" | "amber" | "red" 
 
 export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, ejectorReady, onRunEjector, onUpdate, onGuideChange }: TurbineModalProps) {
   const [mode, setMode] = useState<TurbineMode>("idle")
+  const playSound = useSoundEffect()
 
   useEffect(() => {
     if (open) {
@@ -58,7 +61,13 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
   }
 
   const current = POSITIONS.findIndex((p) => p.mode === mode)
-  const turnTo = (index: number) => setMode(POSITIONS[Math.max(0, Math.min(POSITIONS.length - 1, index))].mode)
+  // Sounds only as the selector reaches a new position, so it's silent against its end stops
+  const select = (next: TurbineMode) => {
+    if (next === mode) return
+    playSound(TURBINE_SELECT_EFFECTS[next])
+    setMode(next)
+  }
+  const turnTo = (index: number) => select(POSITIONS[Math.max(0, Math.min(POSITIONS.length - 1, index))].mode)
 
   // Press and drag left or right to turn the knob through its detents; it stops at Pumps and Grid.
   // A drag swallows the click that follows it, so only a plain click turns the knob one step clockwise.
@@ -72,7 +81,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
       return
     }
     // Wraps from Grid back to Pumps
-    setMode(POSITIONS[(current + 1) % POSITIONS.length].mode)
+    select(POSITIONS[(current + 1) % POSITIONS.length].mode)
   }
 
   const handleKnobKey = (e: React.KeyboardEvent) => {
@@ -126,7 +135,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
                     />
                     <button
                       aria-pressed={selected}
-                      onClick={() => setMode(p.mode)}
+                      onClick={() => select(p.mode)}
                       className={`cr-selector-legend ${selected ? "on" : ""}`}
                       style={{
                         left: `${Math.round(140 + LEGEND_RADIUS * Math.sin(rad))}px`,
@@ -187,7 +196,13 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
               </button>
             </span>
             <span className="cr-lens-bezel flex-1">
-              <button onClick={() => onOpenChange(false)} className="cr-lens cr-lens-red w-full h-12">
+              <button
+                onClick={() => {
+                  playSound("cancel")
+                  onOpenChange(false)
+                }}
+                className="cr-lens cr-lens-red w-full h-12"
+              >
                 Cancel
               </button>
             </span>

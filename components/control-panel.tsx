@@ -5,6 +5,7 @@ import { Cctv, Home, Pause, Play, Volume2, VolumeX } from "lucide-react"
 
 import { type GameState, THRESHOLDS, getShiftTime } from "@/lib/types"
 import type { SoundEffect } from "@/lib/sound-cues"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { type HallSignal, formatTime, checkEventWarnings, checkWarnings, getHallSignal, getWarningFlags } from "@/lib/game-utils"
 import { isPowerOnTarget } from "@/lib/game-mechanics"
 import { canRunBalancer, canRunEjector, runBalancer, runEjector } from "@/lib/maintenance"
@@ -21,7 +22,6 @@ interface ControlPanelProps {
   updateGameState: (updates: Partial<GameState>) => void
   onHomeClick: () => void
   onSoundClick: () => void
-  onSoundEffect: (effect: SoundEffect) => void // confirmations and AZ-5 (bible §15)
   logLampLit: boolean // a new shift-log message hasn't been seen yet
   onSeeWarnings: () => void
   onSeeLog: () => void
@@ -89,7 +89,12 @@ function Machine({ label, ariaLabel, disabled, tutorial, onOpen, children }: { l
   )
 }
 
-export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick, onSoundEffect, logLampLit, onSeeWarnings, onSeeLog, briefing = false }: ControlPanelProps) {
+export default function ControlPanel({ gameState, onTogglePause, updateGameState, onHomeClick, onSoundClick, logLampLit, onSeeWarnings, onSeeLog, briefing = false }: ControlPanelProps) {
+  const playSound = useSoundEffect()
+  const pressing = (effect: SoundEffect, action: () => void) => () => {
+    playSound(effect)
+    action()
+  }
   const [rodsModalOpen, setRodsModalOpen] = useState(false)
   const [pumpsModalOpen, setPumpsModalOpen] = useState(false)
   const [turbineModalOpen, setTurbineModalOpen] = useState(false)
@@ -123,6 +128,11 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
     setGuideOpen(open)
     updateGameState({ isPaused: open })
   }
+  const openMachine = (open: (on: boolean) => void) => () => {
+    if (paused) return
+    playSound("machineKey")
+    open(true)
+  }
   // The green screens are right-justified, as on a real numeric readout: each digit keeps its place as the value rises
   // and falls. The LED meters stay centred (owner, 2026-11-04).
   const vfd = "font-mono font-bold vfd-display !pl-1 !pr-2 !py-0.5 text-right text-sm"
@@ -140,12 +150,12 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           </h1>
 
           <span className="cr-bezel col-start-1 row-start-2" data-tutorial="desk-keys">
-            <button className="cr-key cr-key-cream w-[34px] h-8 px-0" title="Return to Menu" aria-label="Return to menu" onClick={onHomeClick}>
+            <button className="cr-key cr-key-cream w-[34px] h-8 px-0" title="Return to Menu" aria-label="Return to menu" onClick={pressing("homeKey", onHomeClick)}>
               <Home className="h-4 w-4" />
             </button>
           </span>
           <span className="cr-bezel col-start-6 row-start-2" data-tutorial="desk-keys">
-            <button className="cr-key cr-key-grey w-[34px] h-8 px-0" title="Sound Settings" aria-label="Sound settings" onClick={onSoundClick}>
+            <button className="cr-key cr-key-grey w-[34px] h-8 px-0" title="Sound Settings" aria-label="Sound settings" onClick={pressing("soundKey", onSoundClick)}>
               {gameState.alarmsEnabled || gameState.effectsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </button>
           </span>
@@ -155,7 +165,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             colour="red"
             label="Warning"
             ariaLabel="Show the alarm monitor"
-            onClick={onSeeWarnings}
+            onClick={pressing("warningKey", onSeeWarnings)}
             className="col-start-3 row-start-2"
           />
           <LampKey
@@ -163,14 +173,14 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             colour="amber"
             label="Message"
             ariaLabel="Show the shift log"
-            onClick={onSeeLog}
+            onClick={pressing("messageKey", onSeeLog)}
             className="col-start-4 row-start-2"
           />
 
           {/* Pause lights while the simulation is paused */}
           <span className="cr-bezel col-start-2 row-start-2" data-tutorial="desk-keys">
             <button
-              onClick={onTogglePause}
+              onClick={pressing("pauseKey", onTogglePause)}
               aria-label={paused ? "Resume" : "Pause"}
               className={`cr-key ${paused ? "cr-key-red-lit" : "cr-key-red [--cap-ink:#fecaca]"} w-[34px] h-8 px-0 !text-[0.75rem] !tracking-[0.08em]`}
             >
@@ -179,7 +189,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           </span>
           <span className="cr-bezel col-start-5 row-start-2" data-tutorial="desk-keys">
             <button
-              onClick={() => setShowReactorView(true)}
+              onClick={pressing("cameraKey", () => setShowReactorView(true))}
               aria-label="View the reactor camera"
               className="cr-key cr-key-teal w-[34px] h-8 px-0 !text-[0.75rem] !tracking-[0.08em]"
             >
@@ -251,7 +261,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
 
           <div className="grid grid-cols-3 gap-1.5">
             {/* Water pumps: on (green) over powered (amber), one column per pump */}
-            <Machine label="Pumps" tutorial="pumps" ariaLabel="Manage the water pumps" disabled={keysOff} onOpen={() => !paused && setPumpsModalOpen(true)}>
+            <Machine label="Pumps" tutorial="pumps" ariaLabel="Manage the water pumps" disabled={keysOff} onOpen={openMachine(setPumpsModalOpen)}>
               <div className="h-9 bg-black/80 border-2 border-neutral-800 rounded-md shadow-inner flex items-center justify-center">
                 <div className="grid grid-cols-4 gap-x-1.5">
                   {gameState.waterPumps.map((pump, idx) => (
@@ -265,7 +275,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             </Machine>
 
             {/* Control rods: each rod's insertion on the VFD (0% at the top), the ten bars across its full width */}
-            <Machine label="Rods" tutorial="rods" ariaLabel="Manage the control rods" disabled={keysOff} onOpen={() => !paused && setRodsModalOpen(true)}>
+            <Machine label="Rods" tutorial="rods" ariaLabel="Manage the control rods" disabled={keysOff} onOpen={openMachine(setRodsModalOpen)}>
               <div className={`h-9 vfd-display !px-0 !py-0.5 w-full relative flex flex-col justify-between`}>
                 <div className="w-full border-t-2 border-black/60 h-0"></div>
                 <div className="absolute left-1 right-1 top-1 bottom-1 flex justify-between">
@@ -291,7 +301,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
             </Machine>
 
             {/* Turbine: on the grid (green), over-pressure (red, flashing at steam 300 and above), feeding the pumps (amber) */}
-            <Machine label="Turbine" tutorial="turbine" ariaLabel="Manage the turbine" disabled={keysOff} onOpen={() => !paused && setTurbineModalOpen(true)}>
+            <Machine label="Turbine" tutorial="turbine" ariaLabel="Manage the turbine" disabled={keysOff} onOpen={openMachine(setTurbineModalOpen)}>
               <div className={`h-9 bg-black/80 border-2 border-neutral-800 rounded-md shadow-inner flex items-center justify-center gap-1.5`}>
                 <div className="flex flex-col gap-1 items-center">
                   <div className={`retro-lamp w-2.5 h-2.5 rounded-full ${gameState.turbineConnected ? "bg-emerald-400 text-emerald-400 on shadow-[0_0_10px_currentColor]" : "bg-emerald-900/20"}`} />
@@ -321,7 +331,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         controlRods={gameState.controlRods}
         onUpdate={(rods, az5) => {
           updateGameState(az5 ? { controlRods: rods, az5PressedAt: getShiftTime(gameState) } : { controlRods: rods })
-          onSoundEffect(az5 ? "az5" : "rodConfirm")
+          playSound(az5 ? "az5" : "rodsApply")
         }}
         onGuideChange={handleGuideChange}
       />
@@ -335,11 +345,13 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         locked={gameState.balancerLock > 0}
         onRunBalancer={() => {
           const started = runBalancer(gameState)
-          if (started) updateGameState(started)
+          if (!started) return
+          updateGameState(started)
+          playSound("waterBalancerRun")
         }}
         onUpdate={(pumps) => {
           updateGameState({ waterPumps: pumps })
-          onSoundEffect("pumpConfirm")
+          playSound("pumpsApply")
         }}
         onGuideChange={handleGuideChange}
       />
@@ -352,11 +364,13 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         ejectorReady={canRunEjector(gameState)}
         onRunEjector={() => {
           const started = runEjector(gameState)
-          if (started) updateGameState(started)
+          if (!started) return
+          updateGameState(started)
+          playSound("turbineVacuumRun")
         }}
         onUpdate={(mode) => {
           updateGameState({ turbineMode: mode, turbineConnected: mode === "grid" })
-          onSoundEffect("turbineConfirm")
+          playSound("turbineApply")
         }}
         onGuideChange={handleGuideChange}
       />
@@ -369,7 +383,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           signal={signal}
           elapsedSeconds={getShiftElapsedSeconds(gameState.gameTime, gameState.timeLimit, gameState.mode)}
           clockStartMs={getCameraClockStartMs(gameState.mode)}
-          onBack={() => setShowReactorView(false)}
+          onClose={() => setShowReactorView(false)}
         />
       )}
     </div>

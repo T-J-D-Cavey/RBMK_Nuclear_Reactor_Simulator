@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { ArcDial } from "@/components/machine-dials"
 import MachineGuide from "@/components/machine-guide"
 import { GripSwitch, JewelLamp, JobKey } from "@/components/switchgear"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { MACHINE_GUIDES } from "@/lib/tutorial"
 import type { WaterPump } from "@/lib/types"
 
@@ -23,6 +24,7 @@ interface WaterPumpsModalProps {
 
 export default function WaterPumpsModal({ open, onOpenChange, waterPumps, balance, balancerReady, locked, onRunBalancer, onUpdate, onGuideChange }: WaterPumpsModalProps) {
   const [tempStates, setTempStates] = useState<boolean[]>([])
+  const playSound = useSoundEffect()
 
   // Initialise only when the modal opens: pump flow changes every second and must not reset choices.
   useEffect(() => {
@@ -95,6 +97,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, balanc
                       label={`Pump ${pump.id}`}
                       describedBy={`pump-${pump.id}-status`}
                       onToggle={() => {
+                        playSound("pumpSwitch")
                         const newStates = [...tempStates]
                         newStates[idx] = !newStates[idx]
                         setTempStates(newStates)
@@ -113,7 +116,13 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, balanc
               </button>
             </span>
             <span className="cr-lens-bezel flex-1">
-              <button onClick={() => onOpenChange(false)} className="cr-lens cr-lens-red w-full h-12">
+              <button
+                onClick={() => {
+                  playSound("cancel")
+                  onOpenChange(false)
+                }}
+                className="cr-lens cr-lens-red w-full h-12"
+              >
                 Cancel
               </button>
             </span>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { X } from "lucide-react"
 import { type Box, type GuidePlan, type TutorialStep, GUIDE_EDGE, planGuide } from "@/lib/tutorial"
 import { useMediaQuery } from "@/hooks/use-element-height"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { usePrefersReducedMotion } from "./presentation-use-reduced-motion"
 import TutorialEngineer from "./tutorial-engineer"
 
@@ -42,6 +43,7 @@ function readHoles(step: TutorialStep): Hole[] {
 // view clear of him. Close, or Begin shift on the last sheet, ends it. With inModal he is talking through a machine's
 // modal instead (components/machine-guide): the modal moves rather than the page, and the end goes back to it.
 export default function Tutorial({ steps, onFinish, inModal = false }: { steps: TutorialStep[]; onFinish: () => void; inModal?: boolean }) {
+  const playSound = useSoundEffect()
   const [index, setIndex] = useState(0)
   const [chars, setChars] = useState(0)
   const [holes, setHoles] = useState<Hole[]>([])
@@ -205,7 +207,14 @@ export default function Tutorial({ steps, onFinish, inModal = false }: { steps: 
             <span className="cr-tut-meta">
               Shift foreman · {String(index + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
             </span>
-            <button className="cr-tut-close" onClick={finish} aria-label={inModal ? "Close the guide and return to the panel" : "Close the briefing and start the shift"}>
+            <button
+              className="cr-tut-close"
+              onClick={() => {
+                playSound("cancel")
+                finish()
+              }}
+              aria-label={inModal ? "Close the guide and return to the panel" : "Close the briefing and start the shift"}
+            >
               <X className="size-4" />
             </button>
           </div>
@@ -223,10 +232,24 @@ export default function Tutorial({ steps, onFinish, inModal = false }: { steps: 
             <span className="sr-only">{step.text}</span>
           </p>
           <div className="cr-tut-footer">
-            <button className="cr-tut-btn" onClick={prev} disabled={index === 0}>
+            <button
+              className="cr-tut-btn"
+              onClick={() => {
+                playSound("guideKey")
+                prev()
+              }}
+              disabled={index === 0}
+            >
               ‹ Previous
             </button>
-            <button ref={nextRef} className="cr-tut-btn" onClick={next}>
+            <button
+              ref={nextRef}
+              className="cr-tut-btn"
+              onClick={() => {
+                playSound("guideKey")
+                next()
+              }}
+            >
               {!last ? "Next ›" : inModal ? "Back to the panel ›" : "Begin shift ›"}
             </button>
           </div>

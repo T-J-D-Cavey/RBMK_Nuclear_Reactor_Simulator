@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
-import { newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, SOUND_EFFECT_FILES, targetCue, type SoundEffect } from "@/lib/sound-cues";
+import { eventCues, LONG_EFFECTS, newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, SOUND_EFFECT_FILES, targetCue, turbineTripCue, type SoundEffect } from "@/lib/sound-cues";
+import type { GameEvent } from "@/lib/types";
 import { RodDriveVoices } from "@/lib/rod-drive-voices";
 import { HumBed } from "@/lib/hum-bed";
 
@@ -20,6 +21,7 @@ const ALARM_VOLUME = 1 / 3; // alarms, relative to the volume slider
 interface AudioManagerProps {
   alarmsOn: boolean; // the sound modal's Alarms switch, off while paused
   effectsOn: boolean; // the sound modal's Sound Effects switch, off while paused
+  pressesOn: boolean; // that switch alone: the keys the player presses still sound during a pause
   soundVolume: number;
   generalAlarmIsNeeded: boolean;
   eventAlarm: boolean;
@@ -32,11 +34,14 @@ interface AudioManagerProps {
   warningKeys: string[];
   lastLogId: string | undefined;
   powerOnTarget: boolean | null; // null when there is no power target
+  activeEvents: GameEvent[];
+  turbineTripped: boolean;
 }
 
 export function useAudioManager({
   alarmsOn,
   effectsOn,
+  pressesOn,
   soundVolume,
   generalAlarmIsNeeded,
   eventAlarm,
@@ -48,6 +53,8 @@ export function useAudioManager({
   warningKeys,
   lastLogId,
   powerOnTarget,
+  activeEvents,
+  turbineTripped,
 }: AudioManagerProps) {
   // --- REFS ---
   const humRef = useRef<HumBed | null>(null);
@@ -65,6 +72,8 @@ export function useAudioManager({
   const rodDriveRef = useRef<RodDriveVoices | null>(null);
   const effectsOnRef = useRef(effectsOn);
   effectsOnRef.current = effectsOn;
+  const pressesOnRef = useRef(pressesOn);
+  pressesOnRef.current = pressesOn;
   const volumeRef = useRef(soundVolume);
   volumeRef.current = soundVolume;
 
@@ -141,6 +150,7 @@ export function useAudioManager({
     humRef.current?.setVolume(soundVolume);
     setAlarmVolume(soundVolume);
     rodDriveRef.current?.setVolume(soundVolume);
+    for (const audio of effectAudioRef.current.values()) audio.volume = soundVolume;
   }, [soundVolume, setAlarmVolume]);
 
   // Hum Logic 
@@ -210,14 +220,41 @@ export function useAudioManager({
   }, [alarmsOn, highSteamOrXenon]);
 
   // --- Sound effects ---
-  // A one-off clip, from the start. Rod, pump and turbine confirmations and AZ-5 come from the control panel.
-  const playEffect = useCallback((effect: SoundEffect) => {
+  const playClip = useCallback((effect: SoundEffect) => {
     const audio = effectAudioRef.current.get(SOUND_EFFECT_FILES[effect]);
-    if (!audio || !effectsOnRef.current) return;
+    if (!audio) return;
     audio.currentTime = 0;
     audio.volume = volumeRef.current;
     audio.play().catch((e) => console.warn("Sound effect blocked", e));
   }, []);
+
+  // A one-off clip the game sets off, which stays silent while it's paused
+  const playEffect = useCallback((effect: SoundEffect) => {
+    if (effectsOnRef.current) playClip(effect);
+  }, [playClip]);
+
+  // A clip for something the player has pressed. It sounds during a pause too, or Play would be silent. This runs before
+  // the press reaches the page's own handler, so it starts the audio itself, or the first press would be lost.
+  const playPress = useCallback((effect: SoundEffect) => {
+    if (!pressesOnRef.current) return;
+    initializeAudio();
+    playClip(effect);
+  }, [initializeAudio, playClip]);
+
+  // The run clips stop with the game, or with the Sound Effects switch, and pick up where they left off
+  const interruptedRef = useRef(new Set<HTMLAudioElement>());
+  useEffect(() => {
+    for (const effect of LONG_EFFECTS) {
+      const audio = effectAudioRef.current.get(SOUND_EFFECT_FILES[effect]);
+      if (!audio) continue;
+      if (!effectsOn && !audio.paused) {
+        audio.pause();
+        interruptedRef.current.add(audio);
+      } else if (effectsOn && interruptedRef.current.delete(audio)) {
+        audio.play().catch((e) => console.warn("Sound effect blocked", e));
+      }
+    }
+  }, [effectsOn]);
 
   // Rod drive: one voice per moving rod, up to three; silent while paused or with the effects off
   useEffect(() => {
@@ -261,6 +298,25 @@ export function useAudioManager({
     if (cue) playEffect(cue);
   }, [loaded, powerOnTarget, playEffect]);
 
+  // Event clips: a power cut, a pump trip or the signal from the reactor hall going. Events already running in a saved
+  // game have had theirs.
+  const knownEventIds = useRef<string[] | null>(null); // null until the save has loaded
+  useEffect(() => {
+    if (!loaded) return;
+    const known = knownEventIds.current;
+    knownEventIds.current = activeEvents.map((event) => event.id);
+    if (known) for (const cue of eventCues(known, activeEvents)) playEffect(cue);
+  }, [loaded, activeEvents, playEffect]);
+
+  // The turbine trips: a saved game already tripped has had its clip
+  const wasTripped = useRef<boolean | null>(null); // null until the save has loaded
+  useEffect(() => {
+    if (!loaded) return;
+    const cue = turbineTripCue(wasTripped.current, turbineTripped);
+    wasTripped.current = turbineTripped;
+    if (cue) playEffect(cue);
+  }, [loaded, turbineTripped, playEffect]);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -273,11 +329,12 @@ export function useAudioManager({
       if (highReactorTempAlarmRef.current) { highReactorTempAlarmRef.current.pause(); highReactorTempAlarmRef.current = null; }
       if (highSteamOrXenonRef.current) { highSteamOrXenonRef.current.pause(); highSteamOrXenonRef.current = null; }
 
-      for (const audio of effectAudioRef.current.values()) audio.pause();
+      // Only the run clips stop: Quit and Main Menu leave this page, and their click has to ring out
+      for (const effect of LONG_EFFECTS) effectAudioRef.current.get(SOUND_EFFECT_FILES[effect])?.pause();
       effectAudioRef.current.clear();
       if (rodDriveRef.current) { rodDriveRef.current.dispose(); rodDriveRef.current = null; }
     };
   }, []);
 
-  return { initializeAudio, playEffect };
+  return { initializeAudio, playPress };
 }

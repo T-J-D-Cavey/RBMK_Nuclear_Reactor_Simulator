@@ -1,28 +1,74 @@
 // When the sound effects play (bible §15, plan §8 Q5). Pure, so the triggers can be checked without a browser;
 // hooks/use-audio-manager.ts plays the clips.
-import type { ControlRod } from "./types"
+import type { ControlRod, EventKind, GameEvent, TurbineMode } from "./types"
 
-export type SoundEffect =
-  | "rodConfirm"
-  | "turbineConfirm"
-  | "pumpConfirm"
-  | "az5"
-  | "warningBleep"
-  | "shiftLogPrinter"
-  | "targetInside"
-  | "targetOutside"
+const button = (clip: 1 | 2 | 3 | 4 | 5) => `/sounds/button-press-${clip}.mp3`
 
-// Clips the owner provided (2026-10-14; target clips 2026-10-20), served from public/sounds. Rods and the turbine
-// share a switch clunk.
-export const SOUND_EFFECT_FILES: Record<SoundEffect, string> = {
-  rodConfirm: "/sounds/switch-confirm.mp3",
-  turbineConfirm: "/sounds/switch-confirm.mp3",
-  pumpConfirm: "/sounds/pump-confirm.mp3",
+// Clips the owner provided, served from public/sounds. To change what a key sounds like, change it here.
+export const SOUND_EFFECT_FILES = {
+  // Every Cancel and Close, and the X on any modal: always this one (owner, 2026-11-05)
+  cancel: button(5),
+
+  // Every other key: a mixture of the other four (owner, 2026-11-05)
+  rodsApply: button(1),
+  turbineApply: button(2),
+  pumpsApply: button(3),
+  quit: button(4),
+  homeKey: button(2),
+  pauseKey: button(3),
+  warningKey: button(1),
+  messageKey: button(4),
+  cameraKey: button(2),
+  soundKey: button(3),
+  machineKey: button(1),
+  guideKey: button(4),
+  screenToggle: button(2),
+  mainMenu: button(4),
+
+  pumpSwitch: "/sounds/pump-confirm.mp3", // a pump's switch, as it turns
+  turbineSelectIdleOrPumps: "/sounds/electricity sound 1.mp3", // the turbine's mode selector, as it reaches a position
+  turbineSelectGrid: "/sounds/electricity sound 2.mp3",
+  turbineVacuumRun: "/sounds/turbine-vacume-run.mp3",
+  waterBalancerRun: "/sounds/water-balancer-run.mp3",
+
+  // As an event starts (owner, 2026-11-05). The turbine trip borrows the selector's Grid clip, as it falls off the grid.
+  powerCutEvent: "/sounds/power cut event.mp3",
+  pumpTripEvent: "/sounds/pump trip event.mp3",
+  reactorHallEvent: "/sounds/reactor hall event.mp3",
+  turbineTrip: "/sounds/electricity sound 2.mp3",
+
   az5: "/sounds/az5.mp3",
   warningBleep: "/sounds/warning-bleep.mp3",
   shiftLogPrinter: "/sounds/shift-log-printer.mp3",
   targetInside: "/sounds/target-inside.mp3",
   targetOutside: "/sounds/target-outside.mp3",
+} satisfies Record<string, string>
+
+export type SoundEffect = keyof typeof SOUND_EFFECT_FILES
+
+// The clips long enough to stop and pick up again with the game: the rest are over in a moment or two
+export const LONG_EFFECTS: SoundEffect[] = ["turbineVacuumRun", "waterBalancerRun", "powerCutEvent", "reactorHallEvent"]
+
+export const TURBINE_SELECT_EFFECTS: Record<TurbineMode, SoundEffect> = {
+  idle: "turbineSelectIdleOrPumps",
+  pumps: "turbineSelectIdleOrPumps",
+  grid: "turbineSelectGrid",
+}
+
+// The events with a clip of their own. A rod jam and a grid hold have none. A turbine trip isn't an event in this
+// list, so it has its own trigger (turbineTripCue).
+const EVENT_EFFECTS: Partial<Record<EventKind, SoundEffect>> = {
+  "power-cut": "powerCutEvent",
+  "pump-trip": "pumpTripEvent",
+  "signal-loss": "reactorHallEvent",
+}
+
+// The clips for events that have started since the last reading, so each sounds once, as it starts
+export function eventCues(knownIds: string[], events: GameEvent[]): SoundEffect[] {
+  return events.flatMap((event) => {
+    const effect = EVENT_EFFECTS[event.type]
+    return effect && !knownIds.includes(event.id) ? [effect] : []
+  })
 }
 
 // The power output has come back inside its target range, or gone outside it (owner, 2026-10-20). Each reading is
@@ -31,6 +77,11 @@ export const SOUND_EFFECT_FILES: Record<SoundEffect, string> = {
 export function targetCue(prev: boolean | null, next: boolean | null): "targetInside" | "targetOutside" | null {
   if (prev === null || next === null || prev === next) return null
   return next ? "targetInside" : "targetOutside"
+}
+
+// Once, as the turbine trips, not for as long as its flag stays up. Each reading is null until the save has loaded.
+export function turbineTripCue(prev: boolean | null, next: boolean): "turbineTrip" | null {
+  return prev === false && next ? "turbineTrip" : null
 }
 
 // The rod drive: one voice per moving rod, at most three (owner). The clip is 104 s, longer than any rod's travel

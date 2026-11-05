@@ -4,6 +4,7 @@ import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 
+import { useSoundEffect } from '@/hooks/use-sound-effect'
 import { cn } from '@/lib/utils'
 
 function Dialog({
@@ -54,6 +55,7 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const playSound = useSoundEffect()
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -69,6 +71,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
+            onClick={() => playSound('cancel')}
             className="cr-key cr-key-black !absolute top-[calc(var(--dlg-pad,1.5rem)_+_0.375rem)] right-[calc(var(--dlg-pad,1.5rem)_+_0.375rem)] size-7 !tracking-normal disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon />

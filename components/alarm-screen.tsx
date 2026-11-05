@@ -1,5 +1,6 @@
 "use client"
 
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import type { Warning } from "@/lib/game-utils"
@@ -26,6 +27,7 @@ function segmentsFor(text: string): Segment[] {
 // on a hidden screen, whether there are any. The header's "See Warning" key (revealSignal) opens it and scrolls it into view.
 export default function AlarmScreen({ warnings, revealSignal = 0 }: { warnings: Warning[]; revealSignal?: number }) {
   const [visible, setVisible] = useState(true)
+  const playSound = useSoundEffect()
   const reduced = usePrefersReducedMotion()
   const section = useRef<HTMLElement>(null)
   useReveal(revealSignal, visible, useCallback(() => setVisible(true), []), section)
@@ -48,7 +50,10 @@ export default function AlarmScreen({ warnings, revealSignal = 0 }: { warnings: 
   return (
     <section ref={section} id="alarm-monitor" className="ws3-cam-bezel cr-bay-screws rounded-md p-2 sm:p-2.5">
       <button
-        onClick={() => setVisible(!visible)}
+        onClick={() => {
+          playSound("screenToggle")
+          setVisible(!visible)
+        }}
         aria-expanded={visible}
         className="w-full flex items-center justify-between gap-2 px-1 pb-2 text-left"
       >

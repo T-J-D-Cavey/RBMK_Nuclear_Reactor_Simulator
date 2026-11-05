@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, type CSSProperties, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import { useSoundEffect } from "@/hooks/use-sound-effect"
 import type { GameState } from "@/lib/types"
 import { useTypewriter } from "@/hooks/use-typewriter"
 import { usePrefersReducedMotion } from "@/components/presentation-use-reduced-motion"
@@ -244,6 +245,7 @@ function EndCamera({ kind, timestamp, reduced }: { kind: EndingKind; timestamp: 
 // message and the paper report.
 export default function EndScreen({ kind, gameState, title, message, lead, report }: EndScreenProps) {
   const router = useRouter()
+  const playSound = useSoundEffect()
 
   // The end screen replaces the game page in place, so the browser keeps the player's scroll position (usually
   // well down the page on a phone). Start at the top, with the camera in view. iOS Safari needs more than one
@@ -279,6 +281,7 @@ export default function EndScreen({ kind, gameState, title, message, lead, repor
   })
 
   const handleReturnToMenu = () => {
+    playSound("mainMenu")
     localStorage.removeItem("chernobyl-game-state")
     router.replace("/") // as leaving mid-game: the finished game leaves the history
   }
