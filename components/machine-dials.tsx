@@ -126,7 +126,8 @@ const STRIPS = {
 
 // A cream strip in a black case with a sliding hairline pointer and no colour zones, as the rod balance is plain: a
 // right-heavy core leans right. `value` is -1 (left) to 1 (right). The scale is drawn for the strip's width, so its
-// lines and words keep their weight on a phone.
+// lines and words keep their weight on a phone. The pointer waits for that width: its slide is animated, so drawn sooner
+// it would sweep in from off the strip each time the modal opens.
 export function StripDial({ value, compact = false }: { value: number; compact?: boolean }) {
   const [ref, size] = useElementSize<HTMLDivElement>()
   const strip = compact ? STRIPS.compact : STRIPS.full
@@ -153,10 +154,12 @@ export function StripDial({ value, compact = false }: { value: number; compact?:
           {!compact && <text x={middle} y={12} className="cr-dial-word" textAnchor="middle">BALANCED</text>}
           <text x={x(1)} y={compact ? 26 : 12} className="cr-dial-word" textAnchor="end">RIGHT</text>
           <text x={middle} y={compact ? 26 : 45} className="cr-dial-word" textAnchor="middle">ROD BALANCE</text>
-          <g className="cr-dial-needle" style={{ transform: `translateX(${round(x((clamped + 1) / 2) - middle)}px)` }}>
-            <line x1={middle} y1={strip.pointerTop} x2={middle} y2={strip.pointerBottom} stroke="#111" strokeWidth={1.5} />
-            <path d={`M${middle - 5} ${strip.arrowBase} L${middle} ${strip.arrowTip} L${middle + 5} ${strip.arrowBase} Z`} fill="#111" />
-          </g>
+          {size !== null && (
+            <g className="cr-dial-needle" style={{ transform: `translateX(${round(x((clamped + 1) / 2) - middle)}px)` }}>
+              <line x1={middle} y1={strip.pointerTop} x2={middle} y2={strip.pointerBottom} stroke="#111" strokeWidth={1.5} />
+              <path d={`M${middle - 5} ${strip.arrowBase} L${middle} ${strip.arrowTip} L${middle + 5} ${strip.arrowBase} Z`} fill="#111" />
+            </g>
+          )}
         </svg>
       </div>
     </div>

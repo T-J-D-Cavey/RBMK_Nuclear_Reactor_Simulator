@@ -2,15 +2,13 @@
 // turbine and pump dialogs run their maintenance jobs with
 
 // Pistol-grip control switch: the grip turns left to the off legend and right to the on legend
-// `locked` shows nothing at all: the switch looks the same and simply can't be turned (owner, 2026-11-04: Pumps B2)
-export function GripSwitch({ id, on, offLegend, onLegend, label, describedBy, locked = false, onToggle }: {
+export function GripSwitch({ id, on, offLegend, onLegend, label, describedBy, onToggle }: {
   id: string
   on: boolean
   offLegend: string
   onLegend: string
   label: string
   describedBy?: string
-  locked?: boolean
   onToggle: () => void
 }) {
   return (
@@ -24,7 +22,6 @@ export function GripSwitch({ id, on, offLegend, onLegend, label, describedBy, lo
         aria-pressed={on}
         aria-label={label}
         aria-describedby={describedBy}
-        disabled={locked}
         onClick={onToggle}
         className={`cr-grip ${on ? "on" : ""}`}
       />
@@ -33,25 +30,24 @@ export function GripSwitch({ id, on, offLegend, onLegend, label, describedBy, lo
   )
 }
 
-// A maintenance job's blue key on its plate, with a Ready tile the plate's width under it: lit green when a press would
-// do something, grey otherwise (owner, 2026-11-04: Turbine B2, Pumps B2).
+// A maintenance job's blue key on its plate. It goes dark and can't be pressed while a press would do nothing, as it
+// won't just after one (owner, 2026-11-05).
 export function JobKey({ ready, ariaLabel, tutorial, onRun }: { ready: boolean; ariaLabel: string; tutorial: string; onRun?: () => void }) {
   return (
     <div className="cr-job-key" data-tutorial={tutorial}>
       <span className="cr-lens-bezel">
-        <button onClick={onRun} aria-label={ariaLabel} className="cr-lens cr-lens-blue">
+        <button onClick={onRun} disabled={!ready} aria-label={ariaLabel} className="cr-lens cr-lens-blue cr-lens-dark">
           Run
         </button>
       </span>
-      <span className={`cr-mode-tile ${ready ? "on-green" : ""}`}>Ready</span>
     </div>
   )
 }
 
-// Jewel lamp with its engraved caption underneath
-export function JewelLamp({ colour, lit, caption }: { colour: "green" | "amber" | "red"; lit: boolean; caption: string }) {
+// Jewel lamp with its engraved caption underneath, or `beside` it where a bay is short of height
+export function JewelLamp({ colour, lit, caption, beside = false }: { colour: "green" | "amber" | "red"; lit: boolean; caption: string; beside?: boolean }) {
   return (
-    <span className="flex flex-col items-center gap-1.5">
+    <span className={beside ? "flex items-center gap-2.5" : "flex flex-col items-center gap-1.5"}>
       <span className={`cr-jewel cr-jewel-${colour} ${lit ? "on" : ""}`} />
       <span className="cr-caption">{caption}</span>
     </span>

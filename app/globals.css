@@ -1470,6 +1470,16 @@
   cursor: not-allowed;
 }
 
+/* A key with nothing to do for now goes dark, unlit, rather than just fading */
+.cr-lens-dark:disabled {
+  --lens: #38362f;
+  --lens-hi: #4b4942;
+  --lens-ink: #8f8c80;
+  --lens-side: #1b1a17;
+  --lens-glow: rgba(0, 0, 0, 0);
+  opacity: 1;
+}
+
 .cr-lens:focus-visible {
   outline: 2px solid #f59e0b;
   outline-offset: 3px;
@@ -1503,6 +1513,11 @@
   .cr-grip-plate {
     --plate: 88px;
   }
+}
+
+/* The pump bays are short, with the lamps beside the switch */
+.cr-pump-bay .cr-grip-plate {
+  --plate: 74px;
 }
 
 /* The sound dialog's two bays sit side by side on a phone, so their switches and tapes are a size smaller there */
@@ -1584,12 +1599,8 @@
   background: #f4f1e8;
 }
 
-.cr-grip:hover:not(:disabled) {
+.cr-grip:hover {
   filter: brightness(1.15);
-}
-
-.cr-grip:disabled {
-  cursor: default;
 }
 
 .cr-grip:focus-visible {
@@ -2172,9 +2183,13 @@
 .cr-rod-legend .is-moving {
   --lamp: #60a5fa;
 }
+.cr-rod-cell.is-slow,
+.cr-rod-legend .is-slow {
+  --lamp: #facc15;
+}
 .cr-rod-cell.is-out,
 .cr-rod-legend .is-out {
-  --lamp: #facc15;
+  --lamp: #efece2;
 }
 .cr-rod-cell.is-jammed,
 .cr-rod-legend .is-jammed {
@@ -2267,10 +2282,10 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.35rem 1rem;
+  gap: 0.35rem 0.75rem;
   font-family: "Geist Mono", monospace;
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #d4d8d3;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
@@ -2278,7 +2293,7 @@
 .cr-rod-legend li {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 .cr-rod-swatch {
   width: 11px;
@@ -2358,14 +2373,12 @@
   .cr-dial-needle { transition: none; }
 }
 
-/* A maintenance job's key and its Ready tile, one width. The tile's ring stands 3px proud and the plate's 1px, so the
-   tile sits in 2px a side. */
+/* A maintenance job's key on its plate */
 .cr-job-key {
   flex: none;
   width: 96px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .cr-job-key .cr-lens-bezel {
@@ -2387,10 +2400,6 @@
   padding-inline: 12px;
   font-size: 0.92rem;
   letter-spacing: 0.1em;
-}
-
-.cr-job-key .cr-mode-tile {
-  margin-inline: 2px;
 }
 
 @media (min-width: 40rem) {
@@ -2789,10 +2798,8 @@
 }
 
 /* The channel a rod's lever travels in, like a real slide lever (owner, 2026-11-04: Rods A2): black woven fabric either
-   side, meeting at a 5px gap. The gap is dark until a lamp behind it lights, yellow for a sluggish rod and red for a
-   jam, and the lamp lightly catches the fabric's inner edges (--lit). The lever never changes. */
+   side, meeting at a 5px gap. The gap is dark until a lamp behind it lights (.cr-rod-lamp). The lever never changes. */
 .cr-rod-slot {
-  --lit: rgba(0, 0, 0, 0);
   background: #060605;
   border: 2px solid #0a0a09;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.45);
@@ -2814,25 +2821,56 @@
 .cr-rod-slot::before {
   left: 0;
   box-shadow: 1px 0 2px rgba(0, 0, 0, 0.75);
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 45%, var(--lit) 100%), var(--weave), linear-gradient(90deg, #0f0f0e 0%, #2b2b28 60%, #191917 100%);
+  background: var(--weave), linear-gradient(90deg, #0f0f0e 0%, #2b2b28 60%, #191917 100%);
 }
 
 .cr-rod-slot::after {
   right: 0;
   box-shadow: -1px 0 2px rgba(0, 0, 0, 0.75);
-  background: linear-gradient(270deg, rgba(0, 0, 0, 0) 45%, var(--lit) 100%), var(--weave), linear-gradient(270deg, #0f0f0e 0%, #2b2b28 60%, #191917 100%);
+  background: var(--weave), linear-gradient(270deg, #0f0f0e 0%, #2b2b28 60%, #191917 100%);
 }
 
-.cr-rod-slot-sluggish {
-  --lit: rgba(242, 215, 15, 0.34);
-  background: radial-gradient(ellipse 100% 55% at 50% 50%, #fff7b0 0%, #f2d70f 55%, #a08c05 100%);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px 1px rgba(242, 215, 15, 0.32), 0 1px 0 rgba(255, 255, 255, 0.45);
+/* The lamp behind the gap, yellow for a slow rod and red for a jam, lightly catching the fabric's inner edges and
+   the channel's rim. It pulses (owner, 2026-11-05), and all of it does so in one layer, which a phone can do cheaply. */
+.cr-rod-lamp {
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* over the fabric, under the lever */
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 22%, var(--lit) 50%, rgba(0, 0, 0, 0) 78%);
+  box-shadow: 0 0 10px 1px var(--lit);
+  animation: cr-rod-lamp var(--pulse) ease-in-out infinite;
 }
 
-.cr-rod-slot-jammed {
-  --lit: rgba(255, 60, 30, 0.36);
-  background: radial-gradient(ellipse 100% 55% at 50% 50%, #ffb39a 0%, #e5261b 55%, #8a120b 100%);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px 1px rgba(255, 60, 30, 0.34), 0 1px 0 rgba(255, 255, 255, 0.45);
+.cr-rod-lamp::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 2.5px);
+  width: 5px;
+  background: var(--glass);
+}
+
+.cr-rod-lamp.is-slow {
+  --lit: rgba(242, 215, 15, 0.36);
+  --glass: radial-gradient(ellipse 100% 55% at 50% 50%, #fff7b0 0%, #f2d70f 55%, #a08c05 100%);
+  --pulse: 2.2s;
+}
+
+.cr-rod-lamp.is-jammed {
+  --lit: rgba(255, 60, 30, 0.38);
+  --glass: radial-gradient(ellipse 100% 55% at 50% 50%, #ffb39a 0%, #e5261b 55%, #8a120b 100%);
+  --pulse: 1.3s;
+}
+
+@keyframes cr-rod-lamp {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-rod-lamp { animation: none; }
 }
 
 /* T-handle of the lever */

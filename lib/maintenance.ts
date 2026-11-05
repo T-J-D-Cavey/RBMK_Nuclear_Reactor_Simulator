@@ -3,6 +3,7 @@
 import type { GameState } from "./types"
 import { addLog } from "./game-utils"
 import { rodBalance } from "./sim/reactor"
+import type { Rng } from "./sim/rng"
 import { MAINTENANCE_TUNING } from "./sim/tuning"
 
 const TURBINE_OPERATOR = "TURBINE OPERATOR"
@@ -34,18 +35,23 @@ function reportVacuum(s: GameState): GameState {
   return addLog({ ...s, vacuumReported: true }, "engineer", "Condenser vacuum is at its worst. We're losing output until the air ejector is run.", TURBINE_OPERATOR)
 }
 
-// A rod left parked goes sluggish, because a drive that never moves can stick (plan §5). Only a move of at least
-// rodFreeingMove from where it was parked restarts its clock, and a sluggish rod stays slow for the whole of that move:
-// it recovers on arrival. A jammed rod's clock waits for it.
-function exerciseRods(s: GameState): GameState {
+// A rod left parked can go slow, because a drive that never moves can stick (plan §5). From rodParkSeconds on it may
+// go, at even odds each minute (owner, 2026-11-05). Only a move of at least rodFreeingMove from where it was parked
+// restarts its clock, and a slow rod stays that way for the whole of that move: it recovers on arrival. A jammed rod's
+// clock waits for it. A rod fully out has nothing to stick in (owner, 2026-11-05), so it can't go slow, and its clock
+// starts when it's back in the core.
+function exerciseRods(s: GameState, rng: Rng): GameState {
+  const { rodParkSeconds, rodSlowCheckSeconds, rodSlowChance, rodFreeingMove } = MAINTENANCE_TUNING
   return {
     ...s,
     controlRods: s.controlRods.map((rod) => {
       if (rod.stuck) return rod
-      const moved = Math.abs(rod.insertion - rod.parkedAt) >= MAINTENANCE_TUNING.rodFreeingMove
-      if (moved && (!rod.sluggish || rod.insertion === rod.target)) return { ...rod, sluggish: false, parkedAt: rod.insertion, parkedSeconds: 0 }
+      if (rod.insertion === 0) return { ...rod, slow: false, parkedAt: 0, parkedSeconds: 0 }
+      const moved = Math.abs(rod.insertion - rod.parkedAt) >= rodFreeingMove
+      if (moved && (!rod.slow || rod.insertion === rod.target)) return { ...rod, slow: false, parkedAt: rod.insertion, parkedSeconds: 0 }
       const parkedSeconds = rod.parkedSeconds + 1
-      return { ...rod, parkedSeconds, sluggish: rod.sluggish || parkedSeconds >= MAINTENANCE_TUNING.rodParkSeconds }
+      const due = parkedSeconds >= rodParkSeconds && (parkedSeconds - rodParkSeconds) % rodSlowCheckSeconds === 0
+      return { ...rod, parkedSeconds, slow: rod.slow || (due && rng() < rodSlowChance) }
     }),
   }
 }
@@ -88,6 +94,6 @@ function reportPumpBalance(s: GameState): GameState {
 }
 
 // One second of the machines' clocks
-export function advanceMaintenance(s: GameState): GameState {
-  return reportPumpBalance(advancePumpBalance(reportRodBalance(exerciseRods(reportVacuum(advanceVacuum(s))))))
+export function advanceMaintenance(s: GameState, rng: Rng): GameState {
+  return reportPumpBalance(advancePumpBalance(reportRodBalance(exerciseRods(reportVacuum(advanceVacuum(s)), rng))))
 }

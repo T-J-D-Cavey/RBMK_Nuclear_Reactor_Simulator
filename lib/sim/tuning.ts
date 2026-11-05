@@ -251,18 +251,22 @@ const HARD_EVENTS: ShiftEventTuning = {
 
 // The machines' maintenance jobs (ai/machine-maintenance-plan.md). Starting values, for tuning at playtest.
 export const MAINTENANCE_TUNING = {
-  vacuumFallSeconds: 360, // full vacuum to worst, in a straight line, in every turbine mode (§3)
+  // Both drifts: about 1.5 jobs each in an Easy shift, and left alone they reach their limits 90 s apart, so their two
+  // shift log messages don't arrive together (owner, 2026-11-05)
+  vacuumFallSeconds: 555, // full vacuum to worst, in a straight line, in every turbine mode (§3)
   vacuumOutputLoss: 0.12, // of output, at worst vacuum
   ejectorRecoverySeconds: 20, // back to full vacuum from any reading
-  rodParkSeconds: 300, // a rod left parked this long goes sluggish (§5)
-  rodFreeingMove: 5, // % from where it was parked, in or out: smaller moves don't count
-  sluggishRodSpeed: 0.6, // of normal speed: a full stroke in 30 s, not 18 s
+  rodParkSeconds: 300, // a rod left parked this long can go slow (§5, owner, 2026-11-05)
+  rodSlowCheckSeconds: 60, // from then on it may go, this often
+  rodSlowChance: 0.5, // the odds each time
+  rodFreeingMove: 1, // % from where it was parked, in or out: this much counts as moving it, and restarts its clock
+  slowRodSpeed: 0.6, // of normal speed: a full stroke in 30 s, not 18 s
   edgeRods: [1, 2, 9, 10] as readonly number[], // far from the core's centre line, so they can tilt it most (§6)
   middleRodPull: 0.4, // of an edge rod's pull on the balance needle
   balanceFullTravel: 100, // weighted % of difference between the sides that puts the needle hard over
   balanceEffect: 0.15, // with the needle hard over, the heavy side counts this much less and the light side more
-  pumpDriftSeconds: 480, // the pump needle, centre to limit (§4)
-  pumpTransferLoss: 0.2, // fuel-to-reactor heat transfer lost at the limit. Never a cut in cooling: that makes more steam, so more output (§10)
+  pumpDriftSeconds: 645, // the pump needle, centre to limit (§4)
+  pumpTransferLoss: 0.1, // fuel-to-reactor heat transfer lost at the limit (owner, 2026-11-05; was 0.2: it set the size of the balancer's kick). Never a cut in cooling: that makes more steam, so more output (§10)
   balancerLockSeconds: 8, // the pump switches can't be used, and flow dips, for this long
   balancerFlowDip: 0.1, // of the pumps' cooling, during the lock
   balancerGlideSeconds: 25, // then the needle glides back to centre

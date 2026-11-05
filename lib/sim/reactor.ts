@@ -3,8 +3,8 @@ import { type ControlRod, type GameOverCause, type GameState, type WaterPump, TH
 import { MAINTENANCE_TUNING, TUNING as T, fuelEffect, pumpEffect } from "./tuning"
 import { gaussian, type Rng } from "./rng"
 
-// A rod's full stroke: the same for every rod in every mode, until it goes sluggish
-export const rodStrokeSeconds = (rod: Pick<ControlRod, "sluggish">) => T.rodFullStrokeSeconds / (rod.sluggish ? MAINTENANCE_TUNING.sluggishRodSpeed : 1)
+// A rod's full stroke: the same for every rod in every mode, until it goes slow
+export const rodStrokeSeconds = (rod: Pick<ControlRod, "slow">) => T.rodFullStrokeSeconds / (rod.slow ? MAINTENANCE_TUNING.slowRodSpeed : 1)
 
 export interface ReactivityCards {
   base: number

@@ -75,7 +75,7 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
       s = keepPumps(s, testPrep ? 4 : o.pumps) // follows the procedure: four pumps for the test
     }
 
-    if (o.jobs && !survival && !testPrep) s = evenUpRods(freeSluggishRod(s))
+    if (o.jobs && !survival && !testPrep) s = evenUpRods(freeSlowRod(s))
 
     // --- The pump needle: past the green band it's worth the lock, unless the reactor needs the switches or the cooling ---
     if (o.jobs && !survival && !testPrep && Math.abs(s.pumpBalance) >= 0.5 && s.mainsPower && s.reactorTemp < 700) s = { ...s, ...runBalancer(s) }
@@ -175,18 +175,20 @@ function keepPumps(s: GameState, wanted: number): GameState {
   }
 }
 
+const EVEN_UP_MOVE = 5 // %: the rods the bot moves, one out and one in, to bring the balance needle back
+
 const isEdge = (r: ControlRod) => MAINTENANCE_TUNING.edgeRods.includes(r.id)
 const sameSide = (a: ControlRod, b: ControlRod) => a.id <= 5 === b.id <= 5
 
 // A yellow rod moved in, with a matching rod on the same side moved out by the same amount, so the two cancel and neither
 // the reactor nor the balance needle notices. One pair at a look, like a person, and only with both at rest.
-function freeSluggishRod(s: GameState): GameState {
+function freeSlowRod(s: GameState): GameState {
   const move = MAINTENANCE_TUNING.rodFreeingMove
   const resting = s.controlRods.filter((r) => !r.stuck && r.insertion === r.target)
-  const going = resting.find((r) => r.sluggish && r.target + move <= 100)
+  const going = resting.find((r) => r.slow && r.target + move <= 100)
   if (!going) return s
   const partners = resting.filter((r) => r !== going && r.target >= move + 1 && sameSide(r, going) && isEdge(r) === isEdge(going))
-  const partner = partners.find((r) => r.sluggish) ?? partners[0]
+  const partner = partners.find((r) => r.slow) ?? partners[0]
   if (!partner) return s
   return {
     ...s,
@@ -198,7 +200,7 @@ function freeSluggishRod(s: GameState): GameState {
 function evenUpRods(s: GameState): GameState {
   const needle = rodBalance(s.controlRods)
   if (Math.abs(needle) < 0.5) return s
-  const move = MAINTENANCE_TUNING.rodFreeingMove
+  const move = EVEN_UP_MOVE
   const edges = s.controlRods.filter((r) => isEdge(r) && !r.stuck && r.insertion === r.target)
   const out = edges.find((r) => r.id > 5 === needle > 0 && r.target >= move + 1)
   const inward = edges.find((r) => r.id > 5 !== needle > 0 && r.target + move <= 100)

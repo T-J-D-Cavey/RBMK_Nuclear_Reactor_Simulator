@@ -23,7 +23,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
   const [tempValues, setTempValues] = useState<number[]>([])
   const [isDragging, setIsDragging] = useState<number | null>(null)
 
-  const anySluggish = controlRods.some((rod) => rod.sluggish && !rod.stuck)
+  const anySlow = controlRods.some((rod) => rod.slow && !rod.stuck)
 
   // Levers show where each rod has been ordered to go (the panel shows where it actually is).
   // Initialise only when the modal opens: rods move every second and must not reset a lever mid-drag.
@@ -106,7 +106,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cr-dialog sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem] select-none">
+      <DialogContent className="cr-dialog sm:max-w-2xl w-full max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem] select-none">
         <DialogHeader>
           <DialogTitle className="cr-dialog-title">Control Rods</DialogTitle>
         </DialogHeader>
@@ -129,11 +129,11 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           </div>
 
           {/* The levers in fabric-lined channels (owner, 2026-11-04: Rods A2), with one SKALA strip under the bank for
-              the set positions (owner, 2026-10-27: prototype A). A lamp shows through the channel's gap: yellow for a
-              sluggish rod, red for a jam, which takes priority. The lever and its plate are hardware and never change.
+              the set positions (owner, 2026-10-27: prototype A). A lamp pulses behind the channel's gap: yellow for a
+              slow rod, red for a jam, which takes priority. The lever and its plate are hardware and never change.
               The shift foreman frames the yellow channels, or the whole bank if there are none to show. */}
           <div className="cr-module cr-bay-screws p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
-            <div data-tutorial={anySluggish ? undefined : "rods-sluggish"}>
+            <div data-tutorial={anySlow ? undefined : "rods-slow"}>
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center" data-tutorial="rods-levers">
               {controlRods.map((rod, idx) => {
                 const currentInsertion = tempValues[idx] ?? rod.insertion
@@ -147,13 +147,13 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                     {/* Rod Track */}
                     <div
                       id={`rod-container-${idx}`}
-                      data-tutorial={rod.sluggish && !rod.stuck ? "rods-sluggish" : undefined}
-                      className={`cr-rod-slot relative w-8 sm:w-[30px] h-36 sm:h-48 rounded-b-sm touch-none ${
-                        rod.stuck ? "cr-rod-slot-jammed cursor-not-allowed" : `cursor-grab ${rod.sluggish ? "cr-rod-slot-sluggish" : ""}`
-                      }`}
+                      data-tutorial={rod.slow && !rod.stuck ? "rods-slow" : undefined}
+                      className={`cr-rod-slot relative w-8 sm:w-[30px] h-36 sm:h-48 rounded-b-sm touch-none ${rod.stuck ? "cursor-not-allowed" : "cursor-grab"}`}
                       onMouseDown={(e) => handleStart(idx, e)}
                       onTouchStart={(e) => handleStart(idx, e)}
                     >
+                      {(rod.stuck || rod.slow) && <span className={`cr-rod-lamp ${rod.stuck ? "is-jammed" : "is-slow"}`} aria-hidden="true" />}
+
                       {/* Draggable Lever Handle, inside a transparent fingertip-sized grab area */}
                       <div
                         className={`absolute z-[1] left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-11 flex items-center justify-center touch-none ${

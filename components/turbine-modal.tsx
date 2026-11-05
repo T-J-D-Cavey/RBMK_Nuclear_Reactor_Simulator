@@ -89,7 +89,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Opens on the knob, not the first key in the page: the ejector runs at once, so Enter mustn't press it by accident */}
       <DialogContent
-        className="cr-dialog sm:max-w-md max-h-[90vh] overflow-y-auto"
+        className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem] gap-3 sm:gap-4"
         onOpenAutoFocus={(e) => {
           e.preventDefault()
           knob.current?.focus()
@@ -99,9 +99,9 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
           <DialogTitle className="cr-dialog-title">Turbine</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* The ejector runs at once, like AZ-5, with no Apply, and carries on if the modal closes. The rising needle and
-              the grey tile are all that shows it running. */}
+              the dark key are all that shows it running. */}
           <div className="cr-module cr-bay-screws p-2.5 flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex-1 min-w-0 max-w-60" data-tutorial="turbine-vacuum">
               <ArcDial kind="vacuum" value={vacuum} />

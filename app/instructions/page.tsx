@@ -104,8 +104,8 @@ export default function InstructionsPage() {
                     <Card title="Control Rods (×10)">
                       More insertion → radioactivity down. Less insertion → radioactivity up. Rods take a few seconds to travel, so
                       make a move and wait for it. Keep each rod at least 1% in: a rod pushed in from fully out (0%) first adds
-                      radioactivity through its graphite tip, and jams if steam is high. A rod left parked for about 5 minutes
-                      goes sluggish: it glows yellow in the rods panel and travels slower, until you move it at least 5%. The
+                      radioactivity through its graphite tip, and jams if steam is high. A rod left parked in the core for 5 minutes
+                      or more can go slow: it shows yellow on the panel and travels slower, until you move it at least 1%. The
                       rod balance needle shows whether one side of the core has more rod in it. Rods on the heavy side count for
                       less and rods on the light side for more, and rods 1, 2, 9 and 10, at the core's edges, swing it most.
                     </Card>
@@ -115,8 +115,8 @@ export default function InstructionsPage() {
                     <Card title="Water Pumps (×4)">
                       The more pumps powered and running, the cooler the reactor and the less steam, so the more radioactivity you
                       need for the same power output. With no pumps running, the reactor boils off the remaining water. Beware.
-                      Circulation slowly drifts out of balance, which runs your fuel hotter. The balancer fixes it, but it locks
-                      the pump switches for a few seconds and flow dips, so for a small reading it may not be worth it yet.
+                      Circulation slowly drifts out of balance, which runs your fuel hotter. The balancer fixes it, but flow dips
+                      and pump changes can't be applied for a few seconds, so for a small reading it may not be worth it yet.
                     </Card>
                     <Card title="Turbine">
                       Converts steam into electricity for the grid: more steam, more power output. The water pumps normally run on

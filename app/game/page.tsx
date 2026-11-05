@@ -59,7 +59,7 @@ export default function GamePage() {
   // in under a minute. It never reaches a production build.
   useEffect(() => {
     if (process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).has("fastjobs")) {
-      Object.assign(MAINTENANCE_TUNING, { vacuumFallSeconds: 18, rodParkSeconds: 15, pumpDriftSeconds: 24 })
+      Object.assign(MAINTENANCE_TUNING, { vacuumFallSeconds: 28, rodParkSeconds: 15, rodSlowCheckSeconds: 3, pumpDriftSeconds: 32 })
     }
   }, [])
 

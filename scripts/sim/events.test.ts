@@ -39,7 +39,7 @@ import {
   RODS_OUT_BELOW,
   SAFETY_TEST_SCRIPT,
 } from "../../lib/safety-test"
-import { canRunBalancer, canRunEjector, runBalancer, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
+import { advanceMaintenance, canRunBalancer, canRunEjector, runBalancer, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
 import { advanceReactor, effectiveBoron, getReactivityCards, rodBalance, rodBoron, rodStrokeSeconds } from "../../lib/sim/reactor"
 import { MAINTENANCE_TUNING, REFERENCE_STATE, TUNING } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
@@ -656,14 +656,16 @@ const ticks = (s: GameState, seconds: number) => {
   return state
 }
 
-test("maintenance: the vacuum falls from full to worst in 6 minutes in every turbine mode, then stops, and the turbine still works", () => {
+test("maintenance: the vacuum falls from full to worst in a straight line in every turbine mode, then stops, and the turbine still works", () => {
+  const fall = MAINTENANCE_TUNING.vacuumFallSeconds
+  const part = Math.round(fall / 5)
   for (const turbineMode of ["grid", "pumps", "idle"] as const) {
     let s: GameState = { ...quietGame("free"), turbineMode }
     assert.equal(s.vacuum, 1, "starts perfect")
-    s = ticks(s, 180)
-    assert.ok(Math.abs(s.vacuum - 0.5) < 1e-9, `${turbineMode}: half way at 3 minutes (${s.vacuum})`)
-    s = ticks(s, 180)
-    assert.ok(s.vacuum < 1e-9, `${turbineMode}: worst at 6 minutes (${s.vacuum})`)
+    s = ticks(s, part)
+    assert.ok(Math.abs(s.vacuum - (1 - part / fall)) < 1e-9, `${turbineMode}: part way (${s.vacuum})`)
+    s = ticks(s, fall - part)
+    assert.ok(s.vacuum < 1e-9, `${turbineMode}: worst (${s.vacuum})`)
     assert.equal(ticks(s, 60).vacuum, 0, `${turbineMode}: stops at its limit`)
   }
 })
@@ -695,7 +697,7 @@ test("maintenance: the air ejector restores full vacuum in 20 s from any reading
   assert.ok(Math.abs(part.vacuum - 0.25) < 1e-9, `${part.vacuum}`)
 })
 
-test("maintenance: pressing at full vacuum or during a recovery does nothing, and the Ready tile says so", () => {
+test("maintenance: pressing at full vacuum or during a recovery does nothing, so the key goes dark", () => {
   assert.equal(runEjector({ vacuum: 1, ejectorSeconds: 0 }), null)
   assert.equal(runEjector({ vacuum: 0.5, ejectorSeconds: 12 }), null)
   assert.equal(canRunEjector({ vacuum: 1, ejectorSeconds: 0 }), false)
@@ -709,15 +711,35 @@ test("maintenance: pressing at full vacuum or during a recovery does nothing, an
 
 test("maintenance: the turbine operator reports the worst vacuum once, and again only after the ejector has run", () => {
   const reports = (s: GameState) => s.log.filter((l) => l.from === "TURBINE OPERATOR" && l.text.includes("vacuum")).length
-  let s = ticks(quietGame("free"), 355)
+  const fall = MAINTENANCE_TUNING.vacuumFallSeconds
+  let s = ticks(quietGame("free"), fall - 5)
   assert.equal(reports(s), 0, "not before it reaches the limit")
   s = ticks(s, 120)
   assert.equal(reports(s), 1, "once, however long it stays there")
   s = ticks({ ...s, ...runEjector(s) }, 30)
   assert.equal(reports(s), 1, "the fix sends nothing")
-  s = ticks(s, 360)
+  s = ticks(s, fall)
   assert.equal(reports(s), 2, "and it can report again")
   assert.ok(s.warnings.every((w) => !w.toLowerCase().includes("vacuum")), "no alarm monitor line")
+})
+
+test("maintenance: each job comes round about 1.5 times an Easy shift, and left alone the two reach their limits a minute or two apart, with one message each", () => {
+  const { vacuumFallSeconds: vacuum, pumpDriftSeconds: pumps } = MAINTENANCE_TUNING
+  assert.ok(Math.abs(GAME_MODE_CONFIGS.easy.timeLimit! / ((vacuum + pumps) / 2) - 1.5) < 0.01)
+  assert.ok(pumps - vacuum >= 60 && pumps - vacuum <= 120, `${pumps - vacuum} s apart`)
+
+  const reports = (s: GameState, from: string) => s.log.filter((l) => l.from === from).length
+  const counts = (s: GameState) => [reports(s, "TURBINE OPERATOR"), reports(s, "PUMP OPERATOR")]
+  let s = ticks(quietGame("free"), vacuum - 1)
+  assert.deepEqual(counts(s), [0, 0])
+  s = ticks(s, 2)
+  assert.deepEqual(counts(s), [1, 0], "the turbine first")
+  s = ticks(s, pumps - vacuum - 3)
+  assert.deepEqual(counts(s), [1, 0])
+  s = ticks(s, 3)
+  assert.deepEqual(counts(s), [1, 1], "then the pumps")
+  s = ticks(s, 900 - pumps - 1)
+  assert.deepEqual(counts(s), [1, 1], "and nothing more, however long they are left")
 })
 
 test("maintenance: every clock stops while the game is paused", () => {
@@ -728,22 +750,51 @@ test("maintenance: every clock stops while the game is paused", () => {
 const park = (s: GameState, seconds = MAINTENANCE_TUNING.rodParkSeconds) =>
   ({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, parkedAt: r.insertion, parkedSeconds: seconds })) })
 const order = (s: GameState, rod: number, target: number) => ({ ...s, controlRods: s.controlRods.map((r, i) => (i === rod ? { ...r, target } : r)) })
+const allSlow = (s: GameState) => ({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, slow: true })) })
+// Seconds with every roll of the dice the same: 0.25 sends a rod slow when it may go, and 0.75 spares it
+const rolling = (s: GameState, seconds: number, roll: number) => {
+  let state = s
+  for (let t = 0; t < seconds; t++) state = advanceGame(state, () => roll)
+  return state
+}
 
-test("maintenance: no rod starts sluggish; every rod left parked goes sluggish after 5 minutes", () => {
+test("maintenance: no rod starts slow or goes within 5 minutes, and then it may go at each minute's roll, with no message", () => {
   let s = park(quietGame("free"), 0)
-  assert.ok(s.controlRods.every((r) => !r.sluggish))
-  s = ticks(s, 299)
-  assert.ok(s.controlRods.every((r) => !r.sluggish), "not before 5 minutes")
-  s = ticks(s, 1)
-  assert.ok(s.controlRods.every((r) => r.sluggish), "all ten at 5 minutes")
-  assert.ok(!s.log.some((l) => /sluggish|parked/i.test(l.text)), "no message")
-  assert.ok(s.warnings.every((w) => !/sluggish/i.test(w)), "no warning")
+  assert.ok(s.controlRods.every((r) => !r.slow))
+  s = rolling(s, 299, 0.25)
+  assert.ok(s.controlRods.every((r) => !r.slow), "not before 5 minutes, however the dice fall")
+  const lucky = rolling(s, 1, 0.75)
+  assert.ok(lucky.controlRods.every((r) => !r.slow), "a good roll at 5 minutes spares it")
+  assert.ok(rolling(lucky, 59, 0.25).controlRods.every((r) => !r.slow), "until the next minute's roll")
+  assert.ok(rolling(lucky, 60, 0.25).controlRods.every((r) => r.slow), "which can catch it")
+  s = rolling(s, 1, 0.25)
+  assert.ok(s.controlRods.every((r) => r.slow), "a bad roll at 5 minutes doesn't")
+  assert.ok(!s.log.some((l) => /slow|parked/i.test(l.text)), "no message")
+  assert.ok(s.warnings.every((w) => !/slow/i.test(w)), "no warning")
 })
 
-test("maintenance: a sluggish rod travels at 60%, a full stroke in 30 s, in and out", () => {
-  assert.equal(rodStrokeSeconds({ sluggish: false }), TUNING.rodFullStrokeSeconds)
-  assert.ok(Math.abs(rodStrokeSeconds({ sluggish: true }) - 30) < 1e-9)
-  const rods = (s: GameState, insertion: number) => ({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, insertion, target: insertion, parkedAt: insertion, sluggish: true })) })
+test("maintenance: left parked, about half the rods have gone by 5 minutes, three quarters by 6 and seven eighths by 7", () => {
+  const seeds = Array.from({ length: 40 }, (_, i) => i + 1)
+  const games = seeds.map((seed) => {
+    const rng = seededRng(seed)
+    let s = park(quietGame("free"), 0)
+    const gone: number[] = []
+    for (let t = 1; t <= 420; t++) {
+      s = advanceGame(s, rng)
+      if (t === 300 || t === 360 || t === 420) gone.push(s.controlRods.filter((r) => r.slow).length / 10)
+    }
+    return gone
+  })
+  ;[0.5, 0.75, 0.875].forEach((expected, i) => {
+    const share = games.reduce((sum, gone) => sum + gone[i], 0) / games.length
+    assert.ok(Math.abs(share - expected) < 0.08, `${share} against ${expected}`)
+  })
+})
+
+test("maintenance: a slow rod travels at 60%, a full stroke in 30 s, in and out", () => {
+  assert.equal(rodStrokeSeconds({ slow: false }), TUNING.rodFullStrokeSeconds)
+  assert.ok(Math.abs(rodStrokeSeconds({ slow: true }) - 30) < 1e-9)
+  const rods = (s: GameState, insertion: number) => ({ ...s, controlRods: s.controlRods.map((r) => ({ ...r, insertion, target: insertion, parkedAt: insertion, slow: true })) })
   for (const [from, to] of [[0, 100], [100, 0]]) {
     let s = rods(quietGame("free"), from)
     s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: to })) }
@@ -753,55 +804,77 @@ test("maintenance: a sluggish rod travels at 60%, a full stroke in 30 s, in and 
   }
 })
 
-test("maintenance: a move of less than 5% leaves a rod sluggish; 5% or more frees it on arrival, and that first move is still slow", () => {
-  const start = ticks(park(quietGame("free")), 1)
-  assert.ok(start.controlRods[2].sluggish)
+test("maintenance: a move of less than 1% leaves a rod slow; 1% or more frees it on arrival, and that first move is still slow", () => {
+  const start = ticks(allSlow(park(quietGame("free"))), 1)
+  assert.ok(start.controlRods[2].slow)
   const at = start.controlRods[2].insertion
 
-  // Small wiggles don't count, even several of them
-  let small = ticks(order(start, 2, at + 4), 5)
-  small = ticks(order(small, 2, at - 4), 5)
-  small = ticks(order(small, 2, at + 4), 5)
-  assert.ok(small.controlRods[2].sluggish, "still sluggish after moves within 4%")
+  // Anything less doesn't count, even several of them
+  let small = ticks(order(start, 2, at + 0.9), 2)
+  small = ticks(order(small, 2, at - 0.9), 2)
+  small = ticks(order(small, 2, at + 0.9), 2)
+  assert.ok(small.controlRods[2].slow, "still slow after moves within 0.9%")
 
-  for (const to of [at + 5, at - 5, at + 30]) {
+  for (const to of [at + 1, at - 1, at + 30]) {
     let s = order(start, 2, to)
     const seconds = Math.ceil((Math.abs(to - at) * 30) / 100)
     s = ticks(s, seconds - 1)
-    assert.ok(s.controlRods[2].sluggish, `to ${to}: stays slow for the whole move`)
+    assert.ok(s.controlRods[2].slow, `to ${to}: stays slow for the whole move`)
     assert.ok(Math.abs(s.controlRods[2].insertion - at) > ((seconds - 2) * 100) / 30 - 1, `to ${to}: travelling at slow speed`)
     assert.ok(Math.abs(s.controlRods[2].insertion - at) <= ((seconds - 1) * 100) / 30 + 0.01, `to ${to}: no faster`)
     s = ticks(s, 2)
     assert.equal(s.controlRods[2].insertion, to)
-    assert.ok(!s.controlRods[2].sluggish, `to ${to}: freed on arrival`)
+    assert.ok(!s.controlRods[2].slow, `to ${to}: freed on arrival`)
     assert.ok(s.controlRods[2].parkedSeconds <= 2, `to ${to}: clock restarted`)
   }
-  assert.ok(start.controlRods.every((r, i) => i === 2 || r.sluggish), "the others are untouched")
+  assert.ok(start.controlRods.every((r, i) => i === 2 || r.slow), "the others are untouched")
 })
 
-test("maintenance: a rod in regular use never goes sluggish", () => {
+test("maintenance: a rod fully out can't go slow, and its 5 minutes start when it's back in the core", () => {
+  // The clock alone: a rod left at 0% for this long would end the shift
+  const clock = (s: GameState, seconds: number) => {
+    let state = s
+    for (let t = 0; t < seconds; t++) state = advanceMaintenance(state, () => 0.25)
+    return state
+  }
+  const place = (s: GameState, at: number) => ({ ...s, controlRods: s.controlRods.map((r, i) => (i === 2 ? { ...r, insertion: at, target: at } : r)) })
+  let s = clock(place(park(quietGame("free"), 0), 0), 420)
+  assert.ok(!s.controlRods[2].slow && s.controlRods[2].parkedSeconds === 0, "at 0%, however long it stays there")
+  assert.ok(s.controlRods[3].slow, "the others go as usual")
+  s = clock(place(s, 1), 300)
+  assert.ok(!s.controlRods[2].slow, "back in the core, it has its whole 5 minutes")
+  assert.ok(clock(s, 1).controlRods[2].slow, "and then it can go")
+})
+
+test("maintenance: a slow rod withdrawn fully recovers as it reaches 0%", () => {
+  const s = rolling(order(allSlow(park(quietGame("free"))), 2, 0), 30, 0.75)
+  assert.equal(s.controlRods[2].insertion, 0)
+  assert.ok(!s.controlRods[2].slow)
+})
+
+test("maintenance: a rod moved 1% every few minutes never goes slow, and each move gives it its whole 5 minutes again", () => {
   let s = park(quietGame("free"), 0)
-  for (let minute = 0; minute < 12; minute++) {
-    s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: r.target + (minute % 2 ? -6 : 6) })) }
-    s = ticks(s, 60)
-    assert.ok(s.controlRods.every((r) => !r.sluggish), `minute ${minute}`)
+  for (let turn = 0; turn < 5; turn++) {
+    s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, target: r.target + (turn % 2 ? -1 : 1) })) }
+    s = rolling(s, 299, 0.25)
+    assert.ok(s.controlRods.every((r) => !r.slow), `turn ${turn}`)
   }
 })
 
 test("maintenance: a jammed rod's clock pauses, and red takes priority over yellow in the modal", () => {
   const parked = park(quietGame("free"), 0)
   let s = { ...parked, controlRods: parked.controlRods.map((r, i) => ({ ...r, stuck: i === 0 })) }
-  s = ticks(s, 320)
-  assert.ok(!s.controlRods[0].sluggish && s.controlRods[0].parkedSeconds === 0, "jammed: clock paused")
-  assert.ok(s.controlRods[1].sluggish, "free rods carry on")
+  s = rolling(s, 320, 0.25)
+  assert.ok(!s.controlRods[0].slow && s.controlRods[0].parkedSeconds === 0, "jammed: clock paused")
+  assert.ok(s.controlRods[1].slow, "free rods carry on")
   s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, stuck: false })) }
   assert.equal(ticks(s, 10).controlRods[0].parkedSeconds, 10, "and it resumes when freed")
 })
 
-test("maintenance: AZ-5 drives sluggish rods in at the slower speed, and from a normal state still shuts the reactor down", () => {
-  let s = park(quietGame("easy"))
+test("maintenance: AZ-5 drives slow rods in at the slower speed, and from a normal state still shuts the reactor down", () => {
+  let s = allSlow(park(quietGame("easy")))
   s = ticks(s, 1)
-  assert.ok(s.controlRods.every((r) => r.sluggish))
+  assert.ok(s.controlRods.every((r) => r.slow))
   s = az5(s)
   const steps: GameState[] = []
   for (let t = 0; t < 60; t++) {
@@ -811,7 +884,7 @@ test("maintenance: AZ-5 drives sluggish rods in at the slower speed, and from a 
   assert.ok(!s.isGameOver, `${s.gameOverCause}`)
   assert.ok(steps[2].controlRods[0].insertion - steps[1].controlRods[0].insertion < 3.4, "slow")
   assert.ok(s.controlRods.every((r) => r.insertion === 100), "every free rod ends fully in")
-  assert.ok(s.controlRods.every((r) => !r.sluggish), "which frees them")
+  assert.ok(s.controlRods.every((r) => !r.slow), "which frees them")
   assert.ok(s.radioactivity < 40, `radioactivity ${s.radioactivity}`)
 })
 
@@ -903,9 +976,9 @@ test("maintenance: the reactor technician reports the needle hard over once, and
   assert.equal(reports(s), 2, "fixed, it can report again")
 })
 
-test("maintenance: AZ-5 from a normal state still shuts down with every rod sluggish and the needle hard over, and rebalances the core", () => {
+test("maintenance: AZ-5 from a normal state still shuts down with every rod slow and the needle hard over, and rebalances the core", () => {
   let s = withRods(quietGame("easy"), [75, 75, 35, 35, 35, 35, 35, 35, 25, 25])
-  s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, sluggish: true })) }
+  s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, slow: true })) }
   assert.equal(rodBalance(s.controlRods), -1)
   s = az5(s)
   for (let t = 0; t < 60; t++) s = advanceGame(s, seededRng(t))
@@ -925,11 +998,13 @@ function heldAt(radioactivity: number, pumpBalance: number) {
   return s
 }
 
-test("maintenance: the pump needle drifts to its limit in 8 minutes and stops, and the pumps still work there", () => {
+test("maintenance: the pump needle drifts to its limit in a straight line and stops, and the pumps still work there", () => {
+  const drift = MAINTENANCE_TUNING.pumpDriftSeconds
+  const part = Math.round(drift / 5)
   let s = quietGame("free")
   assert.equal(s.pumpBalance, 0, "starts perfect")
-  s = ticks(s, 240)
-  assert.ok(Math.abs(Math.abs(s.pumpBalance) - 0.5) < 1e-9, `half way at 4 minutes (${s.pumpBalance})`)
+  s = ticks(s, part)
+  assert.ok(Math.abs(Math.abs(s.pumpBalance) - part / drift) < 1e-9, `part way (${s.pumpBalance})`)
   s = { ...s, pumpBalance: s.pumpDrift * 0.999 }
   s = ticks(s, 60)
   assert.equal(Math.abs(s.pumpBalance), 1, "stops at its limit")
@@ -937,12 +1012,12 @@ test("maintenance: the pump needle drifts to its limit in 8 minutes and stops, a
 })
 
 test("maintenance: at steady radioactivity, imbalance heats the fuel and nothing else, up to the plan's figures", () => {
-  for (const [R, fuel0, fuel20] of [[100, 530, 580], [180, 946, 1036]]) {
+  for (const [R, fuel0, fuelAtLimit] of [[100, 530, 552], [180, 946, 986]]) {
     const level = heldAt(R, 0)
     const half = heldAt(R, 0.5)
     const limit = heldAt(R, 1)
     assert.ok(Math.abs(level.fuelTemp - fuel0) < 2, `R${R}: ${level.fuelTemp}`)
-    assert.ok(Math.abs(limit.fuelTemp - fuel20) < 3, `R${R}, limit: ${limit.fuelTemp}`)
+    assert.ok(Math.abs(limit.fuelTemp - fuelAtLimit) < 3, `R${R}, limit: ${limit.fuelTemp}`)
     assert.ok(level.fuelTemp < half.fuelTemp && half.fuelTemp < limit.fuelTemp, "it scales with the needle")
     assert.ok(Math.abs(limit.reactorTemp - level.reactorTemp) < 0.5, `reactor ${limit.reactorTemp} vs ${level.reactorTemp}`)
     assert.ok(Math.abs(limit.steamVolume - level.steamVolume) < 0.5, `steam ${limit.steamVolume} vs ${level.steamVolume}`)
@@ -1034,7 +1109,7 @@ test("maintenance: the Safety Test's order to start the pumps wins over a lock",
 
 test("maintenance: every gauge at its limit together still leaves a playable reactor", () => {
   let s: GameState = { ...quietGame("free"), vacuum: 0, pumpBalance: 1, rodBalanceReported: true }
-  s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, sluggish: true })) }
+  s = { ...s, controlRods: s.controlRods.map((r) => ({ ...r, slow: true })) }
   const bot = makeBot({ jobs: false })
   const rng = seededRng(1)
   for (let t = 0; t < 600; t++) s = advanceGame(bot.act(s), rng)

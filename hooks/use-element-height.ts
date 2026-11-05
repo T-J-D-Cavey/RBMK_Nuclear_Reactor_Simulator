@@ -16,8 +16,9 @@ export function useElementSize<T extends Element>(): [(element: T | null) => voi
   useEffect(() => {
     if (!element || typeof ResizeObserver === "undefined") return
     const measure = () => {
+      // Laid-out size where there is one: a dialog zooms in as it opens, and that mustn't be measured
       const box = element.getBoundingClientRect()
-      const next = { width: Math.round(box.width), height: Math.round(box.height) }
+      const next = element instanceof HTMLElement ? { width: element.offsetWidth, height: element.offsetHeight } : { width: Math.round(box.width), height: Math.round(box.height) }
       setSize((prev) => (prev && prev.width === next.width && prev.height === next.height ? prev : next))
     }
     measure()

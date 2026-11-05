@@ -61,7 +61,7 @@ function migrateSavedState(state: GameState): GameState {
       insertion: rod.insertion,
       target: typeof rod.target === "number" ? rod.target : rod.insertion,
       stuck: rod.stuck,
-      sluggish: rod.sluggish ?? false,
+      slow: rod.slow ?? false,
       parkedAt: rod.parkedAt ?? rod.insertion,
       parkedSeconds: rod.parkedSeconds ?? 0,
     })),

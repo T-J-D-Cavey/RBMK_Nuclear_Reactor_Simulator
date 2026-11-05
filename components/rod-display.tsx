@@ -10,13 +10,15 @@ import { type RodDisplay as RodView, useRodDisplay } from "@/hooks/use-rod-displ
 // mimic panel), each rod with its number and insertion, and the AZ-5 lamp by the nameplate. It sits below the
 // radioactivity balance.
 
-type Lamp = "in" | "moving" | "out" | "jammed"
+type Lamp = "in" | "moving" | "slow" | "out" | "jammed"
 
-const LEGEND: { lamp: Lamp; label: string }[] = [
-  { lamp: "in", label: "Inserted" },
-  { lamp: "moving", label: "Moving" },
-  { lamp: "out", label: "Withdrawn" },
-  { lamp: "jammed", label: "Jammed" },
+// Five short words, so the legend stays one line and the widget no bigger (owner, 2026-11-05)
+const LEGEND: { lamp: Lamp; label: string; spoken: string }[] = [
+  { lamp: "in", label: "In", spoken: "inserted" },
+  { lamp: "moving", label: "Moving", spoken: "moving" },
+  { lamp: "slow", label: "Slow", spoken: "slow" },
+  { lamp: "out", label: "Out", spoken: "fully withdrawn" },
+  { lamp: "jammed", label: "Jammed", spoken: "jammed" },
 ]
 
 // Where each rod sits on the map, in % of its width and height: left edge (R1–2), left centre (R3–5), right centre
@@ -37,10 +39,12 @@ const CORE_MAP: readonly (readonly [number, number])[] = [
   [80, 68.5],
 ]
 
-// A jam shows above everything; a rod at 0% has no tip in the core, so it shows as withdrawn.
+// A jam shows above everything, and a slow rod above where it sits, as it's a job waiting. A rod at 0% has no tip in
+// the core, so it shows as withdrawn.
 function lampFor(rod: ControlRod, view: RodView): Lamp {
   if (rod.stuck) return "jammed"
   if (view.moving) return "moving"
+  if (rod.slow) return "slow"
   return view.insertion === 0 ? "out" : "in"
 }
 
@@ -76,7 +80,7 @@ export default function RodDisplay({ gameState, className = "" }: { gameState: G
                 <span className="cr-rod-id" aria-hidden="true">R{rod.id}</span>
                 <span className="cr-rod-pos" aria-hidden="true">{position}%</span>
                 <span className="sr-only">
-                  Rod {rod.id}: {position}% inserted, {LEGEND.find((entry) => entry.lamp === lamp)?.label.toLowerCase()}
+                  Rod {rod.id}: {position}% inserted, {LEGEND.find((entry) => entry.lamp === lamp)?.spoken}
                 </span>
               </li>
             )
