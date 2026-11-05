@@ -36,6 +36,48 @@ const browserTimers: DriveTimers = {
   clearTimeout: (id) => window.clearTimeout(id as number),
 }
 
+// One short burst of the rod drive, on its own element so it never takes a voice from a moving rod
+export class RodDriveBurst {
+  private audio: DriveAudio
+  private offset: number
+  private ms: number
+  private timers: DriveTimers
+  private timer: unknown = null
+  private level = 1
+
+  constructor(audio: DriveAudio, offset: number, ms: number, timers: DriveTimers = browserTimers) {
+    this.audio = audio
+    this.offset = offset
+    this.ms = ms
+    this.timers = timers
+  }
+
+  setVolume(level: number) {
+    this.level = level
+    if (this.timer !== null) this.audio.volume = level
+  }
+
+  // Another rod snagging during a burst starts it again
+  play() {
+    this.clear()
+    this.audio.currentTime = this.offset
+    this.audio.volume = this.level
+    const played = this.audio.play()
+    if (played) played.catch((e) => console.warn("Rod burst blocked", e))
+    this.timer = this.timers.setTimeout(() => this.stop(), this.ms)
+  }
+
+  stop() {
+    this.clear()
+    this.audio.pause()
+  }
+
+  private clear() {
+    if (this.timer !== null) this.timers.clearTimeout(this.timer)
+    this.timer = null
+  }
+}
+
 export class RodDriveVoices {
   private voices: Voice[]
   private timers: DriveTimers

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
-import { eventCues, LONG_EFFECTS, newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, SOUND_EFFECT_FILES, targetCue, turbineTripCue, type SoundEffect } from "@/lib/sound-cues";
-import type { GameEvent } from "@/lib/types";
-import { RodDriveVoices } from "@/lib/rod-drive-voices";
+import { eventCues, LONG_EFFECTS, newWarningAppeared, ROD_BURST_MS, ROD_BURST_OFFSET, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, rodsSnagged, SOUND_EFFECT_FILES, targetCue, turbineTripCue, type SoundEffect } from "@/lib/sound-cues";
+import type { ControlRod, GameEvent } from "@/lib/types";
+import { RodDriveBurst, RodDriveVoices } from "@/lib/rod-drive-voices";
 import { HumBed } from "@/lib/hum-bed";
 
 const HUM_FILE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/git-blob/prj_L1nuMYO7yz6mS0HjQz107XLumQHr/XVA0IQMpaTFFPj7AMJYm8k/public/hum_full.mp3";
@@ -31,6 +31,7 @@ interface AudioManagerProps {
   // Sound effect triggers (plan §8 Q5)
   loaded: boolean; // the saved game has loaded: warnings and messages already in it don't count as new
   rodsMoving: number;
+  controlRods: ControlRod[];
   warningKeys: string[];
   lastLogId: string | undefined;
   powerOnTarget: boolean | null; // null when there is no power target
@@ -50,6 +51,7 @@ export function useAudioManager({
   highSteamOrXenon,
   loaded,
   rodsMoving,
+  controlRods,
   warningKeys,
   lastLogId,
   powerOnTarget,
@@ -70,6 +72,7 @@ export function useAudioManager({
   // Sound effects: one element per clip (rods and the turbine share theirs), and the rod drive's voices
   const effectAudioRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const rodDriveRef = useRef<RodDriveVoices | null>(null);
+  const rodBurstRef = useRef<RodDriveBurst | null>(null);
   const effectsOnRef = useRef(effectsOn);
   effectsOnRef.current = effectsOn;
   const pressesOnRef = useRef(pressesOn);
@@ -140,6 +143,8 @@ export function useAudioManager({
       ROD_DRIVE_OFFSETS,
     );
     rodDriveRef.current.setVolume(volumeRef.current);
+    rodBurstRef.current = new RodDriveBurst(new Audio(ROD_DRIVE_FILE), ROD_BURST_OFFSET, ROD_BURST_MS);
+    rodBurstRef.current.setVolume(volumeRef.current);
     setAlarmVolume(volumeRef.current);
 
     isInitialized.current = true;
@@ -150,6 +155,7 @@ export function useAudioManager({
     humRef.current?.setVolume(soundVolume);
     setAlarmVolume(soundVolume);
     rodDriveRef.current?.setVolume(soundVolume);
+    rodBurstRef.current?.setVolume(soundVolume);
     for (const audio of effectAudioRef.current.values()) audio.volume = soundVolume;
   }, [soundVolume, setAlarmVolume]);
 
@@ -262,6 +268,18 @@ export function useAudioManager({
     else rodDriveRef.current?.silence();
   }, [effectsOn, rodsMoving]);
 
+  // A rod has jammed or gone slow: a short burst of the rod drive, cut off if the game pauses
+  useEffect(() => {
+    if (!effectsOn) rodBurstRef.current?.stop();
+  }, [effectsOn]);
+  const prevRods = useRef<ControlRod[] | null>(null); // null until the save has loaded
+  useEffect(() => {
+    if (!loaded) return;
+    const prev = prevRods.current;
+    prevRods.current = controlRods;
+    if (prev && effectsOnRef.current && rodsSnagged(prev, controlRods)) rodBurstRef.current?.play();
+  }, [loaded, controlRods]);
+
   // Warning bleep: a warning has appeared on the alarm monitor (alongside its alarm)
   const warningKeysText = warningKeys.join("|");
   const prevWarningKeys = useRef<string[] | null>(null);
@@ -333,6 +351,7 @@ export function useAudioManager({
       for (const effect of LONG_EFFECTS) effectAudioRef.current.get(SOUND_EFFECT_FILES[effect])?.pause();
       effectAudioRef.current.clear();
       if (rodDriveRef.current) { rodDriveRef.current.dispose(); rodDriveRef.current = null; }
+      if (rodBurstRef.current) { rodBurstRef.current.stop(); rodBurstRef.current = null; }
     };
   }, []);
 

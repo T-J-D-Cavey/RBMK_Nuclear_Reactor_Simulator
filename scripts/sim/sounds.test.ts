@@ -5,13 +5,13 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { existsSync } from "node:fs"
-import { DRIVE_MIN_PLAY_MS, DRIVE_STAGGER_MS, DRIVE_START_DELAY_MS, type DriveAudio, type DriveTimers, RodDriveVoices } from "../../lib/rod-drive-voices"
+import { DRIVE_MIN_PLAY_MS, DRIVE_STAGGER_MS, DRIVE_START_DELAY_MS, type DriveAudio, type DriveTimers, RodDriveBurst, RodDriveVoices } from "../../lib/rod-drive-voices"
 import { HUM_ENTRY_MS, HUM_GAIN, HUM_PLAY_MS, HumBed } from "../../lib/hum-bed"
-import { eventCues, newWarningAppeared, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, rodsMoving, SOUND_EFFECT_FILES, targetCue, TURBINE_SELECT_EFFECTS, turbineTripCue, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
+import { eventCues, newWarningAppeared, ROD_BURST_MS, ROD_BURST_OFFSET, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, rodsMoving, rodsSnagged, SOUND_EFFECT_FILES, targetCue, TURBINE_SELECT_EFFECTS, turbineTripCue, WARNING_REBLEEP_MS } from "../../lib/sound-cues"
 import { advanceReactor } from "../../lib/sim/reactor"
 import { seededRng } from "../../lib/sim/rng"
 import { createNewGame } from "../../lib/game-loop"
-import { startEvent } from "../../lib/game-events"
+import { jamRodsInHighSteam, startEvent } from "../../lib/game-events"
 import { EVENT_TUNING } from "../../lib/sim/tuning"
 import { getEventWarnings, getReactorWarnings } from "../../lib/game-utils"
 import type { GameState } from "../../lib/types"
@@ -237,6 +237,60 @@ test("rod drive: a jammed rod falls silent; AZ-5 runs three voices until the las
   assert.equal(heard[0], 0)
   assert.ok(heard.slice(1, lastMoving + 1).every((h, i) => h === Math.min(3, counts[i + 1])))
   assert.equal(heard[lastMoving + 1], 0)
+})
+
+test("rod burst: a jam by event, a jam in high steam or a rod going slow each sound; a rod coming free doesn't", () => {
+  const rng = seededRng(1)
+  const calm = createNewGame("easy")
+  const rods = calm.controlRods
+  assert.equal(rodsSnagged(rods, rods), false)
+
+  const jammed = startEvent(calm, "rod-stuck", EVENT_TUNING.easy, rng).controlRods
+  assert.equal(rodsSnagged(rods, jammed), true, "a jam event")
+  assert.equal(rodsSnagged(jammed, jammed), false, "not again while they stay jammed")
+  assert.equal(rodsSnagged(jammed, rods), false, "not as they come free")
+
+  const out = { ...calm, steamVolume: 320, controlRods: rods.map((r, i) => (i === 0 ? { ...r, insertion: 0, target: 40 } : r)) }
+  assert.equal(rodsSnagged(out.controlRods, jamRodsInHighSteam(out).controlRods), true, "a rod sent in from 0% in high steam")
+
+  const slow = rods.map((r, i) => (i === 3 ? { ...r, slow: true } : r))
+  assert.equal(rodsSnagged(rods, slow), true, "a rod going slow")
+  assert.equal(rodsSnagged(slow, rods), false, "not as it recovers")
+})
+
+test("rod burst: plays for two seconds from its own point in the clip, and stops at once when paused", () => {
+  assert.equal(ROD_BURST_MS, 2000)
+  const clock = new Clock()
+  const audio = new FakeAudio(clock)
+  const burst = new RodDriveBurst(audio, ROD_BURST_OFFSET, ROD_BURST_MS, clock)
+  burst.setVolume(0.8)
+  burst.play()
+  assert.equal(audio.playing, true)
+  assert.equal(audio.currentTime, ROD_BURST_OFFSET)
+  assert.equal(audio.volume, 0.8)
+  clock.advance(1999)
+  assert.equal(audio.playing, true)
+  clock.advance(1)
+  assert.equal(audio.playing, false)
+
+  burst.play()
+  clock.advance(1000)
+  burst.play() // another rod snags part way through
+  clock.advance(1999)
+  assert.equal(audio.playing, true)
+  clock.advance(1)
+  assert.equal(audio.playing, false)
+
+  burst.play()
+  clock.advance(500)
+  burst.stop()
+  assert.equal(audio.playing, false)
+  clock.advance(5000)
+  assert.equal(audio.playing, false)
+
+  // A full stroke at a slow rod's speed is 30 s, so no voice reaches the burst's stretch of the clip
+  const stroke = 18 / 0.6
+  for (const offset of ROD_DRIVE_OFFSETS) assert.ok(offset + stroke <= ROD_BURST_OFFSET || offset >= ROD_BURST_OFFSET + ROD_BURST_MS / 1000)
 })
 
 test("target cues: one sound coming back inside the target range, another going outside; none when a target comes or goes", () => {

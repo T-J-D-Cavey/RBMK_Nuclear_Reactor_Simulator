@@ -449,6 +449,7 @@ A scripted scenario of 20 minutes that recreates the show's night: the player sp
   - a sound as the turbine's mode selector reaches a position: one for Idle and Pumps, another for Grid;
   - a one-off sound as a power cut, a pump trip or the signal loss starts, or as the turbine trips, alongside the event alarm;
   - a rod-drive sound while rods travel: one per moving rod, up to three, started a split second apart, once the confirmation sound has played. Each fades out as its rod arrives;
+  - two seconds of the same rod-drive sound as a rod jams, however that happens, or goes slow;
   - a distinct AZ-5 sound;
   - a short computer bleep when a new warning appears on the alarm monitor. It plays alongside that warning's alarm, not instead of it;
   - a teleprinter printing sound when a new message arrives in the shift log, lasting only a few seconds.

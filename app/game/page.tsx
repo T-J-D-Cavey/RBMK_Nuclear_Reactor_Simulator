@@ -113,6 +113,7 @@ export default function GamePage() {
     highSteamOrXenon: alarms.highSteamOrXenon,
     loaded: isLoaded,
     rodsMoving: rodsMoving(gameState.controlRods),
+    controlRods: gameState.controlRods,
     warningKeys: [...getReactorWarnings(gameState), ...getEventWarnings(gameState)].map((warning) => warning.key),
     lastLogId: gameState.log[gameState.log.length - 1]?.id,
     powerOnTarget: gameState.powerTarget === null ? null : isPowerOnTarget(gameState),

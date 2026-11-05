@@ -637,7 +637,7 @@ The owner supplied five more clips, all in the same table in `lib/sound-cues.ts`
 - Each event clip plays once, as the event starts, with the event alarm, the warning bleep and the printer in that same second. An event already running in a saved game doesn't play it again. The same goes for a turbine trip.
 - **Claude's call: the event clips follow the Sound Effects switch, not Alarms,** as one-off sounds like the warning bleep. The event alarm itself stays on Alarms.
 - The power cut (5.7 s) and reactor hall (2.7 s) clips stop and pick up with the game, like the run clips. The pump trip (1 s) rings out.
-- A rod jam and a grid hold have no clip. The Safety Test's own mains loss isn't an event, so it plays none.
+- A grid hold has no clip. A rod jam has the rod drive's short burst (§9.13). The Safety Test's own mains loss isn't an event, so it plays none.
 
 ### 9.12 One click for every key, 2026-11-05
 
@@ -646,6 +646,15 @@ The owner found Button press 5 the best click, as it has the least delay, so eve
 - Each key keeps its own name in the table in `lib/sound-cues.ts`, so one can still be given a different clip.
 - Button press 1 to 4 are no longer played, and their files stay in `public/sounds`.
 - The rod drive starts 1.25 s after Rods Apply, a delay set to follow the old 1.9 s clunk. The new click lasts about 0.6 s, so there's now a short gap before the drive (§11.1).
+
+### 9.13 A short rod sound on a jam or a slow rod, 2026-11-05
+
+The owner asked for two seconds of the rod drive clip as a rod jams, in any scenario, or goes slow.
+
+- **It watches the rods themselves,** so every cause counts: a rod jam event, a rod sent in from 0% in high steam, and a rod left parked. A rod coming free is silent.
+- Several rods at once play one burst. Another rod snagging during a burst starts its two seconds again.
+- It has its own audio element, so it never takes a voice from a moving rod. It starts 66 s into the clip, where no voice reaches even on a full stroke at a slow rod's speed.
+- It follows the Sound Effects switch, is cut off by a pause, and doesn't play for a rod already jammed or slow in a saved game.
 
 ---
 
@@ -736,4 +745,4 @@ In priority order, as of 2026-11-05. The order runs from what changes how the ga
 14. **Key sounds Claude added beyond the owner's list** (§9.10): the ? key, the foreman's keys, the alarm monitor and shift log headers, Main Menu, and the click on the three panel keys that open the Pumps, Rods and Turbine modals. Tapping outside a modal, Escape and the home page stay silent.
 15. **The gap before the rod drive** (§9.12). It starts 1.25 s after Rods Apply, which suited the old clunk. With the shorter click, should it start sooner? **Claude recommends** about 0.6 s if the gap sounds wrong in play.
 
-**Waiting on a clip from the owner, not on a decision:** the rod levers and rod jams. Neither has a suitable sound yet (owner, 2026-11-05), so both stay silent for now, and the owner will say if that changes.
+**Waiting on a clip from the owner, not on a decision:** the rod levers have no suitable sound yet (owner, 2026-11-05), so they stay silent for now, and the owner will say if that changes.

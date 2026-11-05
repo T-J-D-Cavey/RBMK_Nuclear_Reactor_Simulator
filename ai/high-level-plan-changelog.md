@@ -2,6 +2,10 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.40 – 2026-11-05 (A short rod sound on a jam or a slow rod)
+
+- **A rod jamming in any scenario, or going slow, plays two seconds of the rod-drive sound** (Section 15, owner).
+
 ## v2.39 – 2026-11-05 (One click for every key)
 
 - **Every key without a sound of its own now plays the same click** (Section 15, owner). It's the clip with the least delay, and it replaces the mixture of four from v2.37.

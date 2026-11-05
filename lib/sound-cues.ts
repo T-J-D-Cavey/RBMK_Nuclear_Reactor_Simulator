@@ -54,8 +54,8 @@ export const TURBINE_SELECT_EFFECTS: Record<TurbineMode, SoundEffect> = {
   grid: "turbineSelectGrid",
 }
 
-// The events with a clip of their own. A rod jam and a grid hold have none. A turbine trip isn't an event in this
-// list, so it has its own trigger (turbineTripCue).
+// The events with a clip of their own. A grid hold has none, and a rod jam has the rod drive's short burst
+// (rodsSnagged). A turbine trip isn't an event in this list, so it has its own trigger (turbineTripCue).
 const EVENT_EFFECTS: Partial<Record<EventKind, SoundEffect>> = {
   "power-cut": "powerCutEvent",
   "pump-trip": "pumpTripEvent",
@@ -88,6 +88,17 @@ export function turbineTripCue(prev: boolean | null, next: boolean): "turbineTri
 // voices never play the same sound a fraction of a second apart.
 export const ROD_DRIVE_FILE = "/sounds/rod-drive.mp3"
 export const ROD_DRIVE_OFFSETS = [0, 35, 70] // seconds into the clip, one per voice
+
+// A short burst of the same clip as a rod jams or goes slow (owner, 2026-11-05). It starts where no voice reaches, even
+// on a full stroke at a slow rod's speed, so it never doubles one.
+export const ROD_BURST_MS = 2000
+export const ROD_BURST_OFFSET = 66
+
+// A rod has jammed or gone slow since the last reading, however that came about: a rod jam event, a rod sent in from
+// 0% in high steam, or a rod left parked. A rod coming free is silent.
+export function rodsSnagged(prev: ControlRod[], next: ControlRod[]): boolean {
+  return next.some((rod, i) => (rod.stuck && !prev[i]?.stuck) || (rod.slow && !prev[i]?.slow))
+}
 
 // Rods still travelling to their ordered position. A jammed rod's order is where it stopped, so it doesn't count.
 export function rodsMoving(rods: ControlRod[]): number {
