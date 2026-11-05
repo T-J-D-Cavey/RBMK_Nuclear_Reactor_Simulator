@@ -1,6 +1,6 @@
 # RBMK Simulator – Machine Maintenance Plan
 
-Status: **BUILD COMPLETE, 2026-11-04. All five stages of §9.1 are built and deployed. The owner is playtesting on the live site. The next job is the owner's notes and the questions in §11.1.**
+Status: **BUILD COMPLETE, 2026-11-04. All five stages of §9.1 are built and deployed. The owner's first playtest notes are built, uncommitted, as of 2026-11-05, with the heat transfer loss halved to 10% (§9.9). The next job is the owner's playtest of that and the questions in §11.1, in their priority order.**
 
 This is the record of what the owner decided for three new maintenance mechanics (turbine, water pumps, control rods), the modal changes that make room for them, and the move of each modal's hint text into the shift foreman guide. All numbers are **starting values for tuning**, not hard requirements.
 
@@ -35,8 +35,8 @@ Occasional maintenance jobs that a player can do to keep each machine at its bes
 | Machine | Job | Long-term penalty if ignored | Short-term consequence of doing it |
 |---|---|---|---|
 | Turbine | Run the air ejector | Up to 12% less output | Output rises as vacuum returns, which can leave the target band |
-| Water pumps | Run the circulation balancer | Up to 20% worse heat transfer out of the fuel | Switches locked for about 8 s, a 10% flow dip, then a small rise in radioactivity |
-| Control rods | Move sluggish rods | That rod travels at about 60% speed | Moving a rod disturbs the reactor |
+| Water pumps | Run the circulation balancer | Up to 10% worse heat transfer out of the fuel | Pump changes can't be applied for about 8 s, a 10% flow dip, then a rise in radioactivity (§9.9: larger than first thought) |
+| Control rods | Move slow rods | That rod travels at about 60% speed | Moving a rod disturbs the reactor |
 | Control rods | Even up left and right | The heavy side counts less, the light side more, and braking falls slightly | Moving rods disturbs the reactor |
 
 ---
@@ -47,7 +47,7 @@ Occasional maintenance jobs that a player can do to keep each machine at its bes
 - **Limits:** each penalty stops at its limit and never gets worse.
 - **Starting state:** the turbine and pumps start perfect. The rods' balance starts slightly off centre (§6).
 - **How the player finds out:** by reading the gauges, which appear both in the modals and on the main page (§7.3). There is no panel lamp.
-- **Warnings:** when a gauge reaches its maximum, the relevant operator sends **one shift log message**. No alarm sound and no alarm monitor line. It can send again only after that gauge has been fixed. Sluggish rods send no message (§5).
+- **Warnings:** when a gauge reaches its maximum, the relevant operator sends **one shift log message**. No alarm sound and no alarm monitor line. It can send again only after that gauge has been fixed. Slow rods send no message (§5).
 - **Signal loss:** all these gauges keep working. Rods, pumps and turbine are read outside the reactor hall (`lib/game-utils.ts`).
 - **Actions take effect at once.** The ejector and balancer buttons work like AZ-5 in the rods modal: immediate, with no Apply step. They run on in the background if the modal is closed.
 - **Safety Test:** if the script switches the pumps on during a lockout, the script wins. An ignored reactor reaches the test with hotter fuel, so this mode needs checking at tuning time.
@@ -65,7 +65,7 @@ Draft log messages (`from` uses the existing senders in `lib/game-events.ts`):
 
 | Value | Starting value |
 |---|---|
-| Vacuum falls from full to worst | About 6 minutes, in a straight line, in every turbine mode |
+| Vacuum falls from full to worst | 555 s (about 9¼ minutes), in a straight line, in every turbine mode. Was 6 minutes (§9.9) |
 | Output loss at worst vacuum | 12%, scaling with vacuum lost |
 | Recovery after pressing | About 20 s |
 
@@ -84,21 +84,21 @@ Draft log messages (`from` uses the existing senders in `lib/game-events.ts`):
 
 | Value | Starting value |
 |---|---|
-| Needle drifts from centre to limit | About 8 minutes, then stops. Its direction is cosmetic |
-| Fuel-to-reactor heat transfer at the limit | 20% lower, scaling with the needle (owner: 30% was too high for a novice) |
-| Switch lock after pressing | About 8 s (owner's range: 5–10 s) |
+| Needle drifts from centre to limit | 645 s (about 10¾ minutes), then stops. Its direction is cosmetic. Was 8 minutes (§9.9) |
+| Fuel-to-reactor heat transfer at the limit | 10% lower, scaling with the needle (owner, 2026-11-05. It was 20%, which gave too big a kick. 30% was too high for a novice) |
+| Lock after pressing | About 8 s (owner's range: 5–10 s). Apply is dark, and the switches stay free (§9.9) |
 | Flow dip during the lock | About 10% |
 | Needle glides back to centre | About 25 s |
 
 **How the penalty works.** It uses the existing dry-out rule's idea: `fuelToReactorRate` is multiplied down. It must **not** be a cut in pump cooling (§10 explains why).
 
 - Heat flow from fuel to reactor = transfer rate × temperature gap. At steady radioactivity all of fission's heat must still get through, so the fuel gets hotter until the wider gap passes the same heat.
-- Normally the gap is about 2° per point of radioactivity. At the limit, it is about 2.5°.
+- Normally the gap is about 2° per point of radioactivity. At the limit, it is about 2.2°.
 - Reactor temperature, steam and output are unchanged **at steady radioactivity**.
 - Hotter fuel is a stronger blue card. With rods unchanged, radioactivity and output sag slowly, and the player withdraws rods to hold them. That is the real cost: more rod out for the same output.
 - Pumps cool both fuel and reactor, but don't restore the gap. Only balancing does.
 
-Measured at 2 pumps with radioactivity held steady:
+Measured at 2 pumps with radioactivity held steady. The limit is now 10%, so the 20% rows are the first build's. At 10%, radioactivity 180 runs fuel at 986°, a gap of 400°:
 
 | Radioactivity | Imbalance | Fuel | Reactor | Gap | Total rod insertion needed |
 |---|---|---|---|---|---|
@@ -109,32 +109,34 @@ Measured at 2 pumps with radioactivity held steady:
 | 180 | 20% | 1,036° | 586° | 450° | 455 |
 
 **Action:** press the balance button.
-- The pump switches can't be used for about 8 s. The pumps keep running as they were.
+- Pump changes can't be applied for about 8 s. Apply goes dark, the switches stay free, and the pumps keep running as they were (owner, 2026-11-05).
 - Flow dips about 10% for those 8 s, so steam and output nudge up briefly. Apply this as a cooling multiplier, not by changing `pump.flow`, so lamps and pump logic are untouched.
-- The needle then glides to centre over about 25 s. The fuel's extra heat passes to the reactor and the blue card weakens, so radioactivity, steam and output rise a little. The player may want to reinsert some rod. The further off centre, the bigger the rise.
+- The needle then glides to centre over about 25 s. The fuel's extra heat passes to the reactor and the blue card weakens, so radioactivity, steam and output rise. The player needs to reinsert some rod. The further off centre, the bigger the rise. **Measured on 2026-11-05, this is not a small rise (§9.9).**
 - It can't start while no pump is running. If a power cut hits partway through, it finishes anyway.
 
 **"Not worth it yet":** the lock and flow dip cost the same every time, while the benefit grows with the needle. So a small reading isn't worth fixing, and a big one is. This is the owner's idea, and it is why the job isn't a chore.
 
 **Warning:** the Pump Operator reports when the needle reaches its limit.
 
-**Check at tuning:** the penalty multiplies with dry-out, so losing all flow at maximum imbalance gives 60% transfer.
+**Check at tuning:** the penalty multiplies with dry-out, so losing all flow at maximum imbalance gives about 68% transfer.
 
 ---
 
-## 5. Control rods: sluggish rods
+## 5. Control rods: slow rods
 
 **Why it's real:** plants periodically move rods to prove they move freely, because a drive left parked can stick.
 
 | Value | Starting value |
 |---|---|
-| Time parked before going sluggish | About 5 minutes |
-| Move that counts | At least 5% from where it was parked, in or out |
-| Sluggish speed | About 60% (full stroke 30 s instead of 18 s) |
+| Time parked before it can go slow | 5 minutes |
+| Then | A 50% chance each minute (owner, 2026-11-05), so about half have gone at 5 minutes, three quarters at 6 and seven eighths at 7 |
+| Move that counts | At least 1% from where it was parked, in or out. It restarts the 5 minutes. Was 5% (owner, 2026-11-05) |
+| A rod at 0% | Can't go slow, as it's out of the fuel with nothing to stick in (owner, 2026-11-05). Its 5 minutes start when it's back in the core |
+| Slow speed | About 60% (full stroke 30 s instead of 18 s) |
 
-- **Sign:** a yellow lamp shows through the gap in the rod's channel in the rods modal (§8.4). Red for a jam takes priority.
-- **Fix:** move it at least 5% with the normal lever. That first move is still slow. Small wiggles don't count.
-- **AZ-5:** still drives a sluggish rod in, at the slower speed.
+- **Sign:** a yellow lamp pulses through the gap in the rod's channel in the rods modal (§8.4), and its lens turns yellow on the rod display (§9.9). Red for a jam takes priority.
+- **Fix:** move it at least 1% with the normal lever. That first move is still slow.
+- **AZ-5:** still drives a slow rod in, at the slower speed.
 - **Jams:** a jammed rod's clock pauses.
 - **No new control or gauge,** and no log message, because ten rods could send ten messages.
 - **Watch for:** the penalty may be too mild. The bot only makes tiny moves, so only a human playtest can judge it.
@@ -179,7 +181,7 @@ Measured at 2 pumps with radioactivity held steady:
 - A rod jam on one side can cause a small imbalance on its own.
 - **AZ-5 stays safe:** every free rod ends fully in, which rebalances the core.
 
-**How the two rod systems interact:** moving one rod in and another out cancels the reactivity, but curing sluggish rods that way can still shift the needle. An edge rod paired with a middle rod shifts it even on the same side, so the safest pairing is two matching rods on the same side.
+**How the two rod systems interact:** moving one rod in and another out cancels the reactivity, but curing slow rods that way can still shift the needle. An edge rod paired with a middle rod shifts it even on the same side, so the safest pairing is two matching rods on the same side.
 
 **Starting position (owner):** slightly off centre, so it's a small job the player can do straight away. **The opening climb in radioactivity must stay as it is today, neither faster nor slower (owner, 2026-11-04).** The exact rod order doesn't matter to the owner. This has a clean solution:
 - Reorder `REFERENCE_RODS` to the mirrored `[40, 55, 40, 40, 55, 55, 40, 40, 55, 40]`. It's the same rods in a new order and is exactly level, so the engine's balanced reference state stays balanced.
@@ -229,7 +231,7 @@ Room varies. The pumps note is one line, so that space has grown. On a 390 × 84
 *Control rods*
 1. Levers: "Drag a lever to set insertion. Deeper rods, less radioactivity."
 2. AZ-5: "Emergency insertion of every rod."
-3. Yellow channels: "A rod left parked too long goes sluggish and glows yellow. Move it a little and it frees up."
+3. Yellow channels: "A rod left parked too long goes slow and glows yellow. Move it a little and it frees up."
 4. Balance needle: "This shows whether one side of the core has more rod in it. It moves as the rods move. Rods on the heavy side count for less, and rods on the light side for more."
 5. Edge rods: "Rods 1, 2, 9 and 10 are at the edges of the core, so they swing the balance most."
 
@@ -311,6 +313,7 @@ Sizes used, in px:
   - A blue lens key (`cr-lens cr-lens-blue`, 44 px high) reading **Run**, on its usual plate.
   - Below it, a **Ready** tile (`cr-mode-tile`, 34 px high, 14 px type).
   - **The tile must match the plate's width.** It sits 2 px in on each side, because its ring stands 3 px proud and the plate's 1 px.
+- **Ready tile: removed by the owner, 2026-11-05 (§9.9).** The key itself goes dark and can't be pressed when a press would do nothing, on both modals. The rest of this section and §8.3 describes the first build.
 - **Ready tile rule:** it always says Ready. It's lit green (`on-green`) when a press would do something, and grey otherwise. Grey here means during a recovery or at full vacuum.
 - **No countdown** and no "running" word. The rising needle and the grey tile show the recovery.
 - The selector, tiles and Apply/Cancel don't change.
@@ -319,16 +322,15 @@ Sizes used, in px:
 
 - The same bay and key set as the turbine, with the arc dial and a key also reading **Run**, not Balance (owner: it fits narrow screens better).
 - **Ready tile rule (owner, 2026-11-04):** green when the key can be pressed, and grey when it can't. In practice it's grey only after a press, through the lock and the glide, and when no pump is running. **With the needle at dead centre it stays green** and the press works, costing the usual lock and flow dip.
-- **No lock UI at all (owner).** No flags, lamps, bar, countdown or dimming. The switches look exactly the same and simply can't be pressed. There is no cursor change or hover response, "as if they're not buttons". When the lock ends they work again.
-- `GripSwitch` needs a disabled state for this. It's shared with the sound dialog, which must not change.
+- **Replaced by the owner, 2026-11-05 (§9.9):** the switches are free all the time, and Apply is dark and can't be pressed during the lock. `GripSwitch` has no disabled state any more.
 
 ### 8.4 Control rods modal
 
 - The hint box becomes a bay holding the strip dial. AZ-5 stays beside it, as it is today.
-- **New lever channel, on all ten rods, not just sluggish ones.** It simulates a real slide lever: black woven fabric on the left and right, meeting at a thin gap the lever moves along. The fabric is most of the channel.
+- **New lever channel, on all ten rods, not just slow ones.** It simulates a real slide lever: black woven fabric on the left and right, meeting at a thin gap the lever moves along. The fabric is most of the channel.
   - Normally the gap is dark.
-  - **Sluggish:** a yellow lamp behind the gap (`#f2d70f`).
-  - **Jammed:** a red lamp behind the gap (`#e5261b`).
+  - **Slow:** a yellow lamp behind the gap (`#f2d70f`), pulsing (owner, 2026-11-05).
+  - **Jammed:** a red lamp behind the gap (`#e5261b`), pulsing faster.
   - The lamp shows only in the 5 px gap, and lightly catches the fabric's inner edges.
 - No metal stem is visible. The owner removed it: the metal is under the lever handle, so only the handle shows. The lever handle itself doesn't change.
 - The channel is 30 px wide on desktop (it was 24) and stays 32 px on a phone. The 10% tick marks go, so the SKALA strip is the numeric readout.
@@ -368,7 +370,7 @@ Sizes used, in px:
 - **Speeds:** vacuum drifts in 15 s and the pump needle in 12 s, so the jobs can be repeated. Use §3 and §4. Recovery, lock and glide run at their real speeds.
 - **Apply stays open,** so the needle can be watched. In the game, Apply closes the modal as it does today.
 - **X on the rods modal resets the demo.** In the game it just closes.
-- **Demo rods:** R4 and R7 start sluggish and R9 jammed, to show the colours. In the game, no rod starts that way.
+- **Demo rods:** R4 and R7 start slow and R9 jammed, to show the colours. In the game, no rod starts that way.
 - **Ready tile for pumps** reads the applied switches. In the game, use the real running state.
 - **The guide doesn't pause anything** on the canvas. See §11.
 - **The red and blue cards** beside Plant Gauges are a simplified stand-in. The real widget doesn't change.
@@ -399,7 +401,7 @@ Read the relevant guide in `node_modules/next/dist/docs/` before writing code (s
 
 1. Modal layouts, the question mark key and the guide (no mechanics). **Built and committed 2026-11-04, approved by the owner.** See §9.5.
 2. Turbine: it sits outside the reactor physics. **Built and committed 2026-11-04.** See §9.6.
-3. Sluggish rods. **Built and committed 2026-11-04.** See §9.7.
+3. Slow rods. **Built and committed 2026-11-04.** See §9.7.
 4. Rod balance, including the new starting order. **Built and committed 2026-11-04.** See §9.8.
 5. Pump balancer: the largest physics change. **Built and committed 2026-11-04.** See §9.8.
 
@@ -463,11 +465,11 @@ New checks to add:
 - Output rises by the stated amount after the ejector, and pressing at full vacuum does nothing.
 - The pump switches are locked for the stated time, and the balancer can't start with no pump running.
 - At steady radioactivity, an imbalance changes fuel temperature but not reactor temperature, steam or output.
-- A rod moved less than 5% stays sluggish, and one moved 5% or more recovers.
+- A rod moved less than 5% stays slow, and one moved 5% or more recovers.
 - The needle ignores the levers and follows actual positions.
 - The same needle reading gives the same effect whichever rods caused it.
 - Effective boron never exceeds real boron.
-- AZ-5 from a normal state still shuts the reactor down safely, with every rod sluggish and the needle hard over.
+- AZ-5 from a normal state still shuts the reactor down safely, with every rod slow and the needle hard over.
 - Each log message is sent once, and only again after a fix.
 - The starting needle is off centre, with total insertion 438.
 - The opening climb matches today's. Use `npm run sim:trace` to compare radioactivity over the first 60 s on the old and new starts, with no player input. It must look the same, and the owner has the final say at playtest.
@@ -480,7 +482,7 @@ New checks to add:
 
 **What later stages plug into:**
 - `components/machine-dials.tsx` holds `ArcDial` and `StripDial`, which has a `compact` version for the rod display.
-- `JobKey` in `components/switchgear.tsx` is the Run key and Ready tile.
+- `JobKey` in `components/switchgear.tsx` is the Run key.
 - `MACHINE_GUIDES` in `lib/tutorial.ts` holds the guide's steps, and `components/machine-guide.tsx` the ? key.
 - The dials have their own `.cr-dial-*` styles.
 
@@ -519,6 +521,129 @@ New checks to add:
 - **The lock shows nothing.** A locked switch's computed look is identical to a free one, and applying `disabled` alone changes no pixels.
 - **Checks on the live game code:** `npm run sim:test` (117 tests), a production build, and every stage driven in headless Edge at phone, tablet, laptop and desktop sizes.
 
+### 9.9 First playtest round, 2026-11-05
+
+Built from the owner's notes, uncommitted. `npm run sim:test` passes 119 tests, and every change was driven in the real game at phone size.
+
+**Changes:**
+- **Rod needle:** the strip dial drew its first frame at a default width, and the pointer then slid from off the strip on a phone. It's now drawn only once the width is known.
+- **Lamps pulse,** yellow every 2.2 s and red every 1.3 s, and hold steady for players who ask for reduced motion.
+- **Slow rods:** the rule in §5. The game's dice decide, so it's drawn from the same `rng` as the rest of the shift.
+- **Ready tiles gone:** Run goes dark while a press would do nothing. Apply on the pumps is dark during the lock only, about 8 s, while Run stays dark through the glide as well, about 33 s.
+- **Unapplied pump choices survive pressing Run,** because the switches now stay free. This replaces question 11 in the old list.
+- **The pump modal's height fell from 779 px to 585 px,** which fits a 664 px phone screen with the address bar showing, and 360 × 640. Each bay has its lamps beside a smaller switch. The turbine modal fits too. All three modals now use `dvh`, so the address bar is allowed for.
+- **Clocks:** vacuum 555 s and pumps 645 s. That's about 1.5 of each job in an Easy shift, and left alone, one message each, 90 s apart.
+- **Rod display:** yellow is now Slow. Fully withdrawn is white. The legend has five lamps, and to stay one line and keep the widget's size it reads In and Out, not Inserted and Withdrawn (Claude's choice).
+
+**Why radioactivity seemed unstable.** Nothing is broken. Median swing in radioactivity over 20 s, bot, 40 shifts:
+
+| Game | Easy | Hard |
+|---|---|---|
+| Before maintenance | ×1.020 | ×1.021 |
+| Now, with no drift in any gauge | ×1.021 | ×1.025 |
+| Committed build, every job done | ×1.036 | ×1.037 |
+| This build, every job done | ×1.030 | ×1.032 |
+
+- With the gauges still, the game matches the old one, so the rod balance and engine changes aren't disturbing it. With fixed rods, a small upset behaves the same as before to the decimal.
+- The rise comes from doing the jobs: the ejector's output rise is steered against, and the balancer's kick (below) moves radioactivity itself. Slow rods add nothing.
+- **A separate cause of real spikes:** a rod at 0% moved to 1% brings its graphite tip in, about +4.5 points at once. That's the old tips rule, not new, but the 1% move now invites it, so a parked rod at 0% is worth watching.
+
+**Why the balancer raised reactor temperature.** The owner's reading is right, and §4's "rise a little" was wrong. The rise was never measured at build time. With rods untouched and steady radioactivity 100 at the limit:
+
+| Time after Run | Radioactivity | Fuel | Reactor | Gap | Steam |
+|---|---|---|---|---|---|
+| 0 s | 100 | 574° | 327° | 247° | 99 |
+| 8 s | 100 | 579° | 330° | 249° | 100 |
+| 33 s | 117 | 567° | 334° | 233° | 102 |
+| 60 s | 132 | 614° | 350° | 264° | 108 |
+| 150 s | 157 | 743° | 417° | 326° | 136 |
+
+- The cause is the blue card. Fuel at the limit gives about −5.7 points, and balancing hands them back: the same as pulling about 11% of rod. Radioactivity climbs, and that heats everything, so the fuel only dips by about 10°.
+- It's built in: if neglect costs rod, fixing it gives that rod back. The plan's table in §4 shows the same 13% of rod. **Measured live: with 1.3% put in on each of the ten rods as the glide starts, fuel falls from 580° to about 520° and the gap from 250° to about 197°, with the reactor at 329° and steam at 99 at 33 s, as the owner expected.** Radioactivity dips to 92 and needs normal steering after that. With a whole 1% on each rod, it reaches 109 at 180 s.
+- At radioactivity 180 it reaches 275 in 150 s, and steam goes from 206 to 274.
+- **Trial, rods untouched, R after 180 s, starting from 100 at the limit:** today 167, no flow dip 165, 60 s glide 166, 10% loss 132, 10% loss with no dip and a 60 s glide 129. Only the size of the loss matters. The glide changes how soon, and the dip barely registers, though without it the fuel doesn't rise first.
+
+**The owner's answer, 2026-11-05: halve the transfer loss to 10%, and change nothing else.** The flow dip, glide and guide wording stay. The figures above are at 20%.
+
+With Run pressed from steady running at the limit, and rods untouched from then on. Steady running there means rod has already been pulled to hold radioactivity against the hot fuel's brake:
+
+| Start | 3 minutes after Run, 20% | 3 minutes after Run, 10% |
+|---|---|---|
+| Radioactivity 100 | 167, steam 148 | 134, steam 124 |
+| Radioactivity 180 | 282, steam 289 | 240, steam 250 |
+
+At needle 0.5, radioactivity 100 reaches 116, not 126. Fuel at the limit now starts at 552°, not 580°, so there's about half as much to hand back. With 0.65% in on each of the ten rods as the glide starts, fuel falls from 552° to about 524° and the gap from 222° to about 193°, with the reactor and steam unchanged at 33 s. That is 6.5% of rod, so 1% on six or seven rods. A whole 1% on all ten is too much: radioactivity falls to 89 and keeps sliding.
+
+**Bot, 400 shifts each:**
+
+| | Survive, every job | Survive, novice | Disasters, every job | Disasters, novice |
+|---|---|---|---|---|
+| Easy, 20% | 98.0% | 97.5% | 0 | 1 |
+| Easy, 10% | 98.8% | 97.8% | 0 | 0 |
+| Hard, 20% | 61.8% | 47.0% | 5 | 17 |
+| Hard, 10% | 58.0% | 51.0% | 10 | 15 |
+
+- On Hard, the novice gains 4 points and the bot doing every job loses about 4. Each is close to the bot's noise, about ±3 points here, so don't read much into either alone.
+- Together they do make sense: a smaller penalty means doing the jobs earns less, about 7 points of survival against 15. That is for the owner's playtest (§11.1, question 2).
+- The median 20 s swing doesn't change with the loss: ×1.030 on Easy and ×1.032 on Hard with every job done.
+- At 20%, the bot ran the ejector about 2.3 times and the balancer about 2 times on Easy, and about 4 of each on Hard. It presses earlier than the limit.
+
+### 9.10 Key sounds, and which way the needle pushes, 2026-11-05
+
+**Slow rods at 0%:** excluded (§5), which closes the trap of the yellow lamp asking for a +4.5 point tip spike.
+
+**Which way the needle pushes.** The owner asked why balancing raises radioactivity, when a hot-fuel brake should lower it. Both are true, at different moments. With no rods touched at any point and the loss at 10%, the drift itself lowers radioactivity:
+
+| Needle | Radioactivity | Gap per point of radioactivity |
+|---|---|---|
+| 0 | 100 | 2.00° |
+| 0.5 | 88 | 2.12° |
+| 1 (10¾ minutes) | 44 | 2.28° |
+
+- The fall is far more than the brake alone. As radioactivity drops, the reactor cools, steam falls and its red card shrinks, so the slow loop carries it down. Fuel itself ends cooler, at 310°, though hotter than it would be at that radioactivity.
+- A player who holds radioactivity against that by withdrawing rod is the starting point of §9.9's table, and Run takes away the brake they were leaning on.
+- From the unsteered state, radioactivity 44 at the limit, Run does nothing to save it. It goes on falling, to 17 three minutes later, because the reactor is already cooling.
+
+**Sounds,** every one checked key by key in a real game at phone size, by recording which clip each press started. All the clips are in one table at the top of `lib/sound-cues.ts`, so swapping one is a one-word change.
+
+| Sound | Plays on |
+|---|---|
+| Button press 5 | Every Cancel, Close and X, including the camera and the foreman's close key |
+| Button press 1 | Rods Apply, Warning key, Pumps, Rods and Turbine keys |
+| Button press 2 | Turbine Apply, Home key, Camera key, alarm monitor and shift log headers |
+| Button press 3 | Pumps Apply, Pause and Play key, Volume key |
+| Button press 4 | Quit, Message key, ? key, foreman's Next and Previous, Main Menu |
+| Pump confirm | Each pump switch as it turns, and no longer Apply |
+| Water balancer run, turbine vacuum run | The Run keys, only when they start a job |
+
+- The sound modal's switches and slider are silent (owner). The camera's Back is now Close, and lost its arrow.
+- **Presses follow the Sound Effects switch alone, not the pause,** or Play would be silent and so would anything pressed during a pause. The game's own sounds still stop while it's paused.
+- **The two run clips stop with the game and pick up where they left off,** so they pause with the foreman too. They run 6 s and 18 s, inside the 20 s and 33 s jobs.
+- **A click survives leaving the game,** or Quit and Main Menu would be cut off. The first press after a reload also now sounds.
+- **A new game starts with sound off.** That's the existing default, so a player hears none of this until they turn it on.
+- A new check fails if a clip named in the table isn't in `public/sounds`, so a renamed file can't quietly lose its sound again.
+- The file name `turbine-vacume-run.mp3` is spelt as supplied.
+
+### 9.11 Turbine selector and event sounds, 2026-11-05
+
+The owner supplied five more clips, all in the same table in `lib/sound-cues.ts`.
+
+| Sound | Plays on |
+|---|---|
+| Electricity sound 1 | The turbine selector reaching Idle or Pumps |
+| Electricity sound 2 | The turbine selector reaching Grid |
+| Power cut event | A power cut starting |
+| Pump trip event | A pump trip starting |
+| Reactor hall event | The signal from the reactor hall going |
+| Electricity sound 2, again | The turbine tripping off the grid (owner chose to reuse a selector clip, Claude chose which) |
+
+- The selector sounds however it's turned, by click, drag, legend or arrow key, as it reaches a new position. It's silent against an end stop. Applying the mode still plays Button press 2.
+- Each event clip plays once, as the event starts, with the event alarm, the warning bleep and the printer in that same second. An event already running in a saved game doesn't play it again. The same goes for a turbine trip.
+- **Claude's call: the event clips follow the Sound Effects switch, not Alarms,** as one-off sounds like the warning bleep. The event alarm itself stays on Alarms.
+- The power cut (5.7 s) and reactor hall (2.7 s) clips stop and pick up with the game, like the run clips. The pump trip (1 s) rings out.
+- Rods Apply stays on Button press 1, the owner's renamed old clip, so it sounds as it did (owner, 2026-11-05).
+- A rod jam and a grid hold have no clip. The Safety Test's own mains loss isn't an event, so it plays none.
+
 ---
 
 ## 10. Test findings behind these decisions
@@ -531,7 +656,7 @@ Run on 2026-11-04 on a scratch copy, with no changes to the repo. Each row is 10
 | Output −10% | 98% / 54% | 63% / 46% |
 | Output −15% | 97% / 50% | 53% / 42% |
 | Pump cooling −10% (bot refitted) | 99% / 55% | 55% / 44% |
-| Fuel heat transfer −20% (the chosen limit) | 99% / 55% | 53% / 45% |
+| Fuel heat transfer −20% (the first limit, 10% since 2026-11-05) | 99% / 55% | 53% / 45% |
 | Fuel heat transfer −30% | 94% / 55% | 51% / 44% |
 | Fuel heat transfer −40% | 90% / 53% | 37% / 42% |
 | All ten rods at half speed | 100% / 56% | 57% / 46% |
@@ -556,7 +681,7 @@ Run on 2026-11-04 on a scratch copy, with no changes to the repo. Each row is 10
 - All three gauges appear on the main page as well as in the modals, in the same design: the rod needle on the Control Rod Positions widget (no bigger, layout little changed), and the turbine and pump gauges in a new two-halves widget that will probably replace the dosimeter.
 - Log messages at gauge maximums only.
 - Pump flow dip added alongside the lock. The turbine needs no added cost.
-- Sluggish rods with a yellow lamp behind the channel's gap, plus left/right balance.
+- Slow rods with a yellow lamp behind the channel's gap, plus left/right balance.
 - Edge rods 1, 2, 9 and 10 count more on the needle, and the needle sets the effect.
 - The needle follows actual rods, not levers.
 - Starting rods keep their total, slightly off centre.
@@ -564,7 +689,7 @@ Run on 2026-11-04 on a scratch copy, with no changes to the repo. Each row is 10
 
 **Proposed by Claude, no objection from the owner:**
 - Edge rods count 2.5 times as much as middle rods.
-- Sluggish rods send no log message.
+- Slow rods send no log message.
 
 **Decided in the design review (2026-11-04):**
 - All designs in §8.
@@ -583,24 +708,28 @@ Run on 2026-11-04 on a scratch copy, with no changes to the repo. Each row is 10
 
 ### 11.1 Open questions for the owner
 
-Everything here can wait for the owner's playtest. Claude's recommendation is given where there is one.
+In priority order, as of 2026-11-05. The order runs from what changes how the game plays, through what depends on that, to what only needs a yes. Claude's recommendation is given where there is one.
 
-**Difficulty (the owner said to judge these once the game can be played as a whole):**
-1. **Is Hard's novice result acceptable?** A novice who ignores every job survives 53.5% of Hard shifts, against 61.5% today, with 7 meltdowns against 5 in 200. Easy is fine at 99.0%. The biggest single lever is `pumpTransferLoss`: the plan's test at 20% matches this result, so 15% should give some back.
-2. **Is the Hard check at 19 losses in 40 acceptable?** It was 18. With every job done the bot now survives 63.5%, so it could go back to 18.
-3. **Are the penalties too mild, or too hard to notice?** Sluggish rods and rod balance made no measurable difference to the bot, which keeps rods moving and level. Only a person can judge these (§5).
-4. **Is the timing of each job a real decision?** That was the owner's aim (§1). The bot can't feel it. Try the ejector during a grid hold, and the balancer at a small reading.
+**Playtest first:**
+1. **Does the balancer's kick feel right at 10%?** Rods untouched at the limit, radioactivity 100 reaches 134 in 3 minutes after Run, not 167 (§9.9). Try a run with about 1% in on six or seven rods.
+2. **Are the penalties too mild, or too hard to notice?** The 1% rule and the 10% loss both made the jobs gentler. Slow rods and rod balance make no measurable difference to the bot, which keeps rods moving and level, so only a person can judge these (§5).
+3. **Is the timing of each job a real decision?** That was the owner's aim (§1), and the bot can't feel it. Try the ejector during a grid hold, and the balancer at a small reading.
 
-**Wording and sounds:**
-5. **The guide's final wording** (§7.2). The draft is live. One step is titled "Balance button", but the key reads Run.
-6. **How to Play's new lines** on all three machines. They are Claude's draft.
-7. **Sounds for the ejector and balancer.** Both are silent. The owner supplies clips, as usual.
+**Difficulty, once 1 to 3 are settled:**
+4. **Is Hard's novice result acceptable?** A novice who ignores every job survives 51% of Hard shifts (47% at 20%), against 61.5% before the jobs. Easy is fine at 97.8%. **Claude recommends** accepting it if question 2 comes back "about right", since Hard is meant to be hard, and the jobs now earn 7 points.
+5. **Is the Hard check at 19 losses in 40 acceptable?** **Claude recommends** keeping 19. The bot doing every job now survives 58%, about 17 losses in 40, so 18 would fail on an ordinary unlucky block.
 
-**Claude's decisions, for the owner to confirm or change:**
+**Words:**
+6. **The guide's final wording** (§7.2). The draft is live. **Claude recommends** renaming the step "Balance button" to "Run", to match the key, and adding that radioactivity rises as the needle returns, so the player puts a little rod in.
+7. **How to Play's new lines** on all three machines. They are Claude's draft.
+
+**Claude's decisions, for a yes or a change:**
 8. **Starting rods.** They differ from §6, to keep the opening climb exact (§9.8). Do they look right, and is 17% off centre enough for a job at the start?
-9. **A sluggish rod recovers on arrival,** not 5% into its move as on the prototype, so that AZ-5 and the first move stay slow as §5 says.
-10. **Modals slide up the screen on a phone** to clear the foreman. Tall subjects can still sit partly behind his sheet on small phones (§9.5).
-11. **Pressing the pumps' Run drops any switch change not yet applied.** Apply during a lock just closes the modal.
-12. **The pump needle drifts the other way after each balancing.** The direction is cosmetic.
-13. **Needles rest on a number:** the turbine's on 100 and the pump's on 0, for much of a shift. That follows the approved dials, but it's worth a look.
-14. **`/game?fastjobs`** stays in the code for future tuning. It is safe to remove when tuning is done.
+9. **Needles rest on a number:** the turbine's on 100 and the pump's on 0, for much of a shift. That follows the approved dials, but it's worth a look.
+10. **A slow rod recovers on arrival,** not part way through its move as on the prototype, so that AZ-5 and the first move stay slow as §5 says. **Claude recommends** keeping it.
+11. **Modals slide up the screen on a phone** to clear the foreman. Tall subjects can still sit partly behind his sheet on small phones (§9.5).
+12. **The pump needle drifts the other way after each balancing.** The direction is cosmetic. **Claude recommends** keeping it.
+13. **`/game?fastjobs`** stays in the code for future tuning. **Claude recommends** removing it when tuning is done.
+14. **Key sounds Claude added beyond the owner's list** (§9.10): the ? key, the foreman's keys, the alarm monitor and shift log headers, Main Menu, and the click on the three panel keys that open the Pumps, Rods and Turbine modals. Tapping outside a modal, Escape and the home page stay silent.
+
+**Waiting on a clip from the owner, not on a decision:** the rod levers and rod jams. Neither has a suitable sound yet (owner, 2026-11-05), so both stay silent for now, and the owner will say if that changes.

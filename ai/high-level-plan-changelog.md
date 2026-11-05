@@ -2,6 +2,32 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.38 – 2026-11-05 (Turbine selector and event sounds)
+
+- **The turbine's mode selector sounds** (Section 15, owner's clips): one for Idle and Pumps, another for Grid.
+- **Power cuts, pump trips and signal losses each have a clip as they start** (Section 15, owner's clips). Claude put them on the Sound Effects switch, as one-off sounds like the warning bleep.
+- **A turbine trip plays one of the selector's clips** (owner). Claude chose the Grid one, as the turbine is falling off the grid.
+
+## v2.37 – 2026-11-05 (Every key has a sound; a rod at 0% can't go slow)
+
+- **A rod fully withdrawn can't go slow** (Section 10, owner). It goes slow by sticking in the fuel, and at 0% it's out of it.
+- **Every key sounds** (Section 15, owner). One clip for every Cancel, Close and X, and a mixture of four others for the rest. Pump switches take the old pump confirmation clip. Claude added the keys the owner's list might have missed, for review (plan §11.1).
+- **The ejector and balancer have their own sounds** (owner's clips).
+- **Key presses follow the Sound Effects switch alone** (Claude), not the pause, or Play would be silent. The two job clips stop and pick up with the game.
+- **The camera's Back is now Close** (owner).
+
+## v2.36 – 2026-11-05 (Machine maintenance: the owner's first playtest notes)
+
+- **A sluggish rod now goes by chance** (Section 10, owner). From 5 minutes parked, even odds each minute. A move of 1%, not 5%, restarts the clock and frees it.
+- **The jobs come round less often** (owner): vacuum 555 s (was 360) and pumps 645 s (was 480). That's about 1.5 of each in an Easy shift, and left alone their two messages arrive 90 s apart. The numbers within that aim are Claude's.
+- **Ready tiles removed** (owner). Run goes dark instead. Apply on the pumps is dark during the lock, and the switches stay free, replacing "the locked switches show nothing" from v2.35. A choice not yet applied now survives pressing Run.
+- **The pump modal is shorter** (owner): 779 px down to 585 px on a phone, with lamps beside a smaller switch. Machine modals use the visible screen height.
+- **Channel lamps pulse** (owner), and the rod display gains a yellow Sluggish lamp, with white for a fully withdrawn rod (owner; the white and the short legend words are Claude's).
+- **Bug fix:** on a phone, the rods modal's needle slid in from off the strip each time it opened.
+- **Text correction, no behaviour change:** Section 7 said radioactivity rises "a little" after balancing. Measured with rods untouched, 100 at the limit reaches 157 in 150 s. The owner's answer is below.
+- **The most heat transfer can fall from imbalance is now 10%, not 20%** (Section 7, owner). Everything else about the balancer stays. From the limit with rods untouched, radioactivity 100 now reaches 134 in 3 minutes, not 167. On Hard the novice survives 51% against 47%, and a bot doing every job 58% against 61.8% (plan §9.9).
+- **"Sluggish" is now "slow" everywhere** (owner): the rod display's legend, the game's text, the code, this plan and the maintenance plan. This changelog and older plans keep the old word.
+
 ## v2.35 – 2026-11-04 (Machine maintenance, stages 4 and 5: rod balance and the pump balancer)
 
 The last two stages, built and deployed together at the owner's request, with the playtest to follow.
