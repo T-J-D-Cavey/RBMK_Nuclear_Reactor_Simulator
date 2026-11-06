@@ -1,12 +1,13 @@
 "use client"
 
+import { useEffect } from "react"
 import { XIcon } from "lucide-react"
 import { useSoundEffect } from "@/hooks/use-sound-effect"
 import type { HallSignal } from "@/lib/game-utils"
 import ReactorCamera, { getInterferenceIntensity } from "./reactor-camera"
 
 // The full reactor camera view: the CCTV monitor set in its own control panel (owner, 2026-10-27: prototype A, and C
-// on a phone). Close is the only control on it. Everything else is read-only panel furniture, so the player never
+// on a phone). The X is the only control on it. Everything else is read-only panel furniture, so the player never
 // wonders whether it can be pressed: status lamps, a signal meter, a talkback grille, vents and a service note.
 
 interface ReactorCameraViewProps {
@@ -94,32 +95,30 @@ export default function ReactorCameraView({ radioactivity, reactorTemp, signal: 
     onClose()
   }
 
+  // Escape closes it, silently, as it does every dialog. This is a page of its own, not one of them.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [onClose])
+
   // With the reactor hall's signal lost there is no picture to interfere with, so nothing here gives radioactivity away
   const lost = hall !== "live"
   const interference = lost ? 0 : getInterferenceIntensity(radioactivity)
   const signal = lost ? 0 : signalStrength(interference)
 
-  // Panel kit classes set their own display, which beats Tailwind's hidden, so a wrapper shows or hides each Close
-  const close = (wrapper: string, height: string) => (
-    <div className={wrapper}>
-      <span className="cr-lens-bezel flex w-full">
-        <button onClick={handleClose} className={`cr-lens w-full ${height} px-5 text-lg lg:text-base`} aria-label="Close the camera">
-          Close
-        </button>
-      </span>
-    </div>
-  )
-
   return (
     <div className="fixed inset-0 z-50 bg-[#0a0a09] p-2.5 lg:p-3.5 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Reactor hall camera">
       <div className="cr-panel cr-screws min-h-full flex flex-col gap-3.5 lg:gap-[18px] px-3.5 pt-[18px] pb-4 lg:px-7 lg:py-[22px]">
-        {/* Header: the dialogs' black title bar with its close key (owner, 2026-10-27). On a phone Close is also at the
-            bottom, where a thumb reaches. */}
-        <div className="relative">
+        {/* Header: the dialogs' black title bar with its close key (owner, 2026-10-27). It's the only way out on a screen
+            with no keyboard, so it stays in view when a phone scrolls the panel. */}
+        <div className="sticky top-0 z-10">
           <h1 className="cr-dialog-title">Reactor Hall Camera</h1>
           <button
             onClick={handleClose}
-            className="cr-key cr-key-black !absolute top-1.5 right-1.5 size-7 !tracking-normal [&_svg]:size-4"
+            className="cr-key cr-key-black !absolute top-1.5 right-1.5 size-7 !tracking-normal after:absolute after:-inset-2 after:content-[''] [&_svg]:size-4"
             aria-label="Close the camera"
           >
             <XIcon />
@@ -162,10 +161,9 @@ export default function ReactorCameraView({ radioactivity, reactorTemp, signal: 
           </div>
         </div>
 
-        {/* Phone: vents, the service note, then Close */}
+        {/* Phone: vents, then the service note */}
         <Louvres count={3} className="lg:hidden px-[60px] !gap-1.5" />
         <ServiceNote className="lg:hidden mx-auto w-[min(100%,15rem)] mt-1" />
-        {close("lg:hidden", "h-[54px]")}
       </div>
     </div>
   )

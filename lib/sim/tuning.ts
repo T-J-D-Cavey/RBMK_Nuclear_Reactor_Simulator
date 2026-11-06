@@ -267,7 +267,7 @@ export const MAINTENANCE_TUNING = {
   balanceEffect: 0.15, // with the needle hard over, the heavy side counts this much less and the light side more
   pumpDriftSeconds: 645, // the pump needle, centre to limit (§4)
   pumpTransferLoss: 0.1, // fuel-to-reactor heat transfer lost at the limit (owner, 2026-11-05; was 0.2: it set the size of the balancer's kick). Never a cut in cooling: that makes more steam, so more output (§10)
-  balancerLockSeconds: 8, // the pump switches can't be used, and flow dips, for this long
+  balancerLockSeconds: 8, // the pump switches don't act, and flow dips, for this long
   balancerFlowDip: 0.1, // of the pumps' cooling, during the lock
   balancerGlideSeconds: 25, // then the needle glides back to centre
 }

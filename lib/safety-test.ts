@@ -263,7 +263,7 @@ function runStep(state: GameState, step: ScriptStep, now: number): GameState {
   }
   switch (step.action) {
     case "pumps-on":
-      s = { ...s, waterPumps: s.waterPumps.map((p) => ({ ...p, on: true })) }
+      s = { ...s, waterPumps: s.waterPumps.map((p) => ({ ...p, on: true })), pumpOrders: null } // over any switch waiting for the balancer
       return addLog(s, ROLES.pumps.source, "All remaining pumps switched on.", ROLES.pumps.from)
     case "turbine-to-pumps":
       s = { ...s, turbineMode: "pumps", turbineConnected: false }

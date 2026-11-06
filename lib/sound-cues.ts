@@ -9,9 +9,6 @@ const CLICK = "/sounds/button-press-5.mp3"
 // Clips the owner provided, served from public/sounds. To change what a key sounds like, change it here.
 export const SOUND_EFFECT_FILES = {
   cancel: CLICK,
-  rodsApply: CLICK,
-  turbineApply: CLICK,
-  pumpsApply: CLICK,
   quit: CLICK,
   homeKey: CLICK,
   pauseKey: CLICK,

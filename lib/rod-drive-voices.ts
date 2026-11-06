@@ -1,10 +1,10 @@
-// The rod-drive sound (bible §15): one voice per moving rod, up to three. The drive starts once the confirmation
-// clunk has played, and voices that start together are a split second apart. A voice stops as soon as its rod has
+// The rod-drive sound (bible §15): one voice per moving rod, up to three. The drive starts a moment after the lever is
+// let go, and voices that start together are a split second apart. A voice stops as soon as its rod has
 // arrived, with no fade-out (owner, 2026-10-20: the fade made the end of a move tail away), but never before it has
 // played for DRIVE_MIN_PLAY_MS. So a small move, whose rod arrives before the drive has even started, is still heard.
 // Takes its audio elements and timers from outside so it can be checked without a browser (scripts/sim/sounds.test.ts).
 
-export const DRIVE_START_DELAY_MS = 1250 // after the order, so the drive follows the confirmation sound (owner)
+export const DRIVE_START_DELAY_MS = 250 // after the order. It was 1,250, to follow the click of Apply, now gone (owner, 2026-11-06)
 export const DRIVE_STAGGER_MS = 300 // gap between voices starting together
 export const DRIVE_MIN_PLAY_MS = 1000 // the shortest a voice plays, however small the move
 

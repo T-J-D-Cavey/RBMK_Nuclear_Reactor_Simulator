@@ -71,12 +71,24 @@ export const canRunBalancer = (s: Pick<GameState, "balancerLock" | "balancerGlid
 export const runBalancer = (s: Pick<GameState, "balancerLock" | "balancerGlide" | "waterPumps">): Pick<GameState, "balancerLock"> | null =>
   canRunBalancer(s) ? { balancerLock: MAINTENANCE_TUNING.balancerLockSeconds } : null
 
-// The needle drifts to its limit and stops. The balancer locks the switches, then glides it back to centre, and a power
+// Where the pump switches are set. They stay free during the balancer's lock, but nothing reaches the pumps until it ends.
+export const pumpSwitches = (s: Pick<GameState, "waterPumps" | "pumpOrders">) => s.pumpOrders ?? s.waterPumps.map((pump) => pump.on)
+
+// A pump switch acts at once, except during the lock: then the pumps keep running as they were, and the switches take
+// effect as it ends (owner, 2026-11-06: no Apply key to hold them back any more).
+export function throwPumpSwitch(s: Pick<GameState, "balancerLock" | "waterPumps" | "pumpOrders">, idx: number): Pick<GameState, "waterPumps"> | Pick<GameState, "pumpOrders"> {
+  const switches = pumpSwitches(s).map((on, i) => (i === idx ? !on : on))
+  return s.balancerLock > 0 ? { pumpOrders: switches } : { waterPumps: s.waterPumps.map((pump, i) => ({ ...pump, on: switches[i] })) }
+}
+
+// The needle drifts to its limit and stops. The balancer locks the pumps, then glides it back to centre, and a power
 // cut part way through doesn't stop it.
 function advancePumpBalance(s: GameState): GameState {
   if (s.balancerLock > 0) {
     const balancerLock = s.balancerLock - 1
-    return { ...s, balancerLock, balancerGlide: balancerLock === 0 ? MAINTENANCE_TUNING.balancerGlideSeconds : 0 }
+    const next = { ...s, balancerLock, balancerGlide: balancerLock === 0 ? MAINTENANCE_TUNING.balancerGlideSeconds : 0 }
+    if (balancerLock > 0 || !s.pumpOrders) return next
+    return { ...next, waterPumps: s.waterPumps.map((pump, i) => ({ ...pump, on: s.pumpOrders![i] })), pumpOrders: null }
   }
   if (s.balancerGlide > 0) {
     const pumpBalance = s.pumpBalance - s.pumpBalance / s.balancerGlide

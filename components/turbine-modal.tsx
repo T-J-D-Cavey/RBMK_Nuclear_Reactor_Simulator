@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { Fragment, useState, useEffect, useRef } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Fragment, useRef } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, openOnDialog } from "@/components/ui/dialog"
 import { ArcDial } from "@/components/machine-dials"
 import MachineGuide from "@/components/machine-guide"
 import { JobKey } from "@/components/switchgear"
@@ -18,7 +18,7 @@ interface TurbineModalProps {
   vacuum: number
   ejectorReady: boolean // a press of the air ejector's key would do something
   onRunEjector: () => void
-  onUpdate: (mode: TurbineMode) => void
+  onSelect: (mode: TurbineMode) => void
   onGuideChange: (open: boolean) => void // the shift foreman has come or gone: the game pauses while he talks
 }
 
@@ -44,34 +44,20 @@ const TILES: { mode: TurbineMode; label: string; lit: "green" | "amber" | "red" 
   { mode: "idle", label: "Idle", lit: "red" },
 ]
 
-export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, ejectorReady, onRunEjector, onUpdate, onGuideChange }: TurbineModalProps) {
-  const [mode, setMode] = useState<TurbineMode>("idle")
+export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, ejectorReady, onRunEjector, onSelect, onGuideChange }: TurbineModalProps) {
   const playSound = useSoundEffect()
 
-  useEffect(() => {
-    if (open) {
-      setMode(turbineMode)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  const handleApply = () => {
-    onUpdate(mode)
-    onOpenChange(false)
-  }
-
-  const current = POSITIONS.findIndex((p) => p.mode === mode)
-  // Sounds only as the selector reaches a new position, so it's silent against its end stops
+  const current = POSITIONS.findIndex((p) => p.mode === turbineMode)
+  // Each position takes effect as the selector reaches it. It sounds only then, so it's silent against its end stops.
   const select = (next: TurbineMode) => {
-    if (next === mode) return
+    if (next === turbineMode) return
     playSound(TURBINE_SELECT_EFFECTS[next])
-    setMode(next)
+    onSelect(next)
   }
   const turnTo = (index: number) => select(POSITIONS[Math.max(0, Math.min(POSITIONS.length - 1, index))].mode)
 
   // Press and drag left or right to turn the knob through its detents; it stops at Pumps and Grid.
   // A drag swallows the click that follows it, so only a plain click turns the knob one step clockwise.
-  const knob = useRef<HTMLButtonElement>(null)
   const drag = useRef<{ x: number; from: number; moved: boolean } | null>(null)
   const dragged = useRef(false)
 
@@ -96,21 +82,16 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Opens on the knob, not the first key in the page: the ejector runs at once, so Enter mustn't press it by accident */}
       <DialogContent
         className="cr-dialog sm:max-w-md max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem] gap-3 sm:gap-4"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault()
-          knob.current?.focus()
-        }}
+        onOpenAutoFocus={openOnDialog}
       >
         <DialogHeader>
           <DialogTitle className="cr-dialog-title">Turbine</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3 sm:space-y-4">
-          {/* The ejector runs at once, like AZ-5, with no Apply, and carries on if the modal closes. The rising needle and
-              the dark key are all that shows it running. */}
+          {/* The ejector carries on if the modal closes. The rising needle and the dark key are all that shows it running. */}
           <div className="cr-module cr-bay-screws p-2.5 flex items-center justify-between gap-2 sm:gap-3">
             <div className="flex-1 min-w-0 max-w-60" data-tutorial="turbine-vacuum">
               <ArcDial kind="vacuum" value={vacuum} />
@@ -125,7 +106,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
               <span className="cr-selector-plate" aria-hidden="true" />
               {POSITIONS.map((p) => {
                 const rad = (p.angle * Math.PI) / 180
-                const selected = p.mode === mode
+                const selected = p.mode === turbineMode
                 return (
                   <Fragment key={p.mode}>
                     <span
@@ -149,7 +130,6 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
                 )
               })}
               <button
-                ref={knob}
                 onClick={handleKnobClick}
                 onKeyDown={handleKnobKey}
                 onPointerDown={(e) => {
@@ -182,30 +162,11 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
 
             <div className="grid grid-cols-3 gap-2 w-full px-1 pb-1">
               {TILES.map((t) => (
-                <span key={t.mode} className={`cr-mode-tile ${t.mode === mode ? `on-${t.lit}` : ""}`}>
+                <span key={t.mode} className={`cr-mode-tile ${t.mode === turbineMode ? `on-${t.lit}` : ""}`}>
                   {t.label}
                 </span>
               ))}
             </div>
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <span className="cr-lens-bezel flex-1">
-              <button onClick={handleApply} className="cr-lens w-full h-12">
-                Apply
-              </button>
-            </span>
-            <span className="cr-lens-bezel flex-1">
-              <button
-                onClick={() => {
-                  playSound("cancel")
-                  onOpenChange(false)
-                }}
-                className="cr-lens cr-lens-red w-full h-12"
-              >
-                Cancel
-              </button>
-            </span>
           </div>
         </div>
 

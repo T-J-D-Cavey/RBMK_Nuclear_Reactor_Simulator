@@ -17,7 +17,7 @@ import { EVENT_TUNING } from "../../lib/sim/tuning"
 import { seededRng } from "../../lib/sim/rng"
 import { getRodMargin } from "../../lib/sim/reactor"
 import { advanceGame, createNewGame } from "../../lib/game-loop"
-import { calculateGameTick, isPowerOnTarget } from "../../lib/game-mechanics"
+import { calculateGameTick, isPowerOnTarget, orderRod } from "../../lib/game-mechanics"
 import {
   AZ5_LAMP_SECONDS,
   SIGNAL_DARK_AFTER,
@@ -39,7 +39,7 @@ import {
   RODS_OUT_BELOW,
   SAFETY_TEST_SCRIPT,
 } from "../../lib/safety-test"
-import { advanceMaintenance, canRunBalancer, canRunEjector, runBalancer, runEjector, vacuumOutputFactor } from "../../lib/maintenance"
+import { advanceMaintenance, canRunBalancer, canRunEjector, pumpSwitches, runBalancer, runEjector, throwPumpSwitch, vacuumOutputFactor } from "../../lib/maintenance"
 import { advanceReactor, effectiveBoron, getReactivityCards, rodBalance, rodBoron, rodStrokeSeconds } from "../../lib/sim/reactor"
 import { MAINTENANCE_TUNING, REFERENCE_STATE, TUNING } from "../../lib/sim/tuning"
 import { makeBot, playGame, type GameRun } from "./bot"
@@ -1105,6 +1105,73 @@ test("maintenance: the Safety Test's order to start the pumps wins over a lock",
   const s = toPumpsOnStep()
   assert.ok(s.waterPumps.every((p) => p.on), "all four on, through the lock")
   assert.ok(s.balancerLock > 0, "and the lock carries on")
+})
+
+test("maintenance: the Safety Test's order to start the pumps wins over a switch turned during the lock", () => {
+  const rng = seededRng(1)
+  const bot = makeBot({ jobs: false })
+  let s = createNewGame("safety_test")
+  const at = SAFETY_TEST_SCRIPT.find((step) => step.action === "pumps-on")!.at
+  while (getShiftTime(s) < at - 2) s = advanceGame(bot.act(s), rng)
+  s = { ...s, ...runBalancer(s) }
+  s = { ...s, ...throwPumpSwitch(s, 0) }
+  for (let t = 0; t < 12; t++) s = advanceGame(s, rng)
+  assert.equal(s.balancerLock, 0)
+  assert.ok(s.waterPumps.every((p) => p.on), "all four still on after the lock")
+  assert.equal(s.pumpOrders, null)
+})
+
+test("orders: a pump switch acts at once, away from the balancer", () => {
+  const s = quietGame("free")
+  const on = s.waterPumps[0].on
+  const next = { ...s, ...throwPumpSwitch(s, 0) }
+  assert.equal(next.waterPumps[0].on, !on)
+  assert.deepEqual(next.waterPumps.slice(1), s.waterPumps.slice(1), "the other pumps are left alone")
+  assert.equal(next.pumpOrders, null)
+})
+
+test("orders: a switch turned during the balancer's lock waits for it, and the pumps run as they were till then", () => {
+  const start: GameState = { ...quietGame("free"), pumpBalance: 0.5 }
+  let s: GameState = { ...start, ...runBalancer(start) }
+  const running = s.waterPumps.map((p) => p.on)
+  const wanted = running.map((on, i) => (i === 3 ? !on : on))
+  s = { ...s, ...throwPumpSwitch(s, 3) }
+  assert.deepEqual(pumpSwitches(s), wanted, "the switch has turned")
+  for (let t = 1; t <= 7; t++) {
+    s = ticks(s, 1)
+    assert.deepEqual(s.waterPumps.map((p) => p.on), running, `the pumps run as they were at ${t} s`)
+  }
+  s = ticks(s, 1)
+  assert.equal(s.balancerLock, 0)
+  assert.deepEqual(s.waterPumps.map((p) => p.on), wanted, "and act as the lock ends")
+  assert.equal(s.pumpOrders, null)
+  assert.deepEqual(pumpSwitches(s), wanted)
+})
+
+test("orders: a switch turned and turned back during the lock leaves the pumps as they were", () => {
+  const start: GameState = { ...quietGame("free"), pumpBalance: 0.5 }
+  let s: GameState = { ...start, ...runBalancer(start) }
+  const running = s.waterPumps.map((p) => p.on)
+  s = { ...s, ...throwPumpSwitch(s, 1) }
+  s = { ...s, ...throwPumpSwitch(s, 1) }
+  s = ticks(s, 8)
+  assert.deepEqual(s.waterPumps.map((p) => p.on), running)
+})
+
+test("orders: a rod's order changes only that rod, from the rods as they stand", () => {
+  const s = quietGame("free")
+  const rods = orderRod(s.controlRods, 2, 73)
+  assert.equal(rods[2].target, 73)
+  assert.equal(rods[2].insertion, s.controlRods[2].insertion, "it travels there at its own speed")
+  assert.deepEqual(rods.filter((_, i) => i !== 2), s.controlRods.filter((_, i) => i !== 2))
+  assert.equal(orderRod(s.controlRods, 0, 140)[0].target, 100)
+  assert.equal(orderRod(s.controlRods, 0, -5)[0].target, 0)
+})
+
+test("orders: a rod that jammed with its lever in the player's hand takes no order", () => {
+  const s = quietGame("free")
+  const jammed = s.controlRods.map((rod, i) => (i === 4 ? { ...rod, stuck: true, target: rod.insertion } : rod))
+  assert.deepEqual(orderRod(jammed, 4, 10), jammed)
 })
 
 test("maintenance: every gauge at its limit together still leaves a playable reactor", () => {

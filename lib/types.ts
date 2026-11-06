@@ -203,7 +203,8 @@ export interface GameState {
   rodBalanceReported: boolean // internal: the reactor technician has reported the needle hard over since it came back
   pumpBalance: number // the circulation balance needle, -1 (towards loop 1) to 1 (loop 2), 0 at centre: only its size matters
   pumpDrift: 1 | -1 // internal: which way the needle is drifting, changing each time it is balanced
-  balancerLock: number // internal: seconds left of the balancer's lock on the pump switches, 0 while it isn't running
+  balancerLock: number // internal: seconds left of the balancer's lock on the pumps, 0 while it isn't running
+  pumpOrders: boolean[] | null // internal: the pump switches, once one has been thrown during that lock; else null
   balancerGlide: number // internal: seconds left of the needle's glide back to centre, after the lock
   pumpBalanceReported: boolean // internal: the pump operator has reported the needle at its limit since it left it
   reactivityNoise: number // internal: slow random drift in the reactivity balance
@@ -290,6 +291,7 @@ export const INITIAL_GAME_STATE: GameState = {
   pumpBalance: 0,
   pumpDrift: 1,
   balancerLock: 0,
+  pumpOrders: null,
   balancerGlide: 0,
   pumpBalanceReported: false,
   reactivityNoise: 0,

@@ -1,4 +1,4 @@
-import { type GameOverCause, type GameState, THRESHOLDS, getPowerTolerance, isGridHoldActive } from "./types"
+import { type ControlRod, type GameOverCause, type GameState, THRESHOLDS, getPowerTolerance, isGridHoldActive } from "./types"
 import { vacuumOutputFactor } from "./maintenance"
 import { advanceReactor, getRodMargin } from "./sim/reactor"
 import type { Rng } from "./sim/rng"
@@ -7,6 +7,12 @@ export interface TickResult {
   updates: Partial<GameState>
   ending: GameOverCause | null
 }
+
+// A new position for one rod, which travels there at its own speed (bible §10). Only that rod's order changes, from the
+// rods as they stand now, so a lever held for some seconds can't put the others back to where they were. A jammed rod
+// takes no orders, and one can jam while its lever is in the player's hand.
+export const orderRod = (rods: ControlRod[], idx: number, target: number): ControlRod[] =>
+  rods.map((rod, i) => (i === idx && !rod.stuck ? { ...rod, target: Math.max(0, Math.min(100, target)) } : rod))
 
 // One second of game time. The reactor physics live in lib/sim (see ai/implementation-plan.md).
 export function calculateGameTick(state: GameState, rng: Rng = Math.random): TickResult {

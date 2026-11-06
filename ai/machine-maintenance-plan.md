@@ -35,7 +35,7 @@ Occasional maintenance jobs that a player can do to keep each machine at its bes
 | Machine | Job | Long-term penalty if ignored | Short-term consequence of doing it |
 |---|---|---|---|
 | Turbine | Run the air ejector | Up to 12% less output | Output rises as vacuum returns, which can leave the target band |
-| Water pumps | Run the circulation balancer | Up to 10% worse heat transfer out of the fuel | Pump changes can't be applied for about 8 s, a 10% flow dip, then a rise in radioactivity (§9.9: larger than first thought) |
+| Water pumps | Run the circulation balancer | Up to 10% worse heat transfer out of the fuel | Pump changes wait about 8 s, a 10% flow dip, then a rise in radioactivity (§9.9: larger than first thought) |
 | Control rods | Move slow rods | That rod travels at about 60% speed | Moving a rod disturbs the reactor |
 | Control rods | Even up left and right | The heavy side counts less, the light side more, and braking falls slightly | Moving rods disturbs the reactor |
 
@@ -49,7 +49,7 @@ Occasional maintenance jobs that a player can do to keep each machine at its bes
 - **How the player finds out:** by reading the gauges, which appear both in the modals and on the main page (§7.3). There is no panel lamp.
 - **Warnings:** when a gauge reaches its maximum, the relevant operator sends **one shift log message**. No alarm sound and no alarm monitor line. It can send again only after that gauge has been fixed. Slow rods send no message (§5).
 - **Signal loss:** all these gauges keep working. Rods, pumps and turbine are read outside the reactor hall (`lib/game-utils.ts`).
-- **Actions take effect at once.** The ejector and balancer buttons work like AZ-5 in the rods modal: immediate, with no Apply step. They run on in the background if the modal is closed.
+- **Actions take effect at once.** The ejector and balancer buttons work like AZ-5 in the rods modal: immediate. They run on in the background if the modal is closed. Since 2026-11-06 every other control in these modals acts at once too (§9.14).
 - **Safety Test:** if the script switches the pumps on during a lockout, the script wins. An ignored reactor reaches the test with hotter fuel, so this mode needs checking at tuning time.
 
 Draft log messages (`from` uses the existing senders in `lib/game-events.ts`):
@@ -86,7 +86,7 @@ Draft log messages (`from` uses the existing senders in `lib/game-events.ts`):
 |---|---|
 | Needle drifts from centre to limit | 645 s (about 10¾ minutes), then stops. Its direction is cosmetic. Was 8 minutes (§9.9) |
 | Fuel-to-reactor heat transfer at the limit | 10% lower, scaling with the needle (owner, 2026-11-05. It was 20%, which gave too big a kick. 30% was too high for a novice) |
-| Lock after pressing | About 8 s (owner's range: 5–10 s). Apply is dark, and the switches stay free (§9.9) |
+| Lock after pressing | About 8 s (owner's range: 5–10 s). The switches stay free, and any change takes effect as the lock ends (§9.14) |
 | Flow dip during the lock | About 10% |
 | Needle glides back to centre | About 25 s |
 
@@ -109,7 +109,7 @@ Measured at 2 pumps with radioactivity held steady. The limit is now 10%, so the
 | 180 | 20% | 1,036° | 586° | 450° | 455 |
 
 **Action:** press the balance button.
-- Pump changes can't be applied for about 8 s. Apply goes dark, the switches stay free, and the pumps keep running as they were (owner, 2026-11-05).
+- Pump changes wait about 8 s. The switches stay free, the pumps keep running as they were, and the change takes effect as the lock ends (§9.14).
 - Flow dips about 10% for those 8 s, so steam and output nudge up briefly. Apply this as a cooling multiplier, not by changing `pump.flow`, so lamps and pump logic are untouched.
 - The needle then glides to centre over about 25 s. The fuel's extra heat passes to the reactor and the blue card weakens, so radioactivity, steam and output rise. The player needs to reinsert some rod. The further off centre, the bigger the rise. **Measured on 2026-11-05, this is not a small rise (§9.9).**
 - It can't start while no pump is running. If a power cut hits partway through, it finishes anyway.
@@ -151,7 +151,7 @@ Measured at 2 pumps with radioactivity held steady. The limit is now 10%, so the
 
 **The needle is plain (owner):** centre is balanced, halfway left is half imbalanced to the left, and hard left is fully imbalanced to the left. The same goes for the right. It needs no rod numbers.
 
-**The needle reads actual rod positions, not the levers (owner).** It doesn't move while the player drags. It moves only after Apply, as the rods travel, and it stops if a rod jams mid-travel.
+**The needle reads actual rod positions, not the levers (owner).** It doesn't move while the player drags. It moves as the rods travel, once the lever is let go, and it stops if a rod jams mid-travel.
 
 | Value | Starting value |
 |---|---|
@@ -205,7 +205,7 @@ Each modal has a `cr-note` box of guiding text. **That box's place in the modal 
 | Water pumps | "A pump cools the core only when ON and POWERED." | Balance needle, Run key, Ready tile. **No lock indication** (§8.3) |
 | Control rods | "Drag a lever to set insertion. Deeper rods, less radioactivity." "AZ-5: emergency insertion of every rod." | Balance needle. **AZ-5 stays where it is, beside this space** |
 
-Room varies. The pumps note is one line, so that space has grown. On a 390 × 844 phone the pumps modal only just fits, and the rods modal scrolls to reach Apply and Cancel. The modals already scroll, so this is acceptable, but keep it in mind.
+Room varies. The pumps note is one line, so that space has grown. On a 390 × 664 phone the pumps and turbine modals fit, and the rods modal scrolls by about 90 px (§9.14). The modals already scroll, so this is acceptable, but keep it in mind.
 
 ### 7.2 Question mark key and the guide
 
@@ -322,7 +322,7 @@ Sizes used, in px:
 
 - The same bay and key set as the turbine, with the arc dial and a key also reading **Run**, not Balance (owner: it fits narrow screens better).
 - **Ready tile rule (owner, 2026-11-04):** green when the key can be pressed, and grey when it can't. In practice it's grey only after a press, through the lock and the glide, and when no pump is running. **With the needle at dead centre it stays green** and the press works, costing the usual lock and flow dip.
-- **Replaced by the owner, 2026-11-05 (§9.9):** the switches are free all the time, and Apply is dark and can't be pressed during the lock. `GripSwitch` has no disabled state any more.
+- **Replaced by the owner, 2026-11-05 (§9.9):** the switches are free all the time, and Apply is dark and can't be pressed during the lock. `GripSwitch` has no disabled state any more. **Apply itself went on 2026-11-06 (§9.14).**
 
 ### 8.4 Control rods modal
 
@@ -388,7 +388,7 @@ Sizes used, in px:
 - Keep the panel's beige-grey (`.cr-panel`, `.cr-module`).
 - Use the existing parts: `cr-module`, `cr-bay-screws`, `cr-plate`, `cr-lens` and the SKALA strip.
 - Every control must work. The owner has rejected dummy controls that look pressable.
-- Keep the Turbine's rotary selector, the lever-drag rods, the pump grip switches and Apply/Cancel.
+- Keep the Turbine's rotary selector, the lever-drag rods and the pump grip switches. Apply and Cancel went on 2026-11-06 (§9.14).
 - Don't change the shift report's paper style (`components/incident-report.tsx`).
 
 ---
@@ -608,7 +608,7 @@ At needle 0.5, radioactivity 100 reaches 116, not 126. Fuel at the limit now sta
 
 | Sound | Plays on |
 |---|---|
-| Button press 5 (one click for all of these, see §9.12) | Every Cancel, Close and X, including the camera and the foreman's close key; every Apply; Quit; the Home, Pause, Play, Volume, Warning, Message, Camera, Pumps, Rods, Turbine and ? keys; the alarm monitor and shift log headers; the foreman's Next and Previous; Main Menu |
+| Button press 5 (one click for all of these, see §9.12) | Every Cancel, Close and X, including the camera and the foreman's close key; Quit; the Home, Pause, Play, Volume, Warning, Message, Camera, Pumps, Rods, Turbine and ? keys; the alarm monitor and shift log headers; the foreman's Next and Previous; Main Menu |
 | Pump confirm | Each pump switch as it turns, and no longer Apply |
 | Water balancer run, turbine vacuum run | The Run keys, only when they start a job |
 
@@ -633,7 +633,7 @@ The owner supplied five more clips, all in the same table in `lib/sound-cues.ts`
 | Reactor hall event | The signal from the reactor hall going |
 | Electricity sound 2, again | The turbine tripping off the grid (owner chose to reuse a selector clip, Claude chose which) |
 
-- The selector sounds however it's turned, by click, drag, legend or arrow key, as it reaches a new position. It's silent against an end stop. Applying the mode plays the usual click.
+- The selector sounds however it's turned, by click, drag, legend or arrow key, as it reaches a new position. It's silent against an end stop. There's no other click.
 - Each event clip plays once, as the event starts, with the event alarm, the warning bleep and the printer in that same second. An event already running in a saved game doesn't play it again. The same goes for a turbine trip.
 - **Claude's call: the event clips follow the Sound Effects switch, not Alarms,** as one-off sounds like the warning bleep. The event alarm itself stays on Alarms.
 - The power cut (5.7 s) and reactor hall (2.7 s) clips stop and pick up with the game, like the run clips. The pump trip (1 s) rings out.
@@ -645,7 +645,7 @@ The owner found Button press 5 the best click, as it has the least delay, so eve
 
 - Each key keeps its own name in the table in `lib/sound-cues.ts`, so one can still be given a different clip.
 - Button press 1 to 4 are no longer played, and their files stay in `public/sounds`.
-- The rod drive starts 1.25 s after Rods Apply, a delay set to follow the old 1.9 s clunk. The new click lasts about 0.6 s, so there's now a short gap before the drive (§11.1).
+- The rod drive started 1.25 s after Rods Apply, a delay set to follow the old 1.9 s clunk. It's now 0.25 s after a lever is let go (§9.14).
 
 ### 9.13 A short rod sound on a jam or a slow rod, 2026-11-05
 
@@ -655,6 +655,29 @@ The owner asked for two seconds of the rod drive clip as a rod jams, in any scen
 - Several rods at once play one burst. Another rod snagging during a burst starts its two seconds again.
 - It has its own audio element, so it never takes a voice from a moving rod. It starts 66 s into the clip, where no voice reaches even on a full stroke at a slow rod's speed.
 - It follows the Sound Effects switch, is cut off by a pause, and doesn't play for a rod already jammed or slow in a saved game.
+
+### 9.14 Controls act at once, 2026-11-06
+
+The owner asked to drop Apply and Cancel, as the sound modal already worked that way. Pumps, rods and turbine now act at once, and the sound modal's Close has gone too. A modal closes with its X, Escape or a tap outside it. The quit modal keeps both keys. `npm run sim:test` passes 134 tests, and it was driven in the real game with a mouse at 1280 × 900 and with touch at 390 × 664 and 360 × 640.
+
+**What removing Apply would have broken, and what was done about it:**
+- **The balancer's lock.** It lived on Apply going dark, so with no Apply it would have stopped working. Switches turned during the lock now wait in `pumpOrders` and take effect as it ends, even with the modal closed. The switches stay free and nothing reaches the pumps, as §9.9 asks. The ON lamps show the pumps themselves, so for those seconds a switch can differ from its lamp. The Safety Test's order to start every pump overrides anything waiting.
+- **Mis-taps on a rod.** A press used to jump the lever to the pointer, up to about 15% even on the lever's own grip, and Cancel made that harmless. Now only the lever can be picked up, and it moves by as far as the pointer does, so a tap sends nothing. A swipe on a channel scrolls the modal.
+- **The Enter that opened a modal.** The pumps opened on the first switch, the turbine on its knob and the rods on AZ-5, so a held Enter would have changed a pump, turned the turbine or fired AZ-5. All three now open on the modal itself, and Tab reaches the controls.
+- **Writing back old rods.** A lever can be held for seconds while the rods travel. Orders are now worked out from the state as it stands (`orderRod`, and `updateGameState` takes a function), so one lever's order can't put the others back. A rod that jams in the player's hand takes no order.
+- **The X as the main way out.** It's 28 px, so it has an invisible 44 px area round it, on every dialog and the camera.
+- **The camera,** which fills the screen and isn't one of the dialogs, lost its Close key as well (owner). It gained Escape, silent as on the dialogs, and its title bar stays in view while a phone scrolls the panel, so the X can't scroll out of reach. There's no outside to tap.
+- **The rod drive's start.** With no click to follow, 1.25 s of silence would have felt like a lag, so it's 0.25 s. `useRodDisplay` follows the same constant.
+
+**A rod's order goes as its lever is let go,** not during the drag. A player can change their mind on the way, an overshoot sends nothing, and the page doesn't save the game on every pixel of a drag.
+
+**Gains:** the rod needle and the pump lamps can be watched from inside the modal, and tapping outside or pressing Escape no longer silently discards changes. Modals also no longer show stale settings if a jam, a trip or the Safety Test changes something while they're open, and closing one can't overwrite such a change.
+
+**Costs:**
+- There's no undo: a wrong move is put right by moving back. On a pump or the turbine that's a second's work, and flow ramps over 4 s. The expensive case is a rod at 0%: 1% in brings its graphite tip in.
+- The turbine really passes through what's between positions: Pumps to Grid by the knob goes through Idle, for as long as the player takes. The legends go straight there.
+- Rods now start one by one, not together. Every rod starts no later than Apply would have sent it, so a move finishes sooner. Measured at radioactivity 97, a paired 10% move in and out with 2 s between peaks at 100 against 98.5 together (5 s: 104), and setting all ten rods 3% at one a second ends within about 1 point of doing it together. The bot still moves rods together, so it doesn't model this.
+- The rods modal still scrolls on a phone, by about 90 px at 664 px, down from about 150 px.
 
 ---
 
@@ -743,6 +766,11 @@ In priority order, as of 2026-11-05. The order runs from what changes how the ga
 12. **The pump needle drifts the other way after each balancing.** The direction is cosmetic. **Claude recommends** keeping it.
 13. **`/game?fastjobs`** stays in the code for future tuning. **Claude recommends** removing it when tuning is done.
 14. **Key sounds Claude added beyond the owner's list** (§9.10): the ? key, the foreman's keys, the alarm monitor and shift log headers, Main Menu, and the click on the three panel keys that open the Pumps, Rods and Turbine modals. Tapping outside a modal, Escape and the home page stay silent.
-15. **The gap before the rod drive** (§9.12). It starts 1.25 s after Rods Apply, which suited the old clunk. With the shorter click, should it start sooner? **Claude recommends** about 0.6 s if the gap sounds wrong in play.
+15. **Claude's choices in dropping Apply and Cancel** (§9.14), for a yes or a change:
+    - A rod's order goes as its lever is let go, not during the drag.
+    - A press on a channel no longer moves the lever, and only the lever can be picked up.
+    - A pump switch turned during the balancer's lock acts as it ends.
+    - The rod drive starts 0.25 s after an order, which also brings it in a second sooner under the AZ-5 clip. That clip is about 9 s long and always overlapped. **Claude hasn't heard this,** so check AZ-5 by ear. If it's wrong, the fix is `DRIVE_START_DELAY_MS`, or a longer delay for AZ-5 alone.
+    - The guide's two changed lines (the levers and the balance button) are drafts.
 
 **Waiting on a clip from the owner, not on a decision:** the rod levers have no suitable sound yet (owner, 2026-11-05), so they stay silent for now, and the owner will say if that changes.

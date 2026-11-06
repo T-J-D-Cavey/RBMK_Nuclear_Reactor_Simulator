@@ -1,13 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useState, useEffect, useRef } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, openOnDialog } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { StripDial } from "@/components/machine-dials"
 import MachineGuide from "@/components/machine-guide"
 import { rodBalance } from "@/lib/sim/reactor"
-import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { MAINTENANCE_TUNING } from "@/lib/sim/tuning"
 import { MACHINE_GUIDES } from "@/lib/tutorial"
 import type { ControlRod } from "@/lib/types"
@@ -16,106 +15,90 @@ interface ControlRodsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   controlRods: ControlRod[]
-  onUpdate: (rods: ControlRod[], az5: boolean) => void
+  onOrderRod: (idx: number, target: number) => void
+  onAZ5: () => void
   onGuideChange: (open: boolean) => void // the shift foreman has come or gone: the game pauses while he talks
 }
 
-export default function ControlRodsModal({ open, onOpenChange, controlRods, onUpdate, onGuideChange }: ControlRodsModalProps) {
-  const [tempValues, setTempValues] = useState<number[]>([])
-  const [isDragging, setIsDragging] = useState<number | null>(null)
-  const playSound = useSoundEffect()
+export default function ControlRodsModal({ open, onOpenChange, controlRods, onOrderRod, onAZ5, onGuideChange }: ControlRodsModalProps) {
+  // The lever in the player's hand. It goes with the pointer and the rod gets its order as it's let go, so overshooting
+  // on the way sends the rod nowhere. Only the lever itself can be picked up, and it moves by as far as the pointer does:
+  // with no Apply to stop it, a tap on a channel or the edge of a grip mustn't send a rod anywhere.
+  const [held, setHeld] = useState<{ idx: number; value: number } | null>(null)
+  const grip = useRef({ y: 0, from: 0, height: 1, value: 0 })
 
   const anySlow = controlRods.some((rod) => rod.slow && !rod.stuck)
 
-  // Levers show where each rod has been ordered to go (the panel shows where it actually is).
-  // Initialise only when the modal opens: rods move every second and must not reset a lever mid-drag.
-  useEffect(() => {
-    if (open) {
-      setTempValues(controlRods.map((rod) => rod.target))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  const handleApply = () => {
-    const updatedRods = controlRods.map((rod, idx) =>
-      rod.stuck ? rod : { ...rod, target: Math.max(0, Math.min(100, tempValues[idx] ?? rod.target)) },
-    )
-    onUpdate(updatedRods, false)
-    onOpenChange(false)
-  }
-
   // AZ-5 takes effect with a single press: every rod that isn't jammed is driven toward 100% (bible §10).
   const handleAZ5 = () => {
-    onUpdate(controlRods.map((rod) => (rod.stuck ? rod : { ...rod, target: 100 })), true)
+    onAZ5()
     onOpenChange(false)
   }
 
-  const setLeverFromPointer = (idx: number, clientY: number) => {
-    const container = document.getElementById(`rod-container-${idx}`)
-    if (!container) return
-    const rect = container.getBoundingClientRect()
-    const y = Math.max(0, Math.min(container.clientHeight, clientY - rect.top))
-    const percentage = Math.round((y / container.clientHeight) * 100)
-    setTempValues((prev) => {
-      const next = [...prev]
-      next[idx] = percentage
-      return next
-    })
-  }
-
-  // A drag can start anywhere on the rod's track or the handle's enlarged grab area.
   const handleStart = (idx: number, e: React.MouseEvent | React.TouchEvent) => {
-    if (!controlRods[idx].stuck) {
-      // touching the lever shouldn't scroll the modal or select text
-      e.stopPropagation()
-      if (!("touches" in e)) e.preventDefault()
-      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
-      setLeverFromPointer(idx, clientY)
-      setIsDragging(idx)
+    if (controlRods[idx].stuck) return
+    // touching the lever shouldn't scroll the modal or select text
+    if (!("touches" in e)) e.preventDefault()
+    const from = Math.round(controlRods[idx].target)
+    grip.current = {
+      y: "touches" in e ? e.touches[0].clientY : e.clientY,
+      from,
+      height: e.currentTarget.parentElement?.clientHeight ?? 1,
+      value: from,
     }
+    setHeld({ idx, value: from })
   }
 
-  const handleMove = (e: MouseEvent | TouchEvent, idx: number) => {
-    // Prevent scrolling on mobile while dragging
-    if (e.cancelable) e.preventDefault()
-    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
-    setLeverFromPointer(idx, clientY)
-  }
-
+  const heldRod = held?.idx ?? null
   useEffect(() => {
-    if (isDragging !== null) {
-      const container = document.getElementById(`rod-container-${isDragging}`)
-      if (container) {
-        const handleMoveEvent = (e: MouseEvent | TouchEvent) => handleMove(e, isDragging)
-        const handleEnd = () => setIsDragging(null)
+    if (heldRod === null) return
+    const move = (e: MouseEvent | TouchEvent) => {
+      // Prevent scrolling on mobile while dragging
+      if (e.cancelable) e.preventDefault()
+      const y = "touches" in e ? e.touches[0].clientY : e.clientY
+      const value = Math.max(0, Math.min(100, Math.round(grip.current.from + ((y - grip.current.y) / grip.current.height) * 100)))
+      grip.current.value = value
+      setHeld({ idx: heldRod, value })
+    }
+    const letGo = () => {
+      if (grip.current.value !== grip.current.from) onOrderRod(heldRod, grip.current.value)
+      setHeld(null)
+    }
+    const interrupted = () => setHeld(null) // the system took the touch away: nothing was decided
 
-        // { passive: false } is required to allow e.preventDefault() in touch events
-        document.addEventListener("mousemove", handleMoveEvent)
-        document.addEventListener("mouseup", handleEnd)
-        document.addEventListener("touchmove", handleMoveEvent, { passive: false })
-        document.addEventListener("touchend", handleEnd)
+    // { passive: false } is required to allow e.preventDefault() in touch events
+    document.addEventListener("mousemove", move)
+    document.addEventListener("mouseup", letGo)
+    document.addEventListener("touchmove", move, { passive: false })
+    document.addEventListener("touchend", letGo)
+    document.addEventListener("touchcancel", interrupted)
 
-        return () => {
-          document.removeEventListener("mousemove", handleMoveEvent)
-          document.removeEventListener("mouseup", handleEnd)
-          document.removeEventListener("touchmove", handleMoveEvent)
-          document.removeEventListener("touchend", handleEnd)
-        }
-      }
+    return () => {
+      document.removeEventListener("mousemove", move)
+      document.removeEventListener("mouseup", letGo)
+      document.removeEventListener("touchmove", move)
+      document.removeEventListener("touchend", letGo)
+      document.removeEventListener("touchcancel", interrupted)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging])
+  }, [heldRod])
+
+  // Levers show where each rod has been ordered to go (the panel shows where it actually is)
+  const setPosition = (rod: ControlRod, idx: number) => (held?.idx === idx && !rod.stuck ? held.value : Math.round(rod.target))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cr-dialog sm:max-w-2xl w-full max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem] select-none">
+      <DialogContent
+        className="cr-dialog sm:max-w-2xl w-full max-h-[90dvh] overflow-y-auto p-4 sm:p-6 [--dlg-pad:1rem] sm:[--dlg-pad:1.5rem] select-none"
+        onOpenAutoFocus={openOnDialog}
+      >
         <DialogHeader>
           <DialogTitle className="cr-dialog-title">Control Rods</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="flex items-stretch gap-3">
-            {/* The needle follows the rods themselves, not the levers: it moves only once they do, after Apply */}
+            {/* The needle follows the rods themselves, not the levers: it moves only once they do */}
             <div className="cr-module cr-bay-screws flex-1 min-w-0 p-2 flex items-center" data-tutorial="rods-needle">
               <StripDial value={rodBalance(controlRods)} />
             </div>
@@ -137,9 +120,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
           <div className="cr-module cr-bay-screws p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
             <div data-tutorial={anySlow ? undefined : "rods-slow"}>
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center" data-tutorial="rods-levers">
-              {controlRods.map((rod, idx) => {
-                const currentInsertion = tempValues[idx] ?? rod.insertion
-                return (
+              {controlRods.map((rod, idx) => (
                   <div key={rod.id} className="flex flex-col items-center gap-1 w-full" data-tutorial={MAINTENANCE_TUNING.edgeRods.includes(rod.id) ? "rods-edge" : undefined}>
                     <Label className="cr-plate !px-1.5 !py-1 !text-[0.7rem] !tracking-[0.1em]">R{rod.id}</Label>
 
@@ -148,11 +129,8 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
 
                     {/* Rod Track */}
                     <div
-                      id={`rod-container-${idx}`}
                       data-tutorial={rod.slow && !rod.stuck ? "rods-slow" : undefined}
-                      className={`cr-rod-slot relative w-8 sm:w-[30px] h-36 sm:h-48 rounded-b-sm touch-none ${rod.stuck ? "cursor-not-allowed" : "cursor-grab"}`}
-                      onMouseDown={(e) => handleStart(idx, e)}
-                      onTouchStart={(e) => handleStart(idx, e)}
+                      className="cr-rod-slot relative w-8 sm:w-[30px] h-36 sm:h-48 rounded-b-sm"
                     >
                       {(rod.stuck || rod.slow) && <span className={`cr-rod-lamp ${rod.stuck ? "is-jammed" : "is-slow"}`} aria-hidden="true" />}
 
@@ -162,7 +140,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                           rod.stuck ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"
                         }`}
                         style={{
-                          top: `${currentInsertion}%`,
+                          top: `${setPosition(rod, idx)}%`,
                         }}
                         onMouseDown={(e) => handleStart(idx, e)}
                         onTouchStart={(e) => handleStart(idx, e)}
@@ -171,8 +149,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                       </div>
                     </div>
                   </div>
-                )
-              })}
+              ))}
             </div>
             </div>
 
@@ -180,8 +157,8 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
               <div className="ws5-crt-screen ws5-crt-text pt-1 pb-1.5 text-[20px] sm:text-[22px] leading-none" style={{ borderRadius: "10px / 8px" }}>
                 <div className="relative z-[1] grid grid-cols-5 sm:grid-cols-10 gap-y-1 text-center tabular-nums">
                   {controlRods.map((rod, idx) => (
-                    <span key={rod.id} aria-label={`Rod ${rod.id}: ${rod.stuck ? "jammed" : `${tempValues[idx] ?? rod.insertion}%`}`}>
-                      {rod.stuck ? <span className="ws5-crt-inverse">JAM</span> : (tempValues[idx] ?? rod.insertion)}
+                    <span key={rod.id} aria-label={`Rod ${rod.id}: ${rod.stuck ? "jammed" : `${setPosition(rod, idx)}%`}`}>
+                      {rod.stuck ? <span className="ws5-crt-inverse">JAM</span> : setPosition(rod, idx)}
                     </span>
                   ))}
                 </div>
@@ -193,25 +170,6 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onUp
                 <span className="ws5-manual-vent" />
               </div>
             </div>
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <span className="cr-lens-bezel flex-1">
-              <button onClick={handleApply} className="cr-lens w-full h-12">
-                Apply
-              </button>
-            </span>
-            <span className="cr-lens-bezel flex-1">
-              <button
-                onClick={() => {
-                  playSound("cancel")
-                  onOpenChange(false)
-                }}
-                className="cr-lens cr-lens-red w-full h-12"
-              >
-                Cancel
-              </button>
-            </span>
           </div>
         </div>
 

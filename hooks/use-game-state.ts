@@ -96,6 +96,8 @@ function migrateSavedState(state: GameState): GameState {
   }
 }
 
+export type GameStateUpdate = Partial<GameState> | ((state: GameState) => Partial<GameState>)
+
 export function useGameState() {
   // The saved game lives in localStorage, which the server cannot see. Start from the same state on the server and
   // in the browser, then load the save after mount, so the first render matches and React does not report a
@@ -116,10 +118,11 @@ export function useGameState() {
     }
   }, [gameState, isLoaded])
 
-  // Update a specific field in game state. Rods only change their ordered position here;
-  // the engine moves them at rod speed (bible §10).
-  const updateGameState = useCallback((updates: Partial<GameState>) => {
-    setGameState((prev) => ({ ...prev, ...updates }))
+  // Update a specific field in game state, or work one out from the state as it stands: a control held across a tick
+  // must not write back what it saw before. Rods only change their ordered position here; the engine moves them at rod
+  // speed (bible §10).
+  const updateGameState = useCallback((updates: GameStateUpdate) => {
+    setGameState((prev) => ({ ...prev, ...(typeof updates === "function" ? updates(prev) : updates) }))
   }, [])
 
   // Reset game to initial state for the active mode

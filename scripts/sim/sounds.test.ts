@@ -23,7 +23,7 @@ test("sounds: every clip is really in public/sounds, so renaming one can't silen
 })
 
 test("sounds: every key without a sound of its own shares one click", () => {
-  const keys = ["cancel", "rodsApply", "turbineApply", "pumpsApply", "quit", "homeKey", "pauseKey", "warningKey", "messageKey", "cameraKey", "soundKey", "machineKey", "guideKey", "screenToggle", "mainMenu"] as const
+  const keys = ["cancel", "quit", "homeKey", "pauseKey", "warningKey", "messageKey", "cameraKey", "soundKey", "machineKey", "guideKey", "screenToggle", "mainMenu"] as const
   assert.deepEqual(new Set(keys.map((key) => SOUND_EFFECT_FILES[key])), new Set(["/sounds/button-press-5.mp3"]))
 })
 
@@ -215,7 +215,7 @@ test("rod drive follows the engine: sound lasts as long as each rod moves", () =
   // Rods 1 and 2 arrive in the 4th second; rod 3 in the 9th or 10th (rounding in the engine's sub-steps)
   assert.deepEqual(counts.slice(0, 9), [3, 3, 3, 3, 1, 1, 1, 1, 1])
   assert.ok(counts.slice(10).every((c) => c === 0) && counts[9] <= 1)
-  assert.deepEqual(heard, [0, ...counts.slice(1)], "1.25 s after the order, one voice per moving rod, stopped within the second a rod arrives")
+  assert.deepEqual(heard, counts, "a moment after the order, one voice per moving rod, stopped within the second a rod arrives")
 })
 
 test("rod drive: a jammed rod falls silent; AZ-5 runs three voices until the last rod is in", () => {
@@ -234,8 +234,7 @@ test("rod drive: a jammed rod falls silent; AZ-5 runs three voices until the las
   const lastMoving = counts.findLastIndex((c) => c > 0)
   assert.equal(counts[0], 10)
   assert.equal(lastMoving + 1, Math.ceil((furthest / 100) * 18), "the drive stops when the furthest rod arrives")
-  assert.equal(heard[0], 0)
-  assert.ok(heard.slice(1, lastMoving + 1).every((h, i) => h === Math.min(3, counts[i + 1])))
+  assert.ok(heard.slice(0, lastMoving + 1).every((h, i) => h === Math.min(3, counts[i])))
   assert.equal(heard[lastMoving + 1], 0)
 })
 

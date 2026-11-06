@@ -2,6 +2,15 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.41 – 2026-11-06 (Controls act at once: no Apply or Cancel)
+
+- **The pump, rod and turbine modals lose Apply and Cancel, and the sound modal loses Close** (Section 2 exception 8, owner). Every control acts at once, and a modal closes with its X, Escape or a tap outside it. The quit modal keeps Quit and Cancel.
+- **The camera loses its Close key too, for consistency** (Section 2 exception 8, owner). It gains Escape, and its title bar stays in view while a phone scrolls the panel, so the X can't scroll out of reach (Claude).
+- **A rod's order goes as its lever is let go** (Section 10, Claude), not during the drag: the player can change their mind on the way, and the rod makes one move.
+- **Only the lever can be picked up, and it moves by as far as the pointer does** (Section 10, Claude). A press used to jump the lever to the pointer, which was harmless with Cancel behind it, but with no Apply a mis-tap would send a rod. A swipe on a channel now scrolls the modal.
+- **A pump switch turned during the balancer's lock takes effect as the lock ends** (Section 7, Claude). The lock was enforced by Apply going dark, so it needed a new home. This keeps the owner's rule of v2.36 that the switches stay free and nothing reaches the pumps.
+- **The rod drive starts 0.25 s after an order, not 1.25 s** (Section 15, Claude). The delay existed to follow Apply's click.
+
 ## v2.40 – 2026-11-05 (A short rod sound on a jam or a slow rod)
 
 - **A rod jamming in any scenario, or going slow, plays two seconds of the rod-drive sound** (Section 15, owner).

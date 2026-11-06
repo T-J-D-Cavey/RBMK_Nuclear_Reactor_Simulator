@@ -9,8 +9,7 @@ export interface RodDisplay {
 }
 
 // How the rod display shows each rod. A rod sent off from rest stays where it was, and doesn't show as moving,
-// until the drive sound starts (DRIVE_START_DELAY_MS after the order, once the confirmation clunk has played), so
-// the display and the sound start together; after that it follows the rod's actual position. A short move (a few %)
+// until the drive sound starts (DRIVE_START_DELAY_MS after the order), so the display and the sound start together; after that it follows the rod's actual position. A short move (a few %)
 // arrives before that hold is over, so it then shows as moving for as long as its travel takes, and at least as long
 // as the drive sound plays: otherwise the rod would just jump.
 export function useRodDisplay(rods: ControlRod[]): RodDisplay[] {

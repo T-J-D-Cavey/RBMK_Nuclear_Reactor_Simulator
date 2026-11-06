@@ -4,11 +4,12 @@ import { useState, type ReactNode } from "react"
 import { Cctv, Home, Pause, Play, Volume2, VolumeX } from "lucide-react"
 
 import { type GameState, THRESHOLDS, getShiftTime } from "@/lib/types"
+import type { GameStateUpdate } from "@/hooks/use-game-state"
 import type { SoundEffect } from "@/lib/sound-cues"
 import { useSoundEffect } from "@/hooks/use-sound-effect"
 import { type HallSignal, formatTime, checkEventWarnings, checkWarnings, getHallSignal, getWarningFlags } from "@/lib/game-utils"
-import { isPowerOnTarget } from "@/lib/game-mechanics"
-import { canRunBalancer, canRunEjector, runBalancer, runEjector } from "@/lib/maintenance"
+import { isPowerOnTarget, orderRod } from "@/lib/game-mechanics"
+import { canRunBalancer, canRunEjector, pumpSwitches, runBalancer, runEjector, throwPumpSwitch } from "@/lib/maintenance"
 import { useRodDisplay } from "@/hooks/use-rod-display"
 import { getCameraClockStartMs, getShiftElapsedSeconds } from "./reactor-camera"
 import ReactorCameraView from "./reactor-camera-view"
@@ -19,7 +20,7 @@ import TurbineModal from "./turbine-modal"
 interface ControlPanelProps {
   gameState: GameState
   onTogglePause: () => void
-  updateGameState: (updates: Partial<GameState>) => void
+  updateGameState: (updates: GameStateUpdate) => void
   onHomeClick: () => void
   onSoundClick: () => void
   logLampLit: boolean // a new shift-log message hasn't been seen yet
@@ -329,9 +330,13 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         open={rodsModalOpen}
         onOpenChange={setRodsModalOpen}
         controlRods={gameState.controlRods}
-        onUpdate={(rods, az5) => {
-          updateGameState(az5 ? { controlRods: rods, az5PressedAt: getShiftTime(gameState) } : { controlRods: rods })
-          playSound(az5 ? "az5" : "rodsApply")
+        onOrderRod={(idx, target) => updateGameState((state) => ({ controlRods: orderRod(state.controlRods, idx, target) }))}
+        onAZ5={() => {
+          updateGameState((state) => ({
+            controlRods: state.controlRods.map((rod) => (rod.stuck ? rod : { ...rod, target: 100 })),
+            az5PressedAt: getShiftTime(state),
+          }))
+          playSound("az5")
         }}
         onGuideChange={handleGuideChange}
       />
@@ -340,19 +345,16 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
         open={pumpsModalOpen}
         onOpenChange={setPumpsModalOpen}
         waterPumps={gameState.waterPumps}
+        switches={pumpSwitches(gameState)}
         balance={gameState.pumpBalance}
         balancerReady={canRunBalancer(gameState)}
-        locked={gameState.balancerLock > 0}
         onRunBalancer={() => {
           const started = runBalancer(gameState)
           if (!started) return
           updateGameState(started)
           playSound("waterBalancerRun")
         }}
-        onUpdate={(pumps) => {
-          updateGameState({ waterPumps: pumps })
-          playSound("pumpsApply")
-        }}
+        onThrowSwitch={(idx) => updateGameState((state) => throwPumpSwitch(state, idx))}
         onGuideChange={handleGuideChange}
       />
 
@@ -368,10 +370,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
           updateGameState(started)
           playSound("turbineVacuumRun")
         }}
-        onUpdate={(mode) => {
-          updateGameState({ turbineMode: mode, turbineConnected: mode === "grid" })
-          playSound("turbineApply")
-        }}
+        onSelect={(mode) => updateGameState({ turbineMode: mode, turbineConnected: mode === "grid" })}
         onGuideChange={handleGuideChange}
       />
 

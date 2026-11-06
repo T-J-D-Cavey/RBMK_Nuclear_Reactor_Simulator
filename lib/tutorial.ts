@@ -157,10 +157,10 @@ export const MACHINE_GUIDES = {
   pumps: [
     step("bays", "Pump bays", "A pump cools the core only when it's on and powered.", ["pumps-bays"]),
     step("needle", "Balance needle", "Circulation drifts out of balance. The further the needle goes, the hotter your fuel runs.", ["pumps-needle"]),
-    step("balancer", "Balance button", "This rebalances the flow, but flow dips, and Apply goes dark for a few seconds, so the pumps can't be changed until it lights. For a small reading, it may not be worth it yet.", ["pumps-balancer"]),
+    step("balancer", "Balance button", "This rebalances the flow, but flow dips, and for a few seconds the pumps can't be changed: a switch you turn acts once that's over. For a small reading, it may not be worth it yet.", ["pumps-balancer"]),
   ],
   rods: [
-    step("levers", "Levers", "Drag a lever to set insertion. Deeper rods, less radioactivity.", ["rods-levers"]),
+    step("levers", "Levers", "Drag a lever to set insertion. Deeper rods, less radioactivity. The rod moves off as you let go.", ["rods-levers"]),
     step("az5", "AZ-5", "Emergency insertion of every rod.", ["rods-az5"]),
     step("channels", "Yellow channels", "A rod left parked in the core for 5 minutes or more can go slow, and its channel pulses yellow. Move it even 1% and it frees up.", ["rods-slow"]),
     step("needle", "Balance needle", "This shows whether one side of the core has more rod in it. It moves as the rods move. Rods on the heavy side count for less, and rods on the light side for more.", ["rods-needle"]),
