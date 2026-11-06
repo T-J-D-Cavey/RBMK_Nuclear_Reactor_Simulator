@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { eventCues, LONG_EFFECTS, newWarningAppeared, ROD_BURST_MS, ROD_BURST_OFFSET, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, rodsSnagged, SOUND_EFFECT_FILES, targetCue, turbineTripCue, type SoundEffect } from "@/lib/sound-cues";
+import { eventCues, LONG_EFFECTS, newWarningAppeared, OVERLAPPING_EFFECTS, ROD_BURST_MS, ROD_BURST_OFFSET, ROD_DRIVE_FILE, ROD_DRIVE_OFFSETS, rodsSnagged, SOUND_EFFECT_FILES, targetCue, turbineTripCue, type SoundEffect } from "@/lib/sound-cues";
 import type { ControlRod, GameEvent } from "@/lib/types";
 import { RodDriveBurst, RodDriveVoices } from "@/lib/rod-drive-voices";
 import { HumBed } from "@/lib/hum-bed";
@@ -227,8 +227,10 @@ export function useAudioManager({
 
   // --- Sound effects ---
   const playClip = useCallback((effect: SoundEffect) => {
-    const audio = effectAudioRef.current.get(SOUND_EFFECT_FILES[effect]);
-    if (!audio) return;
+    const loaded = effectAudioRef.current.get(SOUND_EFFECT_FILES[effect]);
+    if (!loaded) return;
+    // A clip already playing is restarted, unless it's one that plays on top of itself: that gets a second copy
+    const audio = !loaded.paused && OVERLAPPING_EFFECTS.includes(effect) ? (loaded.cloneNode() as HTMLAudioElement) : loaded;
     audio.currentTime = 0;
     audio.volume = volumeRef.current;
     audio.play().catch((e) => console.warn("Sound effect blocked", e));

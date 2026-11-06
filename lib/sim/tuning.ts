@@ -194,12 +194,9 @@ export interface ShiftEventTuning {
   // has been on target for the settle time, so a target never moves just as it is reached, and never sits for long.
   firstNotice: Range // when the shift's first notice comes; it is always a plain change
   settleSeconds: Range // on target without a break this long before the next notice
-  holds: number // grid holds per shift, never the first change, spread across the shift
-  holdForSeconds: Range // inside the narrow window without a break this long lifts a hold
-  giveUpSeconds: number // a target or hold not reached by then is moved on anyway; the clock stops in a power cut or signal loss
-  changeEverySeconds: number // about how often a notice comes, to spread the holds across the shift (measured, 2026-11-02)
+  giveUpSeconds: number // a target not reached by then is moved on anyway; the clock stops in a power cut or signal loss
   targetRange: Range // MW
-  targetMaxStep: number // largest single change, MW (a hold moves half as far)
+  targetMaxStep: number // largest single change, MW
   targetMinStep: number // smallest change worth announcing, MW
 }
 
@@ -215,20 +212,17 @@ const EASY_EVENTS: ShiftEventTuning = {
   pumpTripSeconds: [60, 90],
 
   firstNotice: [30, 60],
-  settleSeconds: [10, 30], // owner, 2026-11-04 (was 20–45)
-  holds: 2, // owner, 2026-11-02
-  holdForSeconds: [60, 90],
+  settleSeconds: [20, 40], // owner, 2026-11-06 (was 10–30)
   giveUpSeconds: 180, // owner, 2026-11-03 (was 240)
-  changeEverySeconds: 202, // measured with the bot, 2026-11-04
   // Big swings are the heart of the game (owner, 2026-11-03): a wider range and bigger steps, every target as likely
   targetRange: [1000, 10000],
-  targetMaxStep: 3000,
+  targetMaxStep: 2000, // owner, 2026-11-06 (was 3,000)
   targetMinStep: 750,
 }
 
 const HARD_EVENTS: ShiftEventTuning = {
   differentKinds: 4,
-  extraEvents: 2, // 6 in 30 minutes: one of each kind and two more (owner, 2026-11-03)
+  extraEvents: 0, // 4 in 30 minutes: one of each kind (owner, 2026-11-06; was two more)
   firstEventAfter: 60,
   lastNoticeBefore: 120,
   powerCutSeconds: [45, 75],
@@ -239,10 +233,7 @@ const HARD_EVENTS: ShiftEventTuning = {
 
   firstNotice: [20, 40],
   settleSeconds: [10, 30], // owner, 2026-11-04 (was 30–60)
-  holds: 4, // owner, 2026-11-02
-  holdForSeconds: [60, 90],
   giveUpSeconds: 180, // owner, 2026-11-03 (was 240)
-  changeEverySeconds: 227, // measured with the bot, 2026-11-04
   // At 12,000 MW (steam 240) radioactivity swings by hundreds every minute however it is steered (bot, 2026-11-03)
   targetRange: [300, 11000],
   targetMaxStep: 4000,
@@ -276,12 +267,13 @@ export const EVENT_TUNING = {
   easy: EASY_EVENTS,
   hard: HARD_EVENTS,
   minEventGap: 70, // seconds from the end of one event to the start of the next, at the least (owner, 2026-11-03)
-  targetNotice: 60, // the grid announces a target change, or a hold, this long before it takes effect (§13)
-  holdStepFactor: 0.5, // a hold request's new target is at most half a target change's step away (owner, 2026-10-29)
+  targetNotice: 60, // a target change is announced this long before it takes effect (§13)
+  unit1TestTarget: 12000, // MW: above any normal target in either mode, so it reads as out of the ordinary (owner, 2026-11-06)
   // Advance warning in the shift log (§12); a pump trip comes unannounced
   warningLead: { "power-cut": 40, "signal-loss": 30, "rod-stuck": 25 } as Partial<Record<string, number>>,
-  turbineTripSeconds: 20, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12)
+  turbineTripSeconds: 5, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12; owner, 2026-11-06, was 20)
   // A rod sent in from 0% while steam is high jams with only its graphite tip in the core, as the rods did when AZ-5
   // was pressed on 26 April 1986 (owner, 2026-10-16). Permanent, unlike an event jam.
   steamJamInsertion: 1, // %
+  hotFuelJamSeconds: [30, 60] as Range, // how long fuel reaching its high warning jams the slow rods (owner, 2026-11-06)
 }

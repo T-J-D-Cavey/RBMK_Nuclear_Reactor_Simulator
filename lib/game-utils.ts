@@ -94,6 +94,7 @@ export function getWarningFlags(state: GameState) {
     lowRadioactivity: hall && state.radioactivity <= THRESHOLDS.radioactivity.lowWarning,
     highReactorTemp: hall && state.reactorTemp >= THRESHOLDS.reactorTemp.warning,
     lowFuelTemp: hall && state.fuelTemp <= THRESHOLDS.fuelTemp.lowWarning,
+    highFuelTemp: hall && state.fuelTemp >= THRESHOLDS.fuelTemp.highWarning,
     highSteam: hall && state.steamVolume >= THRESHOLDS.steamVolume.highWarning,
     lowSteam: hall && state.steamVolume <= THRESHOLDS.steamVolume.lowWarning,
     highXenon: hall && state.xenon >= THRESHOLDS.xenon.highWarning,
@@ -116,6 +117,7 @@ const REACTOR_WARNINGS: [WarningFlag, string][] = [
   ["lowRadioactivity", "WARNING: Low radioactivity. Recommend reducing control rod insertion."],
   ["highReactorTemp", "WARNING: High reactor temperature. Recommend turning on any remaining water pumps."],
   ["lowFuelTemp", "WARNING: Low fuel temperature. Review water pump and control rod configurations."],
+  ["highFuelTemp", "WARNING: High fuel temperature. Risk of ruptured fuel channels impacting control rod movement."],
   ["highSteam", "WARNING: High steam pressure. Recommend turning on all remaining water pumps and disconnecting turbine."],
   ["lowSteam", "WARNING: Low steam pressure causing reduced power generation. Review water pump and control rod configurations."],
   ["highXenon", "WARNING: High xenon levels detected. Recommend cautious reduction in control rod insertion."],
@@ -139,8 +141,9 @@ export function getEventWarnings(state: GameState): Warning[] {
   if (getWarningFlags(state).lowPerformance) {
     warnings.push({ key: "lowPerformance", text: "WARNING: Our power station is reporting low grid target performance. Review power targets" })
   }
-  // This warning lasts while any rod is jammed: until a rod jam ends (on the event alarm), or for the rest of the
-  // shift for a rod jammed by high steam (on the general alarm). The player can switch the alarms off.
+  // This warning lasts while any rod is jammed: until a rod jam ends (on the event alarm), until a hot-fuel jam frees
+  // itself, or for the rest of the shift for a rod jammed by high steam (both on the general alarm). The player can
+  // switch the alarms off.
   const jammed = state.controlRods.filter((rod) => rod.stuck).map((rod) => rod.id)
   if (jammed.length) {
     const rods = jammed.length === 1 ? `control rod ${jammed[0]}` : `control rods ${jammed.join(", ")}`
@@ -179,16 +182,16 @@ export function checkEventWarnings(state: GameState): string[] {
 // instead. The turbine over-pressure countdown only runs while steam is high, so it shares the steam alarm. Power-cut,
 // pump-trip and signal-loss warnings last exactly as long as their events, so they share the event alarm.
 const OWN_ALARM_WARNINGS = new Set(["highRadioactivity", "highReactorTemp", "highSteam", "highXenon", "turbineOverpressure", "powerCut", "pumpTrip", "signalLoss"])
-// Events that sound the event alarm while they last, so every event sounds the same (owner, 2026-11-02). A grid hold
-// doesn't, and target changes aren't events (owner, 2026-10-14).
+// Events that sound the event alarm while they last, so every event sounds the same (owner, 2026-11-02). Target
+// changes aren't events (owner, 2026-10-14).
 const EVENT_ALARM_KINDS: readonly EventKind[] = ["power-cut", "pump-trip", "signal-loss", "rod-stuck"]
 
 // Which alarm sounds are on: one per alarm, read straight from the warnings so a sound starts and stops with its warning.
 export function getAlarms(state: GameState) {
   const flags = getWarningFlags(state)
   const warnings = [...getReactorWarnings(state), ...getEventWarnings(state)]
-  // The jammed-rods warning sounds the general alarm only for a rod jammed by high steam: a rod jam's own rods are
-  // covered by the event alarm while it lasts
+  // The jammed-rods warning sounds the general alarm only for a rod jammed by high steam or hot fuel: a rod jam's own
+  // rods are covered by the event alarm while it lasts
   const eventJammed = state.activeEvents.flatMap((event) => (event.type === "rod-stuck" ? (event.data?.affectedRods ?? []) : []))
   const steamJammed = state.controlRods.some((rod, i) => rod.stuck && !eventJammed.includes(i))
   return {

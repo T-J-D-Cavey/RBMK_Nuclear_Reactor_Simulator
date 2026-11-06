@@ -2,6 +2,27 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+## v2.43 – 2026-11-06 (Hot fuel jams slow rods)
+
+- **Fuel reaching its high warning jams the slow rods for a while** (Sections 10 and 12, owner). Unlike the high-steam jam it only takes the rods showing yellow at that moment, and they free themselves.
+- **Hot fuel gets a warning, at 2,000°** (owner). The owner asked for the jam at the high fuel warning, but there wasn't one: hot fuel was left without a warning on 2026-10-14. Claude first set it at 1,300°, and the owner chose the wording ("Risk of ruptured fuel channels impacting control rod movement") and tried 2,000°, which was too rare and too late to matter. A sweep from 1,300° to 2,000° (200 shifts per mode, with the normal bot and a scratch bot that leaves four rods parked) settled on 1,500°: the lowest level never crossed in calm play, and the highest where the game was usually still going 30 s later. The warning sounds the general alarm, as the low fuel one does.
+- **The jam made no measurable difference to survival at any level in that sweep** (Claude). If it needs to bite, its 30–60 s length is the number to raise.
+- **30–60 s, as the fuel gets there, no message** (Claude). Shorter than a rod jam event, as it can come more than once a shift. It's not an event, so it doesn't delay the shift's events or count as an emergency. No shift log line, like the high-steam jam, and to keep the log quiet.
+- **The bot can't exercise this**: it moves its rods so often that they never went yellow in 500 shifts, so bot numbers don't change and the checks are scenarios of their own.
+
+## v2.42 – 2026-11-06 (One-off targets replace holds; Easy calmer, Hard fewer events, faster turbine trip)
+
+- **Grid holds are gone** (Section 13, owner). They added shift log messages without changing how the owner played: they stay close to target either way. On Easy the two holds become the two one-offs below; on Hard two of the four become the one-offs and the other two normal changes.
+- **Grid over-supplied: a 0 MW target, once a shift** (Section 13, owner). The player disconnects the turbine. The next target is drawn from the one before, or it would always be a low one.
+- **Unit 1's low-power safety test: a 12,000 MW target, once a shift** (Section 13, owner). 10,000 MW was the owner's first thought, but that's already inside the normal range. The two one-offs never come straight after one another.
+- **Each one-off gets a due time at the start of the shift** (Section 13, Claude). Holds drew a chance at each change from an estimate of how many changes were left. That missed a one-off in about one winning shift in twenty, as Easy fits only about five changes. The first change due from that time on is the one-off. Claude also wrote the messages, for the owner to reword.
+- **Easy: settle time 20–40 s (was 10–30 s) and largest change 2,000 MW (was 3,000)** (Section 13, owner).
+- **Hard: 4 events, one of each kind (was 6)** (Section 12, owner), ahead of another event being added.
+- **The turbine trips after 5 s of over-pressure, not 20** (Section 12, owner). Reconnecting with steam still high starts the same flow again.
+- **The rod widget's legend reads In, Out, Moving, Slow, Jammed** (owner).
+- **Pump switches thrown in quick succession play on top of each other** (Section 15, owner). The rods already have their own voices and the turbine moves one position at a time, so only the pump switches change.
+- **Bot yardstick, for the owner to judge at playtest** (Claude). 200 seeds: Easy 96%, Hard 44% (was about 60%), novice Easy 87%, novice Hard 10%. Hard with holds removed and no one-offs is 51%, with only the 0 MW target 53%, with only the 12,000 MW target 34%. The 5 s trip makes no measurable difference. Output takes about two minutes to reach 12,000 MW, which costs about 15% performance, and the bot's own xenon rule isn't the cause. The Section 13 check that a competent player survives "most" Hard shifts no longer holds on this yardstick. Test limits moved to the measured values so that they catch further changes, not because the numbers are settled.
+
 ## v2.41 – 2026-11-06 (Controls act at once: no Apply or Cancel)
 
 - **The pump, rod and turbine modals lose Apply and Cancel, and the sound modal loses Close** (Section 2 exception 8, owner). Every control acts at once, and a modal closes with its X, Escape or a tap outside it. The quit modal keeps Quit and Cancel.

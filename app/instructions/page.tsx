@@ -105,7 +105,8 @@ export default function InstructionsPage() {
                       More insertion → radioactivity down. Less insertion → radioactivity up. Rods take a few seconds to travel, so
                       make a move and wait for it. Keep each rod at least 1% in: a rod pushed in from fully out (0%) first adds
                       radioactivity through its graphite tip, and jams if steam is high. A rod left parked in the core for 5 minutes
-                      or more can go slow: it shows yellow on the panel and travels slower, until you move it at least 1%. The
+                      or more can go slow: it shows yellow on the panel and travels slower, until you move it at least 1%. If the fuel
+                      reaches {t.fuelTemp.highWarning.toLocaleString("en-GB")}° while a rod is slow, it jams for a while. The
                       rod balance needle shows whether one side of the core has more rod in it. Rods on the heavy side count for
                       less and rods on the light side for more, and rods 1, 2, 9 and 10, at the core's edges, swing it most.
                     </Card>
@@ -140,8 +141,12 @@ export default function InstructionsPage() {
                       {EVENT_TUNING.targetNotice} seconds later. You won&apos;t know how big it is, or which way, until then.
                     </li>
                     <li>
-                      <Inverse>Hold request:</Inverse> the margin halves to ±{margin * t.powerTolerance.holdFactor}% until
-                      you&apos;ve held output steady inside it for a while and the grid lifts the hold.
+                      <Inverse>Grid over-supplied:</Inverse> once a shift the grid asks for 0 MW. Disconnect the turbine, keep
+                      the reactor ready, and reconnect when the next target comes.
+                    </li>
+                    <li>
+                      <Inverse>Unit 1&apos;s safety test:</Inverse> once a shift Unit 1 asks you to cover its output with{" "}
+                      {EVENT_TUNING.unit1TestTarget.toLocaleString("en-GB")} MW, far above the grid&apos;s usual targets.
                     </li>
                     <li>
                       <Inverse>Low targets:</Inverse> low output means low radioactivity, where xenon builds up. See The Xenon Pit.

@@ -258,7 +258,7 @@ Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, p
 **Change:**
 1. **A rod's effect depends only on how much boron is in the core.** Moving a rod 5% changes its boron effect by the same amount whether it goes 10%→5% or 50%→45%. Rods are deliberately gentle against the other cards (owner): moving one rod 10% shifts radioactivity by about a fifth at first, so a single small move is never decisive.
 2. **Rod margin.** The total insertion across all ten rods is the rod margin: how much boron is holding the reactor down. It is not an extra physics rule; it names a dangerous state. Below a minimum (the game's version of the "15-rod minimum"), a warning in the existing message area says so. Low margin is dangerous because of what it implies: radioactivity is being held by something less reliable than boron (often xenon, which can vanish).
-3. **Rods travel over time, at the same speed in every mode.** Letting go of a lever moves that rod toward its new setting at a steady speed (full stroke about 18 s, as in the real reactor; tune to taste). A rod left parked in the core for 5 minutes or more can go slow, in every mode, at even odds each minute from then on (a rod at 0% has nothing to stick in, so it can't): it travels at about 60% speed (a full stroke in about 30 s), its channel pulses yellow in the rods modal and its lens turns yellow on the rod display. A move of at least 1% from where it was parked restarts its 5 minutes and, if it was slow, frees it on arrival, and that move is still slow. A jammed rod's clock pauses. There is no message, because ten rods could send ten. AZ-5 takes effect the moment it is pressed (closing the lever modal when AZ-5 button is selected), and drives every rod that isn't jammed toward 100% at the same speed, so it takes seconds to complete. The lever modal shows where each rod has been ordered to go; the panel's rod display shows where each rod actually is, so after closing the modal the player watches the indicators travel. Only the lever itself can be picked up, and it moves by as far as the pointer does, so a tap sends no rod anywhere. A jammed rod stops wherever it is, including mid-travel.
+3. **Rods travel over time, at the same speed in every mode.** Letting go of a lever moves that rod toward its new setting at a steady speed (full stroke about 18 s, as in the real reactor; tune to taste). **Hot fuel jams slow rods (owner, 2026-11-06):** as fuel reaches its high warning (1,500°), every rod showing yellow at that moment jams where it is for 30–60 s, then frees itself. No message: the alarm screen reports the hot fuel and the jammed rods. It happens in every mode, and with the hall's signal lost, though the warning can't then be seen. A rod that goes slow while the fuel is already hot is safe until the fuel cools and comes back. Steady running at 12,000 MW is about 1,075°, so it takes a serious overshoot. A rod left parked in the core for 5 minutes or more can go slow, in every mode, at even odds each minute from then on (a rod at 0% has nothing to stick in, so it can't): it travels at about 60% speed (a full stroke in about 30 s), its channel pulses yellow in the rods modal and its lens turns yellow on the rod display. A move of at least 1% from where it was parked restarts its 5 minutes and, if it was slow, frees it on arrival, and that move is still slow. A jammed rod's clock pauses. There is no message, because ten rods could send ten. AZ-5 takes effect the moment it is pressed (closing the lever modal when AZ-5 button is selected), and drives every rod that isn't jammed toward 100% at the same speed, so it takes seconds to complete. The lever modal shows where each rod has been ordered to go; the panel's rod display shows where each rod actually is, so after closing the modal the player watches the indicators travel. Only the lever itself can be picked up, and it moves by as far as the pointer does, so a tap sends no rod anywhere. A jammed rod stops wherever it is, including mid-travel.
 4. **Graphite tips.** Each rod has a graphite tip at its bottom. Graphite is a red card worth +10, the same as 10% of boron. The tip is in the core at 1% insertion or more, and out only at 0%. One rod's net effect, counted in % of one rod's boron (+ pushes radioactivity up, − pushes it down):
 
    | Rod position | Tip | Boron | Net |
@@ -304,7 +304,7 @@ Ten rods, same lever modal, same AZ-5 button. Changes are mostly in behaviour, p
 | | Easy | Hard |
 |---|---|---|
 | Shift | 15 min | 30 min |
-| Events | 3 per shift, all different (Section 12) | 6 per shift: one of each kind and two more (Section 12) |
+| Events | 3 per shift, all different (Section 12) | 4 per shift: one of each kind (Section 12) |
 | Emergency severity | shorter power cuts, smaller rod jams (Section 12) | longer power cuts, bigger rod jams (Section 12) |
 | Power target changes | big swings over a wide range (Section 13) | bigger swings over a wider range (Section 13) |
 
@@ -327,7 +327,7 @@ Each ending gets its own game-over presentation.
 ## 12. Random emergency events
 
 **Change:**
-- **Four kinds of event, the occasional crisis to navigate; the power targets are the heart of the game** (owner, 2026-11-03). Easy has three different kinds, never the same kind twice: 3 in 15 minutes. Hard has one of each kind and two more of any kind: 6 in 30 minutes. Hard's are harder because they last longer and its rod jams take more rods.
+- **Four kinds of event, the occasional crisis to navigate; the power targets are the heart of the game** (owner, 2026-11-03). Easy has three different kinds, never the same kind twice: 3 in 15 minutes. Hard has one of each kind: 4 in 30 minutes. Hard's are harder because they last longer and its rod jams take more rods.
 - **Random order and random times, never two events at once, and at least 70 s apart** (from the end of one to the start of the next). No event starts in the first minute. They run right up to the end of the shift, with the last one over by the end. Between those, the time is shared out at random, so two events can come 70 s apart or many minutes apart.
 - **Target changes run separately** (Section 13), and can happen during any event.
 - **Brief warning in the shift log before an event where it fits** (e.g. "grid instability reported" shortly before a power cut) so the player can prepare. A pump trip comes unannounced.
@@ -336,12 +336,12 @@ Each ending gets its own game-over presentation.
   - **Signal lost from the reactor hall** (major emergency): the link between the control room and the reactor hall goes down, so every reading taken in the hall is lost for a period: radioactivity, reactor and fuel temperature, steam, xenon, the camera, the chart recorder and the radioactivity balance. Each display's screen flickers between lit and unlit, shows ERR, then goes dark. The camera turns to snow and NO SIGNAL, the chart recorder's paper stops, and the balance shows NO SIGNAL. The alarm monitor can't see the reactor either: only the signal-loss warning shows, on the event alarm. Power output, the target, the time, the rods, the pumps, the plant gauges and the turbine are read elsewhere and keep working, so the player steers by power output, as operators once did. The reactor itself runs on as usual. A shift foreman warns of cabling faults shortly before; the head engineer reports the loss, and a technician reports when the readings are back.
   - **Single pump trip:** one pump fails for a period.
   - **Rod jam:** with rod travel (Section 10), a jam freezes each affected rod wherever it is, including mid-travel, for a period. The head engineer reports when the fuel channel is repaired and the rods can move again.
-- **Not events, and possible any time:** sustained over-pressure (the existing OVR-P lamp) trips the turbine off the grid, which gives the high-steam warning a real consequence. A rod sent in from 0% while steam is high jams for the rest of the shift (Section 10).
+- **Not events, and possible any time:** 5 s of over-pressure (the existing OVR-P lamp) trips the turbine off the grid, which gives the high-steam warning a real consequence. The player has to reconnect it once steam is low enough; reconnecting with steam still high starts the same 5 s again. A rod sent in from 0% while steam is high jams for the rest of the shift (Section 10). Fuel reaching its 1,500° high warning jams every slow rod for 30–60 s (Section 10).
 
 **Starting values by mode** (tune in playtests):
 | | Easy (15 min) | Hard (30 min) |
 |---|---|---|
-| Events | 3 different kinds (3) | 1 of each kind + 2 more (6) |
+| Events | 3 different kinds (3) | 1 of each kind (4) |
 | Gap between events | 70 s or more | the same |
 | Power cut length | 20–45 s | 45–75 s |
 | Signal loss length | 45–75 s | 75–120 s |
@@ -358,30 +358,29 @@ Each ending gets its own game-over presentation.
 ## 13. Power targets
 
 **Change** (values are starting points for playtesting):
-- **Target changes run on their own track, alongside the events and whatever they are doing.** A grid hold is a kind of target change.
+- **Target changes run on their own track, alongside the events and whatever they are doing.**
 - **The first change comes early and is always plain:** its notice comes 30–60 s into an Easy shift, 20–40 s into a Hard one.
 - **Every change is warned the same way:** the grid controller says "We may soon require an adjustment in your power output", with no number, and the change takes effect 60 seconds later. The player knows a change is coming, but not its size or direction until it takes effect. (The Safety Test's orders still state the new target with their notice.)
   - **A plain change:** the grid confirms the new target.
-  - **A hold** (Kiev's request in the show): the grid confirms the new target and says it is a hold, giving the window, which is 50% narrower from that moment. The hold is lifted ("Hold lifted. Normal tolerance restored.") once output has been inside the narrow window for 60–90 s without a break. A hold's new target is at most half as far from the current one as a plain change's.
-- **The next notice waits until the player has settled:** it comes once output has been on target without a break for the settle time (10–30 s), or after a hold is lifted and the settle time has passed. So a target never moves just as it is reached (it stays at least a settle time plus the 60 s notice), and a player on target is never left idle for long.
-- **The grid gives up waiting after 3 minutes** (owner, 2026-11-03; was 4): a target (or hold) not reached and held by then is moved on anyway, so a struggling player isn't stuck. A player swinging from too low to too high keeps restarting the settle count, so this backstop is often what moves a target on. The clock runs from when the target takes effect, and stops while a power cut or signal loss is on.
-- **A set number of holds per shift,** never the first change, spread across the shift.
+- **Two one-off targets replace the grid holds** (owner, 2026-11-06), each once a shift on Easy and Hard, in either order, never the first change and never one straight after the other. Each follows the usual rules: 60 s notice with no number, the usual window, the settle time, and the grid giving up after 3 minutes. Each lasts one target, and the next target is drawn from the target before it, so neither drags the targets after it to one end of the range. A shift always has room for both unless the player is failing nearly every target.
+  - **Grid over-supplied:** the usual notice from the grid controller, then a target of 0 MW and the order to disconnect the turbine from the grid. The reactor runs on as usual, and the player reconnects for the next target. Steam doesn't depend on the turbine, so the challenge is keeping the reactor ready for a target they can't yet see.
+  - **Unit 1's low-power safety test:** both messages come from Unit 1, not the grid controller. The target is 12,000 MW, above anything the grid asks for in either mode.
+- **The next notice waits until the player has settled:** it comes once output has been on target without a break for the settle time (20–40 s on Easy, 10–30 s on Hard). So a target never moves just as it is reached (it stays at least a settle time plus the 60 s notice), and a player on target is never left idle for long.
+- **The grid gives up waiting after 3 minutes** (owner, 2026-11-03; was 4): a target not reached and held by then is moved on anyway, so a struggling player isn't stuck. A player swinging from too low to too high keeps restarting the settle count, so this backstop is often what moves a target on. The clock runs from when the target takes effect, and stops while a power cut or signal loss is on.
 - **No notice in the last two minutes of the shift.**
-- **Tolerance proportional to target:** ±10%, never tighter than about ±200 MW, the same in every mode; half that during a hold.
+- **Tolerance proportional to target:** ±10%, never tighter than about ±200 MW, the same in every mode.
 - **Big power swings are the heart of the game** (owner, 2026-11-03): using rods and pumps to chase large changes up and down a wide range, with the occasional event to navigate (Section 12).
 - **Every target in the range is as likely as any other.** A low target is a xenon trap and stays in as a real danger; nothing makes it rarer (owner, 2026-11-03).
 - **Hard is harder through bigger changes over a wider range.** Its changes take longer to reach, and that chasing is the challenge.
-- **The top of the range stops short of steam 240 (12,000 MW).** At that point, on two pumps, radioactivity swings by hundreds every minute however it is steered. From about 10,000 MW the reactor is already twitchy, which suits Hard.
+- **The top of the range stops short of steam 240 (12,000 MW).** At that point, on two pumps, radioactivity swings by hundreds every minute however it is steered. From about 10,000 MW the reactor is already twitchy, which suits Hard. Unit 1's safety test goes there on purpose, once a shift and only for one target. It is reachable below the over-pressure level even at the worst vacuum (steam 273).
 
 | | Easy | Hard |
 |---|---|---|
 | Target range | 1,000–10,000 MW | 300–11,000 MW |
-| Plain change | 750–3,000 MW | 1,000–4,000 MW |
-| Hold change | 375–1,500 MW | 500–2,000 MW |
-| Holds per shift | 2 | 4 |
-| Settle time | 10–30 s | 10–30 s |
-| Hold held for | 60–90 s | 60–90 s |
-| Target changes per shift (bot, typical) | 3–4 | 5–7 |
+| Plain change | 750–2,000 MW | 1,000–4,000 MW |
+| One-off targets per shift | 1 of each (2) | 1 of each (2) |
+| Settle time | 20–40 s | 10–30 s |
+| Target changes per shift (bot, typical) | 4–5 | 7–8 |
 
 - Final values are tuned together with Sections 5–12, not independently.
 

@@ -117,7 +117,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
   const highSteamWarning = flags.highSteam
   const lowSteamWarning = flags.lowSteam
   const highXenonWarning = flags.highXenon
-  const lowFuelTempWarning = flags.lowFuelTemp
+  const fuelTempWarning = flags.lowFuelTemp || flags.highFuelTemp
   // The reactor hall's readings, and their nameplate lamps, go with its signal; the turbine's OVR-P lamp is its own
   const signal = getHallSignal(gameState)
   const overPressure = gameState.steamVolume >= THRESHOLDS.steamVolume.highWarning
@@ -241,7 +241,7 @@ export default function ControlPanel({ gameState, onTogglePause, updateGameState
               <HallReading signal={signal} className={vfd}>{Math.round(gameState.reactorTemp)}°</HallReading>
             </Bay>
 
-            <Bay label="Fuel Temp" tutorial="fuel-temp" warn={lowFuelTempWarning}>
+            <Bay label="Fuel Temp" tutorial="fuel-temp" warn={fuelTempWarning}>
               <HallReading signal={signal} className={vfd}>{Math.round(gameState.fuelTemp)}°</HallReading>
             </Bay>
 

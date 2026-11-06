@@ -43,6 +43,7 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
   let pressedAz5 = false // Safety Test: AZ-5 pressed during the test; the rods are left in from then on
   let answeredDeputy = false // Safety Test: AZ-5 pressed in answer to the deputy's withdrawal
   let heldR: number | null = null // Safety Test: radioactivity held through the test preparations
+  let lastOutputTarget = 0 // the last target above 0, the best guess at what comes after a 0 MW target
 
   const act = (input: GameState): GameState => {
     let s = input
@@ -67,9 +68,12 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
         return az5(s)
       }
     }
+    const wantsNoOutput = s.powerTarget === 0
+    if (s.powerTarget) lastOutputTarget = s.powerTarget
     if (!survival) {
       if (!s.mainsPower && s.turbineMode === "grid") s = { ...s, turbineMode: "pumps", turbineConnected: false }
-      if (s.mainsPower && s.turbineMode !== "grid" && s.powerTarget !== null && s.steamVolume < 280 && !testPrep) {
+      if (wantsNoOutput && s.turbineMode === "grid") s = { ...s, turbineMode: "idle", turbineConnected: false }
+      if (s.mainsPower && s.turbineMode !== "grid" && s.powerTarget !== null && !wantsNoOutput && s.steamVolume < 280 && !testPrep) {
         s = { ...s, turbineMode: "grid", turbineConnected: true }
       }
       s = keepPumps(s, testPrep ? 4 : o.pumps) // follows the procedure: four pumps for the test
@@ -112,8 +116,8 @@ export function makeBot(options: Partial<BotOptions> = {}): Bot {
       const target = pending ?? s.powerTarget
       if (s.turbineMode !== "grid") {
         // No output while the turbine is off the grid (e.g. supplying the pumps in a power cut): hold the
-        // radioactivity that will give the target once it is reconnected.
-        goal = radioactivityFor(target) * Math.exp(correction)
+        // radioactivity that will give the target once it is reconnected. Asked for 0 MW, that's the last real target.
+        goal = radioactivityFor(wantsNoOutput ? lastOutputTarget : target) * Math.exp(correction)
       } else {
         const back = Math.min(10, outputs.length - 1)
         const trend = back > 0 ? (outputs[outputs.length - 1] - outputs[outputs.length - 1 - back]) / back : 0

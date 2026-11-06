@@ -32,7 +32,7 @@ test("sounds: the turbine selector has one clip for Idle and Pumps, and another 
   assert.notEqual(SOUND_EFFECT_FILES[TURBINE_SELECT_EFFECTS.grid], SOUND_EFFECT_FILES[TURBINE_SELECT_EFFECTS.idle])
 })
 
-test("event sounds: each clip plays once, as the real event starts; a rod jam and a grid hold have none", () => {
+test("event sounds: each clip plays once, as the real event starts; a rod jam has none", () => {
   const rng = seededRng(1)
   const calm = createNewGame("easy")
   for (const [kind, cue] of [["power-cut", "powerCutEvent"], ["pump-trip", "pumpTripEvent"], ["signal-loss", "reactorHallEvent"]] as const) {
@@ -40,11 +40,9 @@ test("event sounds: each clip plays once, as the real event starts; a rod jam an
     assert.deepEqual(eventCues([], activeEvents), [cue])
     assert.deepEqual(eventCues(activeEvents.map((event) => event.id), activeEvents), [], "not again while it lasts")
   }
-  for (const kind of ["rod-stuck", "grid-hold"] as const) {
-    const { activeEvents } = startEvent(calm, kind, EVENT_TUNING.easy, rng)
-    assert.equal(activeEvents.length, 1)
-    assert.deepEqual(eventCues([], activeEvents), [])
-  }
+  const { activeEvents } = startEvent(calm, "rod-stuck", EVENT_TUNING.easy, rng)
+  assert.equal(activeEvents.length, 1)
+  assert.deepEqual(eventCues([], activeEvents), [])
 })
 
 test("event sounds: a turbine trip sounds once as it trips, and not on a saved game that has already tripped", () => {

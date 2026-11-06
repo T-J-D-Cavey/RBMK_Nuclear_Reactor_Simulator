@@ -3,7 +3,7 @@
 import { type GameMode, type GameState, GAME_MODE_CONFIGS, INITIAL_GAME_STATE, getShiftTime } from "./types"
 import { calculateGameTick } from "./game-mechanics"
 import { FIRST_LOG_AT, addLog, checkEventWarnings, checkGameOver, checkWarnings } from "./game-utils"
-import { applyPendingTarget, checkTurbineTrip, expireEvents, jamRodsInHighSteam, runShiftEvents } from "./game-events"
+import { applyPendingTarget, checkTurbineTrip, expireEvents, freeHotFuelJams, jamRodsInHighSteam, jamSlowRodsInHotFuel, runShiftEvents } from "./game-events"
 import { advanceMaintenance } from "./maintenance"
 import { runSafetyTest } from "./safety-test"
 import type { Rng } from "./sim/rng"
@@ -47,6 +47,7 @@ export function advanceGame(prev: GameState, rng: Rng = Math.random): GameState 
   }
 
   s = expireEvents(s)
+  s = jamSlowRodsInHotFuel(prev, freeHotFuelJams(s), rng)
   s = checkTurbineTrip(s)
   s = applyPendingTarget(s)
   s = s.mode === "safety_test" ? runSafetyTest(s) : runShiftEvents(s, rng)

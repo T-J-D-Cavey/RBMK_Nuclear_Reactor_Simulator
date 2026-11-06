@@ -43,6 +43,10 @@ export const SOUND_EFFECT_FILES = {
 export type SoundEffect = keyof typeof SOUND_EFFECT_FILES
 
 // The clips long enough to stop and pick up again with the game: the rest are over in a moment or two
+// Pumps are often switched one straight after another, so each switch plays on top of the last, not over it
+// (owner, 2026-11-06). The rod drive has its own voices and the turbine selector moves one position at a time.
+export const OVERLAPPING_EFFECTS: SoundEffect[] = ["pumpSwitch"]
+
 export const LONG_EFFECTS: SoundEffect[] = ["turbineVacuumRun", "waterBalancerRun", "powerCutEvent", "reactorHallEvent"]
 
 export const TURBINE_SELECT_EFFECTS: Record<TurbineMode, SoundEffect> = {
@@ -51,7 +55,7 @@ export const TURBINE_SELECT_EFFECTS: Record<TurbineMode, SoundEffect> = {
   grid: "turbineSelectGrid",
 }
 
-// The events with a clip of their own. A grid hold has none, and a rod jam has the rod drive's short burst
+// The events with a clip of their own. A rod jam has the rod drive's short burst
 // (rodsSnagged). A turbine trip isn't an event in this list, so it has its own trigger (turbineTripCue).
 const EVENT_EFFECTS: Partial<Record<EventKind, SoundEffect>> = {
   "power-cut": "powerCutEvent",

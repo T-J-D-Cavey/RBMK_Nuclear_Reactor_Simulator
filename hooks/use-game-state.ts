@@ -1,13 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { type GameEvent, type GameState, type GameMode, INITIAL_GAME_STATE, GAME_MODE_CONFIGS, SHIFT_EVENT_KINDS } from "@/lib/types"
+import { type GameEvent, type GameState, type GameMode, type TargetTrack, INITIAL_GAME_STATE, GAME_MODE_CONFIGS, SHIFT_EVENT_KINDS } from "@/lib/types"
 import { advanceGame, createNewGame } from "@/lib/game-loop"
 
 const STORAGE_KEY = "chernobyl-game-state"
 const TICK_INTERVAL = 1000 // 1 second
-
-const EVENT_TYPES: GameEvent["type"][] = ["power-cut", "signal-loss", "rod-stuck", "pump-trip", "grid-hold"]
 
 function loadSavedGameState(): GameState {
   if (typeof window !== "undefined") {
@@ -52,8 +50,9 @@ function loadSavedGameState(): GameState {
 // Saves from before the reactor rework lack rod targets, pump flow, turbine mode, log and stats; saves from
 // before the events rework have old-style target-change events and no event plan. Saves from before target changes
 // got their own track (2026-11-02) have target changes and holds in the event plan: those are dropped, and the
-// track starts afresh on the next tick.
-function migrateSavedState(state: GameState): GameState {
+// track starts afresh on the next tick. Saves from before grid holds went (2026-11-06) may be part way through one: the
+// hold is dropped and the track carries on settling, with no one-off targets to come in that shift.
+export function migrateSavedState(state: GameState): GameState {
   return {
     ...state,
     controlRods: state.controlRods.map((rod) => ({
@@ -64,6 +63,7 @@ function migrateSavedState(state: GameState): GameState {
       slow: rod.slow ?? false,
       parkedAt: rod.parkedAt ?? rod.insertion,
       parkedSeconds: rod.parkedSeconds ?? 0,
+      jamSeconds: rod.jamSeconds ?? 0,
     })),
     waterPumps: state.waterPumps.map((pump) => ({
       ...pump,
@@ -72,13 +72,10 @@ function migrateSavedState(state: GameState): GameState {
     })),
     turbineMode: state.turbineMode ?? (state.turbineConnected ? "grid" : "idle"),
     mainsPower: state.mainsPower ?? state.waterPumps.every((pump) => pump.powered),
-    // An old-style hold ran for a set time; the new track lifts holds itself, so one saved without a track is dropped
-    activeEvents: (state.activeEvents ?? []).filter(
-      (event) => EVENT_TYPES.includes(event.type) && typeof event.duration === "number" && (event.type !== "grid-hold" || state.targetTrack),
-    ),
-    eventHistory: state.eventHistory ?? [],
+    activeEvents: (state.activeEvents ?? []).filter(isShiftEvent),
+    eventHistory: (state.eventHistory ?? []).filter(isShiftEvent),
     eventPlan: state.eventPlan ? state.eventPlan.filter((e) => SHIFT_EVENT_KINDS.includes(e.kind) && typeof e.duration === "number") : null,
-    targetTrack: state.targetTrack ?? null,
+    targetTrack: state.targetTrack ? migrateTargetTrack(state.targetTrack) : null,
     nextTargetChangeAt: state.nextTargetChangeAt ?? null,
     pendingTarget: state.pendingTarget ?? null,
     scriptStep: state.scriptStep ?? 0,
@@ -94,6 +91,13 @@ function migrateSavedState(state: GameState): GameState {
       : [],
     stats: { ...INITIAL_GAME_STATE.stats, ...state.stats },
   }
+}
+
+const isShiftEvent = (event: GameEvent) => SHIFT_EVENT_KINDS.includes(event.type) && typeof event.duration === "number"
+
+function migrateTargetTrack(track: TargetTrack): TargetTrack {
+  const { phase, oneOffs, returnTo } = track
+  return { ...track, phase: (phase as string) === "holding" ? "settling" : phase, oneOffs: oneOffs ?? [], returnTo: returnTo ?? null }
 }
 
 export type GameStateUpdate = Partial<GameState> | ((state: GameState) => Partial<GameState>)

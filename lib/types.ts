@@ -8,6 +8,7 @@ export interface ControlRod {
   slow: boolean // left parked too long: it travels slower until moved properly (lib/maintenance)
   parkedAt: number // internal: where it was last moved to, by enough to count
   parkedSeconds: number // internal: how long since then
+  jamSeconds: number // internal: seconds left of a hot-fuel jam, which frees itself; 0 for any other jam, or none
 }
 
 export interface WaterPump {
@@ -48,11 +49,9 @@ export interface GameStats {
 }
 
 // Shift events (bible §12): power cuts, signal losses from the reactor hall, pump trips and rod jams. Power cuts and
-// signal losses are the major emergencies. A grid hold is a kind of target change (owner, 2026-10-30), kept here
-// because it runs as an active event while its narrow window lasts.
-export type EventKind = "power-cut" | "signal-loss" | "rod-stuck" | "pump-trip" | "grid-hold"
-export type ShiftEventKind = Exclude<EventKind, "grid-hold">
-export const SHIFT_EVENT_KINDS: readonly ShiftEventKind[] = ["power-cut", "signal-loss", "pump-trip", "rod-stuck"]
+// signal losses are the major emergencies.
+export type EventKind = "power-cut" | "signal-loss" | "rod-stuck" | "pump-trip"
+export const SHIFT_EVENT_KINDS: readonly EventKind[] = ["power-cut", "signal-loss", "pump-trip", "rod-stuck"]
 
 export interface GameEvent {
   id: string
@@ -68,7 +67,7 @@ export interface GameEvent {
 // One event in this shift's plan (shift time = seconds since the shift started)
 export interface ScheduledEvent {
   at: number
-  kind: ShiftEventKind
+  kind: EventKind
   warned: boolean // advance warning already given
   duration: number // drawn when the shift is planned, so no two events overlap
 }
@@ -76,16 +75,26 @@ export interface ScheduledEvent {
 // Where the grid's target changes have got to (bible §13, owner 2026-11-02). They run on their own, alongside the
 // events: the next notice comes once the player has been on target for a while, or when the grid gives up waiting.
 export interface TargetTrack {
-  phase: "waiting" | "notice" | "settling" | "holding"
+  phase: "waiting" | "notice" | "settling"
   noticeAt: number // waiting: shift time the next notice is due
   takesEffectAt: number // notice: when the change takes effect
-  since: number // settling/holding: when the give-up clock started (it stops during a power cut or signal loss)
-  steady: number // settling/holding: seconds on target without a break
-  need: number // settling: the settle time drawn; holding: how long the hold must be held
-  hold: boolean // the change in hand (or the last one) is a hold
+  since: number // settling: when the give-up clock started (it stops during a power cut or signal loss)
+  steady: number // settling: seconds on target without a break
+  need: number // settling: the settle time drawn
   changes: number // announced so far
-  holdsLeft: number
+  oneOffs: ScheduledOneOff[] // still to come this shift, in order
+  returnTo: number | null // while a one-off is in hand: the target it replaced, which the next change is drawn from
 }
+
+export interface ScheduledOneOff {
+  kind: OneOffTarget
+  dueAt: number // shift time: the first change announced from then on is this one
+}
+
+// One-off targets (owner, 2026-11-06), once each a shift, between the grid's usual changes: the grid over-supplied, so
+// no output wanted at all, or Unit 1's low-power safety test, so an unusually high output to cover it.
+export type OneOffTarget = "grid-oversupply" | "unit-1-test"
+export const ONE_OFF_TARGETS: readonly OneOffTarget[] = ["grid-oversupply", "unit-1-test"]
 
 // A target change the grid (or the Safety Test script) has announced but which is not yet in force.
 export interface PendingTargetChange {
@@ -93,6 +102,7 @@ export interface PendingTargetChange {
   at: number // shift time when it takes effect
   source: LogSource
   from: string
+  confirmation?: string // what's said as it takes effect, in place of the usual confirmation
 }
 
 export type GameMode = "easy" | "hard" | "free" | "safety_test"
@@ -267,6 +277,7 @@ export const INITIAL_GAME_STATE: GameState = {
     slow: false,
     parkedAt: insertion,
     parkedSeconds: 0,
+    jamSeconds: 0,
   })),
 
   waterPumps: Array.from({ length: 4 }, (_, i) => ({
@@ -339,8 +350,7 @@ export const INITIAL_GAME_STATE: GameState = {
 }
 
 // Warning levels, set from harness runs (owner, 2026-10-14; plan §6). The high ones sit above anything a competent
-// player needs, even Hard's largest target on four pumps (radioactivity ≈285). Hot fuel has no warning: it only
-// slows a rise, so it isn't a risk worth an alarm (owner, 2026-10-14).
+// player needs, even Hard's largest target on four pumps (radioactivity ≈285).
 export const THRESHOLDS = {
   radioactivity: {
     highWarning: 350,
@@ -352,6 +362,10 @@ export const THRESHOLDS = {
   },
   fuelTemp: {
     lowWarning: TUNING.fuelColdBelow, // where very cold fuel starts to push radioactivity up (§9)
+    // Crossing it jams any slow rods for a while (owner, 2026-11-06), so it has a warning now; until then hot fuel had none.
+    // In a sweep from 1,300° to 2,000° this was the lowest level never crossed in calm play, and the highest where the
+    // game was usually still going 30 s later.
+    highWarning: 1500,
   },
   steamVolume: {
     highWarning: 300,
@@ -370,17 +384,12 @@ export const THRESHOLDS = {
   powerTolerance: {
     fraction: 0.1, // ±10% of target (bible §13)
     minimum: 200, // never tighter than ±200 MW
-    holdFactor: 0.5, // a grid "hold" request halves the window while it lasts (bible §12)
   },
 } as const
 
-export function getPowerTolerance(powerTarget: number, hold = false): number {
-  const { minimum, fraction, holdFactor } = THRESHOLDS.powerTolerance
-  return Math.max(minimum, powerTarget * fraction) * (hold ? holdFactor : 1)
-}
-
-export function isGridHoldActive(state: Pick<GameState, "activeEvents">): boolean {
-  return state.activeEvents.some((event) => event.type === "grid-hold")
+export function getPowerTolerance(powerTarget: number): number {
+  const { minimum, fraction } = THRESHOLDS.powerTolerance
+  return Math.max(minimum, powerTarget * fraction)
 }
 
 // Seconds since the shift started, in every mode (countdown modes count gameTime down from timeLimit).
