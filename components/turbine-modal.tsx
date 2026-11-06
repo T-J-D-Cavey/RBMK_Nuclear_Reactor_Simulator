@@ -93,7 +93,7 @@ export default function TurbineModal({ open, onOpenChange, turbineMode, vacuum, 
         <div className="space-y-3 sm:space-y-4">
           {/* The ejector carries on if the modal closes. The rising needle and the dark key are all that shows it running. */}
           <div className="cr-module cr-bay-screws p-2.5 flex items-center justify-between gap-2 sm:gap-3">
-            <div className="flex-1 min-w-0 max-w-60" data-tutorial="turbine-vacuum">
+            <div className="cr-arc-slot flex-1 min-w-0 max-w-60" data-tutorial="turbine-vacuum">
               <ArcDial kind="vacuum" value={vacuum} />
             </div>
             <JobKey ready={ejectorReady} ariaLabel="Run the air ejector" tutorial="turbine-ejector" onRun={onRunEjector} />

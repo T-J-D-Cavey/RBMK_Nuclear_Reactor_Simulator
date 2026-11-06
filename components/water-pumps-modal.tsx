@@ -38,7 +38,7 @@ export default function WaterPumpsModal({ open, onOpenChange, waterPumps, switch
           {/* The balancer carries on if the modal closes. Its key is dark until it can run again, and the switches stay
               free throughout, but nothing reaches the pumps during its lock: they act as it ends (owner, 2026-11-06). */}
           <div className="cr-module cr-bay-screws p-2.5 flex items-center justify-between gap-2 sm:gap-3">
-            <div className="flex-1 min-w-0 max-w-60" data-tutorial="pumps-needle">
+            <div className="cr-arc-slot flex-1 min-w-0 max-w-60" data-tutorial="pumps-needle">
               <ArcDial kind="pumps" value={balance} />
             </div>
             <JobKey ready={balancerReady} ariaLabel="Run the circulation balancer" tutorial="pumps-balancer" onRun={onRunBalancer} />
