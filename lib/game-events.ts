@@ -306,7 +306,7 @@ function endEvent(state: GameState, event: GameEvent): GameState {
       break
     }
     case "signal-loss":
-      s = addLog(s, "engineer", "Electrics to the reactor hall are back. Reactor instruments are reading again.", REACTOR_TECHNICIAN)
+      s = addLog(s, "engineer", "Electrics to the reactor hall are back. Reactor instruments should be working again...", REACTOR_TECHNICIAN)
       break
   }
   // Every event counts, smaller ones too (owner, 2026-11-04)
@@ -395,7 +395,7 @@ const ONE_OFF_DETAILS: Record<OneOffTarget, { target: number; from: string; noti
     target: 0,
     from: GRID_CONTROLLER,
     notice: TARGET_NOTICE,
-    confirmation: `The grid is over-supplied. New power output requested to be ${formatMW(0)}. Disconnect your turbine from the grid.`,
+    confirmation: `The grid is over-supplied. New power output requested to be ${formatMW(0)}. We request the disconnection of Unit 4 from the grid.`,
   },
   "unit-1-test": {
     target: EVENT_TUNING.unit1TestTarget,

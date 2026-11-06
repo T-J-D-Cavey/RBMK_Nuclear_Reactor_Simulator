@@ -623,7 +623,7 @@ test("§13 grid over-supplied: the usual notice, then 0 MW and the order to disc
     assert.equal(s.stats.targetChanges, changes + 1, "it counts as a target change")
     assert.equal(s.stats.emergenciesHandled, 0, "and not as an emergency")
     assert.equal(s.log.at(-1)!.from, "GRID CONTROLLER")
-    assert.equal(s.log.at(-1)!.text, "The grid is over-supplied. New power output requested to be 0 MW. Disconnect your turbine from the grid.")
+    assert.equal(s.log.at(-1)!.text, "The grid is over-supplied. New power output requested to be 0 MW. We request the disconnection of Unit 4 from the grid.")
     assert.equal(getAlarms(s).event, false, "no event alarm")
 
     // Only a disconnected turbine, or next to no steam, meets it
