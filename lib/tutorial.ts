@@ -143,6 +143,37 @@ export function tutorialSteps(mode: GameMode): TutorialStep[] {
   ]
 }
 
+// --- The manual's induction ---
+
+// The Operating Manual opens with the same foreman, as the player's induction (owner, 2026-11-09): he welcomes the new
+// engineer, sends them to the Induction section on the computer, and points out that the other clipboards are optional
+// detail. The desk and its controls are his to teach in the control room, so the manual keeps to the key concepts.
+export const MANUAL_INDUCTION: TutorialStep[] = [
+  step(
+    "welcome",
+    "Welcome to Chernobyl",
+    "Welcome, comrade. I'm Aleksandr Akimov, shift foreman at Unit 4. You've joined us as a Senior Reactor Control Engineer, and this is your induction. Skip ahead, go back or close this as you see fit.",
+  ),
+  step(
+    "training",
+    "Your training material",
+    "The first step of your induction is to read the Induction on this computer. It covers everything you need at a glance: what drives the reactor, what a shift throws at you and how a shift ends.",
+    ["manual-screen"],
+  ),
+  step(
+    "concepts",
+    "Key concepts first",
+    "When you enter the control room I'll walk you through every control on the desk, and the '?' key on the rods, pumps and turbine panels brings me back to explain them. But first I want you to understand the key concepts.",
+    ["manual-screen"],
+  ),
+  step(
+    "sections",
+    "More if you want it",
+    "These clipboards go into more detail on the game modes, power targets, shift emergencies and warning signs. They're optional. Press 'Leave Training' whenever you're ready.",
+    ["manual-tabs"],
+  ),
+]
+
 // --- The machine modals' guide ---
 
 // The same foreman talks through a machine's modal when its ? key is pressed (owner, 2026-11-04: Guide A). The modals'

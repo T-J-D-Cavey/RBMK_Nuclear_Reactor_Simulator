@@ -42,7 +42,20 @@ function readHoles(step: TutorialStep): Hole[] {
 // for what he is talking about, framed in amber; he stands on an edge of the screen with his words on a typed sheet, and the page scrolls each subject into
 // view clear of him. Close, or Begin shift on the last sheet, ends it. With inModal he is talking through a machine's
 // modal instead (components/machine-guide): the modal moves rather than the page, and the end goes back to it.
-export default function Tutorial({ steps, onFinish, inModal = false }: { steps: TutorialStep[]; onFinish: () => void; inModal?: boolean }) {
+// The manual's induction passes its own wording for the last key and the close key.
+export default function Tutorial({
+  steps,
+  onFinish,
+  inModal = false,
+  finishLabel,
+  closeLabel,
+}: {
+  steps: TutorialStep[]
+  onFinish: () => void
+  inModal?: boolean
+  finishLabel?: string
+  closeLabel?: string
+}) {
   const playSound = useSoundEffect()
   const [index, setIndex] = useState(0)
   const [chars, setChars] = useState(0)
@@ -213,7 +226,7 @@ export default function Tutorial({ steps, onFinish, inModal = false }: { steps: 
                 playSound("cancel")
                 finish()
               }}
-              aria-label={inModal ? "Close the guide and return to the panel" : "Close the briefing and start the shift"}
+              aria-label={closeLabel ?? (inModal ? "Close the guide and return to the panel" : "Close the briefing and start the shift")}
             >
               <X className="size-4" />
             </button>
@@ -250,7 +263,7 @@ export default function Tutorial({ steps, onFinish, inModal = false }: { steps: 
                 next()
               }}
             >
-              {!last ? "Next ›" : inModal ? "Back to the panel ›" : "Begin shift ›"}
+              {!last ? "Next ›" : (finishLabel ?? (inModal ? "Back to the panel ›" : "Begin shift ›"))}
             </button>
           </div>
           <span className={`cr-tut-tail ${left ? "cr-tut-tail-left" : "cr-tut-tail-right"}`} aria-hidden="true" />

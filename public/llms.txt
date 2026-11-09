@@ -15,7 +15,7 @@ Game modes:
 ## Pages
 
 - [Home](https://rbmk-simulator.vercel.app/): start a game and choose a mode.
-- [Operating Manual](https://rbmk-simulator.vercel.app/instructions): how to play, covering the modes, the reactivity cards, every control, warning signs, the xenon pit, the Safety Test and how the game ends.
+- [Operating Manual](https://rbmk-simulator.vercel.app/instructions): how to play: an induction to the reactivity cards, the controls that balance them, power targets and how the game ends, then sections on the game modes, power targets, shift emergencies and warning signs.
 
 ## Optional
 

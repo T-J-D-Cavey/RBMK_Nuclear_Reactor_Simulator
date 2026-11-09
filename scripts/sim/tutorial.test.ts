@@ -1,7 +1,7 @@
 // The control-room briefing (lib/tutorial): its order in every mode, and where the guide goes. Run: node --run sim:test
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { GUIDE_EDGE, MACHINE_GUIDES, planGuide, tutorialSteps } from "../../lib/tutorial"
+import { GUIDE_EDGE, MACHINE_GUIDES, MANUAL_INDUCTION, planGuide, tutorialSteps } from "../../lib/tutorial"
 
 test("briefing: every mode opens with the welcome and ends with Begin; each reading comes before the control that moves it", () => {
   for (const mode of ["easy", "hard", "safety_test", "free"] as const) {
@@ -68,4 +68,12 @@ test("briefing: on a wide screen the guide takes the bottom corner opposite the 
   const wide = planGuide({ top: 494, bottom: 894, left: 18, right: 1422 }, desk, guide, false)
   assert.equal(wide.dock, "top")
   assert.ok(wide.scrollY <= 20, `scroll ${wide.scrollY}`)
+})
+
+test("manual induction: a welcome first, then the computer, then the section clipboards, framed", () => {
+  assert.equal(MANUAL_INDUCTION[0].id, "welcome")
+  assert.deepEqual(MANUAL_INDUCTION[0].targets, [])
+  for (const s of MANUAL_INDUCTION.slice(1, -1)) assert.deepEqual(s.targets, ["manual-screen"], s.id)
+  assert.deepEqual(MANUAL_INDUCTION.at(-1)?.targets, ["manual-tabs"])
+  assert.equal(new Set(MANUAL_INDUCTION.map((s) => s.id)).size, MANUAL_INDUCTION.length)
 })
