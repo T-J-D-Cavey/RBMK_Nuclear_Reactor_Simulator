@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 const FLASH_MS = 15000 // a new message flashes the header lamp for this long at most
 const SEEN_MS = 3000 // or until the shift log has been in view this long (long enough to watch it print)
 
-// The header's shift-log lamp (plan §21.5): flashes when a new message arrives, until the player has seen the log
+// The header's shift-log lamp (bible §15): flashes when a new message arrives, until the player has seen the log
 // or 15 s have passed. Messages already in the log when the game loads don't count as new.
 export function useShiftLogLamp(lastId: string | undefined, enabled: boolean) {
   const started = useRef(false)

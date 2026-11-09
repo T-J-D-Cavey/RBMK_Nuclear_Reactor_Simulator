@@ -1,4 +1,4 @@
-// When the sound effects play (bible §15, plan §8 Q5). Pure, so the triggers can be checked without a browser;
+// When the sound effects play (bible §15). Pure, so the triggers can be checked without a browser;
 // hooks/use-audio-manager.ts plays the clips.
 import type { ControlRod, EventKind, GameEvent, TurbineMode } from "./types"
 

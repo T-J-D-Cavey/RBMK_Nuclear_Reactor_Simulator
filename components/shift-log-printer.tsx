@@ -27,7 +27,7 @@ type Stage = "idle" | "flash" | "print" | "feed"
 // at the roller and the rest of the roll below it. The player can drag the paper (or use the mouse wheel or arrow
 // keys) to read back. The housing matches the alarm monitor's. The Safety Test uses the same log: its orders are
 // messages on the paper (owner). The header's "See Message" key (revealSignal) opens it and scrolls it into view, and
-// onInView tells the header's shift-log lamp whether the open paper is on screen (plan §21.5).
+// onInView tells the header's shift-log lamp whether the open paper is on screen (bible §15).
 export default function ShiftLogPrinter({
   gameState,
   revealSignal = 0,

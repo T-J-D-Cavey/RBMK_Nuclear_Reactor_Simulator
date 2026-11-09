@@ -18,8 +18,8 @@ Every mode runs the same physics. Only the workload changes.
 
 | Mode | Shift | Workload |
 | --- | --- | --- |
-| **Easy** | 15 min | 7 events: one major emergency, smaller events and target changes |
-| **Hard** | 30 min | 14 events: both major emergencies, tougher, plus smaller events and larger target changes |
+| **Easy** | 15 min | 3 events, each a different kind (at least one major emergency), plus target changes |
+| **Hard** | 30 min | 4 events, one of each kind (both major emergencies), tougher, plus larger target changes |
 | **Free** | Unlimited | Sandbox: no targets, no events |
 | **Safety Test** | 20 min | A scripted recreation of the Unit 4 turbine rundown test (25–26 April 1986) |
 
@@ -79,8 +79,8 @@ A Next.js 16 / React 19 app (Tailwind, shadcn/ui), deployed on Vercel. The key d
 ### Design documents (`ai/`)
 
 - **`ai/high-level-plan.md`** is the design "bible", the source of truth for what the player should experience. It is organised by area (reactivity, temperatures, pumps, turbine, xenon, rods, events, targets, Safety Test, presentation). Each section gives the change, the player outcome, what must be preserved, and **acceptance checks**.
-- **`ai/implementation-plan.md`** maps the bible onto code and records each iteration. If the two disagree, the bible wins.
-- **`ai/high-level-plan-changelog.md`** records why the design changed.
+- **`ai/high-level-plan-changelog.md`** records why the design changed, newest first.
+- **`ai/android-app-plan.md`** is the plan for wrapping the finished game as an Android app in a separate repo (not started).
 
 ---
 

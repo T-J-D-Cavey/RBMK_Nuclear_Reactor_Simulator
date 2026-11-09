@@ -28,7 +28,7 @@ const rodPull = (rods: ControlRod[]) =>
   rods.reduce((sum, rod) => sum + rod.insertion * (MAINTENANCE_TUNING.edgeRods.includes(rod.id) ? 1 : MAINTENANCE_TUNING.middleRodPull), 0)
 
 // The rod balance needle, from the rods' actual positions: -1 hard left to 1 hard right, leaning to the heavy side.
-// Rods 1-5 are the left of the core and 6-10 the right, and an edge rod shifts it more than a middle rod (plan §6).
+// Rods 1-5 are the left of the core and 6-10 the right, and an edge rod shifts it more than a middle rod (bible §10).
 export function rodBalance(rods: ControlRod[]): number {
   const lean = (rodPull(sideOf(rods, "right")) - rodPull(sideOf(rods, "left"))) / MAINTENANCE_TUNING.balanceFullTravel
   return Math.max(-1, Math.min(1, lean))
@@ -157,7 +157,7 @@ export function advanceReactor(input: GameState, rng: Rng): PhysicsResult {
     s.radioactivity = Math.min(T.maxRadioactivity, R * Math.exp(growthRate(rho) * dt) + T.source * dt)
 
     // Fuel heated by radioactivity; heat flows to the reactor in proportion to the gap (bible §6).
-    // Starved channels pass heat out of the fuel less well, on top of any dry-out (plan §4)
+    // Starved channels pass heat out of the fuel less well, on top of any dry-out (bible §7)
     const dryOut = flow > 0.5 ? 1 : T.dryOutTransfer + (1 - T.dryOutTransfer) * (flow / 0.5)
     const transfer = T.fuelToReactorRate * dryOut * (1 - MAINTENANCE_TUNING.pumpTransferLoss * Math.abs(s.pumpBalance))
     const fuelToReactor = transfer * (s.fuelTemp - s.reactorTemp)

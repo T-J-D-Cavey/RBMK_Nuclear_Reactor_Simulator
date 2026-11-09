@@ -46,7 +46,7 @@ export default function GamePage() {
   const [panelRef, panelHeight] = useElementHeight<HTMLDivElement>()
   const sideFit = dashboard && panelHeight ? panelHeight : null
 
-  // Header keys that bring the alarm monitor or the shift log into view, and the shift log's lamp (plan §21.5)
+  // Header keys that bring the alarm monitor or the shift log into view, and the shift log's lamp (bible §15)
   const [alarmRevealSignal, setAlarmRevealSignal] = useState(0)
   const [logRevealSignal, setLogRevealSignal] = useState(0)
   const logLamp = useShiftLogLamp(gameState.log[gameState.log.length - 1]?.id, isLoaded)

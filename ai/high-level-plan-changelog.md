@@ -2,6 +2,22 @@
 
 Why [high-level-plan.md](high-level-plan.md) changed between drafts. The plan only describes what we're building; this file keeps the reasoning so the plan can stay short. Nothing here is an instruction.
 
+**For agents: don't read this whole file.** It is long and newest first. To add an entry, read only the top one or two for the format. Search it (e.g. for a section number or a word) only when you need to know why a particular rule exists.
+
+## v2.45 – 2026-11-09 (Old planning documents retired)
+
+- **The project is nearly finished, so the planning documents built around the work are gone** (owner): the implementation plan, the machine maintenance plan, the 2026-10-13 mechanics review and the manual test notes. They are in git history before this date. The implementation plan's Android section is now [android-app-plan.md](android-app-plan.md).
+- **The plan's status now says it is built**, not "draft, nothing implemented". Section 4 (the assessment of the game before the rework) and Section 17 (the delivery order) are emptied; their numbers stay so code comments citing "bible §" still point to the right place.
+- **Machine maintenance's rules for all three machines move into Section 2, exception 7**, from the maintenance plan: every mode, gauges only with no panel lamp, one shift log message at a gauge's maximum, gauges that work through signal loss, and no dummy controls. The mechanics themselves were already in Sections 7, 8 and 10.
+
+## v2.44 – 2026-11-09 (Turbine trips in every mode after 3 s; vacuum costs 15%; a shorter manual)
+
+- **The turbine trips after 3 s of over-pressure, not 5, in every mode** (Section 12, owner). The owner sat at high steam for about 10 s without a trip: Free mode and the Safety Test had no trips at all, a WS4 choice made because they have no events. The trip is the turbine's own protection, not an event, so it now applies everywhere. Its shift log message is unchanged. For the bot it changes almost nothing, as it rarely sits at high steam.
+- **A poor condenser vacuum costs up to 15% of output, not 12%** (Section 7, owner: about 200 MW back from the ejector felt too small; that was at about 1,500 MW, and the effect scales with output). Running the ejector from worst now gives +17.6%. At 0.2 Unit 1's 12,000 MW would need steam 300 at worst vacuum, which trips the turbine, so 15% leaves room. Bot, 200 seeds: Easy on target 50% → 51%, Hard survival 44% → 41% (noise-sized); the novice who never runs the ejector survives 80% of Easy shifts, not 87%, and 6% of Hard, not 10%.
+- **How to Play is introduced by the shift foreman and drops its Controls section** (Section 15, owner). He first stood in the page above the computer; the owner then asked for him on the side of the screen as in the game, as a three-page induction (welcome, the training material, key concepts before the desk) that frames the computer from the second page. Then the manual was split into sections picked by clipboards (owner's option D of four canvas prototypes): a short Induction that is enough to play, and optional detail behind it. The Xenon Pit moved into Power Targets as one item, and the Safety Test section went, since Game Modes and the briefing cover it. Akimov gained a fourth page on the optional sections. The turbine trip moved to Warning Signs, as the briefing doesn't mention it.
+- **The rods modal's guide explains jammed rods** (owner): a sixth step on the red channels and their three causes.
+- **Circulation imbalance costs up to 20% of fuel-to-reactor transfer again, not 10%, for a playtest** (Section 8, owner: at 10% nothing visible changed). With radioactivity held, the fuel runs about 45° hotter at the limit at radioactivity 100 (was about 20°), and output drops 1–4% with 2 pumps and up to 9% with 4. Balancing gives the bigger kick that led to 10% on 2026-11-05: with the rods held still, radioactivity went from 123 to 253 in 150 s after the balancer ran, against 150 without it. Bot, 200 seeds: no change for the competent bot; the novice survives 76% of Easy shifts, not 80%.
+
 ## v2.43 – 2026-11-06 (Hot fuel jams slow rods)
 
 - **Fuel reaching its high warning jams the slow rods for a while** (Sections 10 and 12, owner). Unlike the high-steam jam it only takes the rods showing yellow at that moment, and they free themselves.

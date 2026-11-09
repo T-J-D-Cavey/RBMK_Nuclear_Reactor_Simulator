@@ -75,7 +75,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Start console: just big enough for its two keys (plan §21.4) */}
+        {/* Start console: just big enough for its two keys (bible §15) */}
         <div className="cr-panel cr-screws mx-auto w-full max-w-xs sm:max-w-none sm:w-fit px-5 py-5 sm:px-6">
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-stretch sm:items-center">
             <span className="cr-lens-bezel w-full sm:w-auto">

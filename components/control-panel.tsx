@@ -32,7 +32,7 @@ interface ControlPanelProps {
 // The compact desk (owner, 2026-10-23, "machine keys"): a thin nameplate strip over one row of keys, the readings three
 // across, then the three machines. It looks the same on every screen; the page keeps it narrow (DESK_WIDTH).
 
-// An illuminated push key: the cap is the lamp (plan §21.5). Red flashes while any warning is active or a major event
+// An illuminated push key: the cap is the lamp (bible §15). Red flashes while any warning is active or a major event
 // runs; amber while a new shift-log message is unseen. The lit layer is always mounted, so it keeps time with the
 // nameplate lamps' flasher; a lit lamp only shows it.
 function LampKey({ lit, colour, label, ariaLabel, onClick, className = "" }: { lit: boolean; colour: "red" | "amber"; label: string; ariaLabel: string; onClick: () => void; className?: string }) {

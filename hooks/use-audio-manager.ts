@@ -28,7 +28,7 @@ interface AudioManagerProps {
   highRadAlarm: boolean;
   highReactorTempAlarm: boolean;
   highSteamOrXenon: boolean;
-  // Sound effect triggers (plan §8 Q5)
+  // Sound effect triggers (bible §15)
   loaded: boolean; // the saved game has loaded: warnings and messages already in it don't count as new
   rodsMoving: number;
   controlRods: ControlRod[];

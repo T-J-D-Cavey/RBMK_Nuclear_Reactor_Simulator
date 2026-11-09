@@ -7,7 +7,7 @@ import ShiftLogPrinter from "@/components/shift-log-printer"
 
 interface MessageAreaProps {
   gameState: GameState
-  // The header's "See Warning" / "See Message" keys bump these to bring a machine into view (plan §21.5)
+  // The header's "See Warning" / "See Message" keys bump these to bring a machine into view (bible §15)
   alarmRevealSignal?: number
   logRevealSignal?: number
   onLogInView?: (inView: boolean) => void
@@ -19,7 +19,7 @@ interface MessageAreaProps {
 //   on a green screen;
 // - the shift log teleprinter: messages from people, printed on paper with the newest at the top, in every
 //   mode including the Safety Test.
-// Each collapses on its own, so an experienced player can hide the warnings and keep the log (plan §11.1).
+// Each collapses on its own, so an experienced player can hide the warnings and keep the log (bible §15).
 export default function MessageArea({ gameState, alarmRevealSignal, logRevealSignal, onLogInView, wide = false }: MessageAreaProps) {
   const warnings = [...getReactorWarnings(gameState), ...getEventWarnings(gameState)]
 

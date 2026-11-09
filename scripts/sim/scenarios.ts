@@ -73,7 +73,7 @@ export const scenarios: Record<string, Scenario> = {
     description: "[§9] As restart, but the player never re-inserts rods",
     run: () => runQuiet(poisonedState(), 900, { 0: (s) => setPumps(setRods(s, 0), 4) }),
   },
-  // Replays of the owner's manual tests (ai/manual-test-results.MD), kept for comparing tuning iterations.
+  // Replays of the owner's early manual tests (2026-10-12), kept for comparing tuning iterations.
   ownerPumpSwitch: {
     description: "[owner test 1] Default start, 2→1 pumps at t=10, back to 2 at t=120",
     run: () => runQuiet(baseState(), 300, { 10: (s) => setPumps(s, 1), 120: (s) => setPumps(s, 2) }),

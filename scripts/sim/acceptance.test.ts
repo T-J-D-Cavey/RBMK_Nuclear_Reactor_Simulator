@@ -237,7 +237,7 @@ test("§9 a poisoned, collapsed reactor restarts within ~1–3 minutes with rods
 })
 
 test("§9 burn-off speed depends on radioactivity", () => {
-  // One turnover (owner, plan §21 step 8b): at or below 80 xenon builds, faster the lower radioactivity is;
+  // One turnover (owner, 2026-10-13): at or below 80 xenon builds, faster the lower radioactivity is;
   // above it a full load (100%) clears slowly just above 80, at a medium rate by 100, fast by 120 and in about
   // 10 s from 130 (owner, 2026-10-15; was ~3 s).
   const clearTime = (R: number) => 100 / -xenonRate(R)
@@ -312,7 +312,7 @@ test("§10 a jammed rod stops where it is, including mid-travel", () => {
 test("§10 AZ-5 with most rods at 0%, high steam and low flow can be fatal", () => {
   // Rods 1–8 parked at 0%, held by fully inserted rods 9–10, one pump: a runaway (no state like this is
   // steady). AZ-5 is pressed once it is hot and steamy.
-  // Since rods were halved in strength (plan §20 step 7b), so were their tips. The owner accepted a weaker trap:
+  // Since rods were halved in strength (owner, 2026-10-13), so were their tips. The owner accepted a weaker trap:
   // the spike needed is ×1.25 (was ×1.4), and it takes eight rods at 0% rather than six.
   const climb = runQuiet(setPumps(setRods(baseState(), [0, 0, 0, 0, 0, 0, 0, 0, 100, 100], { instant: true }), 1, { instant: true }), 600)
   const fragile = climb.samples.find((x) => x.S > 250)!.state

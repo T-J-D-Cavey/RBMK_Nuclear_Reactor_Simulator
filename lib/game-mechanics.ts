@@ -14,7 +14,7 @@ export interface TickResult {
 export const orderRod = (rods: ControlRod[], idx: number, target: number): ControlRod[] =>
   rods.map((rod, i) => (i === idx && !rod.stuck ? { ...rod, target: Math.max(0, Math.min(100, target)) } : rod))
 
-// One second of game time. The reactor physics live in lib/sim (see ai/implementation-plan.md).
+// One second of game time. The reactor physics live in lib/sim (see the README's Architecture section).
 export function calculateGameTick(state: GameState, rng: Rng = Math.random): TickResult {
   if (state.isPaused || state.isGameOver) {
     return { updates: {}, ending: null }

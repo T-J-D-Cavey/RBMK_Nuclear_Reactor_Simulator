@@ -19,7 +19,7 @@ export interface BotOptions {
   pumps: number // pumps to keep running
   allocation: "even" | "pull-out" // "pull-out": withdraws the shallowest rods all the way first (reckless)
   testResponse: "insert" | "az5" | "late-az5" | "none" // Safety Test: what to do when the test begins
-  jobs: boolean // does the machines' maintenance. Off, it is the novice who doesn't know the jobs exist (plan §9.4)
+  jobs: boolean // does the machines' maintenance. Off, it is the novice who doesn't know the jobs exist
 }
 
 const DEFAULTS: BotOptions = { cadence: 3, minRod: 1, pumps: 2, allocation: "even", testResponse: "insert", jobs: true }

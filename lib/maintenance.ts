@@ -1,4 +1,4 @@
-// The machines' maintenance jobs (ai/machine-maintenance-plan.md): occasional work that keeps a machine at its best.
+// The machines' maintenance jobs (bible §2 exception 7, §7, §8 and §10): occasional work that keeps a machine at its best.
 // Left alone, each penalty stops at a limit and nothing ever stops working. Pure, so the game and the bot share it.
 import type { GameState } from "./types"
 import { addLog } from "./game-utils"
@@ -11,7 +11,7 @@ const REACTOR_TECHNICIAN = "REACTOR TECHNICIAN"
 const PUMP_OPERATOR = "PUMP OPERATOR"
 const BALANCE_FIXED_BELOW = 0.9 // the needle has properly left its limit, so a rod hovering there can't send a message a second
 
-// What the turbine makes of its steam: air in the condenser costs output, not the pumps it can power (plan §3)
+// What the turbine makes of its steam: air in the condenser costs output, not the pumps it can power (bible §8)
 export const vacuumOutputFactor = (vacuum: number) => 1 - MAINTENANCE_TUNING.vacuumOutputLoss * (1 - vacuum)
 
 // Pressing at full vacuum or during a recovery does nothing, in any turbine mode
@@ -35,7 +35,7 @@ function reportVacuum(s: GameState): GameState {
   return addLog({ ...s, vacuumReported: true }, "engineer", "Condenser vacuum is at its worst. We're losing output until the air ejector is run.", TURBINE_OPERATOR)
 }
 
-// A rod left parked can go slow, because a drive that never moves can stick (plan §5). From rodParkSeconds on it may
+// A rod left parked can go slow, because a drive that never moves can stick (bible §10). From rodParkSeconds on it may
 // go, at even odds each minute (owner, 2026-11-05). Only a move of at least rodFreeingMove from where it was parked
 // restarts its clock, and a slow rod stays that way for the whole of that move: it recovers on arrival. A jammed rod's
 // clock waits for it. A rod fully out has nothing to stick in (owner, 2026-11-05), so it can't go slow, and its clock
