@@ -20,7 +20,7 @@
   --accent: oklch(0.4664 0.0978 187.55); /* NEW GREEN HERE */
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.55 0.22 25); /* Warning red */
-  --event: oklch(0.42 0.13 262); /* Events box: deep teletype blue (plan §11.1) */
+  --event: oklch(0.42 0.13 262); /* Events box: deep teletype blue (bible §15) */
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.65 0.01 85);
   --input: oklch(0.75 0.01 85);
@@ -184,58 +184,6 @@
 
 .led-amber {
   color: var(--color-led-amber);
-}
-
-/* Reactor glow effect */
-.reactor-glow {
-  filter: drop-shadow(0 0 20px var(--color-glow-green));
-}
-
-/* Add faster flashing animations for warning lights and borders */
-@keyframes warning-flash {
-  0%,
-  100% {
-    opacity: 1;
-    box-shadow: 0 0 30px rgba(220, 38, 38, 0.8);
-  }
-  50% {
-    opacity: 0.3;
-    box-shadow: 0 0 10px rgba(220, 38, 38, 0.3);
-  }
-}
-
-.animate-warning-flash {
-  animation: warning-flash 1s ease-in-out infinite;
-}
-
-
-
-
-
-  /* Buttons on the control panel */
-
-  /* 1980s Industrial Button - The "Unpressed" State */
-.btn-retro {
-  /* Slight gradient to look like plastic */
-  background: linear-gradient(to bottom, #3a3a3a, #2b2b2b);
-  /* The 3D Bevel effect */
-  box-shadow: 
-    inset 1px 1px 0px rgba(255, 255, 255, 0.15), /* Top highlight */
-    inset -1px -1px 0px rgba(0, 0, 0, 0.5),      /* Bottom shadow */
-    0px 4px 0px #1a1a1a,                         /* Physical height (the side of the button) */
-    0px 5px 5px rgba(0, 0, 0, 0.4);              /* Drop shadow */
-  transition: all 0.1s ease;
-  position: relative;
-  top: 0;
-}
-
-/* The "Pressed" State */
-.btn-retro:active, .btn-retro.pressed {
-  box-shadow: 
-    inset 2px 2px 5px rgba(0, 0, 0, 0.8), /* Deep inner shadow */
-    0px 0px 0px #1a1a1a;                  /* Remove height */
-  top: 4px; /* Physically move the button down */
-  background: #222;
 }
 
 /* LED / Incandescent Bulb Indicator */
@@ -860,15 +808,6 @@
   100% { opacity: 0; }
 }
 
-.ws5-shock-ring {
-  animation: ws5-shock 2.4s ease-out infinite;
-}
-
-@keyframes ws5-shock {
-  0% { transform: scale(0.6); opacity: 0.9; }
-  100% { transform: scale(1.8); opacity: 0; }
-}
-
 /* ---- Reduced motion: no flicker, no moving static, steady indicators ---- */
 @media (prefers-reduced-motion: reduce) {
   .ws3-cam-flicker,
@@ -884,8 +823,7 @@
   .ws5-manual-blink,
   .ws5-lamp-flash,
   .ws5-unread,
-  .ws5-flash,
-  .ws5-shock-ring {
+  .ws5-flash {
     animation: none;
   }
   .ws5-printer-viewport {
@@ -1140,21 +1078,6 @@
     0 1px 0 1px rgba(255, 255, 255, 0.35);
 }
 
-/* Chrome ring around an indicator lamp: lit from straight above so it reads evenly, with a dark socket behind a
-   dim (semi-transparent) lamp */
-.cr-lamp-bezel {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border-radius: 9999px;
-  background:
-    radial-gradient(circle closest-side, #141413 calc(100% - 4px), rgba(0, 0, 0, 0) calc(100% - 3.5px)),
-    linear-gradient(180deg, #f1f1ee 0%, #a9aaa5 50%, #5c5c57 100%);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.35);
-}
-
 /* Black frame around a digital readout */
 .cr-screen-bezel {
   padding: 3px;
@@ -1243,16 +1166,10 @@
 .cr-key-black { --cap: #1d1d1c; --cap-hi: #3a3a38; --cap-side: #050505; --cap-ink: #e2e0d8; }
 .cr-key-red { --cap: #5a1a1a; --cap-hi: #6e2222; --cap-side: #2e0b0b; --cap-ink: rgba(254, 202, 202, 0.45); }
 .cr-key-red-lit { --cap: #c81e1e; --cap-hi: #f04848; --cap-side: #6f1515; --cap-ink: #fff; --cap-glow: rgba(239, 68, 68, 0.5); }
-.cr-key-green-lit { --cap: #2aa85d; --cap-hi: #4fe08a; --cap-side: #0d4a26; --cap-ink: #04170b; --cap-glow: rgba(92, 255, 154, 0.4); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3); }
-.cr-key-amber-lit { --cap: #b45309; --cap-hi: #e88a1c; --cap-side: #5c2a05; --cap-ink: #fff8eb; --cap-glow: rgba(245, 158, 11, 0.4); }
-.cr-key-blue { --cap: #24456e; --cap-hi: #39679e; --cap-side: #0f1f33; --cap-ink: #eaf2ff; }
-.cr-key-green { --cap: #20573d; --cap-hi: #2f7d58; --cap-side: #0c2619; --cap-ink: #e9fff3; }
 .cr-key-cream { --cap: #cfcab9; --cap-hi: #ebe7da; --cap-side: #7b7668; --cap-ink: #23221f; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); }
 /* Mixed caps for the panel's utility keys (owner: old control rooms are full of buttons of every kind) */
 .cr-key-grey { --cap: #8e908a; --cap-hi: #b6b8b1; --cap-side: #4a4b46; --cap-ink: #1c1c1a; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); }
 .cr-key-teal { --cap: #1e5e59; --cap-hi: #2f8a83; --cap-side: #0a2725; --cap-ink: #e4fbf7; }
-.cr-key-maroon { --cap: #8a1d1d; --cap-hi: #b13232; --cap-side: #430c0c; --cap-ink: #ffe8e3; }
-.cr-key-mustard { --cap: #c69a1e; --cap-hi: #e4bd43; --cap-side: #66500d; --cap-ink: #241c04; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35); }
 
 /* A sculpted keycap (owner, 2026-11-03: the machine keys): the lens keys' sloped sidewalls and concave dish in the
    key's own colours, in its usual collar, with no escutcheon. Slimmer walls than a lens key's, to fit the narrow
