@@ -28,6 +28,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onOr
   const grip = useRef({ y: 0, from: 0, height: 1, value: 0 })
 
   const anySlow = controlRods.some((rod) => rod.slow && !rod.stuck)
+  const anyJammed = controlRods.some((rod) => rod.stuck)
 
   // AZ-5 takes effect with a single press: every rod that isn't jammed is driven toward 100% (bible §10).
   const handleAZ5 = () => {
@@ -116,8 +117,9 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onOr
           {/* The levers in fabric-lined channels (owner, 2026-11-04: Rods A2), with one SKALA strip under the bank for
               the set positions (owner, 2026-10-27: prototype A). A lamp pulses behind the channel's gap: yellow for a
               slow rod, red for a jam, which takes priority. The lever and its plate are hardware and never change.
-              The shift foreman frames the yellow channels, or the whole bank if there are none to show. */}
+              The shift foreman frames the yellow channels, then the red ones, or the whole bank if there are none to show. */}
           <div className="cr-module cr-bay-screws p-2 sm:p-3 sm:pb-2.5 flex flex-col gap-3">
+            <div data-tutorial={anyJammed ? undefined : "rods-jammed"}>
             <div data-tutorial={anySlow ? undefined : "rods-slow"}>
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-1 gap-y-4 justify-items-center" data-tutorial="rods-levers">
               {controlRods.map((rod, idx) => (
@@ -129,7 +131,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onOr
 
                     {/* Rod Track */}
                     <div
-                      data-tutorial={rod.slow && !rod.stuck ? "rods-slow" : undefined}
+                      data-tutorial={rod.stuck ? "rods-jammed" : rod.slow ? "rods-slow" : undefined}
                       className="cr-rod-slot relative w-8 sm:w-[30px] h-36 sm:h-48 rounded-b-sm"
                     >
                       {(rod.stuck || rod.slow) && <span className={`cr-rod-lamp ${rod.stuck ? "is-jammed" : "is-slow"}`} aria-hidden="true" />}
@@ -150,6 +152,7 @@ export default function ControlRodsModal({ open, onOpenChange, controlRods, onOr
                     </div>
                   </div>
               ))}
+            </div>
             </div>
             </div>
 

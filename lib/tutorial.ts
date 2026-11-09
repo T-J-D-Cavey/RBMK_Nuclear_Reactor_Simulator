@@ -26,8 +26,8 @@ export function tutorialSteps(mode: GameMode): TutorialStep[] {
       "welcome",
       "Welcome to Unit 4",
       test
-        ? "I'm Aleksandr Akimov, shift foreman. Tonight is the safety test. Before it starts I'll walk you round the desk; the previous shift will keep things steady till we're done. Close me any time if you know the panel."
-        : "I'm Aleksandr Akimov, shift foreman. Before your shift starts I'll walk you round the desk; the previous shift will keep things steady till we're done. Close me any time if you know the panel.",
+        ? "I'm Aleksandr Akimov, shift foreman. Tonight is the safety test. Before it starts I'll show you the ropes. Skip ahead, go back or close this tutorial as you see fit."
+        : "I'm Aleksandr Akimov, shift foreman. Before your shift starts I'll show you the ropes. Skip ahead, go back or close this tutorial as you see fit.",
     ),
     step(
       "radioactivity",
@@ -157,12 +157,18 @@ export const MACHINE_GUIDES = {
   pumps: [
     step("bays", "Pump bays", "A pump cools the core only when it's on and powered.", ["pumps-bays"]),
     step("needle", "Balance needle", "Circulation drifts out of balance. The further the needle goes, the hotter your fuel runs.", ["pumps-needle"]),
-    step("balancer", "Balance button", "This rebalances the flow, but flow dips, and for a few seconds the pumps can't be changed: a switch you turn acts once that's over. For a small reading, it may not be worth it yet.", ["pumps-balancer"]),
+    step("balancer", "Balance button", "This rebalances the flow of cooling water, stabalising fuel temperature. The act of rebalancing temporarily takes some cooling water away from the reactor and pumps are fixed in their on/off state. So it's only worth rebalancing when out of the green zone.", ["pumps-balancer"]),
   ],
   rods: [
     step("levers", "Levers", "Drag a lever to set insertion. Deeper rods, less radioactivity. The rod moves off as you let go.", ["rods-levers"]),
     step("az5", "AZ-5", "Emergency insertion of every rod.", ["rods-az5"]),
     step("channels", "Yellow channels", "A rod left parked in the core for 5 minutes or more can go slow, and its channel pulses yellow. Move it even 1% and it frees up. Leave it, and it jams for a while if the fuel gets too hot.", ["rods-slow"]),
+    step(
+      "jammed",
+      "Red channels",
+      `A jammed rod's channel pulses red and its reading shows JAM: its lever can't be moved until its repaired. If a rod is fully removed and enters the core at high steam, it will become jammed permanently.`,
+      ["rods-jammed"],
+    ),
     step("needle", "Balance needle", "This shows whether one side of the core has more rod in it. It moves as the rods move. Rods on the heavy side count for less, and rods on the light side for more.", ["rods-needle"]),
     step("edge", "Edge rods", "Rods 1, 2, 9 and 10 are at the edges of the core, so they swing the balance most.", ["rods-edge"]),
   ],

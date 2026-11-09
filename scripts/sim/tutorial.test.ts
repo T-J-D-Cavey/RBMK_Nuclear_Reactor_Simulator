@@ -31,7 +31,7 @@ test("machine guides: the turbine, pumps and rods each have their own steps, on 
       }
     }
   }
-  assert.deepEqual([MACHINE_GUIDES.turbine.length, MACHINE_GUIDES.pumps.length, MACHINE_GUIDES.rods.length], [3, 3, 5])
+  assert.deepEqual([MACHINE_GUIDES.turbine.length, MACHINE_GUIDES.pumps.length, MACHINE_GUIDES.rods.length], [3, 3, 6])
 })
 
 test("machine guides: every piece of the modals' old hint text is kept", () => {
