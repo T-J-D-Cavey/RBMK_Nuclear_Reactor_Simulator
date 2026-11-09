@@ -118,7 +118,6 @@ export interface GameModeConfig {
   hasPowerTarget: boolean
   defaultPowerTarget: number | null // e.g. 5000 for standard, null for free
   hasRandomEvents: boolean
-  turbineTrips: boolean // sustained over-pressure trips the turbine off the grid (bible §12)
   performanceAffectsGameOver: boolean
 }
 
@@ -135,7 +134,6 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     hasPowerTarget: true,
     defaultPowerTarget: 5000,
     hasRandomEvents: true,
-    turbineTrips: true,
     performanceAffectsGameOver: true,
   },
   hard: {
@@ -149,7 +147,6 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     hasPowerTarget: true,
     defaultPowerTarget: 5000,
     hasRandomEvents: true,
-    turbineTrips: true,
     performanceAffectsGameOver: true,
   },
   free: {
@@ -163,7 +160,6 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     hasPowerTarget: false,
     defaultPowerTarget: null,
     hasRandomEvents: false,
-    turbineTrips: false,
     performanceAffectsGameOver: false,
   },
   safety_test: {
@@ -177,7 +173,6 @@ export const GAME_MODE_CONFIGS: Record<GameMode, GameModeConfig> = {
     hasPowerTarget: true,
     defaultPowerTarget: 5000,
     hasRandomEvents: false,
-    turbineTrips: false,
     performanceAffectsGameOver: true,
   },
 }
@@ -349,7 +344,7 @@ export const INITIAL_GAME_STATE: GameState = {
   soundVolume: 1,
 }
 
-// Warning levels, set from harness runs (owner, 2026-10-14; plan §6). The high ones sit above anything a competent
+// Warning levels, set from harness runs (owner, 2026-10-14). The high ones sit above anything a competent
 // player needs, even Hard's largest target on four pumps (radioactivity ≈285).
 export const THRESHOLDS = {
   radioactivity: {

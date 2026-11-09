@@ -152,7 +152,7 @@ test("§12 a typical shift: every planned event happens, warned of in advance wh
 })
 
 test("§12 a turbine trip only happens after a visible over-pressure warning", () => {
-  // High steam while on the grid: the OVR-P lamp and a countdown warning show for 5 s before the trip.
+  // High steam while on the grid: the OVR-P lamp and a countdown warning show for 3 s before the trip.
   let s: GameState = { ...quietGame("easy"), steamVolume: 350 }
   for (let second = 1; second < EVENT_TUNING.turbineTripSeconds; second++) {
     s = checkTurbineTrip(s)
@@ -163,20 +163,27 @@ test("§12 a turbine trip only happens after a visible over-pressure warning", (
   s = checkTurbineTrip(s)
   assert.equal(s.turbineMode, "idle")
   assert.ok(s.log.at(-1)?.text.startsWith("Turbine disconnection implemented"))
-  // Steam dropping back below the warning resets the count; off the grid, or in Free mode, it never trips.
+  // Steam dropping back below the warning resets the count; off the grid it never trips.
   const almost = EVENT_TUNING.turbineTripSeconds - 1
   let dip: GameState = { ...quietGame("easy"), steamVolume: 350 }
   for (let i = 0; i < almost; i++) dip = checkTurbineTrip(dip)
   dip = checkTurbineTrip({ ...dip, steamVolume: 250 })
   for (let i = 0; i < almost; i++) dip = checkTurbineTrip({ ...dip, steamVolume: 350 })
   assert.equal(dip.turbineMode, "grid")
-  let free: GameState = { ...quietGame("free"), steamVolume: 350 }
-  for (let i = 0; i < 60; i++) free = checkTurbineTrip(free)
-  assert.equal(free.turbineMode, "grid")
+  let pumps: GameState = { ...quietGame("easy"), steamVolume: 350, turbineMode: "pumps", turbineConnected: false }
+  for (let i = 0; i < 60; i++) pumps = checkTurbineTrip(pumps)
+  assert.equal(pumps.turbineMode, "pumps")
+  // Every mode trips, with its shift log message (owner, 2026-11-09)
+  for (const mode of ["easy", "hard", "free", "safety_test"] as const) {
+    let m: GameState = { ...quietGame(mode), steamVolume: 350 }
+    for (let i = 0; i < EVENT_TUNING.turbineTripSeconds; i++) m = checkTurbineTrip(m)
+    assert.equal(m.turbineMode, "idle", mode)
+    assert.ok(m.log.at(-1)?.text.startsWith("Turbine disconnection implemented"), mode)
+  }
 })
 
-test("§12 the turbine trips 5 s into high steam, and reconnecting with steam still high runs the same flow again", () => {
-  assert.equal(EVENT_TUNING.turbineTripSeconds, 5)
+test("§12 the turbine trips 3 s into high steam, and reconnecting with steam still high runs the same flow again", () => {
+  assert.equal(EVENT_TUNING.turbineTripSeconds, 3)
   let s: GameState = { ...quietGame("easy"), steamVolume: 350 }
   for (let second = 1; second <= EVENT_TUNING.turbineTripSeconds; second++) s = checkTurbineTrip(s)
   assert.deepEqual([s.turbineMode, s.turbineTripped], ["idle", true])
@@ -801,8 +808,9 @@ test("§13 a competent player meets the targets on Easy and Hard, and Hard is ha
   // With a change every 3 minutes or so on Easy (2026-11-02) there is more to chase: 70% over 200 seeds, 67% over these ten.
   // With big swings at the heart of the game (owner, 2026-11-03) there is far more chasing: Easy 57% and Hard 48% over
   // 200 seeds. With the shorter settle time (owner, 2026-11-04): Easy 55% and Hard 43%. With the one-offs (2026-11-06):
-  // Easy 50% and Hard 41% over 200 seeds, 36% over these ten.
-  assert.ok(easy >= 0.5, `easy on target ${(100 * easy).toFixed(0)}%`)
+  // Easy 50% and Hard 41% over 200 seeds, 36% over these ten. With the vacuum costing 15% (owner, 2026-11-09) Easy is 51%
+  // and Hard 38% over 200 seeds, but these ten Easy seeds fell from 50% to 49%.
+  assert.ok(easy >= 0.48, `easy on target ${(100 * easy).toFixed(0)}%`)
   assert.ok(hard >= 0.35 && hard < easy, `hard on target ${(100 * hard).toFixed(0)}% (easy ${(100 * easy).toFixed(0)}%)`)
   // Nearly every target that stays in force for two minutes is reached. It was 90% until Unit 1's 12,000 MW (2026-11-06):
   // radioactivity swings by hundreds at that output (§13) and the bot can be caught in that, so that steam and output stay
@@ -833,7 +841,7 @@ test("§13 a low target visibly risks xenon build-up", () => {
 
 const safety = (opts = {}) => playGame(createNewGame("safety_test"), makeBot(opts), 1)
 
-// ---------- Machine maintenance (lib/maintenance.ts; ai/machine-maintenance-plan.md) ----------
+// ---------- Machine maintenance (lib/maintenance.ts; bible §7, §8 and §10) ----------
 
 const ticks = (s: GameState, seconds: number) => {
   const rng = seededRng(1)
@@ -856,28 +864,30 @@ test("maintenance: the vacuum falls from full to worst in a straight line in eve
   }
 })
 
-test("maintenance: the vacuum costs output and nothing else, 12% at worst, scaling with what is lost", () => {
+test("maintenance: the vacuum costs output and nothing else, 15% at worst, scaling with what is lost", () => {
   const state = (vacuum: number, turbineMode: GameState["turbineMode"] = "grid"): GameState => ({ ...quietGame("free"), vacuum, turbineMode })
   const output = (s: GameState) => calculateGameTick(s, () => 0.25).updates.steamVolume! * 50
   const full = calculateGameTick(state(1), () => 0.25).updates
   const worst = calculateGameTick(state(0), () => 0.25).updates
   const half = calculateGameTick(state(0.5), () => 0.25).updates
   assert.ok(Math.abs(full.powerOutput! - output(state(1))) < 1e-6)
-  assert.ok(Math.abs(worst.powerOutput! / full.powerOutput! - 0.88) < 1e-9)
-  assert.ok(Math.abs(half.powerOutput! / full.powerOutput! - 0.94) < 1e-9)
+  assert.ok(Math.abs(worst.powerOutput! / full.powerOutput! - 0.85) < 1e-9)
+  assert.ok(Math.abs(half.powerOutput! / full.powerOutput! - 0.925) < 1e-9)
+  // Unit 1's target stays reachable below the trip at worst vacuum
+  assert.ok(EVENT_TUNING.unit1TestTarget / 50 / vacuumOutputFactor(0) < THRESHOLDS.steamVolume.highWarning - 10)
   assert.equal(worst.steamVolume, full.steamVolume, "the reactor doesn't notice")
   assert.equal(worst.turbinePumpCapacity, full.turbinePumpCapacity, "nor do the pumps it can power")
   assert.equal(calculateGameTick(state(0, "pumps"), () => 0.25).updates.powerOutput, 0, "off the grid, output is 0 anyway")
 })
 
-test("maintenance: the air ejector restores full vacuum in 20 s from any reading, and output rises 13.6% from worst", () => {
+test("maintenance: the air ejector restores full vacuum in 20 s from any reading, and output rises 17.6% from worst", () => {
   for (const from of [0, 0.4, 0.9]) {
     const s = ticks({ ...quietGame("free"), vacuum: from, ...runEjector({ vacuum: from, ejectorSeconds: 0 }) }, 20)
     assert.ok(Math.abs(s.vacuum - 1) < 1e-9, `from ${from}: ${s.vacuum}`)
     assert.equal(s.ejectorSeconds, 0)
     assert.ok(s.vacuum > 0.999 && ticks(s, 1).vacuum < s.vacuum, "and the air starts leaking back in")
   }
-  assert.ok(Math.abs(vacuumOutputFactor(1) / vacuumOutputFactor(0) - 1.136) < 0.001)
+  assert.ok(Math.abs(vacuumOutputFactor(1) / vacuumOutputFactor(0) - 1.176) < 0.001)
   // It rises evenly, not in one jump
   const part = ticks({ ...quietGame("free"), vacuum: 0, ejectorSeconds: 20 }, 5)
   assert.ok(Math.abs(part.vacuum - 0.25) < 1e-9, `${part.vacuum}`)
@@ -1199,7 +1209,8 @@ test("maintenance: the pump needle drifts to its limit in a straight line and st
 })
 
 test("maintenance: at steady radioactivity, imbalance heats the fuel and nothing else, up to the plan's figures", () => {
-  for (const [R, fuel0, fuelAtLimit] of [[100, 530, 552], [180, 946, 986]]) {
+  // At the limit with a 20% loss (owner, 2026-11-09); it was 552 and 986 with 10%
+  for (const [R, fuel0, fuelAtLimit] of [[100, 530, 580], [180, 946, 1036]]) {
     const level = heldAt(R, 0)
     const half = heldAt(R, 0.5)
     const limit = heldAt(R, 1)
@@ -1375,7 +1386,8 @@ test("maintenance: a novice who never runs the ejector still survives okay", () 
   const seeds = Array.from({ length: 20 }, (_, i) => i + 1)
   // Since Unit 1's 12,000 MW (2026-11-06) this no longer holds on Hard: the novice survives 87% of Easy shifts but only 10%
   // of Hard ones (200 seeds; blocks of 20 lose up to 4 and 19). It was at most 11 of 20 lost. For the owner to judge.
-  for (const [mode, most] of [["easy", 4], ["hard", 19]] as const) {
+  // With the vacuum costing 15%, not 12% (owner, 2026-11-09): 80% of Easy and 6% of Hard (200 seeds); these 20 lose 5 on Easy.
+  for (const [mode, most] of [["easy", 6], ["hard", 19]] as const) {
     const lost = seeds.map((seed) => playGame(createNewGame(mode), makeBot({ jobs: false }), seed)).filter((run) => !run.final.hasWon)
     assert.ok(lost.length <= most, `${mode}: the novice lost ${lost.length} of 20 (${lost.map((run) => run.final.gameOverCause)})`)
   }

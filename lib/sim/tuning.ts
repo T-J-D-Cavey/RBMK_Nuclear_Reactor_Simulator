@@ -50,7 +50,7 @@ const TUNING_BASE = {
 
   // --- §10 Control rods ---
   rodFullStrokeSeconds: 18,
-  // Points per 1% of one rod's boron. Half the other cards' scale (owner, plan §20 step 7b): one rod moved 10%
+  // Points per 1% of one rod's boron. Half the other cards' scale (owner, 2026-10-13): one rod moved 10%
   // shifts radioactivity by about a fifth at first, so a single small move is no longer decisive.
   rodWorth: 0.5,
   tipWorth: 10, // red card per rod whose tip is in the core, in % of boron (= the boron in the first 10% of travel)
@@ -64,7 +64,7 @@ const TUNING_BASE = {
   fuelBrakeHotSlope: 0.17, // points per degree once fuel is very hot
   fuelBrakeFirmsAt: 1300, // °
   fuelBrakeFirmWidth: 100, // °
-  // Above about capAt the brake stops growing (owner, plan §20 step 7c): fuel hotter than this gives no extra
+  // Above about capAt the brake stops growing (owner, 2026-10-13): fuel hotter than this gives no extra
   // brake, so with rods pulled right out nothing slows the runaway and it ends in seconds, not in big swings.
   fuelBrakeCapAt: 2000, // °
   fuelBrakeCapWidth: 100, // °: the brake levels off smoothly over about this range
@@ -101,18 +101,18 @@ const TUNING_BASE = {
 
   // --- §8 Turbine-powered pumps ---
   // Steam needed per pump the turbine can power: all four from steam ≈106 (owner chose 25 over 20, because at
-  // 20 or 22 an ignored Safety Test gets its pumps back too soon to run away; plan §20.3).
+  // 20 or 22 an ignored Safety Test gets its pumps back too soon to run away; 2026-10-13).
   turbineSteamPerPump: 25,
   turbineHysteresis: 0.25, // in pumps: supply holds until steam has clearly moved
   // With its steam shut off (the Safety Test), the turbine coasts: it starts with what its steam was powering
-  // and runs down at four pumps' worth per this many seconds, whatever the steam (owner, plan §20 step 7b).
+  // and runs down at four pumps' worth per this many seconds, whatever the steam (owner, 2026-10-13).
   turbineCoastSeconds: 45,
 
   // --- §9 Xenon ---
   // Blue card. Its worth is derived: full xenon sits this many points below everything pushing up in a
   // cold reactor with rods out, so a poisoned reactor can always restart with rods (nearly) all out (§9).
   xenonCapBelowExcess: 33,
-  // One threshold (owner, plan §21 step 8b): at or below it xenon builds, faster the closer radioactivity is to
+  // One threshold (owner, 2026-10-13): at or below it xenon builds, faster the closer radioactivity is to
   // 0; above it xenon burns off, slowly just above, at a medium rate by 100, fast by 120 and fastest from 130.
   xenonTurnover: 80,
   xenonBuildRate: 0.3, // %/s at radioactivity 0, falling linearly to 0 at the turnover
@@ -173,7 +173,7 @@ export const TUNING = { ...TUNING_BASE, fuelHeatPerRadioactivity: derived.fuelHe
 export { fuelEffect, pumpEffect }
 
 // --- §12–§13 Shift events and power targets (not reactor physics: the engine never reads these) ---
-// Times are seconds of shift time. Starting values from the bible, to tune in playtests (Checkpoint B).
+// Times are seconds of shift time. Starting values from the bible, tuned in playtests.
 
 type Range = readonly [number, number]
 
@@ -240,12 +240,14 @@ const HARD_EVENTS: ShiftEventTuning = {
   targetMinStep: 1000,
 }
 
-// The machines' maintenance jobs (ai/machine-maintenance-plan.md). Starting values, for tuning at playtest.
+// The machines' maintenance jobs (bible §7, §8 and §10). Starting values, for tuning at playtest.
 export const MAINTENANCE_TUNING = {
   // Both drifts: about 1.5 jobs each in an Easy shift, and left alone they reach their limits 90 s apart, so their two
   // shift log messages don't arrive together (owner, 2026-11-05)
   vacuumFallSeconds: 555, // full vacuum to worst, in a straight line, in every turbine mode (§3)
-  vacuumOutputLoss: 0.12, // of output, at worst vacuum
+  // Of output, at worst vacuum (owner, 2026-11-09: a bigger effect; was 0.12). Keep it well under 0.2: at 0.2 Unit 1's
+  // 12,000 MW needs steam 300 at worst vacuum, which trips the turbine.
+  vacuumOutputLoss: 0.15,
   ejectorRecoverySeconds: 20, // back to full vacuum from any reading
   rodParkSeconds: 300, // a rod left parked this long can go slow (§5, owner, 2026-11-05)
   rodSlowCheckSeconds: 60, // from then on it may go, this often
@@ -257,7 +259,7 @@ export const MAINTENANCE_TUNING = {
   balanceFullTravel: 100, // weighted % of difference between the sides that puts the needle hard over
   balanceEffect: 0.15, // with the needle hard over, the heavy side counts this much less and the light side more
   pumpDriftSeconds: 645, // the pump needle, centre to limit (§4)
-  pumpTransferLoss: 0.1, // fuel-to-reactor heat transfer lost at the limit (owner, 2026-11-05; was 0.2: it set the size of the balancer's kick). Never a cut in cooling: that makes more steam, so more output (§10)
+  pumpTransferLoss: 0.2, // fuel-to-reactor heat transfer lost at the limit (owner, 2026-11-09: back to 0.2 for a playtest, as 0.1 was too small to notice; 0.1 from 2026-11-05, as it sets the size of the balancer's kick). Never a cut in cooling: that makes more steam, so more output (§10)
   balancerLockSeconds: 8, // the pump switches don't act, and flow dips, for this long
   balancerFlowDip: 0.1, // of the pumps' cooling, during the lock
   balancerGlideSeconds: 25, // then the needle glides back to centre
@@ -271,7 +273,7 @@ export const EVENT_TUNING = {
   unit1TestTarget: 12000, // MW: above any normal target in either mode, so it reads as out of the ordinary (owner, 2026-11-06)
   // Advance warning in the shift log (§12); a pump trip comes unannounced
   warningLead: { "power-cut": 40, "signal-loss": 30, "rod-stuck": 25 } as Partial<Record<string, number>>,
-  turbineTripSeconds: 5, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine (§12; owner, 2026-11-06, was 20)
+  turbineTripSeconds: 3, // sustained over-pressure (OVR-P lamp) while on the grid trips the turbine, in every mode (§12; owner, 2026-11-09, was 5, and 20 before 2026-11-06)
   // A rod sent in from 0% while steam is high jams with only its graphite tip in the core, as the rods did when AZ-5
   // was pressed on 26 April 1986 (owner, 2026-10-16). Permanent, unlike an event jam.
   steamJamInsertion: 1, // %

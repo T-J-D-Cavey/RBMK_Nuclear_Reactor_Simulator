@@ -164,7 +164,7 @@ export function getEventWarnings(state: GameState): Warning[] {
     warnings.push({ key: "signalLoss", text: "WARNING: No incoming signal being received from reactor hall." })
   }
   // Sustained over-pressure trips the turbine off the grid (bible §12): count down so it never comes unannounced.
-  if (state.overpressureSeconds > 0 && state.turbineMode === "grid" && GAME_MODE_CONFIGS[state.mode]?.turbineTrips) {
+  if (state.overpressureSeconds > 0 && state.turbineMode === "grid") {
     const left = Math.max(0, EVENT_TUNING.turbineTripSeconds - state.overpressureSeconds)
     warnings.push({
       key: "turbineOverpressure",
