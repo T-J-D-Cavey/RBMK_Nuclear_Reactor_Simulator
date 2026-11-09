@@ -169,7 +169,7 @@ export const MANUAL_INDUCTION: TutorialStep[] = [
   step(
     "sections",
     "More if you want it",
-    "These clipboards go into more detail on the game modes, power targets, shift emergencies and warning signs. They're optional. Press 'Leave Training' whenever you're ready.",
+    "These clipboards go into more detail: the game modes, power targets, emergencies, warning signs, bad habits, getting out of trouble, and what really happened that night. They're optional. Press 'Leave Training' whenever you're ready.",
     ["manual-tabs"],
   ),
 ]

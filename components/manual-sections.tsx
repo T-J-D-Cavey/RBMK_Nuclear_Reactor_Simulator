@@ -11,7 +11,7 @@ export interface ManualSection {
   content: ReactNode
 }
 
-const TILT = [-0.9, 0.6, -0.4, 0.8, -0.6] // each sheet sits on its clipboard a little askew
+const TILT = [-0.9, 0.6, -0.4, 0.8, -0.6, 0.5, -0.7, 0.4] // each sheet sits on its clipboard a little askew
 
 // The Operating Manual in sections (owner, 2026-11-09: option D). A row of clipboards under the header picks the
 // section; the open one is lifted and bright and the rest are dimmed. Below a wide screen they become a strip that
